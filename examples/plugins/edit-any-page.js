@@ -1,5 +1,9 @@
+/**
+ * @typedef {import('../../src').InPageEdit} InPageEdit
+ */
+
 mw.hook('InPageEdit.ready').add(
-  /** @param {import('../src').InPageEdit} ipe */
+  /** @param {InPageEdit} ipe */
   (ipe) => {
     ipe.plugin({
       name: 'Edit Any Page',

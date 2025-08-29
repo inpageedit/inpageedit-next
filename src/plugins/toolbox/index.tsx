@@ -123,6 +123,12 @@ export class PluginToolbox extends Service {
     let { id, group, icon, tooltip, buttonProps, onClick, index } = payload
     id = this.normalizeButtonId(id)
 
+    const existingButton = this.container.querySelector(`#${id}`)
+    if (existingButton) {
+      this.ctx.logger('toolbox').warn(`Button with id ${id} already exists, replacing it.`)
+      existingButton.remove()
+    }
+
     let groupEl: HTMLElement | null = null
     if (typeof group === 'undefined' || group === 'auto') {
       // 选择按钮最少的那一组，一样多就选第一组
@@ -145,12 +151,7 @@ export class PluginToolbox extends Service {
       </li>
     )
 
-    const existingButton = groupEl.querySelector(`#${id}`)
-    if (existingButton) {
-      this.ctx.logger('toolbox').warn(`Button with id ${id} already exists, replacing it.`)
-      existingButton.replaceWith(button)
-    } else if (typeof index === 'number') {
-      // 如果要求了索引，则插入到指定位置
+    if (typeof index === 'number') {
       index = Math.min(Math.max(index, 0), groupEl.children.length)
       groupEl.children[index]?.before(button)
     } else {
