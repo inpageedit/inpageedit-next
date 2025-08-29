@@ -1,0 +1,44 @@
+.diff-container
+  --primary-text-color: #333
+  --secondary-text-color: #888
+  --container-bg-color: #fff
+  --border-color: #ccc
+  --del-bg: #fadad7
+  --del-color: #b30000
+  --ins-bg: #eaf2c2
+  --ins-color: #406619
+  --chunk-header-color: #8a008b
+  --result-bg: #f5f5f5
+
+  background: var(--result-bg)
+  padding: 1rem
+  margin: 0
+  border-radius: 3px
+  font-family: 'Maple Mono NF CN', 'Maple Mono NF', 'Maple Mono', 'JetBrainsMono Nerd Font', 'JetBrains Mono NF', 'JetBrains Mono', Consolas, 'Courier New', monospace
+  white-space: pre-wrap
+  overflow-x: auto
+  line-height: 1.4em
+  color: var(--secondary-text-color)
+  transition: color 0.25s ease
+
+  &:hover
+    color: var(--primary-text-color)
+
+  /* 特殊标记样式 */
+  del
+    text-decoration: line-through
+    color: var(--del-color)
+    background: var(--del-bg)
+
+  ins
+    background: var(--ins-bg)
+    color: var(--ins-color)
+    text-decoration: underline
+
+  del,
+  ins
+    font-weight: bold
+
+  .chunk-header
+    color: var(--chunk-header-color)
+    text-decoration: none
