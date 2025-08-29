@@ -58,9 +58,7 @@ import loaderTemplate from './loader.template.js?raw'
           {},
           {
             default() {
-              return typeof props.value !== 'string'
-                ? 'Loading...'
-                : props.value
+              return typeof props.value !== 'string' ? 'Loading...' : props.value
             },
           }
         )
@@ -111,10 +109,7 @@ import loaderTemplate from './loader.template.js?raw'
 })()
 
 function getLoaderString(entryURL: URL) {
-  return loaderTemplate.replaceAll(
-    '/*__ENTRY_URL__*/',
-    entryURL.toString().replace(/['"]/g, '')
-  )
+  return loaderTemplate.replaceAll('/*__ENTRY_URL__*/', entryURL.toString().replace(/['"]/g, ''))
 }
 
 function copyText(str = '') {
