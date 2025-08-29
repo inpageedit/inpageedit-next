@@ -6,10 +6,7 @@ declare module '@/InPageEdit' {
     toolbox: PluginToolbox
   }
   interface Events {
-    'toolbox/button/added'(payload: {
-      ctx: InPageEdit
-      button: HTMLElement
-    }): void
+    'toolbox/button/added'(payload: { ctx: InPageEdit; button: HTMLElement }): void
     'toolbox/button/removed'(payload: { ctx: InPageEdit; id: string }): void
   }
 }
@@ -69,14 +66,8 @@ export class PluginToolbox extends Service {
     )
     const element = (
       <div id="ipe-edit-toolbox">
-        <ul
-          className="btn-group group1"
-          style={{ display: 'flex', flexDirection: 'column' }}
-        ></ul>
-        <ul
-          className="btn-group group2"
-          style={{ display: 'flex', flexDirection: 'row' }}
-        ></ul>
+        <ul className="btn-group group1" style={{ display: 'flex', flexDirection: 'column' }}></ul>
+        <ul className="btn-group group2" style={{ display: 'flex', flexDirection: 'row' }}></ul>
         {toggler}
       </div>
     )
@@ -114,6 +105,9 @@ export class PluginToolbox extends Service {
   }
 
   private normalizeButtonId(id: string) {
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 8)
+    }
     return `ipe-toolbox__${id.trim()}`.replace(/\s\.#/g, '-')
   }
 
@@ -124,19 +118,16 @@ export class PluginToolbox extends Service {
     tooltip?: string | HTMLElement | JQuery
     buttonProps?: Record<string, any>
     onClick?: (event: MouseEvent) => void
+    index?: number
   }) {
-    let { id, group, icon, tooltip, buttonProps, onClick } = payload
+    let { id, group, icon, tooltip, buttonProps, onClick, index } = payload
     id = this.normalizeButtonId(id)
 
     let groupEl: HTMLElement | null = null
     if (typeof group === 'undefined' || group === 'auto') {
       // 选择按钮最少的那一组，一样多就选第一组
-      const group1 = this.container.querySelector(
-        '.btn-group.group1'
-      ) as HTMLElement
-      const group2 = this.container.querySelector(
-        '.btn-group.group2'
-      ) as HTMLElement
+      const group1 = this.container.querySelector('.btn-group.group1') as HTMLElement
+      const group2 = this.container.querySelector('.btn-group.group2') as HTMLElement
       const group1Count = group1?.children.length || 0
       const group2Count = group2?.children.length || 0
       groupEl = group1Count <= group2Count ? group1 : group2
@@ -154,11 +145,14 @@ export class PluginToolbox extends Service {
       </li>
     )
 
-    const existingButton = groupEl.querySelector(
-      `.ipe-toolbox-btn#${payload.id}`
-    )
+    const existingButton = groupEl.querySelector(`#${id}`)
     if (existingButton) {
+      this.ctx.logger('toolbox').warn(`Button with id ${id} already exists, replacing it.`)
       existingButton.replaceWith(button)
+    } else if (typeof index === 'number') {
+      // 如果要求了索引，则插入到指定位置
+      index = Math.min(Math.max(index, 0), groupEl.children.length)
+      groupEl.children[index]?.before(button)
     } else {
       groupEl.appendChild(button)
     }

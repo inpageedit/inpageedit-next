@@ -4,6 +4,6 @@
   "compilerOptions": {
     "allowJs": true,
     "noEmit": true,
-    "types": ["vite/client", "node"]
+    "types": ["vite/client"]
   }
 }

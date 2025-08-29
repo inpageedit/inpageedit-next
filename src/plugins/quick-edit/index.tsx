@@ -103,7 +103,13 @@ export class PluginQuickEdit extends BasePlugin {
         sizeClass: 'large',
       })
       .init()
-    modal.setTitle((<>{options.title}: Loading...</>) as HTMLElement)
+    modal.setTitle(
+      (
+        <>
+          Loading: <u>{options.title}</u>
+        </>
+      ) as HTMLElement
+    )
     modal.setContent(
       (
         <section
@@ -212,6 +218,9 @@ export class PluginQuickEdit extends BasePlugin {
           }
         )
           .then(async () => {
+            modal.setOptions({
+              beforeClose: noop,
+            })
             modal.close()
             this.ctx.modal.notify('success', {
               title: 'Submission Successful',
@@ -256,7 +265,7 @@ export class PluginQuickEdit extends BasePlugin {
             (result) => {
               if (result) {
                 modal.setOptions({
-                  beforeClose: () => true,
+                  beforeClose: noop,
                 })
                 modal.close()
               }
@@ -298,6 +307,8 @@ export class PluginQuickEdit extends BasePlugin {
   private injectToolbox(ctx: InPageEdit) {
     ctx.toolbox.addButton({
       id: 'quick-edit',
+      group: 'group1',
+      index: 0,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
