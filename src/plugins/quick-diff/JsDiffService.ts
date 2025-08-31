@@ -9,8 +9,7 @@ import * as JsDiff from 'diff'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    JsDiff: typeof JsDiff
-    diffService: JsDiffService
+    jsdiff: JsDiffService
   }
 }
 
@@ -28,9 +27,9 @@ export type JsDiffDiffType =
 
 export class JsDiffService {
   constructor(public ctx: InPageEdit) {
-    this.ctx.set('JsDiff', JsDiff)
-    this.ctx.set('diffService', this)
+    this.ctx.set('jsdiff', this)
   }
+  JsDiff = JsDiff
   diffChars = JsDiff.diffChars
   diffWords = JsDiff.diffWords
   diffWordsWithSpace = JsDiff.diffWordsWithSpace

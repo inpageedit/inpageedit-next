@@ -1,4 +1,4 @@
-import { InPageEdit } from '@/InPageEdit'
+import { Inject, InPageEdit } from '@/InPageEdit'
 import { type QuickEditInitPayload } from '@/plugins/quick-edit'
 import { JsDiffDiffType } from './JsDiffService'
 
@@ -11,8 +11,8 @@ declare module '@/InPageEdit' {
   }
 }
 
+@Inject(['jsdiff'])
 export class PluginQuickDiffCore extends BasePlugin {
-  static readonly inject = ['JsDiff']
   VALID_DIFF_TYPES: JsDiffDiffType[] = [
     'diffChars',
     'diffWords',
@@ -74,7 +74,6 @@ export class PluginQuickDiffCore extends BasePlugin {
             }}
           />
         ))}
-        <input type="radio" checked />
       </div>
     )
     modal.setContent(
@@ -107,7 +106,8 @@ export class PluginQuickDiffCore extends BasePlugin {
     if (diffType === 'createTwoFilesPatch') {
       // 将 patch 结果转化为与 diffChars/diffWords... 类似的结构
       let pastHunkHeader = false
-      diff = this.ctx.JsDiff.createTwoFilesPatch('original.txt', 'modified.txt', oldStr, newStr)
+      diff = this.ctx.jsdiff
+        .createTwoFilesPatch('original.txt', 'modified.txt', oldStr, newStr)
         .split('\n')
         .map(function (entry) {
           const line = {
@@ -126,7 +126,7 @@ export class PluginQuickDiffCore extends BasePlugin {
           return line
         })
     } else {
-      const handler = this.ctx.JsDiff[diffType] as (
+      const handler = this.ctx.jsdiff[diffType] as (
         oldStr: string,
         newStr: string
       ) => ChangeObject<string>[]

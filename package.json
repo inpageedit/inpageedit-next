@@ -48,6 +48,7 @@
   "dependencies": {
     "cordis": "^3.18.1",
     "diff": "^8.0.2",
+    "localforage": "^1.10.0",
     "wiki-saikou": "^4.2.2"
   },
   "peerDependencies": {
