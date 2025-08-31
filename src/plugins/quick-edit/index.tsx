@@ -2,6 +2,7 @@ import { Inject, InPageEdit } from '@/InPageEdit'
 import { WikiPage } from '@/models/WikiPage'
 import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
 import { SsiModal } from '@/types/SsiModal'
+import { PluginQuickEditInArticleLinks } from './PluginQuickEditInArticleLinks'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -26,7 +27,7 @@ export interface QuickEditOptions {
   section: number | 'new' | undefined
   editMinor: boolean
   editSummary: string
-  editNotice: string
+  createOnly: boolean
 }
 
 export interface QuickEditInitPayload {
@@ -53,7 +54,7 @@ export class PluginQuickEdit extends BasePlugin {
     section: undefined,
     editMinor: false,
     editSummary: '',
-    editNotice: '',
+    createOnly: false,
   }
 
   constructor(public ctx: InPageEdit) {
@@ -68,15 +69,13 @@ export class PluginQuickEdit extends BasePlugin {
         this.removeToolbox(ctx)
       })
     })
+
+    this.ctx.plugin(PluginQuickEditInArticleLinks)
   }
 
   async quickEdit(payload?: string | Partial<QuickEditOptions>) {
     if (typeof payload === 'undefined') {
-      payload = {
-        title: mw.config.get('wgPageName'),
-        pageId: mw.config.get('wgArticleId'),
-        revision: mw.config.get('wgRevisionId'),
-      }
+      payload = {}
     } else if (typeof payload === 'string') {
       payload = {
         title: payload,
@@ -89,6 +88,16 @@ export class PluginQuickEdit extends BasePlugin {
       payload.title = payload.page
       // @ts-expect-error
       delete payload.page
+    }
+
+    if (!payload.title && !payload.pageId && !payload.revision) {
+      this.logger.warn('None of the title, pageId or revision provided. Using defaults.')
+      payload = {
+        ...payload,
+        title: mw.config.get('wgPageName'),
+        pageId: mw.config.get('wgArticleId'),
+        revision: mw.config.get('wgRevisionId'),
+      }
     }
 
     const options: QuickEditOptions = {
@@ -189,12 +198,15 @@ export class PluginQuickEdit extends BasePlugin {
             </CheckBox>
           </div>
         </div>
-        <div className="debug">
-          <details>
-            <summary>Debug Info</summary>
-            <pre>{JSON.stringify(wikiPage.pageInfo, null, 2)}</pre>
-          </details>
-        </div>
+        {/* Debug Info */}
+        {import.meta.env.DEV && (
+          <div className="debug">
+            <details>
+              <summary>Debug Info</summary>
+              <pre>{JSON.stringify(wikiPage.pageInfo, null, 2)}</pre>
+            </details>
+          </div>
+        )}
       </form>
     ) as HTMLFormElement
     modal.setContent(editForm)

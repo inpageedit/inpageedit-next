@@ -7,7 +7,7 @@ interface DisposeHandler {
 
 export default class BasePlugin<T extends unknown = any> {
   #name!: string
-  readonly config: T
+  public config: T
   private disposeHandlers: DisposeHandler[] = []
 
   constructor(

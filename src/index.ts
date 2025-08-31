@@ -3,12 +3,32 @@ import { InPageEdit as Core } from '@/InPageEdit'
 export { InPageEdit } from '@/InPageEdit'
 export { default as BasePlugin } from '@/plugins/BasePlugin'
 
+/**
+ * Global variable declaration
+ *
+ * Due to historical problem,
+ * we call the IPE instance `InPageEdit`,
+ * and the IPE class called `InPageEditCore`
+ */
+declare global {
+  export const InPageEditCore: typeof Core
+  export const InPageEdit: Core
+  export interface Window {
+    InPageEditCore: typeof Core
+    InPageEdit: Core
+    __IPE_MODULES__: {
+      push: (payload: (ipe: Core) => void) => void
+    }
+  }
+}
+
 // IIFE
 ;((window as any).RLQ ||= []).push([['mediawiki.base'], autoload])
 
 async function autoload() {
   // 防止多次运行
   if (window?.InPageEdit?.stop) {
+    console.warn('[InPageEdit] Plugin already loaded, disposing...')
     await window.InPageEdit.stop()
   }
 
@@ -61,51 +81,16 @@ async function autoload() {
 }
 
 /**
- * Global variable declaration
- *
- * Due to historical problem,
- * we call the IPE instance `InPageEdit`,
- * and the IPE class called `InPageEditCore`
- */
-declare global {
-  export const InPageEditCore: typeof Core
-  export const InPageEdit: Core
-  export interface Window {
-    InPageEditCore: typeof Core
-    InPageEdit: Core
-    __IPE_MODULES__: {
-      push: (payload: (ipe: Core) => void) => void
-    }
-  }
-}
-
-/**
- * FIXME: 热重载似乎有点问题，需要 vite 大神协助修复
- * 目前暂时回退到刷新网页
- *
- * console > GET http://localhost:1005/src/index.js.ts?t=1756407659107 net::ERR_ABORTED 404 (Not Found)
- * console > [vite] Failed to reload /src/index.js.ts. This could be due to syntax errors or importing non-existent modules. (see errors above)
- *
+ * Hot Module Replacement (HMR) support
  */
 if (import.meta.hot) {
-  // import.meta.hot.dispose(async () => {
-  //   if (window.InPageEdit) {
-  //     console.info('[InPageEdit] Clean up for hot reload')
-  //     await window?.InPageEdit?.stop?.()
-  //     window.InPageEdit = undefined as any
-  //   }
-  // })
-  // import.meta.hot.accept((module) => {
-  //   if (typeof module === 'undefined') {
-  //     console.error("[InPageEdit] Hell no, I'm so cold...")
-  //     location.reload()
-  //   } else {
-  //     console.info("[InPageEdit] OMG, I'm so hot!", module)
-  //     autoload()
-  //   }
-  // })
-  import.meta.hot.accept(() => {
-    console.error("[InPageEdit] OMG, I'm so hot!")
-    location.reload()
+  import.meta.hot.accept((module) => {
+    if (typeof module === 'undefined') {
+      console.error("[InPageEdit] Hell no, I'm so cold...")
+      location.reload()
+    } else {
+      console.info("[InPageEdit] OMG, I'm so hot!", module)
+      autoload()
+    }
   })
 }

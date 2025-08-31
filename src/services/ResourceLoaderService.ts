@@ -11,9 +11,9 @@ export class ResourceLoaderService extends Service {
     super(ctx, 'resourceLoader', true)
   }
   protected stop(): void | Promise<void> {
-    document.querySelectorAll('[data-ipe]').forEach((el) => {
-      el.remove()
-    })
+    // document.querySelectorAll('[data-ipe]').forEach((el) => {
+    //   el.remove()
+    // })
   }
 
   loadScript(src: string, attrs?: Record<string, any>): Promise<HTMLScriptElement> {

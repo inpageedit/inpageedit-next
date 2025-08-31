@@ -9,8 +9,9 @@ declare module '@/InPageEdit' {
 
 export class SiteMetadataService extends Service {
   static inject = ['api']
-  private _promise?: Promise<SiteMetadata>
   private _data!: SiteMetadata
+  private siteIdentity?: string
+  private readonly CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'sitemeta', false)
@@ -26,7 +27,37 @@ export class SiteMetadataService extends Service {
   }
 
   protected async start(): Promise<void> {
-    this._promise ||= this.api
+    const cached = await this.fetchFromCache()
+    if (cached) {
+      this.ctx.logger('SiteMetadataService').info('Using cached metadata')
+      this._data = cached
+      return
+    }
+    const meta = await this.fetchFromApi()
+    this.saveToCache(meta)
+    this._data = meta
+  }
+
+  async computeSiteIdentity() {
+    if (this.siteIdentity) return this.siteIdentity
+    let path: string
+    if (!window.mw?.config) {
+      path = new URL(location.href).origin
+    } else {
+      const { wgServer, wgArticlePath } = window.mw.config.get()
+      path = `${wgServer}${wgArticlePath}`
+    }
+    const hash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(path)).then((hash) => {
+      const hashArray = Array.from(new Uint8Array(hash))
+      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+      return hashHex
+    })
+    this.siteIdentity = `IPE:sitemeta/${hash}`
+    return this.siteIdentity
+  }
+
+  async fetchFromApi() {
+    return this.api
       .get({
         action: 'query',
         meta: 'siteinfo|userinfo',
@@ -41,11 +72,38 @@ export class SiteMetadataService extends Service {
       })
       .catch((e) => {
         this.ctx.logger.error('[InPageEdit]', 'fetchMetadata error', e)
-        this._promise = undefined
         return Promise.reject(e)
       })
-    const meta = await this._promise!
-    this._data = meta
+  }
+
+  async fetchFromCache() {
+    const key = await this.computeSiteIdentity()
+    const raw = localStorage.getItem(key)
+    if (!raw) return null
+    try {
+      const data = JSON.parse(raw)
+      if (!data.time || !data.value) {
+        throw new Error('Invalid cache data')
+      }
+      const now = Date.now()
+      if (now - data.time > this.CACHE_TTL) {
+        localStorage.removeItem(key)
+        return null
+      }
+      return data.value
+    } catch (e) {
+      this.ctx.logger.error('[InPageEdit]', 'fetchMetadata cache error', e)
+      return null
+    }
+  }
+  async saveToCache(data: SiteMetadata) {
+    const key = await this.computeSiteIdentity()
+    const now = Date.now()
+    const cacheData = {
+      time: now,
+      value: data,
+    }
+    localStorage.setItem(key, JSON.stringify(cacheData))
   }
 
   // shortcuts
