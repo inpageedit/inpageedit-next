@@ -28,6 +28,7 @@ export interface QuickEditOptions {
   editMinor: boolean
   editSummary: string
   createOnly: boolean
+  reloadAfterSave: boolean
 }
 
 export interface QuickEditInitPayload {
@@ -45,7 +46,7 @@ export interface QuickEditSubmitPayload {
   watchlist?: WatchlistAction
 }
 
-@Inject(['api', 'wikiPage', 'modal'])
+@Inject(['api', 'wikiPage', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
     editSummary: Schema.string().description('Default edit summary for quick edits'),
@@ -61,7 +62,7 @@ export interface QuickEditSubmitPayload {
     .description('Quick edit options')
     .extra('category', 'edit'),
   {
-    editSummary: '// Edit via InPageEdit',
+    editSummary: '// Edit via InPageEdit-NEXT',
     editMinor: false,
     outSideClose: true,
     watchList: WatchlistAction.preferences,
@@ -76,6 +77,7 @@ export class PluginQuickEdit extends BasePlugin {
     editMinor: false,
     editSummary: '',
     createOnly: false,
+    reloadAfterSave: false,
   }
 
   constructor(public ctx: InPageEdit) {
@@ -121,16 +123,33 @@ export class PluginQuickEdit extends BasePlugin {
       }
     }
 
+    const outSideClose = (await this.ctx.preferences.get<boolean>('outSideClose'))!
+    const watchList = (await this.ctx.preferences.get<WatchlistAction>('watchList'))!
+    const editSummary =
+      typeof payload.editSummary === 'string'
+        ? payload.editSummary
+        : (await this.ctx.preferences.get<string>('editSummary'))!
+    const editMinor =
+      typeof payload.editMinor === 'boolean'
+        ? payload.editMinor
+        : (await this.ctx.preferences.get<boolean>('editMinor'))!
+
     const options: QuickEditOptions = {
       ...this.DEFAULT_OPTIONS,
+      editSummary,
+      editMinor,
       ...payload,
     }
-    this.ctx.emit('quickEdit/initOptions', { ctx: this.ctx, options })
+    if (!options.editSummary) {
+      options.editSummary = (await this.ctx.preferences.get<string>('editSummary')) || ''
+    }
+    if (!options) this.ctx.emit('quickEdit/initOptions', { ctx: this.ctx, options })
 
     const modal = this.ctx.modal
       .createObject({
         className: 'in-page-edit ipe-quickEdit ipe-editor',
         sizeClass: 'large',
+        outSideClose,
       })
       .init()
     modal.setTitle(
@@ -200,7 +219,14 @@ export class PluginQuickEdit extends BasePlugin {
         <textarea className="editArea" name="text">
           {wikiPage.revisions[0]?.content || ''}
         </textarea>
-        <div class="ipe-quickEdit-options">
+        <div
+          class="ipe-quickEdit-options"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem',
+          }}
+        >
           <div>
             <label htmlFor="summary" style={{ display: 'block' }}>
               Summary
@@ -214,14 +240,41 @@ export class PluginQuickEdit extends BasePlugin {
             />
           </div>
           <div>
-            <CheckBox name="minor" id="minor">
+            <CheckBox name="minor" id="minor" checked={options.editMinor}>
               Minor edit
+            </CheckBox>
+          </div>
+          <div>
+            <label htmlFor="watchlist" style={{ display: 'block' }}>
+              Watchlist
+            </label>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              {[
+                WatchlistAction.preferences,
+                WatchlistAction.nochange,
+                WatchlistAction.watch,
+                WatchlistAction.unwatch,
+              ].map((action) => (
+                <RadioBox
+                  key={action}
+                  name="watchlist"
+                  value={action}
+                  inputProps={{ checked: watchList === action }}
+                >
+                  {action}
+                </RadioBox>
+              ))}
+            </div>
+          </div>
+          <div>
+            <CheckBox name="reloadAfterSave" id="reloadAfterSave" checked={options.reloadAfterSave}>
+              Reload after save
             </CheckBox>
           </div>
         </div>
         {/* Debug Info */}
         {import.meta.env.DEV && (
-          <div className="debug">
+          <div className="debug" style={{ marginTop: '1rem' }}>
             <details>
               <summary>Debug Info</summary>
               <pre>{JSON.stringify(wikiPage.pageInfo, null, 2)}</pre>
@@ -259,8 +312,10 @@ export class PluginQuickEdit extends BasePlugin {
               title: 'Submission Successful',
               content: 'Your changes have been saved.',
             })
-            await sleep(500)
-            location.reload()
+            if (formData.get('reloadAfterSave')) {
+              await sleep(500)
+              location.reload()
+            }
           })
           .catch((error) => {
             this.ctx.modal.notify('error', {

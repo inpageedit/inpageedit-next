@@ -1,4 +1,4 @@
-import { Inject, InPageEdit } from '@/InPageEdit'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { type QuickEditInitPayload } from '@/plugins/quick-edit'
 import { JsDiffDiffType } from './JsDiffService'
 
@@ -11,15 +11,32 @@ declare module '@/InPageEdit' {
   }
 }
 
+const VALID_DIFF_TYPES = [
+  'diffChars',
+  'diffWords',
+  'diffSentences',
+  'diffLines',
+  'createTwoFilesPatch',
+] as JsDiffDiffType[]
+
 @Inject(['jsdiff'])
+@RegisterPreferences(
+  Schema.object({
+    'quickDiff.preferredCompareMode': Schema.union([
+      Schema.const('jsDiff'),
+      Schema.const('mwApi'),
+    ]).description('The preferred comparison mode for quick diff'),
+    'quickDiff.jsDiff.defaultType': Schema.union(
+      VALID_DIFF_TYPES.map((type) => Schema.const(type))
+    ).description('The default diff type for JsDiff'),
+  }).description('Quick Diff Preferences'),
+  {
+    'quickDiff.preferredCompareMode': 'jsDiff',
+    'quickDiff.jsDiff.defaultType': 'diffSentences',
+  }
+)
 export class PluginQuickDiffCore extends BasePlugin {
-  VALID_DIFF_TYPES: JsDiffDiffType[] = [
-    'diffChars',
-    'diffWords',
-    'diffSentences',
-    'diffLines',
-    'createTwoFilesPatch',
-  ]
+  VALID_DIFF_TYPES = VALID_DIFF_TYPES
 
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-diff')

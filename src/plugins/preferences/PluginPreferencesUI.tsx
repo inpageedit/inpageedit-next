@@ -41,6 +41,9 @@ export class PluginPreferencesUI extends BasePlugin {
           <ProgressBar />
         </>
       ) as HTMLElement,
+      onClose() {
+        app.unmount()
+      },
     })
 
     modal.get$wrapper().addClass('dialog')

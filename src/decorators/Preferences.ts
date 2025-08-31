@@ -3,8 +3,8 @@ import Schema from 'schemastery'
 type AnyConstructor<T = any> = new (...args: any[]) => T
 
 export type PreferenceAugmented<C extends AnyConstructor, D extends Record<string, any>> = C & {
-  ConfigSchema: Schema
-  ConfigDefaults: D
+  PreferencesSchema: Schema<D>
+  PreferencesDefaults: D
 }
 
 /**
@@ -37,8 +37,8 @@ export type PreferenceAugmented<C extends AnyConstructor, D extends Record<strin
  */
 export function RegisterPreferences<D extends Record<string, any>>(schema: Schema<D>, defaults: D) {
   return function <T extends AnyConstructor>(target: T): PreferenceAugmented<T, D> {
-    ;(target as any).ConfigSchema = schema
-    ;(target as any).ConfigDefaults = defaults
+    ;(target as any).PreferencesSchema = schema
+    ;(target as any).PreferencesDefaults = defaults
     return target as PreferenceAugmented<T, D>
   }
 }

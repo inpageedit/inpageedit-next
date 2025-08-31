@@ -5,6 +5,7 @@ declare global {
     interface Meta<T = any> {
       /** Category grouping for UI or docs */
       category?: string
+      hidden?: boolean
     }
   }
 }

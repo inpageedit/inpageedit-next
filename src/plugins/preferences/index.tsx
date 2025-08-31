@@ -51,6 +51,54 @@ export class PluginPreferences extends BasePlugin {
       index: 99,
     })
 
+    this.registerCustomConfig(
+      'about',
+      Schema.object({
+        about: Schema.string()
+          .role('html-info')
+          .description(
+            (
+              <div className="prose">
+                <h2>✏️ InPageEdit NEXT</h2>
+                <i>v{version}</i>
+                <h2>Portal</h2>
+                <div style="display: flex; flex-direction: column; gap: 1rem">
+                  <ActionButton
+                    link="https://www.ipe.wiki"
+                    buttonProps={{ style: { display: 'block', width: '100%' } }}
+                  >
+                    Official Website & Help Center
+                  </ActionButton>
+                  <ActionButton
+                    link="https://www.ipe.wiki/update/"
+                    buttonProps={{ style: { display: 'block', width: '100%' } }}
+                  >
+                    Update Logs
+                  </ActionButton>
+                </div>
+                <h2>Join us</h2>
+                <ul>
+                  <li>
+                    <strong>GitHub</strong>:{' '}
+                    <a href="https://github.com/inpageedit/inpageedit-next" target="_blank">
+                      inpageedit/inpageedit-next
+                    </a>
+                  </li>
+                  <li>
+                    <strong>QQ Group</strong>: 1026023666
+                  </li>
+                </ul>
+                <hr />
+                <p>🚀 Modular, Extensible Supercharged Plugin for MediaWiki.</p>
+                <p>InPageEdit-NEXT Copyright © 2025-present dragon-fish</p>
+              </div>
+            ).outerHTML
+          ),
+      }).description(''),
+      'about',
+      {}
+    )
+
     import('./PluginPreferencesUI').then((module) => {
       const fork = this.ctx.plugin(module.PluginPreferencesUI)
       this.addDisposeHandler(() => {
@@ -121,14 +169,14 @@ export class PluginPreferences extends BasePlugin {
         if (plugin === null) {
           return {
             name: 'root',
-            schema: (InPageEdit as any)?.ConfigSchema || null,
-            defaults: (InPageEdit as any)?.ConfigDefaults || {},
+            schema: (InPageEdit as any)?.PreferencesSchema || null,
+            defaults: (InPageEdit as any)?.PreferencesDefaults || {},
           }
         } else {
           return {
             name: plugin.name,
-            schema: (plugin as any)?.ConfigSchema || null,
-            defaults: (plugin as any)?.ConfigDefaults || {},
+            schema: (plugin as any)?.PreferencesSchema || null,
+            defaults: (plugin as any)?.PreferencesDefaults || {},
           }
         }
       })
@@ -139,8 +187,8 @@ export class PluginPreferences extends BasePlugin {
           category: item.schema.meta.category || 'general',
         }
       })
-      .filter((item) => !category || item.category === category)
       .concat(this.customRegistries)
+      .filter((item) => !category || item.category === category)
   }
 
   defineCategory(category: InPageEditPreferenceUICategory) {

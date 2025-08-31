@@ -1,11 +1,12 @@
 <template lang="pug">
 NFormItem.schema-item(
+  v-show='!schema.meta.hidden',
   :validation-status='status.status',
   :feedback='status.feedback',
   :required='schema.meta.required',
   :class='`schema-type-${schema.type} schema-role-${schema.meta.role || "default"} ${hideLabel ? "schema-without-label" : ""}`'
 )
-  template(#label, v-if='!hideLabel')
+  template(#label, v-if='!hideLabel && !schema.meta.role?.includes("info")')
     slot(name='label')
       NText(v-if='schema.meta.disabled', style='margin-right: 0.5rem'): NIcon: IconLock
       NText
@@ -104,6 +105,11 @@ const status = computed(() => schemaValidator(props.schema, props.value))
   padding-left: 0.4rem
   transition: border-color 0.24s ease
   border-left: 1px solid var(--border-color)
+
+.schema-role-html-info, schema-role-info
+  .schema-item-inner
+    border-left: none
+    padding-left: 0
 
 .schema-item-inner
   width: 100%

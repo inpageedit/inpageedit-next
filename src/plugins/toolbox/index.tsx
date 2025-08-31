@@ -1,4 +1,4 @@
-import { InPageEdit, Service } from '@/InPageEdit'
+import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -10,6 +10,15 @@ declare module '@/InPageEdit' {
   }
 }
 
+@RegisterPreferences(
+  Schema.object({
+    toolboxAlwaysShow: Schema.boolean().description('Make the toolbox opened by default'),
+  }),
+  {
+    toolboxAlwaysShow: false,
+  }
+)
+@Inject(['preferences'])
 export class PluginToolbox extends Service {
   container!: HTMLElement
   private forceShow = false
@@ -26,6 +35,14 @@ export class PluginToolbox extends Service {
     }
     document.body.appendChild(this.container)
     await sleep(0) // wait nextTick
+    this.ctx.preferences.get('toolboxAlwaysShow').then((val) => {
+      if (val) {
+        this.container.querySelector('#toolbox-toggle')?.classList.add('opened')
+        this.container.querySelectorAll('.btn-group').forEach((el) => {
+          el.classList.add('opened')
+        })
+      }
+    })
   }
 
   protected stop(): void | Promise<void> {

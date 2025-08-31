@@ -1,4 +1,4 @@
-import { InPageEdit } from '@/InPageEdit'
+import { Inject, InPageEdit } from '@/InPageEdit'
 import { type QuickEditInitPayload } from '@/plugins/quick-edit'
 import { WikiPage } from '@/models/WikiPage'
 import { MwApiParams } from 'wiki-saikou'
@@ -26,9 +26,8 @@ declare module '@/InPageEdit' {
   }
 }
 
+@Inject(['api', 'wikiPage', 'modal'])
 export class PluginQuickPreview extends BasePlugin {
-  static inject = ['api', 'wikiPage', 'modal']
-
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quickPreview')
   }
@@ -50,8 +49,7 @@ export class PluginQuickPreview extends BasePlugin {
         className: 'btn btn-secondary',
         method: () => {
           this.quickPreview(
-            (modal.get$content().find('textarea.editArea').val() as string) ||
-              '',
+            (modal.get$content().find('textarea.editArea').val() as string) || '',
             undefined,
             wikiPage
           )
