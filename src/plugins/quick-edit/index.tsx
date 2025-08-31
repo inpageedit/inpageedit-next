@@ -1,4 +1,4 @@
-import { Inject, InPageEdit } from '@/InPageEdit'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { WikiPage } from '@/models/WikiPage'
 import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
 import { SsiModal } from '@/types/SsiModal'
@@ -46,6 +46,27 @@ export interface QuickEditSubmitPayload {
 }
 
 @Inject(['api', 'wikiPage', 'modal'])
+@RegisterPreferences(
+  Schema.object({
+    editSummary: Schema.string().description('Default edit summary for quick edits'),
+    editMinor: Schema.boolean().description('Whether to mark the edit as minor'),
+    outSideClose: Schema.boolean().description('Whether to close the modal outside'),
+    watchList: Schema.union([
+      Schema.const(WatchlistAction.preferences).description('Follow my preferences'),
+      Schema.const(WatchlistAction.nochange).description('Keep the current watchlist status'),
+      Schema.const(WatchlistAction.watch).description('Add the page to watchlist'),
+      Schema.const(WatchlistAction.unwatch).description('Remove the page from watchlist'),
+    ]).description('Watchlist options'),
+  })
+    .description('Quick edit options')
+    .extra('category', 'edit'),
+  {
+    editSummary: '// Edit via InPageEdit',
+    editMinor: false,
+    outSideClose: true,
+    watchList: WatchlistAction.preferences,
+  }
+)
 export class PluginQuickEdit extends BasePlugin {
   private readonly DEFAULT_OPTIONS: QuickEditOptions = {
     title: '',

@@ -1,4 +1,4 @@
-import { InPageEdit, Logger } from '@/InPageEdit'
+import { InPageEdit, Logger, Plugin } from '@/InPageEdit'
 import { snakeCase } from '@/utils/string'
 
 interface DisposeHandler {
@@ -17,12 +17,37 @@ export default class BasePlugin<T extends unknown = any> {
   ) {
     this.name = name || this.constructor.name
     this.config = config || ({} as T)
-    this.start()
+    const { promise, resolve, reject } = promiseWithResolvers<void>()
+    queueMicrotask(() => {
+      try {
+        const ret = this.start()
+        if (ret && typeof (ret as Promise<unknown>).then === 'function') {
+          ;(ret as Promise<unknown>)
+            .then(() => resolve())
+            .catch((err) => {
+              this.logger.error('Plugin start failed', err)
+              reject()
+            })
+        } else {
+          resolve()
+        }
+      } catch (err) {
+        this.logger.error('Plugin start threw synchronously', err)
+        reject()
+      }
+
+      promise.then(() => {
+        this.logger.info('Plugin started')
+      })
+      promise.catch(() => {
+        this.ctx.registry.get(this as any)?.dispose?.()
+      })
+    })
     this.ctx.once('dispose', () => {
       this.disposeHandlers.forEach((fn) => fn(this.ctx))
       this.stop()
+      this.logger.info('Plugin disposed')
     })
-    this.logger.debug('Plugin initialized')
   }
 
   protected start(): Promise<void> | void {}

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import { version } from './package.json'
 import { resolve } from 'node:path'
+import Vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import dts from 'unplugin-dts/vite'
 
@@ -29,8 +30,15 @@ export default defineConfig({
     },
   },
   plugins: [
+    Vue(),
     AutoImport({
-      dirs: ['./src/components/**', './src/constants', './src/utils', './src/polyfills'],
+      dirs: [
+        './src/components/**',
+        './src/constants',
+        './src/utils',
+        './src/polyfills',
+        './src/decorators',
+      ],
       imports: [
         {
           from: '@/plugins/BasePlugin',
@@ -61,7 +69,7 @@ export default defineConfig({
     ),
   },
   optimizeDeps: {
-    include: ['cordis'],
+    // include: ['cordis'],
   },
   mode: process.env.NODE_ENV,
   server: {

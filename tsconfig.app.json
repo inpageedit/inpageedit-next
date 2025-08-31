@@ -16,5 +16,8 @@
     "paths": {
       "@/*": ["./src/*"]
     }
+  },
+  "vueCompilerOptions": {
+    "plugins": ["@vue/language-plugin-pug"]
   }
 }

@@ -14,24 +14,27 @@ export class StorageService extends Service {
     ctx.set('localforage', localforage)
   }
   get StorageManager() {
-    return StorageManager
+    return IPEStorageManager
   }
 
   createDatabse<T = any>(storeName: string, ttl?: number) {
-    return new StorageManager<T>('InPageEdit', storeName, ttl)
+    return new IPEStorageManager<T>('InPageEdit', storeName, ttl)
   }
 }
 
-export interface StorageManagerItem<T = any> {
+export interface IPEStorageItem<T = any> {
+  /** last update time */
   time: number
+  /** stored value */
   value: T
 }
 
-export class StorageManager<T = any> {
+export class IPEStorageManager<T = any> {
   static DEFAULT_TTL = Infinity
   static readonly _cached_db_instances: Map<string, LocalForage> = new Map()
 
   readonly db: LocalForage
+  keys: (typeof localforage)['keys']
 
   /**
    *
@@ -42,9 +45,10 @@ export class StorageManager<T = any> {
   constructor(
     readonly dbName: string,
     readonly storeName: string,
-    public ttl: number = StorageManager.DEFAULT_TTL
+    public ttl: number = IPEStorageManager.DEFAULT_TTL
   ) {
-    this.db = StorageManager.createDatabase(dbName, storeName)
+    this.db = IPEStorageManager.createDatabase(dbName, storeName)
+    this.keys = this.db.keys.bind(this.db)
   }
 
   static createDatabase(dbName: string, storeName: string) {
@@ -60,11 +64,7 @@ export class StorageManager<T = any> {
     return db
   }
 
-  async get(
-    key: string,
-    ttl = this.ttl,
-    setter?: () => Promise<NonNullable<T>> | NonNullable<T>
-  ): Promise<T | null> {
+  async get(key: string, ttl = this.ttl, setter?: () => Promise<T> | T): Promise<T | null> {
     const data = await this.loadFromDB(key)
     const isExpired = this.checkIfExpired(data, ttl)
     if (!data || isExpired) {
@@ -79,7 +79,7 @@ export class StorageManager<T = any> {
     return data.value
   }
 
-  async set(key: string, value: T): Promise<StorageManagerItem<T>> {
+  async set(key: string, value: T): Promise<IPEStorageItem<T>> {
     return this.db.setItem(key, {
       time: Date.now(),
       value,
@@ -94,6 +94,12 @@ export class StorageManager<T = any> {
 
   async delete(key: string): Promise<void> {
     return this.db.removeItem(key)
+  }
+
+  async iterate(callback: (value: T, key: string) => void) {
+    return await this.db.iterate<IPEStorageItem<T>, void>((value, key) => {
+      callback(value.value, key)
+    })
   }
 
   async loadFromDB(key: string) {
@@ -112,7 +118,7 @@ export class StorageManager<T = any> {
     return data
   }
 
-  checkIfExpired(data: StorageManagerItem<T> | null, ttl = this.ttl) {
+  checkIfExpired(data: IPEStorageItem<T> | null, ttl = this.ttl) {
     if (!data) {
       return false
     }

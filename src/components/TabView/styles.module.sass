@@ -1,0 +1,31 @@
+.tabview
+  font-size: 14px
+  .labels_container
+    font-size: 16px
+    list-style: none
+    margin: 0
+    white-space: nowrap
+    overflow-x: auto
+
+    .label
+      flex: auto
+      padding: 0
+      margin: 0
+      display: inline-block
+      text-align: center
+      text-transform: uppercase
+      &:not(:first-child)
+        margin-left: 0.5em
+      a
+        display: inline-block
+        padding: 0.25em 0.5em
+        text-decoration: none
+        color: #08d
+        cursor: pointer
+      &:hover a
+        box-shadow: 0 -2px 0 rgba(0, 136, 221, 0.25) inset
+      &.active a
+        box-shadow: 0 -2px 0 #08d inset
+
+  .contents_container
+    margin-top: 1em

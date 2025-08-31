@@ -1,5 +1,4 @@
-import { InPageEdit } from '@/InPageEdit'
-import { Service } from 'cordis'
+import { InPageEdit, Service } from '@/InPageEdit'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -152,8 +151,13 @@ export class PluginToolbox extends Service {
     )
 
     if (typeof index === 'number') {
-      index = Math.min(Math.max(index, 0), groupEl.children.length)
-      groupEl.children[index]?.before(button)
+      if (index <= 0) {
+        groupEl.prepend(button)
+      } else if (index >= groupEl.children.length) {
+        groupEl.appendChild(button)
+      } else {
+        groupEl.children[index]?.before(button)
+      }
     } else {
       groupEl.appendChild(button)
     }

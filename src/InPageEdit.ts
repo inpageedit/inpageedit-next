@@ -1,4 +1,5 @@
 import { Context } from 'cordis'
+import Schema from 'schemastery'
 import { ApiService } from '@/services/ApiService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService'
 import { SsiModalService } from '@/services/SsiModalService'
@@ -11,6 +12,7 @@ export interface InPageEditCoreConfig {
 }
 
 export * from 'cordis'
+export { Schema }
 
 /**
  * ✏️ InPageEdit NEXT
@@ -21,6 +23,16 @@ export * from 'cordis'
  * @license MIT
  * @see https://github.com/Dragon-Fish/InPageEdit-v2
  */
+@RegisterPreferences(
+  Schema.object({
+    test: Schema.string().description('test description'),
+  })
+    .description('App configs')
+    .extra('category', 'general'),
+  {
+    test: 'foo bar baz',
+  }
+)
 export class InPageEdit extends Context {
   public config: InPageEditCoreConfig
   static DEFAULT_CONFIG: InPageEditCoreConfig = {
@@ -54,6 +66,7 @@ export class InPageEdit extends Context {
     this.plugin((await import('@/plugins/quick-preview/index')).PluginQuickPreview)
     this.plugin((await import('@/plugins/quick-diff/index')).PluginQuickDiff)
     this.plugin((await import('@/plugins/quick-rename/index')).PluginQuickRename)
+    this.plugin((await import('@/plugins/preferences/index')).PluginPreferences)
   }
 
   private async loadCoreAssets() {

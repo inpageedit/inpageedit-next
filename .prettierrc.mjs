@@ -12,4 +12,5 @@ export default {
   bracketSpacing: true,
   arrowParens: 'always',
   printWidth: 100,
+  plugins: ['@prettier/plugin-pug'],
 }

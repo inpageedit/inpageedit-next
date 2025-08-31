@@ -1,7 +1,15 @@
-import { Inject, InPageEdit } from '@/InPageEdit'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { QuickEditOptions } from '.'
 
 @Inject(['sitemeta', 'quickEdit'])
+@RegisterPreferences(
+  Schema.object({
+    redLinkEdit: Schema.boolean().description('Show quick edit entry after red links'),
+  }).description('In-article quick edit links'),
+  {
+    redLinkEdit: true,
+  }
+)
 export class PluginQuickEditInArticleLinks extends BasePlugin<{
   wikiBaseUrl: string
   wikiArticlePath: string

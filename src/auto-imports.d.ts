@@ -12,13 +12,20 @@ declare global {
   const Endpoints: typeof import('./constants/endpoints')['Endpoints']
   const ProgressBar: typeof import('./components/ProgressBar')['ProgressBar']
   const RadioBox: typeof import('./components/RadioBox')['RadioBox']
+  const RegisterPreferences: typeof import('./decorators/Preferences')['RegisterPreferences']
+  const TabContent: typeof import('./components/TabView/TabView')['TabContent']
+  const TabLabel: typeof import('./components/TabView/TabView')['TabLabel']
+  const TabView: typeof import('./components/TabView/TabView')['TabView']
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
+  const checkURL: typeof import('./utils/schemaValidator')['checkURL']
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
   const ensureSlash: typeof import('./utils/string')['ensureSlash']
   const noop: typeof import('./utils/noop')['noop']
+  const openLinkPreview: typeof import('./utils/schemaValidator')['openLinkPreview']
   const paramCase: typeof import('./utils/string')['paramCase']
   const promiseWithResolvers: typeof import('./polyfills/Promise.withResolvers')['promiseWithResolvers']
+  const schemaValidator: typeof import('./utils/schemaValidator')['schemaValidator']
   const setProgressBarToComplete: typeof import('./components/ProgressBar')['setProgressBarToComplete']
   const sleep: typeof import('./utils/sleep')['sleep']
   const snakeCase: typeof import('./utils/string')['snakeCase']
@@ -29,6 +36,12 @@ declare global {
 // for type re-export
 declare global {
   // @ts-ignore
+  export type { TabViewLabelOptions } from './components/TabView/TabView'
+  import('./components/TabView/TabView')
+  // @ts-ignore
   export type { Endpoints } from './constants/endpoints'
   import('./constants/endpoints')
+  // @ts-ignore
+  export type { PreferenceAugmented } from './decorators/Preferences'
+  import('./decorators/Preferences')
 }

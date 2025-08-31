@@ -1,6 +1,6 @@
 import { Inject, InPageEdit, Service } from '@/InPageEdit'
 import { SiteMetadata, SiteUserBlockInfo } from '@/types/SiteMetadata'
-import { StorageManager } from './StorageService'
+import { IPEStorageManager } from './StorageService'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -13,7 +13,7 @@ export class SiteMetadataService extends Service {
   private _data!: SiteMetadata
   private siteIdentity?: string
   private readonly CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
-  private db: StorageManager<SiteMetadata>
+  private db: IPEStorageManager<SiteMetadata>
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'sitemeta', false)
