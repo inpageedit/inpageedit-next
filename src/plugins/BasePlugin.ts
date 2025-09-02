@@ -1,4 +1,4 @@
-import { InPageEdit, Logger, Plugin } from '@/InPageEdit'
+import { InPageEdit, Logger } from '@/InPageEdit'
 import { snakeCase } from '@/utils/string'
 
 interface DisposeHandler {

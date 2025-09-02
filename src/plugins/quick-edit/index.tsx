@@ -1,7 +1,6 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { WikiPage } from '@/models/WikiPage'
 import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
-import { SsiModal } from '@/types/SsiModal'
 import { PluginQuickEditInArticleLinks } from './PluginQuickEditInArticleLinks'
 
 declare module '@/InPageEdit' {

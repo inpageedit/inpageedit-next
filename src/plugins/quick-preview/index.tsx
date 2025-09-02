@@ -2,7 +2,6 @@ import { Inject, InPageEdit } from '@/InPageEdit'
 import { type QuickEditInitPayload } from '@/plugins/quick-edit'
 import { WikiPage } from '@/models/WikiPage'
 import { MwApiParams } from 'wiki-saikou'
-import { SsiModal } from '@/types/SsiModal'
 import { PageParseData } from '@/models/WikiPage/types/PageParseData'
 
 declare module '@/InPageEdit' {

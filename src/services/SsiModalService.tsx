@@ -1,10 +1,10 @@
-import { Endpoints } from '@/constants/endpoints'
 import { InPageEdit } from '@/InPageEdit'
-import { SsiModal, SsiModalOptions } from '@/types/SsiModal'
+
+type LibSsiModal = typeof ssi_modal
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    modal: typeof SsiModal
+    modal: LibSsiModal
   }
   interface Events {
     'modal/show'(payload: { modal: SsiModal }): void
@@ -12,15 +12,20 @@ declare module '@/InPageEdit' {
   }
 }
 
-declare module '@/types/SsiModal' {
-  interface SsiModal {
-    setLoadingState: (state: boolean) => void
+declare global {
+  namespace SsiModal {
+    interface SsiModal {
+      /**
+       * Toggle a visual loading overlay & disable buttons inside the modal
+       */
+      setLoadingState(state: boolean): void
+    }
   }
 }
 
 export class SsiModalService {
   static readonly inject = ['resourceLoader']
-  private modal?: typeof SsiModal
+  private modal?: typeof ssi_modal
 
   constructor(public ctx: InPageEdit) {
     this.start()
@@ -30,7 +35,7 @@ export class SsiModalService {
   }
 
   protected start(): void | Promise<void> {
-    const { promise, resolve } = promiseWithResolvers<typeof SsiModal>()
+    const { promise, resolve } = promiseWithResolvers<LibSsiModal>()
 
     if (window.ssi_modal && typeof window.ssi_modal.show === 'function') {
       resolve(window.ssi_modal)
@@ -56,30 +61,29 @@ export class SsiModalService {
     this.modal?.closeAll()
   }
 
-  hackSsiModal(ssi: typeof SsiModal) {
+  hackSsiModal(ssiModalLib: LibSsiModal) {
     const that = this
 
-    const init = ssi.proto.init
-    ssi.proto.init = function () {
+    const init = ssiModalLib.proto.init
+    ssiModalLib.proto.init = function () {
       console.log('init', this)
       this.options.className ||= ''
       this.options.className += ' in-page-edit theme-ipe'
       return init.call(this)
     }
 
-    const show = ssi.proto.show
-    ssi.proto.show = function () {
+    const show = ssiModalLib.proto.show
+    ssiModalLib.proto.show = function () {
       that.ctx.emit('modal/show', { modal: this })
       return show.call(this)
     }
 
-    const close = ssi.proto.close
-    ssi.proto.close = function () {
+    const close = ssiModalLib.proto.close
+    ssiModalLib.proto.close = function () {
       that.ctx.emit('modal/close', { modal: this })
       return close.call(this)
     }
-
-    ssi.proto.setLoadingState = function (state: boolean) {
+    ssiModalLib.proto.setLoadingState = function (this: SsiModal, state: boolean) {
       this.get$window().toggleClass('loading', state)
       this.get$buttons().find('.ssi-modalBtn').prop('disabled', state)
 
@@ -107,5 +111,7 @@ export class SsiModalService {
         this.get$window().find('#ssi-modalLoadingWrapper').remove()
       }
     }
+
+    return ssiModalLib
   }
 }
