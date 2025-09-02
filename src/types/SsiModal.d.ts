@@ -93,6 +93,10 @@ declare class SsiModal {
   setPluginName: (name: string) => this
   setTitle: (title: string | HTMLElement | JQuery<any>) => void
   show: () => this
+  on: <T extends keyof SsiModalEventMap>(
+    event: T,
+    callback: (event: SsiModalEventMap[T]) => void
+  ) => void
 
   // Static methods
   static proto: SsiModal
@@ -218,6 +222,14 @@ export type SsiModalSizeClass =
   | 'large'
   | 'full'
   | 'auto'
+
+export interface SsiModalEventMap extends HTMLElementEventMap {
+  'beforeShow.ssi-modal': void
+  'onShow.ssi-modal': void
+  'backdropClose.ssi-modal': void
+  'beforeClose.ssi-modal': void
+  'onClose.ssi-modal': void
+}
 
 export type SsiModalAnimation =
   | string

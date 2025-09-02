@@ -1,7 +1,7 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { createApp, h } from 'vue'
 import PreferencesUI from './components/PreferencesUI.vue'
-import { IPEInjectKey } from './components/hooks'
+import { injectIPE } from './components/hooks'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -53,9 +53,6 @@ export class PluginPreferencesUI extends BasePlugin {
           <ProgressBar />
         </>
       ) as HTMLElement,
-      onClose() {
-        app.unmount()
-      },
     })
 
     modal.get$wrapper().addClass('dialog')
@@ -64,7 +61,7 @@ export class PluginPreferencesUI extends BasePlugin {
     modal.setContent(root as HTMLElement)
 
     const app = createApp(PreferencesUI)
-    app.provide(IPEInjectKey, this.ctx)
+    injectIPE(this.ctx, app)
     const ui = app.mount(root) as InstanceType<typeof PreferencesUI>
 
     modal.setButtons([
@@ -87,5 +84,9 @@ export class PluginPreferencesUI extends BasePlugin {
         },
       },
     ])
+
+    modal.on('onClose.ssi-modal', () => {
+      app.unmount()
+    })
   }
 }
