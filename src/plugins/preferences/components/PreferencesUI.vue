@@ -26,7 +26,7 @@ const regs = ref<InPageEditPreferenceUIRegistryItem[]>([])
 
 defineExpose({
   getValue() {
-    return value.value
+    return deepToRaw(value)
   },
 })
 
