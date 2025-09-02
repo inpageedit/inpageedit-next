@@ -32,9 +32,7 @@ declare class SsiModal {
    * Generates a button according to the options.
    * @returns The button element.
    */
-  generateButton: (
-    buttonOptions: Partial<SsiModalButton>
-  ) => JQuery<HTMLElement>
+  generateButton: (buttonOptions: Partial<SsiModalButton>) => JQuery<HTMLElement>
   /**
    * Returns the backdrop element of the modal.
    * Or outer element if the modal is stack.
@@ -44,9 +42,7 @@ declare class SsiModal {
    * Returns the buttons element of the modal.
    * @param type - 'left' or 'right'. If not specified, returns all buttons' container.
    */
-  get$buttons: (
-    type?: 'buttons' | 'leftButtons' | 'rightButtons'
-  ) => JQuery<HTMLElement>
+  get$buttons: (type?: 'buttons' | 'leftButtons' | 'rightButtons') => JQuery<HTMLElement>
   /**
    * Returns the content element of the modal.
    */
@@ -92,16 +88,14 @@ declare class SsiModal {
     method?: 'html' | 'append' | 'prepend'
   ) => JQuery<any>
   setIcons: (icons: any) => void
-  setModalHeight: (
-    offset: number,
-    option?: 'height' | 'min-height' | 'max-height'
-  ) => number
+  setModalHeight: (offset: number, option?: 'height' | 'min-height' | 'max-height') => number
   setOptions: (options: Partial<SsiModalOptions>) => this
   setPluginName: (name: string) => this
   setTitle: (title: string | HTMLElement | JQuery<any>) => void
   show: () => this
 
   // Static methods
+  static proto: SsiModal
   /**
    * Checks if the element is a ssi modal object.
    */

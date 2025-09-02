@@ -26,6 +26,7 @@ export class PluginPreferences extends BasePlugin {
   private db: IPEStorageManager<any>
   public customRegistries: InPageEditPreferenceUIRegistryItem[] = []
   public categoryDefinitions: InPageEditPreferenceUICategory[] = []
+  private _defaultPreferences: Record<string, any> = {}
 
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'preferences')
@@ -109,7 +110,7 @@ export class PluginPreferences extends BasePlugin {
 
   get<T = any>(key: string, fallback?: () => T | Promise<T>): Promise<T | null> {
     fallback ||= () => {
-      const defaultValue = this.getDefaultConfigs()[key]
+      const defaultValue = this._defaultPreferences[key] ?? this.getDefaultConfigs()[key]
       console.info('default value used', defaultValue)
       return defaultValue as T
     }
@@ -139,6 +140,7 @@ export class PluginPreferences extends BasePlugin {
       item.defaults &&
         Object.entries(item.defaults).forEach(([key, val]) => {
           data[key] = val
+          this._defaultPreferences[key] = val
         })
     })
     return data

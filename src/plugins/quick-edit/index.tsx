@@ -77,7 +77,7 @@ export class PluginQuickEdit extends BasePlugin {
     editMinor: false,
     editSummary: '',
     createOnly: false,
-    reloadAfterSave: false,
+    reloadAfterSave: true,
   }
 
   constructor(public ctx: InPageEdit) {
@@ -295,6 +295,7 @@ export class PluginQuickEdit extends BasePlugin {
           summary: formData.get('summary') as string,
           minor: formData.get('minor') === 'on',
         })
+        modal.setLoadingState(true)
         this.handleSubmit(
           { ctx: this.ctx, modal, wikiPage, options },
           {
@@ -322,6 +323,7 @@ export class PluginQuickEdit extends BasePlugin {
               title: 'Submission Error',
               content: error instanceof Error ? error.message : String(error),
             })
+            modal.setLoadingState(false)
           })
       },
     })

@@ -161,7 +161,7 @@ export class PluginToolbox extends Service {
     const button = (
       <li class="btn-tip-group" id={id} onClick={onClick}>
         <div class="btn-tip">{tooltip}</div>
-        <button id="edit-btn" class="ipe-toolbox-btn" {...buttonProps}>
+        <button id={`${id}-btn`} class="ipe-toolbox-btn" {...buttonProps}>
           {icon}
         </button>
       </li>

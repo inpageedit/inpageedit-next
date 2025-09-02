@@ -40,7 +40,7 @@ export default class BasePlugin<T extends unknown = any> {
         this.logger.info('Plugin started')
       })
       promise.catch(() => {
-        this.ctx.registry.get(this as any)?.dispose?.()
+        this.ctx.scope.dispose()
       })
     })
     this.ctx.once('dispose', () => {
