@@ -79,7 +79,12 @@ export class IPEStorageManager<T = any> {
     return data.value
   }
 
-  async set(key: string, value: T): Promise<IPEStorageItem<T>> {
+  set(key: string, value: null | undefined): Promise<void>
+  set(key: string, value: T): Promise<IPEStorageItem<T>>
+  async set(key: string, value: T | null | undefined): Promise<IPEStorageItem<T> | void> {
+    if (value === null || typeof value === 'undefined') {
+      return this.delete(key)
+    }
     return this.db.setItem(key, {
       time: Date.now(),
       value,

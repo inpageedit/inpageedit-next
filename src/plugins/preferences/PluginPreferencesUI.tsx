@@ -85,7 +85,7 @@ export class PluginPreferencesUI extends BasePlugin {
       },
     ])
 
-    modal.on('onClose.ssi-modal', () => {
+    modal.get$modal().on('onClose.ssi-modal', () => {
       app.unmount()
     })
   }

@@ -94,7 +94,8 @@ export class PluginPreferences extends BasePlugin {
                 <p>InPageEdit-NEXT Copyright © 2025-present dragon-fish</p>
               </div>
             ).outerHTML
-          ),
+          )
+          .default(''),
       }).description(''),
       'about',
       {}
@@ -110,31 +111,36 @@ export class PluginPreferences extends BasePlugin {
 
   get<T = any>(key: string, fallback?: () => T | Promise<T>): Promise<T | null> {
     fallback ||= () => {
-      const defaultValue = this._defaultPreferences[key] ?? this.getDefaultConfigs()[key]
-      console.info('default value used', defaultValue)
+      const defaultValue = this.getDefaultValue(key)
+      this.logger.info('default value used', defaultValue)
       return defaultValue as T
     }
     const value = this.db.get(key, undefined, fallback)
-    console.info(value)
     return value
   }
 
-  set<T = any>(key: string, value: T) {
-    return this.db.set(key, value)
+  getDefaultValue(key: string) {
+    return (this._defaultPreferences[key] ??= this.loadDefaultConfigs()[key])
   }
 
-  async getAll() {
-    const data = {} as Record<string, any>
-    await this.db.iterate((value: IPEStorageItem, key: string) => {
-      data[key] = value
-    })
-    return {
-      ...data,
-      ...this.getDefaultConfigs(),
+  set<T = any>(key: string, value: T): Promise<IPEStorageItem<T> | void> {
+    const defaultValue = this.getDefaultValue(key)
+    if (value === defaultValue) {
+      return this.db.delete(key)
+    } else {
+      return this.db.set(key, value)
     }
   }
 
-  private getDefaultConfigs() {
+  async getAll() {
+    const data = this.loadDefaultConfigs()
+    await this.db.iterate((value: IPEStorageItem, key: string) => {
+      data[key] = value
+    })
+    return data
+  }
+
+  private loadDefaultConfigs() {
     const data = {} as Record<string, any>
     this.getConfigRegistries().forEach((item) => {
       item.defaults &&

@@ -119,7 +119,10 @@ declare namespace SsiModal {
      * ssi_modal.show({ content:'Hello World' })
      * ```
      */
-    show(options: Partial<SsiModalOptions>, element?: AnyJQueryElement): SsiModal['show']
+    show(
+      options: Partial<SsiModalOptions>,
+      element?: AnyJQueryElement
+    ): ReturnType<SsiModal['show']>
     /**
      * Creates a ssi modal object but does not init or show it.
      * @param options The options of the modal
