@@ -29,6 +29,7 @@
     "@tabler/icons-vue": "^3.34.1",
     "@types/jquery": "^3.5.33",
     "@types/node": "^22.18.0",
+    "@types/ssi-modal": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.41.0",
     "@vitejs/plugin-vue": "^6.0.1",

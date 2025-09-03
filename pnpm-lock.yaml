@@ -51,6 +51,9 @@ importers:
       '@types/node':
         specifier: ^22.18.0
         version: 22.18.0
+      '@types/ssi-modal':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.41.0
         version: 8.41.0(@typescript-eslint/parser@8.41.0(eslint@9.34.0)(typescript@5.9.2))(eslint@9.34.0)(typescript@5.9.2)
@@ -737,6 +740,9 @@ packages:
   '@types/sizzle@2.3.8':
     resolution: {integrity: sha512-0vWLNK2D5MT9dg0iOo8GlKguPAU02QjmZitPEsXRuJXU/OGIOt9vT9Fc26wtYuavLxtO45v9PGleoL9Z0k1LHg==}
 
+  '@types/ssi-modal@1.0.0':
+    resolution: {integrity: sha512-ZD8wGQuADwZsEE4ZnJz+vE/cRUeD/WfZcbcRflvGcamQHSQ+4La05KX5CIVFl8GMw+CZIfuIr7rPPeXViI2+qA==}
+
   '@typescript-eslint/eslint-plugin@8.41.0':
     resolution: {integrity: sha512-8fz6oa6wEKZrhXWro/S3n2eRJqlRcIa6SlDh59FXJ5Wp5XRZ8B9ixpJDcjadHq47hMx0u+HW6SNa6LjJQ6NLtw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -1005,8 +1011,6 @@ packages:
     resolution: {integrity: sha512-9IbthFbFBVJ15WBDNPqHdl59TyEAMNWxF1Dxsdi14625ePQkMX35WvcqgGno0BcXlpXDbUaBZgQ+jfBYT+uuSQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
-    peerDependencies:
-      cordis: '*'
 
   cosmokit@1.8.0:
     resolution: {integrity: sha512-iTnjvOdRKzmcZGSTamFW/pwlDLNBKkIEjk43Ew40YaxSayogY6OsCV40sSTb2dlvD3stR14bLh04qOoQZzX/0Q==}
@@ -2678,6 +2682,10 @@ snapshots:
 
   '@types/sizzle@2.3.8': {}
 
+  '@types/ssi-modal@1.0.0':
+    dependencies:
+      '@types/jquery': 3.5.33
+
   '@typescript-eslint/eslint-plugin@8.41.0(@typescript-eslint/parser@8.41.0(eslint@9.34.0)(typescript@5.9.2))(eslint@9.34.0)(typescript@5.9.2)':
     dependencies:
       '@eslint-community/regexpp': 4.12.1
@@ -3002,7 +3010,6 @@ snapshots:
       '@cordisjs/schema': 0.1.1(@cordisjs/core@3.18.1)
       '@cordisjs/timer': 0.3.2(@cordisjs/core@3.18.1)
       cac: 6.7.14
-      cordis: 3.18.1
       cosmokit: 1.8.0
       kleur: 4.1.5
       reggol: 1.7.1
