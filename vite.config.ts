@@ -67,6 +67,7 @@ export default defineConfig({
         ? version
         : `${version}-dev.${new Date().toISOString().split('T')[0].replaceAll('-', '')}`
     ),
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
   },
   optimizeDeps: {
     // include: ['cordis'],

@@ -61,7 +61,7 @@ export class PluginPreferences extends BasePlugin {
             (
               <div className="prose">
                 <h2>✏️ InPageEdit NEXT</h2>
-                <i>v{version}</i>
+                <i>v{this.ctx.version}</i>
                 <h2>Portal</h2>
                 <div style="display: flex; flex-direction: column; gap: 1rem">
                   <ActionButton

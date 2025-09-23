@@ -17,7 +17,7 @@ export default class BasePlugin<T extends unknown = any> {
   ) {
     this.name = name || this.constructor.name
     this.config = config || ({} as T)
-    const { promise, resolve, reject } = promiseWithResolvers<void>()
+    const { promise, resolve, reject } = Promise.withResolvers<void>()
     queueMicrotask(() => {
       try {
         const ret = this.start()
@@ -26,20 +26,21 @@ export default class BasePlugin<T extends unknown = any> {
             .then(() => resolve())
             .catch((err) => {
               this.logger.error('Plugin start failed', err)
-              reject()
+              reject(err)
             })
         } else {
           resolve()
         }
       } catch (err) {
         this.logger.error('Plugin start threw synchronously', err)
-        reject()
+        reject(err)
       }
 
       promise.then(() => {
         this.logger.info('Plugin started')
       })
-      promise.catch(() => {
+      promise.catch((e) => {
+        this.logger.error('Plugin start failed', e)
         this.ctx.scope.dispose()
       })
     })

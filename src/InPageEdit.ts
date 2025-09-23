@@ -1,5 +1,4 @@
-import { Context } from 'cordis'
-import Schema from 'schemastery'
+import { Context, Inject, Schema } from 'cordis'
 import { ApiService } from '@/services/ApiService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService'
 import { SsiModalService } from '@/services/SsiModalService'
@@ -9,10 +8,10 @@ import { WikiPageService } from '@/services/WikiPageService'
 
 export interface InPageEditCoreConfig {
   legacyPreferences: Record<string, any>
+  baseURL: string | URL
 }
 
 export * from 'cordis'
-export { Schema }
 
 /**
  * ✏️ InPageEdit NEXT
@@ -37,8 +36,11 @@ export class InPageEdit extends Context {
   public config: InPageEditCoreConfig
   static DEFAULT_CONFIG: InPageEditCoreConfig = {
     legacyPreferences: {},
+    baseURL: '',
   }
   Endpoints = Endpoints
+  Schema = Schema
+  readonly version: string = import.meta.env.__VERSION__ || '0.0.0'
 
   constructor(config?: Partial<InPageEditCoreConfig>) {
     super()
@@ -46,13 +48,14 @@ export class InPageEdit extends Context {
       ...InPageEdit.DEFAULT_CONFIG,
       ...config,
     }
-    this.installCoreServices()
-    this.installCoreModules()
-    this.loadCoreAssets()
+
+    this.#initCoreServices()
+    this.#initCorePlugins()
+    this.#initCoreAssets()
   }
 
-  private async installCoreServices() {
-    this.plugin(ApiService)
+  async #initCoreServices() {
+    this.plugin(ApiService, { baseURL: this.config.baseURL })
     this.plugin(ResourceLoaderService)
     this.plugin(SsiModalService)
     this.plugin(StorageService)
@@ -60,87 +63,39 @@ export class InPageEdit extends Context {
     this.plugin(WikiPageService)
   }
 
-  private async installCoreModules() {
-    this.plugin((await import('@/plugins/toolbox/index')).PluginToolbox)
-    this.plugin((await import('@/plugins/quick-edit/index')).PluginQuickEdit)
-    this.plugin((await import('@/plugins/quick-preview/index')).PluginQuickPreview)
-    this.plugin((await import('@/plugins/quick-diff/index')).PluginQuickDiff)
-    this.plugin((await import('@/plugins/quick-rename/index')).PluginQuickRename)
-    this.plugin((await import('@/plugins/preferences/index')).PluginPreferences)
+  // TODO: 这里不应该硬编码，暂时先这样
+  async #initCorePlugins() {
+    const plugins = [
+      import('@/plugins/preferences/index.js').then(({ PluginPreferences }) => PluginPreferences),
+      import('@/plugins/quick-edit/index.js').then(({ PluginQuickEdit }) => PluginQuickEdit),
+      import('@/plugins/quick-move/index.js').then(({ PluginQuickMove }) => PluginQuickMove),
+      import('@/plugins/quick-preview/index.js').then(
+        ({ PluginQuickPreview }) => PluginQuickPreview
+      ),
+      import('@/plugins/quick-diff/index.js').then(({ PluginQuickDiff }) => PluginQuickDiff),
+      import('@/plugins/quick-redirect/index.js').then(
+        ({ PluginQuickRedirect }) => PluginQuickRedirect
+      ),
+      import('@/plugins/toolbox/index.js').then(({ PluginToolbox }) => PluginToolbox),
+    ]
+    plugins.forEach(async (plugin) => {
+      this.plugin(await plugin)
+    })
   }
 
-  private async loadCoreAssets() {
-    // TODO: 应该抽象到 PluginTheme 中去，暂时先硬编码
+  // TODO: 应该抽象到 PluginTheme 中去，暂时先硬编码
+  async #initCoreAssets() {
     this.inject(['resourceLoader'], (ctx) => {
       import.meta.env.PROD && ctx.resourceLoader.loadStyle(import.meta.resolve('./style.css'))
       ctx.resourceLoader.loadStyle(`${Endpoints.PLUGIN_CDN_BASE}/skins/ipe-default.css`)
     })
   }
 
-  static async autoload() {
-    // 防止多次运行
-    if ((window as any)?.IPE?.stop) {
-      console.warn('[InPageEdit] Plugin already loaded, disposing...')
-      await window.ipe.stop()
-    }
-
-    const oldGlobalVar: any = window.InPageEdit || {}
-    const ipe = new InPageEdit({
-      legacyPreferences: oldGlobalVar?.myPreferences || {},
+  async useScope(inject: Inject) {
+    const { promise, resolve } = promiseWithResolvers<this>()
+    this.inject(inject, (ctx) => {
+      resolve(ctx)
     })
-    ipe.start().then(() => {
-      // Trigger MediaWiki js hook
-      mw?.hook?.('InPageEdit.ready').fire(ipe)
-
-      // Initialize global modules
-      window.__IPE_MODULES__ ||= [] as any[]
-      if (Array.isArray(window.__IPE_MODULES__)) {
-        const modulesBackup = [] as any[]
-        while (window.__IPE_MODULES__.length) {
-          try {
-            const payload = window.__IPE_MODULES__.shift()
-            typeof payload === 'function' && payload?.(ipe)
-            modulesBackup.push(payload)
-          } catch (error) {
-            console.error('[InPageEdit] Failed to initialize module:', error)
-          }
-        }
-        window.__IPE_MODULES__ = {
-          push: (payload) => {
-            typeof payload === 'function' && payload(ipe)
-            modulesBackup.push(payload)
-          },
-        }
-        ipe.on('dispose', () => {
-          window.__IPE_MODULES__ = modulesBackup
-        })
-      }
-
-      // 花里胡哨的加载提示
-      ipe
-        .logger('READY')
-        .info(
-          `${Endpoints.HOME_URL}` +
-            '\n' +
-            '    ____      ____                   ______    ___ __ \n   /  _/___  / __ \\____ _____ ____  / ____/___/ (_) /_\n   / // __ \\/ /_/ / __ `/ __ `/ _ \\/ __/ / __  / / __/\n _/ // / / / ____/ /_/ / /_/ /  __/ /___/ /_/ / / /_  \n/___/_/ /_/_/    \\__,_/\\__, /\\___/_____/\\__,_/_/\\__/  \n                      /____/                v' +
-            import.meta.env.__VERSION__
-        )
-    })
-
-    window.InPageEdit = InPageEdit
-    window.ipe = ipe
-  }
-}
-
-/**
- * Global types declaration
- */
-declare global {
-  export interface Window {
-    InPageEdit: typeof InPageEdit
-    ipe: InPageEdit
-    __IPE_MODULES__: {
-      push: (payload: (ipe: InPageEdit) => void) => void
-    }
+    return promise
   }
 }

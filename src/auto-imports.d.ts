@@ -10,12 +10,14 @@ declare global {
   const BasePlugin: typeof import('@/plugins/BasePlugin')['default']
   const CheckBox: typeof import('./components/CheckBox')['CheckBox']
   const Endpoints: typeof import('./constants/endpoints')['Endpoints']
+  const InputBox: typeof import('./components/InputBox')['InputBox']
   const ProgressBar: typeof import('./components/ProgressBar/index')['ProgressBar']
   const RadioBox: typeof import('./components/RadioBox')['RadioBox']
   const RegisterPreferences: typeof import('./decorators/Preferences')['RegisterPreferences']
   const TabContent: typeof import('./components/TabView/TabView')['TabContent']
   const TabLabel: typeof import('./components/TabView/TabView')['TabLabel']
   const TabView: typeof import('./components/TabView/TabView')['TabView']
+  const TwinSwapInput: typeof import('./components/TwinSwapInput/index')['TwinSwapInput']
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
   const checkURL: typeof import('./utils/schemaValidator')['checkURL']
@@ -31,13 +33,24 @@ declare global {
   const snakeCase: typeof import('./utils/string')['snakeCase']
   const trimSlash: typeof import('./utils/string')['trimSlash']
   const uncapitalize: typeof import('./utils/string')['uncapitalize']
-  const version: typeof import('./constants/version')['default']
 }
 // for type re-export
 declare global {
   // @ts-ignore
+  export type { CheckBoxProps } from './components/CheckBox'
+  import('./components/CheckBox')
+  // @ts-ignore
+  export type { InputBoxProps } from './components/InputBox'
+  import('./components/InputBox')
+  // @ts-ignore
+  export type { RadioBoxProps } from './components/RadioBox'
+  import('./components/RadioBox')
+  // @ts-ignore
   export type { TabViewLabelOptions } from './components/TabView/TabView'
   import('./components/TabView/TabView')
+  // @ts-ignore
+  export type { TwinSwapInputProps, TwinSwapInputInput, TwinSwapElement } from './components/TwinSwapInput/index'
+  import('./components/TwinSwapInput/index')
   // @ts-ignore
   export type { Endpoints } from './constants/endpoints'
   import('./constants/endpoints')

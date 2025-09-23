@@ -16,7 +16,11 @@ export const ActionButton = ({
   children?: ReactNode
 }) => {
   const button = (
-    <button className={`btn btn-${type || 'default'}`} data-href={link} {...buttonProps}>
+    <button
+      className={`theme-ipe ipe-action-button btn btn-${type || 'default'}`}
+      data-href={link}
+      {...buttonProps}
+    >
       {children}
     </button>
   )
@@ -24,7 +28,12 @@ export const ActionButton = ({
     return button
   } else {
     return (
-      <a href={link} target={target} {...anchorProps}>
+      <a
+        className="theme-ipe ipe-action-button ipe-link-button"
+        href={link}
+        target={target}
+        {...anchorProps}
+      >
         {button}
       </a>
     )

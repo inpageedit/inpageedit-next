@@ -35,7 +35,7 @@ export class SsiModalService {
   }
 
   protected start(): void | Promise<void> {
-    const { promise, resolve } = promiseWithResolvers<LibSsiModal>()
+    const { promise, resolve } = Promise.withResolvers<LibSsiModal>()
 
     if (window.ssi_modal && typeof window.ssi_modal.show === 'function') {
       resolve(window.ssi_modal)

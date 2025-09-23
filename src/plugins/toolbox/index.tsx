@@ -1,4 +1,5 @@
 import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit'
+import { ReactElement } from 'jsx-dom'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -130,7 +131,7 @@ export class PluginToolbox extends Service {
   addButton(payload: {
     id: string
     group?: 'auto' | 'group1' | 'group2'
-    icon: string | HTMLElement | JQuery
+    icon: string | HTMLElement | SVGElement | JQuery | ReactElement
     tooltip?: string | HTMLElement | JQuery
     buttonProps?: Record<string, any>
     onClick?: (event: MouseEvent) => void
