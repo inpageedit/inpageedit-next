@@ -13,7 +13,9 @@ declare module '@/InPageEdit' {
 
 @RegisterPreferences(
   Schema.object({
-    toolboxAlwaysShow: Schema.boolean().description('Make the toolbox opened by default'),
+    toolboxAlwaysShow: Schema.boolean()
+      .description('Make the toolbox opened by default')
+      .default(false),
   }),
   {
     toolboxAlwaysShow: false,

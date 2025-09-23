@@ -1,0 +1,61 @@
+.mbox
+  --border-color: #dfdfdf
+  --title-color: #efefef
+  --content-color: #ffffff
+  border-radius: 0.5rem
+  border: 1px solid var(--title-color)
+  border-left: 6px solid var(--border-color)
+  overflow: hidden
+  margin: 1rem 0
+  position: relative
+  .title
+    background-color: var(--title-color)
+    padding: 0.5rem 1rem
+    font-weight: 700
+    font-size: 1rem
+    line-height: 1.2
+  .content
+    background-color: var(--content-color)
+    padding: 0.5rem 1rem
+    font-size: 1rem
+    line-height: 1.5
+    max-height: 14em
+    overflow: auto
+  .close
+    position: absolute
+    top: 0.5rem
+    right: 0.5rem
+    font-size: 1.25rem
+    line-height: 1rem
+    color: var(--border-color)
+    cursor: pointer
+    user-select: none
+    &:hover
+      filter: brightness(1.2)
+    &:active
+      filter: brightness(0.8)
+
+  &:global(.mbox-type-note),
+  &:global(.mbox-type-info)
+    --border-color: #1f6feb
+    --title-color: #AFD1FE
+    --content-color: #f3f9ff
+  &:global(.mbox-type-tip),
+  &:global(.mbox-type-success)
+    --border-color: #238636
+    --title-color: #E0F1E3
+    --content-color: #f9f9f9
+  &:global(.mbox-type-important),
+  &:global(.mbox-type-done)
+    --border-color: #8957e5
+    --title-color: #DDCBFC
+    --content-color: #f9f9f9
+  &:global(.mbox-type-warning)
+    --border-color: #9e6a03
+    --title-color: #E4CC9D
+    --content-color: #fff9db
+  &:global(.mbox-type-caution),
+  &:global(.mbox-type-error)
+    --border-color: #da3633
+    --title-color: #FCB9B6
+    --content-color: #f9f9f9

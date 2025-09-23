@@ -12,6 +12,11 @@ NFormItem.schema-item(
       NText
         | {{ schema.meta.description?.toString() }}
         span(v-if='name', style='user-select: none; opacity: 0.5') &nbsp;({{ name }})
+      NA(
+        v-if='defaultValue !== void 0 && value !== defaultValue',
+        @click='handleReset',
+        style='margin-left: 1em'
+      ) reset
   .schema-item-inner
     Component(
       :is='ItemComponent',
@@ -26,7 +31,7 @@ NFormItem.schema-item(
 
 <script setup lang="ts">
 import { computed, defineComponent, h } from 'vue'
-import { NFormItem, NGradientText, NText, NIcon } from 'naive-ui'
+import { NA, NFormItem, NGradientText, NText, NIcon } from 'naive-ui'
 import { IconLock } from '@tabler/icons-vue'
 import type Schema from 'schemastery'
 import SchemaArray from './SchemaArray.vue'
@@ -88,6 +93,26 @@ const ItemComponent = computed(() => {
 })
 
 const status = computed(() => schemaValidator(props.schema, props.value))
+
+const defaultValue = computed(() => {
+  if (props.schema.meta.extra?.default !== void 0) {
+    return props.schema.meta.extra.default
+  }
+  if (props.schema.meta.default !== void 0) {
+    if (
+      typeof props.schema.meta.default === 'object' &&
+      Reflect.ownKeys(props.schema.meta.default).length < 1
+    ) {
+      return undefined
+    } else {
+      return props.schema.meta.default
+    }
+  }
+  return undefined
+})
+const handleReset = () => {
+  emit('update:value', defaultValue.value)
+}
 </script>
 
 <style scoped lang="sass">

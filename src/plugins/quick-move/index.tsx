@@ -2,7 +2,8 @@ import { Inject, InPageEdit } from '@/InPageEdit'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickMove: PluginQuickMove
+    quickMove: PluginQuickMove['quickMove']
+    movePage: PluginQuickMove['movePage']
   }
 }
 
@@ -23,7 +24,8 @@ export interface QuickMoveOptions extends Partial<MovePageOptions> {
 export class PluginQuickMove extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-move')
-    ctx.set('quickMove', this)
+    ctx.set('quickMove', this.quickMove.bind(this))
+    ctx.set('movePage', this.movePage.bind(this))
   }
 
   protected start(): Promise<void> | void {
@@ -62,7 +64,7 @@ export class PluginQuickMove extends BasePlugin {
       tooltip: 'Quick Move',
       group: 'group2',
       onClick: () => {
-        this.showModal(
+        this.quickMove(
           canEdit
             ? {
                 lockFromField: true,
@@ -74,7 +76,7 @@ export class PluginQuickMove extends BasePlugin {
     })
   }
 
-  showModal(options?: Partial<QuickMoveOptions>) {
+  quickMove(options?: Partial<QuickMoveOptions>) {
     const modal = this.ctx.modal
       .createObject({
         title: 'Quick Move',

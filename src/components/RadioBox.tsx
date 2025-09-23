@@ -7,7 +7,6 @@ export type RadioBoxProps = {
   label?: string | HTMLElement
   inputProps?: JSX.IntrinsicElements['input']
   labelProps?: JSX.IntrinsicElements['span']
-  children?: ReactNode
 } & JSX.IntrinsicElements['label']
 
 export const RadioBox = (props: RadioBoxProps) => {

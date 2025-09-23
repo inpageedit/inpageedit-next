@@ -7,7 +7,6 @@ export type CheckBoxProps = {
   checked?: boolean
   inputProps?: JSX.IntrinsicElements['input']
   labelProps?: JSX.IntrinsicElements['span']
-  children?: ReactNode
 } & JSX.IntrinsicElements['label']
 
 export const CheckBox = (props: CheckBoxProps) => {

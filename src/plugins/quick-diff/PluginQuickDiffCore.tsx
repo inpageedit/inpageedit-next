@@ -4,10 +4,60 @@ import { JsDiffDiffType } from './JsDiffService'
 
 import styles from './styles.module.sass'
 import { ChangeObject } from 'diff'
+import { DiffTable } from './components/DiffTable'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
     quickDiff: PluginQuickDiffCore
+  }
+}
+
+export interface CompareApiRequestOptions {
+  fromtitle: string
+  fromid: number
+  fromrev: number
+  frompst: boolean
+  totitle: string
+  toid: number
+  torev: number
+  torelative?: 'cur' | 'prev' | 'next'
+  topst: boolean
+  prop: string
+  difftype: 'table' | 'unified'
+  // deprecated, but still works
+  fromtext: string
+  fromsection: string | number
+  fromcontentmodel: string
+  totext: string
+  tosection: string | number
+  tocontentmodel: string
+}
+
+export interface CompareApiResponse {
+  compare: Partial<{
+    fromid: number
+    fromrevid: number
+    fromns: number
+    fromtitle: string
+    fromsize: number
+    fromtimestamp: string
+    fromuser: string
+    fromuserid: number
+    fromcomment: string
+    fromparsedcomment?: string
+    toid: number
+    torevid: number
+    tons: number
+    totitle: string
+    tosize: number
+    totimestamp: string
+    touser: string
+    touserid: number
+    tocomment: string
+    toparsedcomment: string
+    diffsize: number
+  }> & {
+    body: string
   }
 }
 
@@ -22,16 +72,15 @@ const VALID_DIFF_TYPES = [
 @Inject(['jsdiff'])
 @RegisterPreferences(
   Schema.object({
-    'quickDiff.preferredCompareMode': Schema.union([
-      Schema.const('jsDiff'),
-      Schema.const('mwApi'),
-    ]).description('The preferred comparison mode for quick diff'),
-    'quickDiff.jsDiff.defaultType': Schema.union(
-      VALID_DIFF_TYPES.map((type) => Schema.const(type))
-    ).description('The default diff type for JsDiff'),
+    'quickDiff.preferredCompareMode': Schema.union([Schema.const('jsDiff'), Schema.const('mwApi')])
+      .description('The preferred comparison mode for quick diff')
+      .default('mwApi'),
+    'quickDiff.jsDiff.defaultType': Schema.union(VALID_DIFF_TYPES.map((type) => Schema.const(type)))
+      .description('The default diff type for JsDiff')
+      .default('diffSentences'),
   }).description('Quick Diff Preferences'),
   {
-    'quickDiff.preferredCompareMode': 'jsDiff',
+    'quickDiff.preferredCompareMode': 'mwApi',
     'quickDiff.jsDiff.defaultType': 'diffSentences',
   }
 )
@@ -45,10 +94,42 @@ export class PluginQuickDiffCore extends BasePlugin {
   protected start(): Promise<void> | void {
     this.ctx.set('quickDiff', this)
     this.ctx.on('quickEdit/wikiPage', this.injectQuickEdit.bind(this))
+    window.RLQ.push(this.injectHistoryPage.bind(this))
   }
 
   protected stop(): Promise<void> | void {
     this.ctx.off('quickEdit/wikiPage', this.injectQuickEdit.bind(this))
+  }
+
+  private injectHistoryPage() {
+    const mwCompareForm = qs<HTMLFormElement>('#mw-history-compare')
+    if (!mwCompareForm) {
+      return
+    }
+    const compareButtons = qsa('.mw-history-compareselectedversions-button', mwCompareForm)
+    compareButtons.forEach((el) => {
+      el.after(
+        <button
+          className="cdx-button"
+          onClick={(e) => {
+            e.preventDefault()
+            const formData = new FormData(mwCompareForm)
+            const fromrev = Number(formData.get('oldid')) || 0
+            const torev = Number(formData.get('diff')) || 0
+            const title = formData.get('title') as string
+            if (!title || !fromrev || !torev) {
+              return this.logger.warn('Missing title or revision IDs')
+            }
+            this.comparePages({
+              fromrev,
+              torev,
+            })
+          }}
+        >
+          Quick Diff
+        </button>
+      )
+    })
   }
 
   private injectQuickEdit({ modal, wikiPage }: QuickEditInitPayload) {
@@ -58,9 +139,18 @@ export class PluginQuickDiffCore extends BasePlugin {
         side: 'left',
         className: 'btn btn-secondary',
         method: () => {
-          const oldStr = wikiPage.revisions?.[0]?.content || ''
-          const newStr = (modal.get$content().find('textarea.editArea').val() as string) || ''
-          this.simpleTextDiff(oldStr, newStr)
+          const fromtext = wikiPage.revisions?.[0]?.content || ''
+          const fromrev = wikiPage.revisions?.[0]?.revid || 0
+          const totext = (modal.get$content().find('textarea.editArea').val() as string) || ''
+          if (!fromrev) {
+            return this.simpleTextDiff(fromtext, totext)
+          } else {
+            return this.comparePages({
+              fromtitle: wikiPage.title,
+              fromrev,
+              totext,
+            })
+          }
         },
       },
     ])
@@ -185,6 +275,77 @@ export class PluginQuickDiffCore extends BasePlugin {
     return fragment
   }
 
-  // TODO: MediaWiki API
-  comparePages() {}
+  readonly COMPARE_API_DEFAULT_OPTIONS: Partial<CompareApiRequestOptions> = {
+    prop: [
+      'comment',
+      'diff',
+      'diffsize',
+      'ids',
+      'parsedcomment',
+      'size',
+      'timestamp',
+      'title',
+      'user',
+    ].join('|'),
+    difftype: 'table',
+  }
+  comparePages(options: Partial<CompareApiRequestOptions>) {
+    const modal = this.ctx.modal
+      .createObject({
+        title: 'Loading diff...',
+        content: (<ProgressBar />) as HTMLElement,
+        className: 'quick-diff',
+      })
+      .init()
+
+    if (window.mw && mw.loader.getState('mediawiki.diff.styles') !== 'ready') {
+      mw.loader.load(['mediawiki.diff.styles'])
+    }
+
+    this.ctx.api
+      .post<MwApiResponse<CompareApiResponse>>({
+        ...this.COMPARE_API_DEFAULT_OPTIONS,
+        ...options,
+        action: 'compare',
+        format: 'json',
+        formatversion: 2,
+      })
+      .then((res) => {
+        if (res.data?.error || res.data?.errors) {
+          const errors = [res.data?.error, ...(res.data?.errors || [])].filter(
+            Boolean
+          ) as MwApiError[]
+          throw new Error(errors.map((err) => err.info).join('\n'), { cause: res })
+        }
+        if (!res.data.compare) {
+          throw new Error('No compare data received', { cause: res })
+        }
+        const {
+          data: { compare },
+        } = res
+        modal.setTitle(
+          compare.fromtitle && compare.totitle
+            ? `${compare.fromtitle} ⇔ ${compare.totitle}`
+            : 'Differences'
+        )
+        modal.setContent(
+          (
+            <section>
+              <DiffTable data={compare} />
+            </section>
+          ) as HTMLElement
+        )
+      })
+      .catch((err) => {
+        modal.setContent(
+          (
+            <MBox title="Failed to load diff" type="error">
+              <pre>{err instanceof Error ? err.message : String(err)}</pre>
+            </MBox>
+          ) as HTMLElement
+        )
+      })
+
+    return modal.show()
+  }
 }

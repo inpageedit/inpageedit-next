@@ -2,7 +2,8 @@ import { InPageEdit } from '@/InPageEdit'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickRedirect: PluginQuickRedirect
+    quickRedirect: PluginQuickRedirect['quickRedirect']
+    redirectPage: PluginQuickRedirect['redirectPage']
   }
 }
 
@@ -22,7 +23,8 @@ export class PluginQuickRedirect extends BasePlugin {
   }
 
   protected start(): Promise<void> | void {
-    this.ctx.set('quickRedirect', this)
+    this.ctx.set('quickRedirect', this.quickRedirect.bind(this))
+    this.ctx.set('redirectPage', this.redirectPage.bind(this))
 
     const curPageName = window.mw?.config.get('wgPageName') || ''
     const canEdit = window.mw?.config.get('wgIsProbablyEditable')
@@ -53,7 +55,7 @@ export class PluginQuickRedirect extends BasePlugin {
         tooltip: 'Quick Redirect',
         group: 'group1',
         onClick: () => {
-          this.showModal(
+          this.quickRedirect(
             canEdit
               ? {
                   to: curPageName,
@@ -70,7 +72,7 @@ export class PluginQuickRedirect extends BasePlugin {
 
   protected stop(): Promise<void> | void {}
 
-  showModal(options?: Partial<QuickRedirectOptions>) {
+  quickRedirect(options?: Partial<QuickRedirectOptions>) {
     const modal = this.ctx.modal
       .createObject({
         title: 'Quick Redirect',

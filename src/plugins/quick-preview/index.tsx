@@ -6,7 +6,7 @@ import { PageParseData } from '@/models/WikiPage/types/PageParseData'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickPreview: PluginQuickPreview
+    quickPreview: PluginQuickPreview['quickPreview']
   }
   interface Events {
     'quickPreview/showModal'(payload: {
@@ -32,7 +32,7 @@ export class PluginQuickPreview extends BasePlugin {
   }
 
   protected start(): Promise<void> | void {
-    this.ctx.set('quickPreview', this)
+    this.ctx.set('quickPreview', this.quickPreview.bind(this))
     this.ctx.on('quickEdit/wikiPage', this.injectQuickEdit.bind(this))
   }
 
@@ -47,7 +47,7 @@ export class PluginQuickPreview extends BasePlugin {
         side: 'left',
         className: 'btn btn-secondary',
         method: () => {
-          this.showModal(
+          this.quickPreview(
             (modal.get$content().find('textarea.editArea').val() as string) || '',
             undefined,
             wikiPage
@@ -57,7 +57,7 @@ export class PluginQuickPreview extends BasePlugin {
     ])
   }
 
-  async showModal(text: string, params?: MwApiParams, wikiPage?: WikiPage) {
+  async quickPreview(text: string, params?: MwApiParams, wikiPage?: WikiPage) {
     wikiPage ||= this.ctx.wikiPage.newBlankPage({
       title: 'API',
     })

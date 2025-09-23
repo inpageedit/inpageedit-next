@@ -11,6 +11,8 @@ declare global {
   const CheckBox: typeof import('./components/CheckBox')['CheckBox']
   const Endpoints: typeof import('./constants/endpoints')['Endpoints']
   const InputBox: typeof import('./components/InputBox')['InputBox']
+  const MBox: typeof import('./components/MBox/index')['MBox']
+  const MwUserLinks: typeof import('./components/MwUserLinks')['MwUserLinks']
   const ProgressBar: typeof import('./components/ProgressBar/index')['ProgressBar']
   const RadioBox: typeof import('./components/RadioBox')['RadioBox']
   const RegisterPreferences: typeof import('./decorators/Preferences')['RegisterPreferences']
@@ -28,7 +30,10 @@ declare global {
   const openLinkPreview: typeof import('./utils/schemaValidator')['openLinkPreview']
   const paramCase: typeof import('./utils/string')['paramCase']
   const promiseWithResolvers: typeof import('./polyfills/Promise.withResolvers')['promiseWithResolvers']
+  const qs: typeof import('./components/utils')['qs']
+  const qsa: typeof import('./components/utils')['qsa']
   const schemaValidator: typeof import('./utils/schemaValidator')['schemaValidator']
+  const setStyles: typeof import('./components/utils')['setStyles']
   const sleep: typeof import('./utils/sleep')['sleep']
   const snakeCase: typeof import('./utils/string')['snakeCase']
   const trimSlash: typeof import('./utils/string')['trimSlash']
@@ -42,6 +47,9 @@ declare global {
   // @ts-ignore
   export type { InputBoxProps } from './components/InputBox'
   import('./components/InputBox')
+  // @ts-ignore
+  export type { MBoxProps, MBoxElement } from './components/MBox/index'
+  import('./components/MBox/index')
   // @ts-ignore
   export type { RadioBoxProps } from './components/RadioBox'
   import('./components/RadioBox')

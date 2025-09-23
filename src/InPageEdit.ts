@@ -7,8 +7,8 @@ import { SiteMetadataService } from '@/services/SiteMetadataService'
 import { WikiPageService } from '@/services/WikiPageService'
 
 export interface InPageEditCoreConfig {
-  legacyPreferences: Record<string, any>
   baseURL: string | URL
+  legacyPreferences: Record<string, any>
 }
 
 export * from 'cordis'
@@ -22,21 +22,11 @@ export * from 'cordis'
  * @license MIT
  * @see https://github.com/Dragon-Fish/InPageEdit-v2
  */
-@RegisterPreferences(
-  Schema.object({
-    test: Schema.string().description('test description'),
-  })
-    .description('App configs')
-    .extra('category', 'general'),
-  {
-    test: 'foo bar baz',
-  }
-)
 export class InPageEdit extends Context {
   public config: InPageEditCoreConfig
   static DEFAULT_CONFIG: InPageEditCoreConfig = {
-    legacyPreferences: {},
     baseURL: '',
+    legacyPreferences: {},
   }
   Endpoints = Endpoints
   Schema = Schema
@@ -81,6 +71,10 @@ export class InPageEdit extends Context {
     plugins.forEach(async (plugin) => {
       this.plugin(await plugin)
     })
+
+    if (import.meta.env.DEV) {
+      this.plugin((await import('@/plugins/_debug/index.js')).default)
+    }
   }
 
   // TODO: 应该抽象到 PluginTheme 中去，暂时先硬编码

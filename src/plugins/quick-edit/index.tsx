@@ -5,7 +5,7 @@ import { PluginQuickEditInArticleLinks } from './PluginQuickEditInArticleLinks'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickEdit: PluginQuickEdit
+    quickEdit: PluginQuickEdit['quickEdit']
   }
   interface Events {
     'quickEdit/initOptions'(payload: Omit<QuickEditInitPayload, 'modal' | 'wikiPage'>): void
@@ -48,20 +48,24 @@ export interface QuickEditSubmitPayload {
 @Inject(['api', 'wikiPage', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
-    editSummary: Schema.string().description('Default edit summary for quick edits'),
-    editMinor: Schema.boolean().description('Whether to mark the edit as minor'),
-    outSideClose: Schema.boolean().description('Whether to close the modal outside'),
+    editSummary: Schema.string()
+      .description('Default edit summary for quick edits')
+      .default('[IPE-NEXT] Quick edit'),
+    editMinor: Schema.boolean().description('Whether to mark the edit as minor').default(false),
+    outSideClose: Schema.boolean().description('Whether to close the modal outside').default(true),
     watchList: Schema.union([
       Schema.const(WatchlistAction.preferences).description('Follow my preferences'),
       Schema.const(WatchlistAction.nochange).description('Keep the current watchlist status'),
       Schema.const(WatchlistAction.watch).description('Add the page to watchlist'),
       Schema.const(WatchlistAction.unwatch).description('Remove the page from watchlist'),
-    ]).description('Watchlist options'),
+    ])
+      .description('Watchlist options')
+      .default(WatchlistAction.preferences),
   })
     .description('Quick edit options')
     .extra('category', 'edit'),
   {
-    editSummary: '// Edit via InPageEdit-NEXT',
+    editSummary: '[IPE-NEXT] Quick edit',
     editMinor: false,
     outSideClose: true,
     watchList: WatchlistAction.preferences,
@@ -84,7 +88,7 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   protected start(): Promise<void> | void {
-    this.ctx.root.set('quickEdit', this)
+    this.ctx.root.set('quickEdit', this.quickEdit.bind(this))
     this.ctx.inject(['toolbox'], (ctx) => {
       this.injectToolbox(ctx)
       ctx.on('dispose', () => {
@@ -95,7 +99,7 @@ export class PluginQuickEdit extends BasePlugin {
     this.ctx.plugin(PluginQuickEditInArticleLinks)
   }
 
-  async showModal(payload?: string | Partial<QuickEditOptions>) {
+  async quickEdit(payload?: string | Partial<QuickEditOptions>) {
     if (typeof payload === 'undefined') {
       payload = {}
     } else if (typeof payload === 'string') {
@@ -208,12 +212,12 @@ export class PluginQuickEdit extends BasePlugin {
       ) as HTMLElement
     )
     const editForm = (
-      <form className="ipe-quickEdit-content">
+      <form className="ipe-quickEdit-form">
         {/* 页面不存在 */}
         {wikiPage.pageInfo.pageid === 0 && (
-          <div>
-            <p>Attention: This page does not exist.</p>
-          </div>
+          <MBox title="Attention" type="important">
+            <p>This page does not exist.</p>
+          </MBox>
         )}
         <textarea className="editArea" name="text">
           {wikiPage.revisions[0]?.content || ''}
@@ -223,26 +227,10 @@ export class PluginQuickEdit extends BasePlugin {
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.5rem',
+            gap: '1rem',
           }}
         >
-          <div>
-            <label htmlFor="summary" style={{ display: 'block' }}>
-              Summary
-            </label>
-            <input
-              type="text"
-              id="summary"
-              name="summary"
-              value={options.editSummary}
-              style={{ width: '100%' }}
-            />
-          </div>
-          <div>
-            <CheckBox name="minor" id="minor" checked={options.editMinor}>
-              Minor edit
-            </CheckBox>
-          </div>
+          <InputBox label="Summary" id="summary" name="summary" value={options.editSummary} />
           <div>
             <label htmlFor="watchlist" style={{ display: 'block' }}>
               Watchlist
@@ -265,7 +253,10 @@ export class PluginQuickEdit extends BasePlugin {
               ))}
             </div>
           </div>
-          <div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <CheckBox name="minor" id="minor" checked={options.editMinor}>
+              Minor edit
+            </CheckBox>
             <CheckBox name="reloadAfterSave" id="reloadAfterSave" checked={options.reloadAfterSave}>
               Reload after save
             </CheckBox>
@@ -275,7 +266,6 @@ export class PluginQuickEdit extends BasePlugin {
         {import.meta.env.DEV && (
           <div className="debug" style={{ marginTop: '1rem' }}>
             <details>
-              <summary>Debug Info</summary>
               <pre>{JSON.stringify(wikiPage.pageInfo, null, 2)}</pre>
             </details>
           </div>
@@ -418,7 +408,7 @@ export class PluginQuickEdit extends BasePlugin {
         </svg>
       ) as HTMLElement,
       tooltip: 'Edit this page quickly',
-      onClick: () => this.showModal(),
+      onClick: () => this.quickEdit(),
     })
   }
 

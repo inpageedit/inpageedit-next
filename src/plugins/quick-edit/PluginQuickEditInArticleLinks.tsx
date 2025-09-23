@@ -4,7 +4,9 @@ import { QuickEditOptions } from '.'
 @Inject(['sitemeta', 'quickEdit'])
 @RegisterPreferences(
   Schema.object({
-    redLinkEdit: Schema.boolean().description('Show quick edit entry after red links'),
+    redLinkEdit: Schema.boolean()
+      .description('Show quick edit entry after red links')
+      .default(true),
   }).description('In-article quick edit links'),
   {
     redLinkEdit: true,
@@ -47,12 +49,34 @@ export class PluginQuickEditInArticleLinks extends BasePlugin<{
           <a
             href={`#/IPE/quickEdit/${info.title}`}
             className={this.config.linkClassName}
+            style={{
+              userSelect: 'none',
+              marginLeft: '0.2em',
+              verticalAlign: 'middle',
+            }}
             onClick={(e) => {
               e.preventDefault()
               this.ctx.quickEdit(info)
             }}
           >
-            Quick Edit
+            <svg
+              style="width: 1em; height: 1em"
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-pencil-bolt"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+              <path d="M13.5 6.5l4 4" />
+              <path d="M19 16l-2 3h4l-2 3" />
+            </svg>
           </a>
         )
 
