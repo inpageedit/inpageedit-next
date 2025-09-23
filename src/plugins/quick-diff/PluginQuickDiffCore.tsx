@@ -185,6 +185,6 @@ export class PluginQuickDiffCore extends BasePlugin {
     return fragment
   }
 
-  //
-  compare() {}
+  // TODO: MediaWiki API
+  comparePages() {}
 }

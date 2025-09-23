@@ -85,9 +85,12 @@ export class SsiModalService {
     }
     ssiModalLib.proto.setLoadingState = function (this: SsiModal, state: boolean) {
       this.get$window().toggleClass('loading', state)
-      this.get$buttons().find('.ssi-modalBtn').prop('disabled', state)
 
+      // start loading
       if (state) {
+        const inputsAndButtons = this.get$window().find('input:not([disabled]),button:not([disabled])')
+        this.get$modal().data('inputsAndButtons', inputsAndButtons)
+        inputsAndButtons.prop('disabled', true)
         this.get$window().append(
           <div
             id="ssi-modalLoadingWrapper"
@@ -108,7 +111,12 @@ export class SsiModalService {
           </div>
         )
       } else {
+        // stop loading
         this.get$window().find('#ssi-modalLoadingWrapper').remove()
+        const inputsAndButtons = this.get$modal().data('inputsAndButtons')
+        if (inputsAndButtons) {
+          inputsAndButtons.prop('disabled', false)
+        }
       }
     }
 

@@ -6,6 +6,7 @@ export interface SiteMetadata {
   userinfo: SiteUserInfo & {
     options: SiteUserOptions
   }
+  namespaces: Record<string, SiteNamespace>
 }
 
 export interface SiteInfo {
@@ -88,6 +89,17 @@ export interface SiteSpecialPageAlias {
 export interface SiteNameSpaceAlias {
   id: number
   alias: string
+}
+
+export interface SiteNamespace {
+  canonical: string
+  case: 'first-letter' | string // ?
+  content: boolean
+  id: number
+  name: string
+  namespaceprotection?: string
+  nonincludable: boolean
+  subpages: boolean
 }
 
 export interface SiteMagicWord {

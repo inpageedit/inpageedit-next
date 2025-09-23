@@ -6,7 +6,7 @@ import { PageParseData } from '@/models/WikiPage/types/PageParseData'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickPreview: PluginQuickPreview['quickPreview']
+    quickPreview: PluginQuickPreview
   }
   interface Events {
     'quickPreview/showModal'(payload: {
@@ -32,7 +32,7 @@ export class PluginQuickPreview extends BasePlugin {
   }
 
   protected start(): Promise<void> | void {
-    this.ctx.set('quickPreview', this.quickPreview.bind(this))
+    this.ctx.set('quickPreview', this)
     this.ctx.on('quickEdit/wikiPage', this.injectQuickEdit.bind(this))
   }
 
@@ -40,14 +40,14 @@ export class PluginQuickPreview extends BasePlugin {
     this.ctx.off('quickEdit/wikiPage', this.injectQuickEdit.bind(this))
   }
 
-  injectQuickEdit({ ctx, modal, wikiPage }: QuickEditInitPayload) {
+  private injectQuickEdit({ ctx, modal, wikiPage }: QuickEditInitPayload) {
     modal.setButtons([
       {
         label: 'Preview',
         side: 'left',
         className: 'btn btn-secondary',
         method: () => {
-          this.quickPreview(
+          this.showModal(
             (modal.get$content().find('textarea.editArea').val() as string) || '',
             undefined,
             wikiPage
@@ -57,7 +57,7 @@ export class PluginQuickPreview extends BasePlugin {
     ])
   }
 
-  async quickPreview(text: string, params?: MwApiParams, wikiPage?: WikiPage) {
+  async showModal(text: string, params?: MwApiParams, wikiPage?: WikiPage) {
     wikiPage ||= this.ctx.wikiPage.newBlankPage({
       title: 'API',
     })
@@ -88,13 +88,19 @@ export class PluginQuickPreview extends BasePlugin {
       data: { parse },
     } = await wikiPage.preview(text, params)
     modal.setTitle(`Preview - ${parse.title}`)
+    let outputRef: HTMLElement | null = null
     modal.setContent(
       (
         <section>
-          <div className="mw-parser-output" innerHTML={parse.text}></div>
+          <div
+            ref={(el) => (outputRef = el)}
+            className="mw-parser-output"
+            innerHTML={parse.text}
+          ></div>
         </section>
       ) as HTMLElement
     )
+    window.mw?.hook('wikipage.content').fire($(outputRef!))
     this.ctx.emit('quickPreview/loaded', {
       ctx: this.ctx,
       modal,

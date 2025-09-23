@@ -2,7 +2,7 @@ import { InPageEdit } from '@/InPageEdit'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickRedirect: PluginQuickRedirect['quickRedirect']
+    quickRedirect: PluginQuickRedirect
   }
 }
 
@@ -19,10 +19,11 @@ export class PluginQuickRedirect extends BasePlugin {
 
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-redirect')
-    ctx.set('quickRedirect', this.quickRedirect.bind(this))
   }
 
   protected start(): Promise<void> | void {
+    this.ctx.set('quickRedirect', this)
+
     const curPageName = window.mw?.config.get('wgPageName') || ''
     const canEdit = window.mw?.config.get('wgIsProbablyEditable')
     this.ctx.inject(['toolbox'], (ctx) => {
@@ -52,7 +53,7 @@ export class PluginQuickRedirect extends BasePlugin {
         tooltip: 'Quick Redirect',
         group: 'group1',
         onClick: () => {
-          this.quickRedirect(
+          this.showModal(
             canEdit
               ? {
                   to: curPageName,
@@ -69,7 +70,7 @@ export class PluginQuickRedirect extends BasePlugin {
 
   protected stop(): Promise<void> | void {}
 
-  quickRedirect(options?: Partial<QuickRedirectOptions>) {
+  showModal(options?: Partial<QuickRedirectOptions>) {
     const modal = this.ctx.modal
       .createObject({
         title: 'Quick Redirect',
@@ -101,7 +102,7 @@ export class PluginQuickRedirect extends BasePlugin {
             }
             modal.setLoadingState(true)
             this.redirectPage(options)
-              .then(() => {
+              .then((res) => {
                 modal.close()
                 this.ctx.modal.notify('success', {
                   title: 'Redirect successful',
@@ -149,14 +150,22 @@ export class PluginQuickRedirect extends BasePlugin {
 
   async redirectPage(options: RedirectPageOptions) {
     const { from, to, reason = '', overwrite = false } = options
-    const wikiPage = await this.ctx.wikiPage.newFromTitle(from)
-    const content = `#REDIRECT [[:${to}]]`
-    if (wikiPage.pageid && !overwrite) {
-      throw new Error(`Page "${from}" already exists.`)
-    }
-    return wikiPage.edit({
-      text: content,
-      summary: reason,
+    const wikiPage = await this.ctx.wikiPage.newBlankPage({
+      title: from,
     })
+    const content = `#REDIRECT [[:${to}]]`
+    const res = await wikiPage.edit(
+      {
+        text: content,
+        summary: reason,
+      },
+      {
+        createonly: !overwrite,
+      }
+    )
+    if (res.data?.errors) {
+      throw new Error(res.data.errors[0].text, { cause: res })
+    }
+    return res
   }
 }

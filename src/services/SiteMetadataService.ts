@@ -13,11 +13,17 @@ export class SiteMetadataService extends Service {
   private _data!: SiteMetadata
   private siteIdentity?: string
   private readonly CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
+  private readonly VERSION = 2
   private db: IPEStorageManager<SiteMetadata>
+  private queryData = {
+    meta: 'siteinfo|userinfo',
+    siprop: 'general|specialpagealiases|namespacealiases|namespaces|magicwords',
+    uiprop: 'groups|rights|blockinfo|options',
+  }
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'sitemeta', false)
-    this.db = ctx.storage.createDatabse<SiteMetadata>('sitemeta', this.CACHE_TTL)
+    this.db = ctx.storage.createDatabse<SiteMetadata>('sitemeta', this.CACHE_TTL, this.VERSION)
   }
 
   get api() {
@@ -58,9 +64,7 @@ export class SiteMetadataService extends Service {
     return this.api
       .get({
         action: 'query',
-        meta: 'siteinfo|userinfo',
-        siprop: 'general|specialpagealiases|namespacealiases|magicwords',
-        uiprop: 'groups|rights|blockinfo|options',
+        ...this.queryData,
       })
       .then(({ data }) => {
         if (typeof data?.query?.general === 'undefined') {
@@ -96,6 +100,27 @@ export class SiteMetadataService extends Service {
   }
   get namespaceAliases() {
     return this._data.namespacealiases
+  }
+  get namespaces() {
+    return this._data.namespaces
+  }
+  get namespaceMap() {
+    const map = Object.values(this.namespaces)
+      .map((ns) => ({
+        id: ns.id,
+        canonical: ns.canonical,
+        aliases: this.namespaceAliases
+          .filter((alias) => alias.id === ns.id)
+          .map((alias) => alias.alias),
+      }))
+      .sort((a, b) => a.id - b.id)
+    Reflect.defineProperty(this, 'namespaceMap', {
+      value: map,
+      writable: false,
+      configurable: false,
+      enumerable: true,
+    })
+    return map
   }
   get magicWords() {
     return this._data.magicwords

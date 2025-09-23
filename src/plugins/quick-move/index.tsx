@@ -2,7 +2,7 @@ import { Inject, InPageEdit } from '@/InPageEdit'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickMove: PluginQuickMove['quickMove']
+    quickMove: PluginQuickMove
   }
 }
 
@@ -23,7 +23,7 @@ export interface QuickMoveOptions extends Partial<MovePageOptions> {
 export class PluginQuickMove extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-move')
-    ctx.set('quickMove', this.quickMove.bind(this))
+    ctx.set('quickMove', this)
   }
 
   protected start(): Promise<void> | void {
@@ -32,7 +32,7 @@ export class PluginQuickMove extends BasePlugin {
     })
   }
 
-  injectToolbox(ctx: InPageEdit) {
+  private injectToolbox(ctx: InPageEdit) {
     const curPageName = window.mw?.config.get('wgPageName') || ''
     const canEdit = window.mw?.config.get('wgIsProbablyEditable')
     ctx.toolbox.addButton({
@@ -62,7 +62,7 @@ export class PluginQuickMove extends BasePlugin {
       tooltip: 'Quick Move',
       group: 'group2',
       onClick: () => {
-        this.quickMove(
+        this.showModal(
           canEdit
             ? {
                 lockFromField: true,
@@ -74,7 +74,7 @@ export class PluginQuickMove extends BasePlugin {
     })
   }
 
-  quickMove(options?: Partial<QuickMoveOptions>) {
+  showModal(options?: Partial<QuickMoveOptions>) {
     const modal = this.ctx.modal
       .createObject({
         title: 'Quick Move',
@@ -107,7 +107,7 @@ export class PluginQuickMove extends BasePlugin {
               noredirect: formData.get('noredirect') === 'on',
             }
             modal.setLoadingState(true)
-            this.move(options)
+            this.movePage(options)
               .then(() => {
                 location.reload()
               })
@@ -171,7 +171,7 @@ export class PluginQuickMove extends BasePlugin {
     return modal.show()
   }
 
-  async move(options: MovePageOptions) {
+  async movePage(options: MovePageOptions) {
     const { from, to, reason = '', ...rest } = options
 
     if (!from || !to) {

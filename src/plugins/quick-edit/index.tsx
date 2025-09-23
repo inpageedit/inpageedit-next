@@ -5,7 +5,7 @@ import { PluginQuickEditInArticleLinks } from './PluginQuickEditInArticleLinks'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickEdit: PluginQuickEdit['quickEdit']
+    quickEdit: PluginQuickEdit
   }
   interface Events {
     'quickEdit/initOptions'(payload: Omit<QuickEditInitPayload, 'modal' | 'wikiPage'>): void
@@ -84,7 +84,7 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   protected start(): Promise<void> | void {
-    this.ctx.root.set('quickEdit', this.quickEdit.bind(this))
+    this.ctx.root.set('quickEdit', this)
     this.ctx.inject(['toolbox'], (ctx) => {
       this.injectToolbox(ctx)
       ctx.on('dispose', () => {
@@ -95,7 +95,7 @@ export class PluginQuickEdit extends BasePlugin {
     this.ctx.plugin(PluginQuickEditInArticleLinks)
   }
 
-  async quickEdit(payload?: string | Partial<QuickEditOptions>) {
+  async showModal(payload?: string | Partial<QuickEditOptions>) {
     if (typeof payload === 'undefined') {
       payload = {}
     } else if (typeof payload === 'string') {
@@ -418,7 +418,7 @@ export class PluginQuickEdit extends BasePlugin {
         </svg>
       ) as HTMLElement,
       tooltip: 'Edit this page quickly',
-      onClick: () => this.quickEdit(),
+      onClick: () => this.showModal(),
     })
   }
 

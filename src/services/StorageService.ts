@@ -17,8 +17,8 @@ export class StorageService extends Service {
     return IPEStorageManager
   }
 
-  createDatabse<T = any>(storeName: string, ttl?: number) {
-    return new IPEStorageManager<T>('InPageEdit', storeName, ttl)
+  createDatabse<T = any>(storeName: string, ttl?: number, version?: number) {
+    return new IPEStorageManager<T>('InPageEdit', storeName, ttl, version)
   }
 }
 
@@ -27,6 +27,8 @@ export interface IPEStorageItem<T = any> {
   time: number
   /** stored value */
   value: T
+  /** version */
+  version?: number
 }
 
 export class IPEStorageManager<T = any> {
@@ -45,7 +47,8 @@ export class IPEStorageManager<T = any> {
   constructor(
     readonly dbName: string,
     readonly storeName: string,
-    public ttl: number = IPEStorageManager.DEFAULT_TTL
+    public ttl: number = IPEStorageManager.DEFAULT_TTL,
+    public version?: number
   ) {
     this.db = IPEStorageManager.createDatabase(dbName, storeName)
     this.keys = this.db.keys.bind(this.db)
@@ -88,6 +91,7 @@ export class IPEStorageManager<T = any> {
     return this.db.setItem(key, {
       time: Date.now(),
       value,
+      version: this.version,
     })
   }
 
@@ -108,13 +112,20 @@ export class IPEStorageManager<T = any> {
   }
 
   async loadFromDB(key: string) {
-    const data = await this.db.getItem<{ time: number; value: T }>(key)
+    const data = await this.db.getItem<{ time: number; value: T; version?: number }>(key)
     // Not exist
     if (!data) {
       return null
     }
     // Bad data
     if (typeof data.time !== 'number' || typeof data.value === 'undefined') {
+      try {
+        this.delete(key)
+      } catch (e) {}
+      return null
+    }
+    // Version mismatch
+    if (typeof this.version === 'number' && data.version !== this.version) {
       try {
         this.delete(key)
       } catch (e) {}
