@@ -219,7 +219,7 @@ export class PluginQuickEdit extends BasePlugin {
             <p>This page does not exist.</p>
           </MBox>
         )}
-        <textarea className="editArea" name="text">
+        <textarea className="editArea" name="text" id="wpTextbox1">
           {wikiPage.revisions[0]?.content || ''}
         </textarea>
         <div

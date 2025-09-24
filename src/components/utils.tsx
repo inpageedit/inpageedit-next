@@ -17,12 +17,14 @@ export const setStyles = (el: HTMLElement | ReactElement, style: CSSProperties) 
   Object.entries(style).forEach(([key, value]) => {
     if (typeof value === 'undefined' || value === null) {
       el.style.removeProperty(key)
-    } else if (typeof value === 'string' && value.endsWith('!important')) {
-      // @ts-ignore
-      el.style.setProperty(key, value.replace('!important', '').trim(), 'important')
     } else {
+      const isImportant = typeof value === 'string' && value.endsWith('!important')
       // @ts-ignore
-      el.style[key] = value
+      el.style.setProperty(
+        key,
+        value.replace('!important', '').trim(),
+        isImportant ? 'important' : undefined
+      )
     }
   })
   return el

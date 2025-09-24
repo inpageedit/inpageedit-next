@@ -139,18 +139,17 @@ export class PluginQuickDiffCore extends BasePlugin {
         side: 'left',
         className: 'btn btn-secondary',
         method: () => {
+          const pageTitle = wikiPage.title
           const fromtext = wikiPage.revisions?.[0]?.content || ''
-          const fromrev = wikiPage.revisions?.[0]?.revid || 0
-          const totext = (modal.get$content().find('textarea.editArea').val() as string) || ''
-          if (!fromrev) {
-            return this.simpleTextDiff(fromtext, totext)
-          } else {
-            return this.comparePages({
-              fromtitle: wikiPage.title,
-              fromrev,
-              totext,
-            })
-          }
+          const totext =
+            (modal.get$content().find('textarea[name="text"]').prop('value') as string) || ''
+
+          return this.comparePages({
+            fromtitle: pageTitle,
+            fromtext,
+            totitle: pageTitle,
+            totext,
+          })
         },
       },
     ])

@@ -1,13 +1,17 @@
 import { JSX } from 'jsx-dom/jsx-runtime'
 import loaderTemplate from './loader.template.js?raw'
+// @ts-ignore
+import { codeToHtml } from 'https://esm.run/shiki@3.13.0'
 
 const entryURL = new URL(import.meta.env.DEV ? '/src/index.ts' : '/index.js', location.href)
-const root = document.getElementById('app')!
 
 main()
 
 function main() {
+  const root = document.getElementById('app')!
   root.innerText = ''
+
+  let loaderRef: HTMLElement, codeRef: HTMLElement
   root.append(
     <>
       <h1>InPageEdit NEXT</h1>
@@ -18,7 +22,7 @@ function main() {
       </div>
       <h2>Loader</h2>
       <div style={{ position: 'relative' }}>
-        <pre id="loader">...</pre>
+        <div ref={(ref) => (loaderRef = ref)}>...</div>
         <CopyButton
           value={() => document.getElementById('loader')!.innerText}
           style={{ position: 'absolute', right: '1rem', top: '1rem' }}
@@ -27,20 +31,29 @@ function main() {
       <h2>Entrypoint Source</h2>
       <details>
         <summary>{entryURL.href}</summary>
-        <pre id="code"></pre>
+        <div ref={(ref) => (codeRef = ref)}>...</div>
       </details>
     </>
   )
 
-  fetch(`${entryURL}?raw`, { headers: { accept: 'text/plaintext' } })
-    .then((i) => i.text())
-    .then((i) => (document.getElementById('code')!.innerText = i))
+  fetch(entryURL, { headers: { accept: 'text/plaintext' } })
+    .then((res) => res.text())
+    .then((text) =>
+      codeToHtml(text, {
+        lang: 'js',
+        theme: 'one-dark-pro',
+      })
+    )
+    .then((code) => (codeRef.innerHTML = code))
 
-  document.getElementById('loader')!.innerText = getLoaderString(entryURL)
+  codeToHtml(getLoaderString(loaderTemplate, entryURL), {
+    lang: 'js',
+    theme: 'one-dark-pro',
+  }).then((code: string) => (loaderRef.innerHTML = code))
+}
 
-  function getLoaderString(entryURL: URL) {
-    return loaderTemplate.replaceAll('__ENTRY_URL__', entryURL.href)
-  }
+function getLoaderString(templateString: string, entryURL: URL) {
+  return templateString.replaceAll('__ENTRY_URL__', entryURL.href)
 }
 
 function copyText(str = '') {

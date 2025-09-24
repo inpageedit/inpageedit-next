@@ -11,7 +11,7 @@ const formatDate = new Intl.DateTimeFormat(undefined, {
 }).format
 
 const DiffTableHeader = (props: {
-  className?: string
+  type?: 'from' | 'to'
   pageid?: number
   pagetitle?: string
   revid?: number
@@ -22,11 +22,23 @@ const DiffTableHeader = (props: {
   comment?: string
   parsedcomment?: string
 }) => {
+  let classList = ['diff-title']
+  if (props.type === 'from') {
+    classList.push('diff-otitle')
+  } else if (props.type === 'to') {
+    classList.push('diff-ntitle')
+  }
+  if (!props.pageid || !props.userid) {
+    return (
+      <td colSpan={2} className={classList}>
+        <div className="mw-diff-title--title">
+          {props.type === 'from' ? 'Original content' : props.type === 'to' ? 'Your content' : ''}
+        </div>
+      </td>
+    )
+  }
   return (
-    <td
-      colSpan={2}
-      className={`diff-title ${props.pageid === 0 ? 'diff-deleted' : ''} ${props.className || ''}`}
-    >
+    <td colSpan={2} className={classList}>
       <div className="mw-diff-title--title">{props.pagetitle || props.timestamp}</div>
       <div className="mw-diff-title--user">
         {props.username && <MwUserLinks user={props.username} target="_blank" />}
@@ -59,7 +71,7 @@ export const DiffTable = (props: DiffTableProps) => {
       <tbody>
         <tr>
           <DiffTableHeader
-            className="diff-otitle"
+            type="from"
             pageid={data.fromid}
             pagetitle={data.fromtitle}
             revid={data.fromrevid}
@@ -71,7 +83,7 @@ export const DiffTable = (props: DiffTableProps) => {
             parsedcomment={data.fromparsedcomment}
           />
           <DiffTableHeader
-            className="diff-ntitle"
+            type="to"
             pageid={data.toid}
             pagetitle={data.totitle}
             revid={data.torevid}
@@ -95,6 +107,23 @@ export const DiffTable = (props: DiffTableProps) => {
       </tbody>
     </table>
   )
-  table.querySelector('#diffbody')!.outerHTML = data.body || ''
+  table.querySelector('#diffbody')!.outerHTML =
+    data.body ||
+    (
+      <tr>
+        <td colSpan={4}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '5rem',
+            }}
+          >
+            <i>No changes</i>
+          </div>
+        </td>
+      </tr>
+    ).outerHTML
   return table
 }
