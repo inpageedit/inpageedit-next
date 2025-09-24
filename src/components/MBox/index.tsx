@@ -48,23 +48,20 @@ export const MBox = (props: MBoxProps) => {
     }
     const { promise, resolve } = Promise.withResolvers<void>()
 
-    box.addEventListener('transitionend', (e) => {
-      if (e.propertyName === 'opacity' && box?.style.opacity === '0') {
-        box.remove()
-        resolve()
+    const animation = box.animate(
+      [
+        { opacity: '1', height: box.clientHeight + 'px' },
+        { opacity: '0', height: '0px', margin: '0px' },
+      ],
+      {
+        duration: 300,
+        easing: 'ease',
       }
-    })
-    setStyles(box, {
-      transition: 'all 0.3s ease',
-      opacity: '1',
-      height: box.clientHeight + 'px',
-    })
-    setTimeout(() => {
-      setStyles(box, {
-        opacity: '0',
-        height: '0px',
-        margin: '0px',
-      })
+    )
+
+    animation.addEventListener('finish', () => {
+      box.remove()
+      resolve()
     })
 
     return promise
