@@ -49,12 +49,12 @@ export default defineConfig({
       dtsMode: 'overwrite',
     }),
     // FIXME: Unsupported export "Logger": reggol@1.7.1
-    // dts({
-    //   tsconfigPath: './tsconfig.app.json',
-    //   bundleTypes: true,
-    //   entryRoot: './src',
-    //   exclude: ['reggol'],
-    // }),
+    dts({
+      tsconfigPath: './tsconfig.app.json',
+      // bundleTypes: true,
+      entryRoot: './src',
+      exclude: ['reggol'],
+    }),
   ],
   resolve: {
     alias: {
