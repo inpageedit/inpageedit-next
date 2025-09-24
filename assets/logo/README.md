@@ -13,4 +13,8 @@ Made by [Dianliang233](https://github.com/dianliang233/) with [Sketch](https://w
 
 ---
 
+> [!IMPORTANT]
+>
+> The IPE logo is subject to an open-source license different from that of this repository.
+>
 > Copyright (c) 2019-present @dianliang233, [GNU General Public License 3.0](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
