@@ -21,7 +21,8 @@
     "format": "prettier --write ./src"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
