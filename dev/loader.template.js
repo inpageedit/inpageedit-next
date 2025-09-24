@@ -13,6 +13,6 @@ function loadScript(src, attrs = {}) {
   })
 }
 
-loadScript('__ENTRY_URL__', { type: 'module', async: '' })
+loadScript('__ENTRY_URL__', { type: 'module' })
   .then(() => console.info('[InPageEdit] DEV MODE'))
   .catch(() => loadScript('https://unpkg.com/mediawiki-inpageedit', { async: '' }))

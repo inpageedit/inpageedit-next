@@ -1,7 +1,7 @@
 import type { PageInfo } from './types/PageInfo'
 import { PageParseData } from './types/PageParseData'
 import { WatchlistAction } from './types/WatchlistAction'
-import MediaWikiApi, { MwApiParams } from 'wiki-saikou'
+import { MediaWikiApi, MwApiParams } from 'wiki-saikou/browser'
 
 export class WikiPage {
   readonly api: MediaWikiApi
@@ -115,13 +115,7 @@ export class WikiPage {
     },
     params?: MwApiParams
   ) {
-    const {
-      text,
-      prependtext,
-      appendtext,
-      summary = '',
-      watchlist = 'preferences',
-    } = payload
+    const { text, prependtext, appendtext, summary = '', watchlist = 'preferences' } = payload
     return this.api.postWithEditToken({
       action: 'edit',
       title: this.title,

@@ -4,6 +4,9 @@
  */
 
 mw.hook('InPageEdit.ready').add((ipe) => {
+  // Hover your mouse over here  ↑↑↑
+  // You may notice that the parameter is fully typed!
+
   /**
    * InPageEdit plugin can be registered in many ways
    * We will explore three different methods here.
@@ -12,7 +15,7 @@ mw.hook('InPageEdit.ready').add((ipe) => {
   // 1. Using a function
   // This is the simplest way to create a plugin
   ipe.plugin((ctx) => {
-    ctx.inject(['toolbox', 'modal'], (ctx) => {
+    ctx.inject(['toolbox'], (ctx) => {
       ctx.toolbox.addButton({
         id: 'hello-world-function',
         icon: '❤️',
@@ -28,7 +31,7 @@ mw.hook('InPageEdit.ready').add((ipe) => {
   // This method is more structured and allows for easier configuration
   ipe.plugin({
     name: 'hello-world-object',
-    inject: ['toolbox', 'modal'],
+    inject: ['toolbox'],
     apply: (ctx) => {
       ctx.toolbox.addButton({
         id: 'hello-world-object',
@@ -46,7 +49,7 @@ mw.hook('InPageEdit.ready').add((ipe) => {
   // For PRO TypeScript lovers :)
   ipe.plugin(
     class PluginHelloWorld {
-      static inject = ['toolbox', 'modal']
+      static inject = ['toolbox']
       /**
        * @param {InPageEdit} ctx
        */
