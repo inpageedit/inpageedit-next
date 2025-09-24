@@ -10,10 +10,7 @@
     NSpace
       NCheckbox(v-for='i in schema.list', :value='i.value')
         Component(:is='renderLabel(i)')
-  NDatePicker(
-    v-else-if='schema.meta.role === "datetime"',
-    :disabled='schema.meta.disabled'
-  )
+  NDatePicker(v-else-if='schema.meta.role === "datetime"', :disabled='schema.meta.disabled')
   NRadioGroup(
     v-else-if='schema.meta.role === "radio"',
     :value='value',
@@ -33,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h } from 'vue'
+import { computed, h } from 'vue'
 import type Schema from 'schemastery'
 import {
   NText,
@@ -42,6 +39,7 @@ import {
   NCheckboxGroup,
   NDatePicker,
   NSpace,
+  NRadio,
   NRadioGroup,
   NSelect,
 } from 'naive-ui'
