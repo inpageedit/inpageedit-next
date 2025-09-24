@@ -1,0 +1,38 @@
+name: Deploy Documentation to GitHub Pages
+
+# Controls when the workflow will run
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+
+      - name: Resolve Dependencies
+        run: |
+          npm i -g pnpm
+          pnpm i
+
+      - name: Build Documentation
+        run: |
+          pnpm doc:build
+
+      - name: Publish GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/.vitepress/dist
+          publish_branch: docs
+          force_orphan: true
+          # cname: ipe.js.org
