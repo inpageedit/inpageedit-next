@@ -17,7 +17,10 @@
     "dev": "vite",
     "lint": "eslint ./src",
     "clean": "rimraf dist",
-    "format": "prettier --write ./src"
+    "format": "prettier --write ./src",
+    "doc:dev": "vitepress dev docs",
+    "doc:build": "vitepress build docs",
+    "doc:preview": "vitepress preview docs"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -51,7 +54,8 @@
     "typescript": "^5.9.2",
     "unplugin-auto-import": "^20.2.0",
     "unplugin-dts": "1.0.0-beta.6",
-    "vite": "^7.1.7"
+    "vite": "^7.1.7",
+    "vitepress": "2.0.0-alpha.12"
   },
   "dependencies": {
     "cordis": "^3.18.1",
