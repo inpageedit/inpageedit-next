@@ -11,12 +11,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "run-p build:*",
-    "build:dynamic": "vite build",
-    "prepublish": "npm run build",
+    "start": "zx dev/scripts/setup-dev.ts",
     "dev": "vite",
+    "build": "run-p build:*",
+    "build:import": "cross-env VITE_BUILD_FORMAT=import vite build",
+    "build:bundle": "cross-env VITE_BUILD_FORMAT=bundle vite build",
+    "prepublish": "npm run build",
     "lint": "eslint ./src",
-    "clean": "rimraf dist",
+    "clean": "rimraf dist/* lib/*",
     "format": "prettier --write ./src",
     "doc:dev": "vitepress dev docs",
     "doc:build": "vitepress build docs",
@@ -55,7 +57,10 @@
     "unplugin-auto-import": "^20.2.0",
     "unplugin-dts": "1.0.0-beta.6",
     "vite": "^7.1.7",
-    "vitepress": "2.0.0-alpha.12"
+    "vitepress": "2.0.0-alpha.12",
+    "vitepress-i18n": "^1.3.4",
+    "vitepress-sidebar": "^1.33.0",
+    "zx": "^8.8.3"
   },
   "dependencies": {
     "cordis": "^3.18.1",
@@ -77,9 +82,9 @@
   "homepage": "https://www.ipe.wiki/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/inpageedit/inpageedit-v2.git"
+    "url": "git+https://github.com/inpageedit/inpageedit-next.git"
   },
   "bugs": {
-    "url": "https://github.com/inpageedit/inpageedit-v2/issues"
+    "url": "https://github.com/inpageedit/inpageedit-next/issues"
   }
 }
