@@ -19,7 +19,7 @@
 <!-- prettier-ignore -->
 ```javascript
 // InPageEdit NEXT
-$('<script src="https://esm.run/@inpageedit/core" type="module"></script>').appendTo('body')
+$('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
 ```
 
 ## 特色功能 / Features

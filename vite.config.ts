@@ -38,8 +38,8 @@ export default defineConfig(() => {
     define: {
       'import.meta.env.__VERSION__': JSON.stringify(
         DEV
-          ? version
-          : `${version}-dev.${new Date().toISOString().split('T')[0].replaceAll('-', '')}`
+          ? `${version}-dev.${new Date().toISOString().split('T')[0].replaceAll('-', '')}`
+          : version
       ),
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     },
@@ -102,7 +102,7 @@ export default defineConfig(() => {
           name: 'InPageEditBundle',
           formats: ['umd'],
           fileName(format) {
-            return `InPageEdit.${format}.js`
+            return `index.${format}.js`
           },
           cssFileName: 'style',
         },

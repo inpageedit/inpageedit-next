@@ -31,3 +31,5 @@ features:
   - title: 🌐 国际化支持
     details: 支持多语言界面，适配不同语言的 MediaWiki 站点
 ---
+
+<!-- @include: @/.templates/install-personal.md -->

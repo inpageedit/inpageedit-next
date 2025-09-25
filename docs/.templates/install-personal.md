@@ -1,0 +1,50 @@
+## 个人安装方式
+
+### 使用动态导入 （推荐）
+
+在个人 JS 页面添加以下代码：
+
+```js{2} [123]
+// InPageEdit NEXT
+$('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
+```
+
+::: details 其他安装方式
+
+### Vanilla JS
+
+大多数 MediaWiki 站点都预装了 jQuery，不过你也可以直接使用原生 JavaScript 来加载：
+
+```js
+// InPageEdit NEXT
+;(() => {
+  var s = document.createElement('script')
+  s.src = 'https://unpkg.com/@inpageedit/core'
+  s.type = 'module' // [!code warning]
+  document.head.appendChild(s)
+})()
+```
+
+### 下载捆绑包
+
+我们同时提供了 bundled 版本，以便那些有特殊需求的用户使用：[下载地址](https://unpkg.com/@inpageedit/core/lib/)
+
+捆绑包采用传统 UMD 格式打包，没有动态导入，因此加载速度可能略慢。另外，此版本不会尝试自动导入 CSS，因此你需要手动加载 CSS 文件。
+
+:::
+
+::: details 注意事项
+
+### 不要使用 `mw.loader.load` 加载
+
+InPageEdit-NEXT 是 ES 模块脚本，直接使用 `mw.loader` 加载会报错。
+
+如果你更喜欢 `mw.loader`，请加载捆绑包版本（同时你会失去动态导入带来的性能优化）。
+
+### 不要在 MediaWiki 的 JS 页面使用 `import`
+
+你也许有想过这个问题：为什么不直接使用 `import(/** ... */)` 加载 InPageEdit-NEXT？
+
+这是因为 MediaWiki 的 ResourceLoader 会将 import 语句自动转换为一些内部实现，导致实际行为预期不符。
+
+:::
