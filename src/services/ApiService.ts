@@ -1,5 +1,5 @@
 import { InPageEdit } from '@/InPageEdit'
-import { MwApi } from 'wiki-saikou'
+import { MwApi } from 'wiki-saikou/browser'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {

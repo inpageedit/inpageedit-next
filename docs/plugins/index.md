@@ -1,11 +1,38 @@
-# Explore plugins
+---
+title: 插件中心
+---
 
-This page will list all the plugins that are available for InPageEdit NEXT.
+# InPageEdit NEXT 插件中心
 
-## Hello World
+InPageEdit NEXT 提供了强大的插件系统，让您可以轻松扩展功能。
 
-The Hello World plugin is a simple plugin that will say hello to the user.
+## 📚 插件开发
 
-```javascript
+想要开发自己的插件？查看我们的 [开发文档](/development/) 了解详细的插件开发指南。
 
-```
+## 🌟 社区插件
+
+欢迎社区贡献插件！如果您开发了有用的插件，可以通过以下方式分享：
+
+1. 在 GitHub 上提交 Pull Request
+2. 在 Issues 中分享您的插件代码
+3. 加入社区讨论群组
+
+## 📝 插件规范
+
+### 命名规范
+
+- 插件名称应使用小写字母和连字符
+- 功能描述应简洁明了
+
+### 代码规范
+
+- 使用 TypeScript 或现代 JavaScript
+- 添加适当的注释和文档
+- 遵循项目的代码风格
+
+### 测试要求
+
+- 在多个 MediaWiki 版本上测试
+- 确保与核心功能兼容
+- 处理错误情况
