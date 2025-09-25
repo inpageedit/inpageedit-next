@@ -20,7 +20,7 @@ export * from 'cordis'
  *
  * @author dragon-fish <dragon-fish@qq.com>
  * @license MIT
- * @see https://github.com/Dragon-Fish/InPageEdit-v2
+ * @see https://github.com/inpageedit/inpageedit-next
  */
 export class InPageEdit extends Context {
   public config: InPageEditCoreConfig
@@ -80,7 +80,10 @@ export class InPageEdit extends Context {
   // TODO: 应该抽象到 PluginTheme 中去，暂时先硬编码
   async #initCoreAssets() {
     this.inject(['resourceLoader'], (ctx) => {
-      import.meta.env.PROD && ctx.resourceLoader.loadStyle(import.meta.resolve('./style.css'))
+      if (import.meta.env.PROD) {
+        const cssPath = ctx.resourceLoader.resolveImportPath('./style.css')
+        ctx.resourceLoader.loadStyle(cssPath)
+      }
       ctx.resourceLoader.loadStyle(`${Endpoints.PLUGIN_CDN_BASE}/skins/ipe-default.css`)
     })
   }

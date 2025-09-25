@@ -16,7 +16,10 @@ export class ResourceLoaderService extends Service {
     // })
   }
 
-  loadScript(src: string, attrs?: Record<string, any>): Promise<HTMLScriptElement> {
+  loadScript(src: string, attrs?: Record<string, any>): Promise<HTMLScriptElement | null> {
+    if (!src) {
+      return Promise.resolve(null)
+    }
     const key = `script:${src}`
     const existed = document.querySelector(`[data-ipe="${key}"]`)
     if (existed) {
@@ -42,7 +45,10 @@ export class ResourceLoaderService extends Service {
     return promise
   }
 
-  loadStyle(href: string, attrs?: Record<string, any>): Promise<HTMLLinkElement> {
+  loadStyle(href: string, attrs?: Record<string, any>): Promise<HTMLLinkElement | null> {
+    if (!href) {
+      return Promise.resolve(null)
+    }
     const key = `style:${href}`
     const existed = document.querySelector(`[data-ipe="${key}"]`)
     if (existed) {
@@ -76,5 +82,23 @@ export class ResourceLoaderService extends Service {
       link.onerror = (e) => reject(e)
     })
     return promise
+  }
+
+  resolveImportPath(path: string) {
+    if (path.startsWith('http') || path.startsWith('//')) {
+      return path
+    }
+    if (import.meta.env.VITE_BUILD_FORMAT === 'import') {
+      return import.meta.resolve(path)
+    }
+    const src = (document.currentScript as HTMLScriptElement)?.src
+    if (!src) {
+      return `https://unpkg.com/mediawiki-inpageedit@latest/dist/${path}`
+    }
+    const url = new URL(src)
+    if (!url.pathname.endsWith('.js')) {
+      url.pathname = url.pathname + '/'
+    }
+    return new URL(path, url.toString()).toString()
   }
 }
