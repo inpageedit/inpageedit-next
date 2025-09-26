@@ -1,7 +1,7 @@
 import '@/polyfills'
 import { InPageEdit as IPECore } from '@/InPageEdit'
 
-export { InPageEdit, Service, Schema } from '@/InPageEdit'
+export * from '@/InPageEdit'
 export { default as BasePlugin } from '@/plugins/BasePlugin'
 
 // Safe guard

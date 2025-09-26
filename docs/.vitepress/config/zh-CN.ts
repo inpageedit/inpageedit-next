@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { generateSidebar } from 'vitepress-sidebar'
 
 export default defineConfig({
   themeConfig: {
@@ -8,6 +9,26 @@ export default defineConfig({
       { text: '插件', link: '/plugins/' },
       { text: '开发', link: '/development/' },
     ],
+    // https://github.com/jooy2/vitepress-sidebar
+    sidebar: generateSidebar({
+      documentRootPath: 'docs',
+      debugPrint: true,
+      useTitleFromFileHeading: true,
+      useTitleFromFrontmatter: true,
+      useFolderTitleFromIndexFile: true,
+      useFolderLinkFromIndexFile: true,
+      manualSortFileNameByPriority: [
+        // 用户指南
+        'guide',
+        // 插件列表
+        'plugins',
+        // 开发指南
+        'development',
+        'plugins-101',
+        'contribute-to-core',
+        'api-references',
+      ],
+    }),
     socialLinks: [
       {
         icon: 'qq',

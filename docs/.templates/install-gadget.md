@@ -10,7 +10,7 @@
 * IPE-NEXT[ResourceLoader|rights=edit,skipcaptcha]|IPE-NEXT.js
 ```
 
-```js [MediaWiki:Gadget-IPE-NEXT.js]
+```js [MediaWiki:Gadget-IPE-NEXT.js ~vscode-icons:file-type-js~]
 // MediaWiki < 1.40
 window.RLQ = window.RLQ || []
 window.RLQ.push(function () {

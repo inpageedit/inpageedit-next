@@ -4,7 +4,7 @@
 
 在个人 JS 页面添加以下代码：
 
-```js{2} [123]
+```js [Special:MyPage/common.js]
 // InPageEdit NEXT
 $('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
 ```
@@ -15,7 +15,7 @@ $('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').ap
 
 大多数 MediaWiki 站点都预装了 jQuery，不过你也可以直接使用原生 JavaScript 来加载：
 
-```js
+```js [Special:MyPage/common.js]
 // InPageEdit NEXT
 ;(() => {
   var s = document.createElement('script')

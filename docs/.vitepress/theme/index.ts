@@ -2,6 +2,29 @@
 import { h } from 'vue'
 import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
+
+import 'virtual:group-icons.css'
+
+import {
+  InjectionKey as GitChangelogInjectionKey,
+  NolebaseGitChangelogPlugin,
+} from '@nolebase/vitepress-plugin-git-changelog/client'
+import '@nolebase/vitepress-plugin-git-changelog/client/style.css'
+
+import { NolebaseInlineLinkPreviewPlugin } from '@nolebase/vitepress-plugin-inline-link-preview/client'
+import '@nolebase/vitepress-plugin-inline-link-preview/client/style.css'
+
+import {
+  NolebasePagePropertiesPlugin,
+  InjectionKey as PagePropertiesInjectionKey,
+} from '@nolebase/vitepress-plugin-page-properties'
+import '@nolebase/vitepress-plugin-page-properties/client/style.css'
+
+import TwoslashFloatingVue from '@shikijs/vitepress-twoslash/client'
+import '@shikijs/vitepress-twoslash/style.css'
+
+import 'vitepress-markdown-timeline/dist/theme/index.css'
+
 import './style.css'
 
 export default {
@@ -12,6 +35,48 @@ export default {
     })
   },
   enhanceApp({ app, router, siteData }) {
-    // ...
+    app.use(TwoslashFloatingVue)
+
+    app.use(NolebaseGitChangelogPlugin)
+    app.provide(GitChangelogInjectionKey, {
+      hideChangelogNoChangesText: true,
+      hideChangelogHeader: true,
+      commitsRelativeTime: true,
+      displayAuthorsInsideCommitLine: true,
+    })
+
+    app.use(NolebaseInlineLinkPreviewPlugin)
+
+    app.use(NolebasePagePropertiesPlugin())
+    app.provide(PagePropertiesInjectionKey, {
+      properties: {
+        'zh-CN': [
+          {
+            key: 'wordCount',
+            type: 'dynamic',
+            title: '字数',
+            options: {
+              type: 'wordsCount',
+            },
+          },
+          {
+            key: 'readingTime',
+            type: 'dynamic',
+            title: '阅读时间',
+            options: {
+              type: 'readingTime',
+              dateFnsLocaleName: 'zhCN',
+            },
+          },
+          {
+            key: 'updatedAt',
+            type: 'datetime',
+            title: '更新时间',
+            formatAsFrom: true,
+            dateFnsLocaleName: 'zhCN',
+          },
+        ],
+      },
+    })
   },
 } satisfies Theme

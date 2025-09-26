@@ -81,15 +81,15 @@ export default defineConfig(() => {
           },
         },
       }
-      config.plugins.push(
-        // FIXME: Unsupported export "Logger": reggol@1.7.1
+      config.plugins = [
+        ...config.plugins,
         dts({
           tsconfigPath: './tsconfig.app.json',
           // bundleTypes: true,
           entryRoot: './src',
           exclude: ['reggol'],
-        })
-      )
+        }),
+      ]
       break
     }
     case 'bundle': {
