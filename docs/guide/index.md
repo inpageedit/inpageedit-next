@@ -8,6 +8,8 @@ title: 用户指南
 
 ## 何谓 InPageEdit NEXT？
 
+[太长不看，快™告诉我怎么安装 →](installation.md)
+
 InPageEdit NEXT 是 InPageEdit 的下一代版本，它基于 TypeScript 重新组织了应用逻辑，提供了更现代的开发体验和更强大的功能。
 
 它与 InPageEdit-v2 相比，更加强大💪🏻！

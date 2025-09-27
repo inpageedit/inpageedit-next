@@ -41,4 +41,12 @@ features:
     details: 支持多语言界面，适配不同语言的 MediaWiki 站点
 ---
 
+<script setup>
+import { data } from './version.data.js'
+</script>
+
+<div style="text-align: center; margin-top: 2rem;">
+最新版本：<Badge type="tip">{{ data.npmVersion }}</Badge>，开发版本：<Badge type="warning">{{ data.devVersion }}</Badge>
+</div>
+
 <!-- @include: @/.templates/install-personal.md -->

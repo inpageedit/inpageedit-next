@@ -25,6 +25,30 @@ $('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').ap
 })()
 ```
 
+### 浏览器插件
+
+如果你更喜欢使用浏览器插件（例如油猴），可以使用以下代码（仅供参考，不保证有效）：
+
+```js
+// ==UserScript==
+// @name         InPageEdit NEXT
+// @namespace    https://www.ipe.wiki
+// @version      0.1.0
+// @description  🚀 模块化、可扩展的 MediaWiki 超级增强插件
+// @author       dragon-fish
+// @match        *
+// @grant        none
+// ==/UserScript==
+
+window.RLQ = window.RLQ || []
+window.RLQ.push(() => {
+  gm.addElement('script', {
+    src: 'https://unpkg.com/@inpageedit/core',
+    type: 'module',
+  })
+})
+```
+
 ### 下载捆绑包
 
 我们同时提供了 bundled 版本，以便那些有特殊需求的用户使用：[下载地址](https://unpkg.com/@inpageedit/core/lib/)
