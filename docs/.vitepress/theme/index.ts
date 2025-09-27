@@ -28,6 +28,7 @@ import '@shikijs/vitepress-twoslash/style.css'
 import 'vitepress-markdown-timeline/dist/theme/index.css'
 
 import './style.css'
+import DateFormat from '../components/DateFormat.vue'
 
 export default {
   extends: DefaultTheme,
@@ -38,6 +39,7 @@ export default {
   },
   enhanceApp({ app, router, siteData }) {
     app.component('IpeVersion', IpeVersion)
+    app.component('DateFormat', DateFormat)
 
     app.use(TwoslashFloatingVue)
 

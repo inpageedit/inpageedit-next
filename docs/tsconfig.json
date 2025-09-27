@@ -11,7 +11,12 @@
     "strict": true,
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "resolveJsonModule": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./*"],
+      "#/*": ["./.vitepress/*"],
+      "$/*": ["./.vitepress/components/*"]
+    }
   },
   "vueCompilerOptions": {
     "plugins": ["@vue/language-plugin-pug"]

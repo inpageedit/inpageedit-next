@@ -30,8 +30,8 @@ const twoSlashDts = await readFile(
 )
 
 // https://vitepress.dev/reference/site-config
-export default defineConfig(
-  withMermaid({
+export default withMermaid(
+  defineConfig({
     base: process.env.DOCS_BASE_URL || '/',
     title: 'InPageEdit NEXT',
     description: '🚀 Modular, Extensible Supercharged Plugin for MediaWiki',
@@ -45,6 +45,9 @@ export default defineConfig(
     },
     themeConfig: {
       logo: '/images/logo/IPE.png',
+      outline: {
+        level: [2, 3],
+      },
       socialLinks: [
         { icon: 'npm', link: 'https://www.npmjs.com/package/@inpageedit/core' },
         { icon: 'github', link: GITHUB_REPO_URL },
@@ -108,20 +111,24 @@ export default defineConfig(
       plugins: [
         groupIconVitePlugin({
           customIcon: {
-            'gadgets-definition': localIconLoader(
-              import.meta.url,
-              '../public/icons/mediawiki.svg'
-            ),
+            'gadgets-definition': localIconLoader(import.meta.url, '../public/icons/mediawiki.svg'),
           },
         }),
         GitChangelog({
-          maxGitLogCount: 2000,
+          maxGitLogCount: 100,
           repoURL: () => GITHUB_REPO_URL,
         }),
         GitChangelogMarkdownSection({}),
         PageProperties(),
         PagePropertiesMarkdownSection({}),
       ],
+      resolve: {
+        alias: {
+          '@': resolve(import.meta.dirname, '../../'),
+          '#': resolve(import.meta.dirname, '../'),
+          $: resolve(import.meta.dirname, '../components'),
+        },
+      },
       optimizeDeps: {
         exclude: ['@nolebase/vitepress-plugin-inline-link-preview/client'],
       },
