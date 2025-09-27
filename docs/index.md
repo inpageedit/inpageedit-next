@@ -46,7 +46,7 @@ import { data } from './version.data.js'
 </script>
 
 <div style="text-align: center; margin-top: 2rem;">
-最新版本：<Badge type="tip">{{ data.npmVersion }}</Badge>，开发版本：<Badge type="warning">{{ data.devVersion }}</Badge>
+最新版本：<Badge type="tip"><IpeVersion /></Badge>，开发版本：<Badge type="warning">{{ data.devVersion }}</Badge>
 </div>
 
 <!-- @include: @/.templates/install-personal.md -->

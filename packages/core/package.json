@@ -16,6 +16,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./package.json": {
+      "types": "./package.json",
+      "import": "./package.json"
+    },
     "./InPageEdit": {
       "types": "./dist/InPageEdit.d.ts"
     },

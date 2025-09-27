@@ -10,6 +10,7 @@
     "moduleResolution": "bundler",
     "strict": true,
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "resolveJsonModule": true,
     "skipLibCheck": true
   },
   "vueCompilerOptions": {
