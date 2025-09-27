@@ -1,6 +1,6 @@
 {
-  "extends": "../tsconfig.app.json",
-  "include": [".", "../src"],
+  "extends": "../../../tsconfig.app.json",
+  "include": ["./plugins"],
   "compilerOptions": {
     "allowJs": true,
     "noEmit": true,

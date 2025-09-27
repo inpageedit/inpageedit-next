@@ -7,7 +7,16 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '指南', link: '/guide/' },
       { text: '插件', link: '/plugins/' },
-      { text: '开发', link: '/development/' },
+      {
+        text: '开发',
+        activeMatch: '/development/',
+        items: [
+          { text: '开发者指南', link: '/development/' },
+          { text: '插件开发手把手', link: '/development/plugins-101/1.first-plugin' },
+          { text: '参与核心开发', link: '/development/contribute-to-core/1.start' },
+          { text: 'API参考', link: '/development/api-references/' },
+        ],
+      },
     ],
     // https://github.com/jooy2/vitepress-sidebar
     sidebar: generateSidebar({

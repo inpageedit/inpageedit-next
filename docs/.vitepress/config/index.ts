@@ -20,6 +20,7 @@ import {
 } from 'vitepress-plugin-group-icons'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import ts from 'typescript'
 
 const GITHUB_REPO_URL = 'https://github.com/inpageedit/inpageedit-next'
 
@@ -43,6 +44,7 @@ export default defineConfig(
       },
     },
     themeConfig: {
+      logo: '/images/logo/IPE.png',
       socialLinks: [
         { icon: 'npm', link: 'https://www.npmjs.com/package/@inpageedit/core' },
         { icon: 'github', link: GITHUB_REPO_URL },
@@ -78,7 +80,16 @@ export default defineConfig(
             extraFiles: {
               'twoslash-global.d.ts': twoSlashDts,
             },
-            // tsLibDirectory: resolve(import.meta.dirname, '../../.templates'),
+            compilerOptions: {
+              target: ts.ScriptTarget.ES2020,
+              module: ts.ModuleKind.ESNext,
+              moduleResolution: ts.ModuleResolutionKind.Bundler,
+              strict: true,
+              noImplicitAny: true,
+              skipLibCheck: true,
+              jsx: ts.JsxEmit.ReactJSX,
+              jsxImportSource: 'jsx-dom',
+            },
           },
           floatingVue: {},
         }),
@@ -97,7 +108,10 @@ export default defineConfig(
       plugins: [
         groupIconVitePlugin({
           customIcon: {
-            'gadgets-definition': localIconLoader(import.meta.url, '../public/icons/mediawiki.svg'),
+            'gadgets-definition': localIconLoader(
+              import.meta.url,
+              '../public/icons/mediawiki.svg'
+            ),
           },
         }),
         GitChangelog({
@@ -114,6 +128,7 @@ export default defineConfig(
       ssr: {
         noExternal: ['@nolebase/vitepress-plugin-inline-link-preview'],
       },
+      publicDir: resolve(import.meta.dirname, '../public'),
       server: {
         port: 1225,
       },

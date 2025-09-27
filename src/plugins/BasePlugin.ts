@@ -1,4 +1,4 @@
-import { InPageEdit, Logger } from '@/InPageEdit'
+import { InPageEdit } from '@/InPageEdit'
 import { snakeCase } from '@/utils/string'
 
 interface DisposeHandler {
@@ -67,7 +67,7 @@ export default class BasePlugin<T extends unknown = any> {
     return this.#name
   }
 
-  get logger(): Logger {
+  get logger() {
     return this.ctx.logger(this.name)
   }
 }

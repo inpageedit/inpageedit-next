@@ -36,7 +36,7 @@ $('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').ap
 
 - 可热插拔的模块化设计
 - 完全使用 TypeScript 编写
-- 超简单的扩展能力，示例插件：[hello-world](./examples/plugins/hello-world.js)
+- 超简单的扩展能力，示例插件：[hello-world](./docs/.templates/examples/plugins/hello-world.js)
 
 ## Supported languages
 

@@ -63,10 +63,15 @@ export default defineConfig(() => {
       config.build = {
         target: 'es2020',
         lib: {
-          entry: 'src/index.ts',
+          entry: {
+            index: 'src/index.ts',
+            'components/index': 'src/components/index.ts',
+          },
           name: 'InPageEditBundle',
           formats: ['es'],
-          fileName: 'index',
+          fileName: (format, entryName) => {
+            return `${entryName}.js`
+          },
           cssFileName: 'style',
         },
         emptyOutDir: true,

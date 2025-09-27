@@ -11,6 +11,31 @@
     "dist",
     "lib"
   ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./InPageEdit": {
+      "types": "./dist/InPageEdit.d.ts"
+    },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "import": "./dist/components/index.js"
+    },
+    "./models/*": {
+      "types": "./dist/plugins/*.d.ts"
+    },
+    "./plugins/*": {
+      "types": "./dist/plugins/*.d.ts"
+    },
+    "./services/*": {
+      "types": "./dist/services/*.d.ts"
+    },
+    "./types/*": {
+      "types": "./dist/services/*.d.ts"
+    }
+  },
   "scripts": {
     "start": "zx dev/scripts/setup-dev.ts",
     "dev": "vite",
@@ -23,7 +48,8 @@
     "format": "prettier --write ./src",
     "doc:dev": "vitepress dev docs",
     "doc:build": "npm run build:import && vitepress build docs",
-    "doc:preview": "vitepress preview docs"
+    "doc:preview": "vitepress preview docs",
+    "typecheck": "tsc -b --pretty false --noEmit"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

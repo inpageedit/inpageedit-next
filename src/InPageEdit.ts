@@ -1,4 +1,4 @@
-import { Context, Inject, Schema } from 'cordis'
+import { Context, Inject, Schema, Events as CordisEvents } from 'cordis'
 import { ApiService } from '@/services/ApiService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService'
 import { SsiModalService } from '@/services/SsiModalService'
@@ -10,8 +10,6 @@ export interface InPageEditCoreConfig {
   baseURL: string | URL
   legacyPreferences: Record<string, any>
 }
-
-export * from 'cordis'
 
 /**
  * ✏️ InPageEdit NEXT
@@ -38,7 +36,6 @@ export class InPageEdit extends Context {
       ...InPageEdit.DEFAULT_CONFIG,
       ...config,
     }
-
     this.#initCoreServices()
     this.#initCorePlugins()
     this.#initCoreAssets()
@@ -94,4 +91,11 @@ export class InPageEdit extends Context {
     })
     return promise
   }
+}
+
+// 类型体操
+export { Inject, Schema, Service } from 'cordis'
+export interface Events<C extends InPageEdit = InPageEdit> extends CordisEvents<C> {}
+export interface InPageEdit {
+  [InPageEdit.events]: Events<this>
 }

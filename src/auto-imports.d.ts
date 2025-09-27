@@ -16,9 +16,9 @@ declare global {
   const ProgressBar: typeof import('./components/ProgressBar/index')['ProgressBar']
   const RadioBox: typeof import('./components/RadioBox')['RadioBox']
   const RegisterPreferences: typeof import('./decorators/Preferences')['RegisterPreferences']
-  const TabContent: typeof import('./components/TabView/TabView')['TabContent']
-  const TabLabel: typeof import('./components/TabView/TabView')['TabLabel']
-  const TabView: typeof import('./components/TabView/TabView')['TabView']
+  const TabContent: typeof import('./components/TabView/index')['TabContent']
+  const TabLabel: typeof import('./components/TabView/index')['TabLabel']
+  const TabView: typeof import('./components/TabView/index')['TabView']
   const TwinSwapInput: typeof import('./components/TwinSwapInput/index')['TwinSwapInput']
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
@@ -54,8 +54,8 @@ declare global {
   export type { RadioBoxProps } from './components/RadioBox'
   import('./components/RadioBox')
   // @ts-ignore
-  export type { TabViewLabelOptions } from './components/TabView/TabView'
-  import('./components/TabView/TabView')
+  export type { TabViewLabelOptions } from './components/TabView/index'
+  import('./components/TabView/index')
   // @ts-ignore
   export type { TwinSwapInputProps, TwinSwapInputInput, TwinSwapElement } from './components/TwinSwapInput/index'
   import('./components/TwinSwapInput/index')
