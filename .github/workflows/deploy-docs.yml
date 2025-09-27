@@ -30,7 +30,7 @@ jobs:
         env:
           DOCS_BASE_URL: /${{ github.event.repository.name }}/
         run: |
-          pnpm doc:build
+          pnpm docs:build
 
       - name: Publish GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

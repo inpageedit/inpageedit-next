@@ -8,8 +8,6 @@
 
 **InPageEdit NEXT**是由机智的小鱼君开发的一款 MediaWiki 多功能插件。主要功能旨在使许多 MediaWiki 的功能在不打开新标签页的情况下完成(包括但不限于编辑)，极大加快维护 wiki 的速度。模块化设计、类型定义清晰完整，插件可自由热插拔。
 
-→ <https://www.ipe.wiki> ←
-
 </div>
 
 ## 快速上手 / Quick Start
@@ -24,15 +22,27 @@
 $('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
 ```
 
-## For developers
+## 特色功能 / Features
 
-This is a monorepo:
+**编辑者视角 / For wiki editors**
 
-| package          | description   | directory                      |
-| ---------------- | ------------- | ------------------------------ |
-| @inpageedit/core | Core package  | [packages/core](packages/core) |
-| docs             | Documentation | [docs](docs)                   |
-| plugins          | Plugins       | [plugins](plugins)             |
+- 快速编辑 / Quick Edit
+- 快速移动 / Quick Move
+- 快速重定向 / Quick Redirect
+- 快速差异 / Quick Diff
+- 快速预览 / Quick Preview
+
+**开发者视角 / For developers**
+
+- 可热插拔的模块化设计
+- 完全使用 TypeScript 编写
+- 超简单的扩展能力，示例插件：[hello-world](./docs/.templates/examples/plugins/hello-world.js)
+
+## Supported languages
+
+> [!NOTE]
+>
+> Currently only English is supported. We're working on i18n support.
 
 ---
 

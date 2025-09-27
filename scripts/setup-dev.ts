@@ -1,35 +1,54 @@
 #!/usr/bin/env zx
 
-/**
- * Dev tmux orchestrator
- * - pnpm dev-all                # 默认：启动(若存在则复用)并 attach
- * - pnpm dev-all --no-attach    # 启动但不 attach
- * - pnpm dev-all --kill         # 结束会话后退出
- * - pnpm dev-all --restart      # kill 后再启动（不丢命令）
- * - pnpm dev-all --status       # 显示状态后退出
- * - pnpm dev-all --help         # 查看帮助
- */
-
+import 'zx/globals'
 import { resolve } from 'node:path'
-import { $, cd } from 'zx'
 
 // ---------------------------- Config ----------------------------
 $.verbose = true
 
 const SESS_NAME = 'inpageedit-next'
 const PROJECT_ROOT = resolve(import.meta.dirname, '../../')
-const DEV_COMMANDS = ['dev', 'doc:dev'] as const
+const DEV_COMMANDS: ((target: string) => ProcessPromise)[] = [
+  (target) => $`tmux send-keys -t ${target} "pnpm --filter core dev" C-m`,
+  (target) => $`tmux send-keys -t ${target} "pnpm --filter docs dev" C-m`,
+] as const
 const DEFAULT_WINDOW = 0
+
+// ---------------------------- Usage ----------------------------
+function printHelp() {
+  console.log(`
+用法：
+  pnpm setup-dev [--start] [--stop] [--quiet] [--restart] [--status] [--help]
+
+选项：
+  --start       创建并启动 tmux 会话
+  --stop        直接结束并删除 "${SESS_NAME}" 会话
+  --quiet       启动 tmux 会话但不附着（CI/非交互环境推荐）
+  --restart     结束旧会话后重启并（默认）附着
+  --status      显示当前 tmux 会话列表（并标注是否存在目标会话）
+  --help        显示本帮助
+`)
+}
 
 // ---------------------------- Arg Parse ----------------------------
 type Flags = {
   help?: boolean
-  kill?: boolean
+  start?: boolean
+  stop?: boolean
+  quiet?: boolean
   restart?: boolean
-  'no-attach'?: boolean
   status?: boolean
 }
-const flags = parseFlags<Flags>(process.argv.slice(2))
+const flags = minimist<Flags>(process.argv.slice(2), {
+  boolean: ['help', 'start', 'stop', 'quiet', 'restart', 'status'],
+  alias: {
+    h: 'help',
+    q: 'quiet',
+    r: 'restart',
+    s: 'status',
+    kill: 'stop',
+  },
+})
 
 // ---------------------------- Main ----------------------------
 await main().catch((err) => {
@@ -38,7 +57,8 @@ await main().catch((err) => {
 })
 
 async function main() {
-  if (flags.help) return printHelp()
+  if (flags.help || Object.keys(flags).length === 0) return printHelp()
+
   cd(PROJECT_ROOT)
 
   await ensureTmuxInstalled()
@@ -48,7 +68,7 @@ async function main() {
     return
   }
 
-  if (flags.kill) {
+  if (flags.stop) {
     const existed = await hasSession(SESS_NAME)
     if (!existed) {
       console.log(`会话 "${SESS_NAME}" 不存在；无需清理。`)
@@ -68,16 +88,20 @@ async function main() {
     return
   }
 
-  // 默认路径：存在则复用，不存在则创建并启动
-  if (!(await hasSession(SESS_NAME))) {
-    await createSession(SESS_NAME)
-    await splitWindowRight(SESS_NAME, DEFAULT_WINDOW)
-    await startDevCommands(SESS_NAME, DEV_COMMANDS)
-  } else {
-    console.log(`复用已存在的会话 "${SESS_NAME}"。`)
+  if (flags.start) {
+    if (!(await hasSession(SESS_NAME))) {
+      await createSession(SESS_NAME)
+      await splitWindowRight(SESS_NAME, DEFAULT_WINDOW)
+      await startDevCommands(SESS_NAME, DEV_COMMANDS)
+    } else {
+      console.log(`复用已存在的会话 "${SESS_NAME}"。`)
+    }
+
+    await maybeAttach(SESS_NAME, !flags.quiet)
+    return
   }
 
-  await maybeAttach(SESS_NAME, !flags['no-attach'])
+  return printHelp()
 }
 
 // ---------------------------- Actions ----------------------------
@@ -109,10 +133,16 @@ async function splitWindowRight(name: string, windowIndex = 0) {
   await $`tmux split-window -h -t ${name}:${windowIndex}`
 }
 
-async function startDevCommands(name: string, cmds: readonly string[]) {
+async function startDevCommands(
+  name: string,
+  cmds: readonly (string | ((target: string) => any))[]
+) {
   for (let i = 0; i < cmds.length; i++) {
     const paneTarget = `${name}:${DEFAULT_WINDOW}.${i}`
-    await $`tmux send-keys -t ${paneTarget} "pnpm ${cmds[i]}" C-m`
+    const cmd = cmds[i]
+    await (typeof cmd === 'function'
+      ? cmd(paneTarget)
+      : await $`tmux send-keys -t ${paneTarget} "${cmd}" C-m`)
   }
 }
 
@@ -139,7 +169,7 @@ async function startSessionAndMaybeAttach() {
   await createSession(SESS_NAME)
   await splitWindowRight(SESS_NAME, DEFAULT_WINDOW)
   await startDevCommands(SESS_NAME, DEV_COMMANDS)
-  await maybeAttach(SESS_NAME, !flags['no-attach'])
+  await maybeAttach(SESS_NAME, !flags.quiet)
 }
 
 async function printStatus() {
@@ -166,23 +196,4 @@ function parseFlags<T extends Record<string, any>>(argv: string[]): T {
     out[k] = v ?? true
   }
   return out as T
-}
-
-function printHelp() {
-  console.log(`
-用法：
-  pnpm dev-all [--no-attach] [--kill] [--restart] [--status] [--help]
-
-选项：
-  --no-attach   启动 tmux 会话但不附着（CI/非交互环境推荐）
-  --kill        直接结束并删除 "${SESS_NAME}" 会话
-  --restart     结束旧会话后重启并（默认）附着
-  --status      显示当前 tmux 会话列表（并标注是否存在目标会话）
-  --help        显示本帮助
-
-说明：
-  - 默认行为：若不存在则创建会话与两个 pane，并运行：
-      ${DEV_COMMANDS.map((c) => `pnpm ${c}`).join(' | ')}
-    若已存在则复用，然后尝试附着（在 TTY 下）。
-`)
 }

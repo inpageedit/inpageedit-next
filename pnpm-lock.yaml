@@ -7,6 +7,142 @@ settings:
 importers:
 
   .:
+    devDependencies:
+      '@prettier/plugin-pug':
+        specifier: ^3.4.2
+        version: 3.4.2(prettier@3.6.2)
+      '@types/node':
+        specifier: ^22.18.6
+        version: 22.18.6
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsx:
+        specifier: ^4.20.5
+        version: 4.20.5
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+      zx:
+        specifier: ^8.8.3
+        version: 8.8.3
+
+  docs:
+    dependencies:
+      naive-ui:
+        specifier: ^2.43.1
+        version: 2.43.1(vue@3.5.21(typescript@5.9.2))
+      vue:
+        specifier: ^3.5.21
+        version: 3.5.21(typescript@5.9.2)
+    devDependencies:
+      '@inpageedit/core':
+        specifier: workspace:^
+        version: link:../packages/core
+      '@nolebase/vitepress-plugin-git-changelog':
+        specifier: ^2.18.2
+        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2))(vue@3.5.21(typescript@5.9.2))
+      '@nolebase/vitepress-plugin-inline-link-preview':
+        specifier: ^2.18.2
+        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2))(vue@3.5.21(typescript@5.9.2))
+      '@nolebase/vitepress-plugin-page-properties':
+        specifier: ^2.18.2
+        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2))(vue@3.5.21(typescript@5.9.2))
+      '@prettier/plugin-pug':
+        specifier: ^3.4.2
+        version: 3.4.2(prettier@3.6.2)
+      '@shikijs/vitepress-twoslash':
+        specifier: ^3.13.0
+        version: 3.13.0(typescript@5.9.2)
+      '@tabler/icons-vue':
+        specifier: ^3.35.0
+        version: 3.35.0(vue@3.5.21(typescript@5.9.2))
+      '@types/jquery':
+        specifier: ^3.5.33
+        version: 3.5.33
+      '@types/node':
+        specifier: ^22.18.6
+        version: 22.18.6
+      '@types/ssi-modal':
+        specifier: ^1.0.0
+        version: 1.0.0
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^8.44.1
+        version: 8.44.1(@typescript-eslint/parser@8.44.1(eslint@9.36.0)(typescript@5.9.2))(eslint@9.36.0)(typescript@5.9.2)
+      '@typescript-eslint/parser':
+        specifier: ^8.44.1
+        version: 8.44.1(eslint@9.36.0)(typescript@5.9.2)
+      '@vitejs/plugin-vue':
+        specifier: ^6.0.1
+        version: 6.0.1(vite@7.1.7(@types/node@22.18.6)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5))(vue@3.5.21(typescript@5.9.2))
+      '@vue/language-plugin-pug':
+        specifier: ^3.0.8
+        version: 3.0.8
+      cross-env:
+        specifier: ^10.0.0
+        version: 10.0.0
+      eslint:
+        specifier: ^9.36.0
+        version: 9.36.0
+      fexios:
+        specifier: ^3.1.0
+        version: 3.1.0
+      jsx-dom:
+        specifier: ^8.1.6
+        version: 8.1.6
+      markdown-it-task-lists:
+        specifier: ^2.1.1
+        version: 2.1.1
+      mermaid:
+        specifier: ^11.12.0
+        version: 11.12.0
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
+      pug:
+        specifier: ^3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      sass-embedded:
+        specifier: ^1.93.2
+        version: 1.93.2
+      tsx:
+        specifier: ^4.20.5
+        version: 4.20.5
+      types-mediawiki:
+        specifier: ^2.0.0
+        version: 2.0.0(vue@3.5.21(typescript@5.9.2))
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+      vite:
+        specifier: ^7.1.7
+        version: 7.1.7(@types/node@22.18.6)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)
+      vitepress:
+        specifier: 2.0.0-alpha.12
+        version: 2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2)
+      vitepress-i18n:
+        specifier: ^1.3.4
+        version: 1.3.4
+      vitepress-markdown-timeline:
+        specifier: ^1.2.2
+        version: 1.2.2
+      vitepress-plugin-group-icons:
+        specifier: ^1.6.3
+        version: 1.6.3(markdown-it@14.1.0)(vite@7.1.7(@types/node@22.18.6)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5))
+      vitepress-plugin-mermaid:
+        specifier: ^2.0.17
+        version: 2.0.17(mermaid@11.12.0)(vitepress@2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2))
+      vitepress-sidebar:
+        specifier: ^1.33.0
+        version: 1.33.0
+
+  packages/core:
     dependencies:
       cordis:
         specifier: ^3.18.1
@@ -405,12 +541,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@eslint-community/eslint-utils@4.7.0':
-    resolution: {integrity: sha512-dyybb3AcajC7uha6CvhdVRJqaKyn7w2YKqKyAN37NKYgZT36w+iRb0Dymmc5qEJ549c/S31cMMSFd75bteCpCw==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
-
   '@eslint-community/eslint-utils@4.9.0':
     resolution: {integrity: sha512-ayVFHdtZ+hsq1t2Dy24wCmGXGe4q9Gu3smhLYALJrr473ZH27MsnSL+LKUlimp4BWJqMDMLmPpx/Q9R3OAlL4g==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -523,9 +653,6 @@ packages:
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
     engines: {node: '>=6.0.0'}
-
-  '@jridgewell/sourcemap-codec@1.5.0':
-    resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
@@ -1447,8 +1574,6 @@ packages:
     resolution: {integrity: sha512-9IbthFbFBVJ15WBDNPqHdl59TyEAMNWxF1Dxsdi14625ePQkMX35WvcqgGno0BcXlpXDbUaBZgQ+jfBYT+uuSQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
-    peerDependencies:
-      cordis: '*'
 
   cose-base@1.0.3:
     resolution: {integrity: sha512-s9whTXInMSgAp/NVXVNuVxVKzGH2qck3aQlVHxDCdAEPgtMKwc4Wq6/QKhgdEdgbLSi9rBTAcPoRa6JpiG4ksg==}
@@ -2249,9 +2374,6 @@ packages:
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
-
-  magic-string@0.30.18:
-    resolution: {integrity: sha512-yi8swmWbO17qHhwIBNeeZxTceJMeBvWJaId6dyvTSOwTipqeHhMhOrz6513r1sOKnpvQ7zkhlG8tPrpilwTxHQ==}
 
   magic-string@0.30.19:
     resolution: {integrity: sha512-2N21sPY9Ws53PZvsEpVtNuSW+ScYbQdp4b9qUaL+9QkHUrGFKo56Lg9Emg5s9V/qrtNBmiR01sYhUOwu3H+VOw==}
@@ -3182,10 +3304,6 @@ packages:
     resolution: {integrity: sha512-6NCPkv1ClwH+/BGE9QeoTIl09nuiAt0gS28nn1PvYXsGKRwM2TCbFA2QiilmehPDTXIe684k4rZI1yl3A1PCUw==}
     engines: {node: '>=18.12.0'}
 
-  unplugin@2.3.9:
-    resolution: {integrity: sha512-2dcbZq6aprwXTkzptq3k5qm5B8cvpjG9ynPd5fyM2wDJuuF7PeUK64Sxf0d+X1ZyDOeGydbNzMqBSIVlH8GIfA==}
-    engines: {node: '>=18.12.0'}
-
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
@@ -3563,11 +3681,6 @@ snapshots:
   '@esbuild/win32-x64@0.25.1':
     optional: true
 
-  '@eslint-community/eslint-utils@4.7.0(eslint@9.36.0)':
-    dependencies:
-      eslint: 9.36.0
-      eslint-visitor-keys: 3.4.3
-
   '@eslint-community/eslint-utils@4.9.0(eslint@9.36.0)':
     dependencies:
       eslint: 9.36.0
@@ -3691,7 +3804,7 @@ snapshots:
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
+      '@jridgewell/sourcemap-codec': 1.5.5
       '@jridgewell/trace-mapping': 0.3.30
 
   '@jridgewell/remapping@2.3.5':
@@ -3701,14 +3814,12 @@ snapshots:
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
-  '@jridgewell/sourcemap-codec@1.5.0': {}
-
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
   '@jridgewell/trace-mapping@0.3.30':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.5.0
+      '@jridgewell/sourcemap-codec': 1.5.5
 
   '@juggle/resize-observer@3.4.0': {}
 
@@ -4345,7 +4456,7 @@ snapshots:
 
   '@typescript-eslint/utils@8.44.1(eslint@9.36.0)(typescript@5.9.2)':
     dependencies:
-      '@eslint-community/eslint-utils': 4.7.0(eslint@9.36.0)
+      '@eslint-community/eslint-utils': 4.9.0(eslint@9.36.0)
       '@typescript-eslint/scope-manager': 8.44.1
       '@typescript-eslint/types': 8.44.1
       '@typescript-eslint/typescript-estree': 8.44.1(typescript@5.9.2)
@@ -4416,7 +4527,7 @@ snapshots:
       '@vue/compiler-ssr': 3.5.21
       '@vue/shared': 3.5.21
       estree-walker: 2.0.2
-      magic-string: 0.30.18
+      magic-string: 0.30.19
       postcss: 8.5.6
       source-map-js: 1.2.1
 
@@ -4699,7 +4810,6 @@ snapshots:
       '@cordisjs/schema': 0.1.1(@cordisjs/core@3.18.1)
       '@cordisjs/timer': 0.3.2(@cordisjs/core@3.18.1)
       cac: 6.7.14
-      cordis: 3.18.1
       cosmokit: 1.8.0
       kleur: 4.1.5
       reggol: 1.7.1
@@ -5544,10 +5654,6 @@ snapshots:
       yallist: 4.0.0
 
   lz-string@1.5.0: {}
-
-  magic-string@0.30.18:
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.5
 
   magic-string@0.30.19:
     dependencies:
@@ -6611,9 +6717,9 @@ snapshots:
       debug: 4.4.1
       kolorist: 1.8.0
       local-pkg: 1.1.2
-      magic-string: 0.30.18
+      magic-string: 0.30.19
       typescript: 5.9.2
-      unplugin: 2.3.9
+      unplugin: 2.3.10
     optionalDependencies:
       '@microsoft/api-extractor': 7.52.13(@types/node@22.18.6)
       '@vue/language-core': 3.0.8(typescript@5.9.2)
@@ -6629,13 +6735,6 @@ snapshots:
       picomatch: 4.0.3
 
   unplugin@2.3.10:
-    dependencies:
-      '@jridgewell/remapping': 2.3.5
-      acorn: 8.15.0
-      picomatch: 4.0.3
-      webpack-virtual-modules: 0.6.2
-
-  unplugin@2.3.9:
     dependencies:
       '@jridgewell/remapping': 2.3.5
       acorn: 8.15.0

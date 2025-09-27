@@ -20,7 +20,6 @@ export default defineConfig({
     ],
     // https://github.com/jooy2/vitepress-sidebar
     sidebar: generateSidebar({
-      documentRootPath: 'docs',
       debugPrint: true,
       useTitleFromFileHeading: true,
       useTitleFromFrontmatter: true,

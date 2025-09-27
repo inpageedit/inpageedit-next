@@ -1,5 +1,5 @@
 import { defineConfig, UserConfig } from 'vite'
-import { version } from './package.json'
+import { version } from '../../package.json'
 import { resolve } from 'node:path'
 import Vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
