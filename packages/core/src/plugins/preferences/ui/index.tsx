@@ -69,11 +69,10 @@ export class PluginPreferencesUI extends BasePlugin {
         className: 'btn',
         method: () => {
           const value = form.getValue()
-          // Object.entries(value).forEach(([key, val]) => {
-          //   this.ctx.preferences.set(key, val).catch(console.error)
-          // })
-          // modal.close()
-          this.logger.info('Preferences to save:', value)
+          Object.entries(value).forEach(([key, val]) => {
+            this.ctx.preferences.set(key, val).catch(console.error)
+          })
+          modal.close()
         },
       },
       {

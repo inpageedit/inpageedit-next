@@ -24,8 +24,8 @@
     pre(style='max-height: 20em; overflow: auto') {{ value }}
 </template>
 
-<script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef, watchEffect } from 'vue'
+<script setup lang="ts" vapor>
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useIPE } from '@/utils/vueHooks'
 import type { InPageEditPreferenceUIRegistryItem, InPageEditPreferenceUICategory } from '../index'
 import SchemaFormVue from '@/components/SchemaForm/SchemaFormVue.vue'

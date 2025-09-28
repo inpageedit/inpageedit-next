@@ -11,7 +11,7 @@
   "scripts": {
     "setup-dev": "zx scripts/setup-dev.ts",
     "dev": "npm run core:dev",
-    "build": "echo 'please run `pnpm --filter core build` instead' && exit 1",
+    "build": "npm run core:build",
     "core:dev": "pnpm --filter core dev",
     "core:build": "pnpm --filter core build",
     "docs:dev": "pnpm --filter docs dev",
