@@ -17,7 +17,7 @@
  * @author @openai/gpt-5
  */
 
-import Schema from 'schemastery'
+import type Schema from 'schemastery'
 import BASE_STYLE from './style.scss?inline'
 
 // ---------------------------------------------------------------------------
@@ -56,18 +56,64 @@ export type SchemaFormChangeEvent<T = any> = Event & {
   detail: SchemaFormChangeDetail<T>
 }
 
+// 注册 Custom Element（避免重复注册报错）
+const registerCustomElement = (name: string, ctor: CustomElementConstructor) => {
+  if (!customElements.get(name)) customElements.define(name, ctor)
+}
+
 // 路径工具
 type PathSeg = string | number
 const getByPath = (obj: any, path: PathSeg[]): any => path.reduce((o, k) => o?.[k], obj)
 const setByPath = (obj: any, path: PathSeg[], value: any): void => {
   if (!path.length) return
-  let cursor = obj
+  let cursor: any = obj
+  let parent: any = null
+  let parentKey: any = null
   for (let i = 0; i < path.length - 1; i++) {
     const key = path[i]
-    if (cursor[key] == null) cursor[key] = typeof path[i + 1] === 'number' ? [] : {}
-    cursor = cursor[key]
+    let next = cursor?.[key]
+
+    // 如果中间节点不存在，按下一段类型创建
+    if (next == null) {
+      next = typeof path[i + 1] === 'number' ? [] : {}
+      cursor[key] = next
+    } else if (typeof next !== 'object') {
+      // 如果出现了原始值（string / number / boolean 等），但后面仍有路径，需要“升级”成容器
+      next = typeof path[i + 1] === 'number' ? [] : {}
+      cursor[key] = next
+    }
+
+    parent = cursor
+    parentKey = key
+    cursor = next
   }
-  cursor[path[path.length - 1]] = value
+
+  const lastKey = path[path.length - 1]
+
+  // 若最终 cursor 仍是原始值（极端情况：path 只有一段且 obj 本身是原始值），做一次容器升级
+  if (cursor == null || typeof cursor !== 'object') {
+    const replacement = typeof lastKey === 'number' ? [] : {}
+    if (parent) {
+      parent[parentKey] = replacement
+      cursor = replacement
+    } else {
+      // parent 不存在说明 obj 自身不是对象，直接返回不赋值以避免抛错
+      return
+    }
+  }
+
+  try {
+    cursor[lastKey] = value
+  } catch (err) {
+    // 最后一层仍然不可写（比如被 Object.freeze），尝试替换成浅拷贝后再写
+    try {
+      const cloned = Array.isArray(cursor) ? cursor.slice() : { ...cursor }
+      cloned[lastKey] = value
+      if (parent) parent[parentKey] = cloned
+    } catch {
+      // 静默失败，避免打断用户输入
+    }
+  }
 }
 const dotPath = (path: PathSeg[]) => path.map(String).join('.')
 
@@ -75,12 +121,6 @@ const dotPath = (path: PathSeg[]) => path.map(String).join('.')
 const sanitizeForId = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, '_')
 const idOf = (path: PathSeg[]) => `schema_${sanitizeForId(dotPath(path) || 'root')}`
 const nameOf = (path: PathSeg[]) => dotPath(path)
-
-// 简单 uid（如需临时唯一标识可用）
-const uid = (() => {
-  let i = 0
-  return () => (++i).toString(36)
-})()
 
 // 值转换（input -> 目标类型）
 function castToType(type: string, value: any) {
@@ -305,9 +345,7 @@ class SchemaFormString extends BaseFieldElement<string | undefined> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-string')) {
-  customElements.define('schema-form-string', SchemaFormString)
-}
+registerCustomElement('schema-form-string', SchemaFormString)
 
 class SchemaFormNumber extends BaseFieldElement<number | undefined> {
   private $input?: HTMLInputElement
@@ -344,9 +382,7 @@ class SchemaFormNumber extends BaseFieldElement<number | undefined> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-number')) {
-  customElements.define('schema-form-number', SchemaFormNumber)
-}
+registerCustomElement('schema-form-number', SchemaFormNumber)
 
 class SchemaFormBoolean extends BaseFieldElement<boolean> {
   protected render() {
@@ -370,9 +406,7 @@ class SchemaFormBoolean extends BaseFieldElement<boolean> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-boolean')) {
-  customElements.define('schema-form-boolean', SchemaFormBoolean)
-}
+registerCustomElement('schema-form-boolean', SchemaFormBoolean)
 
 class SchemaFormDate extends BaseFieldElement<Date | undefined> {
   private $input?: HTMLInputElement
@@ -404,9 +438,7 @@ class SchemaFormDate extends BaseFieldElement<Date | undefined> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-date')) {
-  customElements.define('schema-form-date', SchemaFormDate)
-}
+registerCustomElement('schema-form-date', SchemaFormDate)
 
 class SchemaFormConst extends BaseFieldElement<any> {
   protected render() {
@@ -425,9 +457,7 @@ class SchemaFormConst extends BaseFieldElement<any> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-const')) {
-  customElements.define('schema-form-const', SchemaFormConst)
-}
+registerCustomElement('schema-form-const', SchemaFormConst)
 
 // ---------------------------------------------------------------------------
 // 复杂字段：union / tuple / object / array / dict —— 泛型辅助
@@ -534,7 +564,10 @@ class SchemaFormUnion extends BaseFieldElement<any> {
         $box.innerHTML = ''
         const current = list[active]
         const child = createFieldForSchema(current, this._path, this._value, this._label)
-        child.addEventListener('change', (e: any) => this.emitChange(e.detail.value))
+        child.addEventListener('change', (e: any) => {
+          e.stopPropagation() // ✅ 不让子项事件继续冒泡
+          this.emitChange(e.detail.value)
+        })
         $box.appendChild(child)
       }
       renderChild()
@@ -544,9 +577,7 @@ class SchemaFormUnion extends BaseFieldElement<any> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-union')) {
-  customElements.define('schema-form-union', SchemaFormUnion)
-}
+registerCustomElement('schema-form-union', SchemaFormUnion)
 
 class SchemaFormTuple extends BaseFieldElement<any[]> {
   protected render() {
@@ -555,6 +586,7 @@ class SchemaFormTuple extends BaseFieldElement<any[]> {
     const $field = this.makeFieldContainer('tuple', meta.description)
     const $box = document.createElement('div')
     $box.className = 'group'
+
     const arr: any[] = Array.isArray(this._value) ? this._value : []
     ;((this._schema as any).list || []).forEach((sub: any, i: number) => {
       const child = createFieldForSchema(
@@ -564,9 +596,10 @@ class SchemaFormTuple extends BaseFieldElement<any[]> {
         `${this._label ?? ''}[${i}]`
       )
       child.addEventListener('change', (e: any) => {
-        const copy = arr.slice()
-        copy[i] = e.detail.value
-        this.emitChange(copy)
+        e.stopPropagation() // ✅
+        const base = Array.isArray(this._value) ? this._value.slice() : []
+        base[i] = e.detail.value
+        this.emitChange(base)
       })
       $box.appendChild(child)
     })
@@ -574,9 +607,7 @@ class SchemaFormTuple extends BaseFieldElement<any[]> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-tuple')) {
-  customElements.define('schema-form-tuple', SchemaFormTuple)
-}
+registerCustomElement('schema-form-tuple', SchemaFormTuple)
 
 class SchemaFormObject extends BaseFieldElement<Record<string, any>> {
   protected render() {
@@ -585,15 +616,17 @@ class SchemaFormObject extends BaseFieldElement<Record<string, any>> {
     const $field = this.makeFieldContainer('object', meta.description)
     const $box = document.createElement('div')
     $box.className = 'group'
-    const obj = this._value ?? {}
     const dict = (this._schema as any).dict || {}
+
     Object.keys(dict).forEach((k) => {
       if (dict[k]?.meta?.hidden) return
-      const child = createFieldForSchema(dict[k], [...this._path, k], obj[k], k)
+      const current = (this._value ?? {})[k]
+      const child = createFieldForSchema(dict[k], [...this._path, k], current, k)
       child.addEventListener('change', (e: any) => {
-        const copy = { ...obj }
-        copy[k] = e.detail.value
-        this.emitChange(copy)
+        e.stopPropagation() // ✅
+        const base = { ...(this._value ?? {}) }
+        base[k] = e.detail.value
+        this.emitChange(base)
       })
       $box.appendChild(child)
     })
@@ -601,9 +634,7 @@ class SchemaFormObject extends BaseFieldElement<Record<string, any>> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-object')) {
-  customElements.define('schema-form-object', SchemaFormObject)
-}
+registerCustomElement('schema-form-object', SchemaFormObject)
 
 class SchemaFormArray extends BaseFieldElement<any[]> {
   protected render() {
@@ -612,62 +643,71 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
     const $field = this.makeFieldContainer('array', meta.description)
     const $box = document.createElement('div')
     $box.className = 'group'
-    const list: any[] = Array.isArray(this._value) ? this._value : []
+
+    const innerSchema = (this._schema as any).inner!
+    const currentList = () => (Array.isArray(this._value) ? this._value : [])
 
     const renderRows = () => {
       $box.innerHTML = ''
+      const list = currentList()
       list.forEach((item, idx) => {
         const rowPath = [...this._path, idx]
         const row = document.createElement('div')
         row.className = 'row'
         row.setAttribute('data-path', dotPath(rowPath))
+
         const child = createFieldForSchema(
-          (this._schema as any).inner!,
+          innerSchema,
           rowPath,
           item,
           `${this._label ?? ''}[${idx}]`
         )
         child.addEventListener('change', (e: any) => {
-          list[idx] = e.detail.value
-          this.emitChange(list.slice())
+          e.stopPropagation() // ✅
+          const base = currentList().slice()
+          base[idx] = e.detail.value
+          this.emitChange(base) // 普通输入不强制重渲染
         })
+
         const toolbar = document.createElement('div')
         toolbar.className = 'actions'
         const up = document.createElement('button')
         up.type = 'button'
         up.className = 'btn'
         up.textContent = this._i18n.arrayMoveUp ?? '↑'
+        up.onclick = () => {
+          if (idx > 0) {
+            const base = currentList().slice()
+            ;[base[idx - 1], base[idx]] = [base[idx], base[idx - 1]]
+            this.emitChange(base)
+            renderRows() // 结构变化需要刷新
+          }
+        }
+
         const down = document.createElement('button')
         down.type = 'button'
         down.className = 'btn'
         down.textContent = this._i18n.arrayMoveDown ?? '↓'
+        down.onclick = () => {
+          const now = currentList()
+          if (idx < now.length - 1) {
+            const base = now.slice()
+            ;[base[idx + 1], base[idx]] = [base[idx], base[idx + 1]]
+            this.emitChange(base)
+            renderRows()
+          }
+        }
+
         const del = document.createElement('button')
         del.type = 'button'
         del.className = 'btn danger'
         del.textContent = this._i18n.arrayRemove ?? '×'
-        up.onclick = () => {
-          if (idx > 0) {
-            const t = list[idx - 1]
-            list[idx - 1] = list[idx]
-            list[idx] = t
-            renderRows()
-            this.emitChange(list.slice())
-          }
-        }
-        down.onclick = () => {
-          if (idx < list.length - 1) {
-            const t = list[idx + 1]
-            list[idx + 1] = list[idx]
-            list[idx] = t
-            renderRows()
-            this.emitChange(list.slice())
-          }
-        }
         del.onclick = () => {
-          list.splice(idx, 1)
+          const base = currentList().filter((_, i) => i !== idx)
+          this.emitChange(base)
           renderRows()
-          this.emitChange(list.slice())
         }
+
         toolbar.append(up, down, del)
         row.appendChild(child)
         row.appendChild(toolbar)
@@ -682,9 +722,10 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
     add.className = 'btn primary'
     add.textContent = this._i18n.arrayAdd ?? '+'
     add.onclick = () => {
-      list.push(defaultOf((this._schema as any).inner!))
+      const base = currentList().slice()
+      base.push(defaultOf(innerSchema))
+      this.emitChange(base)
       renderRows()
-      this.emitChange(list.slice())
     }
     const actions = document.createElement('div')
     actions.className = 'actions'
@@ -695,9 +736,7 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-array')) {
-  customElements.define('schema-form-array', SchemaFormArray)
-}
+registerCustomElement('schema-form-array', SchemaFormArray)
 
 class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
   protected render() {
@@ -706,7 +745,9 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
     const $field = this.makeFieldContainer('dict', meta.description)
     const $box = document.createElement('div')
     $box.className = 'group'
+
     const map: Record<string, any> = this._value ?? {}
+    const innerSchema = (this._schema as any).inner!
 
     Object.keys(map).forEach((k) => {
       const rowPath = [...this._path, k]
@@ -718,33 +759,37 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
       $k.value = k
       $k.name = nameOf(rowPath) + '.__key'
       $k.id = idOf(rowPath) + '__key'
-      const $v = createFieldForSchema(
-        (this._schema as any).inner!,
-        rowPath,
-        map[k],
-        `${this._label ?? ''}[${k}]`
-      )
+      const $v = createFieldForSchema(innerSchema, rowPath, map[k], `${this._label ?? ''}[${k}]`)
+
       const $del = document.createElement('button')
       $del.type = 'button'
       $del.className = 'btn danger'
       $del.textContent = this._i18n.dictRemove ?? '×'
       $del.onclick = () => {
-        delete map[k]
-        this.emitChange({ ...map })
+        const base = { ...(this._value ?? {}) }
+        delete base[k]
+        this.emitChange(base)
+        // 行被删除，重渲染以移除 UI
+        this.render()
       }
+
       $k.onchange = () => {
         const nv = $k.value
         if (!nv || nv === k) return
-        const copy = { ...map }
-        copy[nv] = copy[k]
-        delete copy[k]
-        this.emitChange(copy)
+        const base = { ...(this._value ?? {}) }
+        base[nv] = base[k]
+        delete base[k]
+        this.emitChange(base)
+        this.render()
       }
+
       $v.addEventListener('change', (e: any) => {
-        const copy = { ...map }
-        copy[k] = e.detail.value
-        this.emitChange(copy)
+        e.stopPropagation() // ✅
+        const base = { ...(this._value ?? {}) }
+        base[k] = e.detail.value
+        this.emitChange(base)
       })
+
       row.append($k, $v, $del)
       $box.appendChild(row)
     })
@@ -754,10 +799,11 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
     add.className = 'btn primary'
     add.textContent = this._i18n.dictAdd ?? '+'
     add.onclick = () => {
-      const keyName = `k${Object.keys(map).length + 1}`
-      const next = defaultOf((this._schema as any).inner!)
-      const copy = { ...map, [keyName]: next }
-      this.emitChange(copy)
+      const keyName = `k${Object.keys(this._value ?? {}).length + 1}`
+      const nextVal = defaultOf(innerSchema)
+      const base = { ...(this._value ?? {}), [keyName]: nextVal }
+      this.emitChange(base)
+      this.render()
     }
     const actions = document.createElement('div')
     actions.className = 'actions'
@@ -768,9 +814,7 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
     this.$root.appendChild($field)
   }
 }
-if (!customElements.get('schema-form-dict')) {
-  customElements.define('schema-form-dict', SchemaFormDict)
-}
+registerCustomElement('schema-form-dict', SchemaFormDict)
 
 // ---------------------------------------------------------------------------
 // 主表单元素：<schema-form> —— 已为泛型 SchemaForm<T>
@@ -795,7 +839,14 @@ export class SchemaForm<T extends any = unknown> extends HTMLElement {
     this.addEventListener('change', (e: any) => {
       if (!e?.detail) return
       const { path, value } = e.detail
-      setByPath(this._state ?? (this._state = {}), path, value)
+
+      if (Array.isArray(path) && path.length === 0) {
+        // ✅ 允许根对象整体替换
+        this._state = value
+      } else {
+        setByPath(this._state ?? (this._state = {}), path, value)
+      }
+
       this.dispatchEvent(
         new CustomEvent('form-change', { detail: { path, value, state: this._state } })
       )
@@ -805,7 +856,12 @@ export class SchemaForm<T extends any = unknown> extends HTMLElement {
   // --- 对外 API ---
   set schema(value: Schema<T>) {
     this._schema = ensureSchemaInstance<T>(value as any)
-    this._state = defaultOf<T>(this._schema)
+    // ✅ 深默认初始化（autofix）
+    try {
+      this._state = this._schema(null as any, { autofix: true })
+    } catch {
+      this._state = defaultOf<T>(this._schema)
+    }
     this.render()
   }
   get schema() {
@@ -835,7 +891,11 @@ export class SchemaForm<T extends any = unknown> extends HTMLElement {
     return opts.validate ? this._schema(raw ?? null, { autofix: opts.autofix }) : (raw as T)
   }
   reset() {
-    this._state = defaultOf<T>(this._schema)
+    try {
+      this._state = this._schema(null as any, { autofix: true })
+    } catch {
+      this._state = defaultOf<T>(this._schema)
+    }
     this.render()
   }
   refresh() {
@@ -865,15 +925,14 @@ export class SchemaForm<T extends any = unknown> extends HTMLElement {
     form.appendChild(child)
   }
 }
-if (!customElements.get('schema-form')) {
-  customElements.define('schema-form', SchemaForm)
-}
+registerCustomElement('schema-form', SchemaForm)
 
 // ---------------------------------------------------------------------------
 // createSchemasteryForm<T>() —— 强类型工厂
 // ---------------------------------------------------------------------------
 export interface FormInstance<T> {
   /** 底层元素 */ el: SchemaForm<T>
+  /** 挂载 */ mount: (parent: HTMLElement | string) => SchemaForm<T>
   /** 设置数据（可选校验）*/ setData: (v: Partial<T>, opts?: { validate?: boolean }) => void
   /** 获取数据（默认校验）*/ getData: (opts?: { validate?: boolean }) => T
   /** 卸载/清理 */ destroy: () => void
@@ -901,6 +960,21 @@ export function createSchemasteryForm<T = any>(
   if (onChange) el.addEventListener('form-change', handler)
   return {
     el,
+    mount: (parent) => {
+      if (typeof parent === 'string') {
+        const p = document.querySelector(parent)
+        if (!p) throw new Error('未找到挂载节点：' + parent)
+        p.innerHTML = ''
+        p.appendChild(el)
+      }
+      if (parent instanceof HTMLElement) {
+        parent.innerHTML = ''
+        parent.appendChild(el)
+      } else {
+        throw new Error('挂载节点必须是 HTMLElement 或 选择器字符串')
+      }
+      return el
+    },
     setData: (v, opts) => el.setData(v, opts),
     getData: (opts?: { validate?: boolean }) => el.getData(opts as any) as T,
     destroy: () => {
@@ -910,12 +984,26 @@ export function createSchemasteryForm<T = any>(
   }
 }
 
+export function install() {
+  registerCustomElement('schema-form', SchemaForm)
+  registerCustomElement('schema-form-string', SchemaFormString)
+  registerCustomElement('schema-form-number', SchemaFormNumber)
+  registerCustomElement('schema-form-boolean', SchemaFormBoolean)
+  registerCustomElement('schema-form-date', SchemaFormDate)
+  registerCustomElement('schema-form-const', SchemaFormConst)
+  registerCustomElement('schema-form-union', SchemaFormUnion)
+  registerCustomElement('schema-form-tuple', SchemaFormTuple)
+  registerCustomElement('schema-form-object', SchemaFormObject)
+  registerCustomElement('schema-form-array', SchemaFormArray)
+  registerCustomElement('schema-form-dict', SchemaFormDict)
+}
+
 // ---------------------------------------------------------------------------
 // 全局类型声明（便于 TS 推断）
 // ---------------------------------------------------------------------------
 declare global {
   interface HTMLElementTagNameMap {
-    'schema-form': SchemaForm<any>
+    'schema-form': SchemaForm
     'schema-form-string': SchemaFormString
     'schema-form-number': SchemaFormNumber
     'schema-form-boolean': SchemaFormBoolean

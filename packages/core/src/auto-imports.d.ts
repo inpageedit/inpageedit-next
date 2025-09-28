@@ -9,7 +9,6 @@ declare global {
   const ActionButton: typeof import('./components/ActionButton')['ActionButton']
   const BasePlugin: typeof import('@/plugins/BasePlugin')['default']
   const CheckBox: typeof import('./components/CheckBox')['CheckBox']
-  const DEFAULT_I18N: typeof import('./components/SchemaForm/index')['DEFAULT_I18N']
   const Endpoints: typeof import('./constants/endpoints')['Endpoints']
   const IPEInjectKey: typeof import('./utils/vueHooks')['IPEInjectKey']
   const InputBox: typeof import('./components/InputBox')['InputBox']
@@ -18,14 +17,12 @@ declare global {
   const ProgressBar: typeof import('./components/ProgressBar/index')['ProgressBar']
   const RadioBox: typeof import('./components/RadioBox')['RadioBox']
   const RegisterPreferences: typeof import('./decorators/Preferences')['RegisterPreferences']
-  const SchemaForm: typeof import('./components/SchemaForm/index')['SchemaForm']
   const TabContent: typeof import('./components/TabView/index')['TabContent']
   const TabLabel: typeof import('./components/TabView/index')['TabLabel']
   const TabView: typeof import('./components/TabView/index')['TabView']
   const TwinSwapInput: typeof import('./components/TwinSwapInput/index')['TwinSwapInput']
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
-  const createSchemasteryForm: typeof import('./components/SchemaForm/index')['createSchemasteryForm']
   const deepToRaw: typeof import('./utils/vueReactivity')['deepToRaw']
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
   const ensureSlash: typeof import('./utils/string')['ensureSlash']
@@ -59,9 +56,6 @@ declare global {
   // @ts-ignore
   export type { RadioBoxProps } from './components/RadioBox'
   import('./components/RadioBox')
-  // @ts-ignore
-  export type { SchemaForm, SchemaFormI18n, JSONValue, SchemaFormChangeDetail, SchemaFormChangeEvent, FormInstance } from './components/SchemaForm/index'
-  import('./components/SchemaForm/index')
   // @ts-ignore
   export type { TabViewLabelOptions } from './components/TabView/index'
   import('./components/TabView/index')

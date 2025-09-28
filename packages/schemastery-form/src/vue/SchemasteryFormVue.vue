@@ -1,12 +1,16 @@
-<template>
-  <schema-form ref="elRef" v-bind="$attrs" />
+<template lang="pug">
+schema-form(ref='elRef', v-bind='$attrs')
 </template>
 
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount, watch, nextTick, useTemplateRef, onBeforeMount } from 'vue'
 import type Schema from 'schemastery'
-import './index' // 注册自定义元素
-import { SchemaForm, type SchemaFormChangeEvent } from './index'
-import { onMounted, onBeforeUnmount, watch, nextTick, useTemplateRef } from 'vue'
+import {
+  install,
+  SchemaForm,
+  type SchemaFormChangeEvent,
+  type SchemaFormChangeDetail,
+} from '@/index'
 
 // Props 定义
 interface Props {
@@ -37,10 +41,10 @@ const onFormChange = (e: SchemaFormChangeEvent) => {
     return
   }
 
+  console.info('Form changed:', e.detail)
+
   const node = elRef.value!
-  const next = validateOnChange
-    ? node.getData({ validate: true })
-    : node.getData({ validate: false, autofix: true })
+  const next = validateOnChange ? node.getData({ validate: true }) : e.detail.state
 
   // 设置标志，避免watch触发更新
   isUpdatingFromComponent = true
@@ -52,6 +56,10 @@ const onFormChange = (e: SchemaFormChangeEvent) => {
 
   emit('change', e.detail)
 }
+
+onBeforeMount(() => {
+  install()
+})
 
 onMounted(() => {
   const node = elRef.value!

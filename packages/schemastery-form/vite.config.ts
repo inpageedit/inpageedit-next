@@ -2,11 +2,12 @@ import { defineConfig, UserConfig } from 'vite'
 import { version } from './package.json'
 import { resolve } from 'node:path'
 import Vue from '@vitejs/plugin-vue'
-import AutoImport from 'unplugin-auto-import/vite'
 import dts from 'unplugin-dts/vite'
 
 const DEV = process.env.NODE_ENV === 'development'
 const BUILD_FORMAT = process.env.VITE_BUILD_FORMAT || 'import'
+// External libraries that should not be bundled into the output
+const EXTERNAL = ['vue']
 
 export default defineConfig(() => {
   const config: UserConfig = {
@@ -18,23 +19,6 @@ export default defineConfig(() => {
             isCustomElement: (tag) => tag.includes('-'),
           },
         },
-      }),
-      AutoImport({
-        dirs: [
-          './src/components/**',
-          './src/constants',
-          './src/utils',
-          './src/polyfills',
-          './src/decorators',
-        ],
-        imports: [
-          {
-            from: '@/plugins/BasePlugin',
-            imports: [['default', 'BasePlugin']],
-          },
-        ],
-        dts: './src/auto-imports.d.ts',
-        dtsMode: 'overwrite',
       }),
     ],
     resolve: {
@@ -50,19 +34,8 @@ export default defineConfig(() => {
       ),
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     },
-    optimizeDeps: {
-      // include: ['cordis'],
-    },
+    optimizeDeps: {},
     mode: process.env.NODE_ENV,
-    server: {
-      host: true,
-      port: 1005,
-    },
-    preview: {
-      host: true,
-      port: 1005,
-      cors: true,
-    },
   }
 
   switch (BUILD_FORMAT) {
@@ -71,10 +44,9 @@ export default defineConfig(() => {
         target: 'es2022',
         lib: {
           entry: {
-            index: 'src/index.ts',
-            'components/index': 'src/components/index.ts',
+            index: './src/index.ts',
+            vue: './src/vue/index.ts',
           },
-          name: 'InPageEditBundle',
           formats: ['es'],
           fileName: (format, entryName) => {
             return `${entryName}.js`
@@ -84,6 +56,7 @@ export default defineConfig(() => {
         emptyOutDir: true,
         sourcemap: true,
         rollupOptions: {
+          external: EXTERNAL,
           output: {
             /**
              * 我们需要在 library 模式下保留 dynamic import 分片，
@@ -94,12 +67,12 @@ export default defineConfig(() => {
         },
       }
       config.plugins = [
-        ...config.plugins,
+        ...config.plugins!,
         dts({
-          tsconfigPath: './tsconfig.app.json',
+          tsconfigPath: './tsconfig.json',
           entryRoot: './src',
-          // TODO: 试了一下不好使
-          // bundleTypes: true,
+          processor: 'vue',
+          bundleTypes: true,
         }),
       ]
       break
@@ -112,12 +85,20 @@ export default defineConfig(() => {
         sourcemap: true,
         lib: {
           entry: 'src/index.ts',
-          name: 'InPageEditBundle',
+          name: 'SchemasteryFormBundle',
           formats: ['umd'],
           fileName(format) {
-            return `index.${format}.js`
+            return `index.${format}.cjs`
           },
           cssFileName: 'style',
+        },
+        rollupOptions: {
+          external: EXTERNAL,
+          output: {
+            globals: {
+              vue: 'Vue',
+            },
+          },
         },
       }
       break

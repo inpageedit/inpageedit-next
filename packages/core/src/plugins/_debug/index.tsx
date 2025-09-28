@@ -1,7 +1,8 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import '@/components/SchemaForm'
-import { SchemaForm } from '@/components/SchemaForm'
+import { install, SchemaForm } from 'schemastery-form'
 import { h } from 'jsx-dom'
+
+install()
 
 interface TestSchema {
   test: string
@@ -43,7 +44,7 @@ class PluginDebug extends BasePlugin {
   }
 
   showModal() {
-    const schemaForm = h('schema-form') as SchemaForm<TestSchema>
+    const schemaForm = h('schema-form') as unknown as SchemaForm<TestSchema>
     schemaForm.schema = schema
 
     const modal = this.ctx.modal

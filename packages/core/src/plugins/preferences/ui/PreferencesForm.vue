@@ -28,7 +28,7 @@
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useIPE } from '@/utils/vueHooks'
 import type { InPageEditPreferenceUIRegistryItem, InPageEditPreferenceUICategory } from '../index'
-import SchemaFormVue from '@/components/SchemaForm/SchemaFormVue.vue'
+import SchemaFormVue from 'schemastery-form/vue'
 import Schema from 'schemastery'
 
 const ctx = useIPE()!

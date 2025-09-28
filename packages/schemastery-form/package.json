@@ -1,0 +1,81 @@
+{
+  "name": "schemastery-form",
+  "version": "0.1.0",
+  "description": "🧩 WebComponent for Schemastery Form Generation",
+  "author": "dragon-fish",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "lib"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./lib/index.umd.cjs"
+    },
+    "./package.json": {
+      "types": "./package.json",
+      "import": "./package.json",
+      "require": "./package.json"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "run-p build:*",
+    "build:import": "cross-env VITE_BUILD_FORMAT=import vite build",
+    "build:bundle": "cross-env VITE_BUILD_FORMAT=bundle vite build",
+    "prepublish": "npm run build",
+    "clean": "rimraf dist/* lib/*",
+    "format": "prettier --write ./src",
+    "typecheck": "tsc -b --pretty false --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.52.13",
+    "@types/node": "^22.18.6",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/language-plugin-pug": "^3.1.0",
+    "cross-env": "^10.0.0",
+    "jsx-dom": "^8.1.6",
+    "npm-run-all2": "^8.0.4",
+    "pug": "^3.0.3",
+    "rimraf": "^6.0.1",
+    "sass-embedded": "^1.93.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.2",
+    "unplugin-dts": "1.0.0-beta.6",
+    "vite": "^7.1.7",
+    "vue": "^3.5.22"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "schemastery": "^3.17.0",
+    "vue": ">=3.5.0 <4.0.0"
+  },
+  "keywords": [
+    "schema",
+    "schemastery",
+    "schema-form",
+    "form",
+    "form-generator"
+  ],
+  "homepage": "https://github.com/inpageedit/inpageedit-next/tree/master/packages/schemastery-form",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inpageedit/inpageedit-next.git"
+  },
+  "bugs": {
+    "url": "https://github.com/inpageedit/inpageedit-next/issues"
+  }
+}
