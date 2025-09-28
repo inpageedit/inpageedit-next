@@ -24,6 +24,17 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 
 -->
 
+<TimelineItem time='2025-09-28T22:27:55.339Z' title='0.3.1'>
+
+- fix: wrong states check for build format
+  - 修正了是否自动导入 css 的错误判断
+- fix: wrong `__VERSION__` constant in build
+  - 修正了打包时插入的错误版本号常量
+- feat!: introduce schemastery-form
+  - 我们已从 @inpageedit/core 中解耦出表单组件，发布并开源了独立的新包 [schemastery-form](https://www.npmjs.com/package/schemastery-form)。
+
+</TimelineItem>
+
 <TimelineItem time='2025-09-28T19:03:39.511Z' title-id='0.3.0'>
 
 <template #title>0.3.0 <Badge type='rainbow'>重量级</Badge></template>
