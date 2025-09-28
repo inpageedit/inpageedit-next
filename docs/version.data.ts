@@ -1,18 +1,19 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { execSync } from 'node:child_process'
 
 export default {
   load: async () => {
-    const { version: devVersion } = await readFile(
+    const { version } = await readFile(
       resolve(import.meta.dirname, '../packages/core/package.json'),
       'utf-8'
     ).then((res) => JSON.parse(res))
-    const npmData: any = await fetch('https://registry.npmjs.com/@inpageedit/core').then((res) =>
-      res.json()
-    )
+    const gitHash = execSync('git rev-parse --short HEAD').toString().trim()
+    const gitTime = execSync('git log -1 --format=%cd --date=iso').toString().trim()
     return {
-      devVersion,
-      npmVersion: npmData['dist-tags'].latest,
+      version,
+      gitHash,
+      gitTime,
     }
   },
 }
