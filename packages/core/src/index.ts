@@ -9,7 +9,9 @@ window.RLQ ||= []
 window.__IPE_MODULES__ ||= []
 
 // Auto load if the site is MediaWiki
-window.RLQ.push(autoload)
+runOnce('InPageEdit#autoload', () => {
+  window.RLQ.push(autoload)
+})
 async function autoload() {
   // 防止多次运行
   if (typeof window?.ipe?.stop === 'function') {
@@ -67,19 +69,14 @@ async function autoload() {
     )
 }
 
-/**
- * Hot Module Replacement (HMR) support
- */
-if (import.meta.hot) {
-  // import.meta.hot.accept((module) => {
-  //   if (typeof module === 'undefined') {
-  //     console.error("[InPageEdit] Hell no, I'm so cold...")
-  //     location.reload()
-  //   } else {
-  //     console.info("[InPageEdit] OMG, I'm so hot!", module)
-  //     IPECore.autoload()
-  //   }
-  // })
+function runOnce(key: string, fn: Function) {
+  const sym = Symbol.for(key)
+  if ((window as any)[sym]) {
+    return false
+  }
+  ;(window as any)[sym] = true
+  fn()
+  return true
 }
 
 // Global types declaration
