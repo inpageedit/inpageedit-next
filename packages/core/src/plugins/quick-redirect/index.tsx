@@ -140,7 +140,7 @@ export class PluginQuickRedirect extends BasePlugin {
               Force create redirect even if the from page already exists
             </CheckBox>
           </div>
-          <ActionButton type="primary" buttonProps={{ style: { width: '100%' } }}>
+          <ActionButton type="primary" style={{ width: '100%' }}>
             Create Redirect
           </ActionButton>
         </form>

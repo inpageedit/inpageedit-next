@@ -1,7 +1,7 @@
-import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import { createApp, h } from 'vue'
-import PreferencesUI from './components/PreferencesUI.vue'
-import { injectIPE } from './components/hooks'
+import { Inject, InPageEdit } from '@/InPageEdit'
+import { createApp } from 'vue'
+import PreferencesForm from './PreferencesForm.vue'
+import { injectIPE } from '@/utils/vueHooks'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -60,20 +60,20 @@ export class PluginPreferencesUI extends BasePlugin {
     const root = <div id="ipe-preferences-app" style={{ minHeight: '65vh' }}></div>
     modal.setContent(root as HTMLElement)
 
-    const app = createApp(PreferencesUI)
-    injectIPE(this.ctx, app)
-    const ui = app.mount(root) as InstanceType<typeof PreferencesUI>
+    const app = this.createFormApp()
+    const form = app.mount(root) as InstanceType<typeof PreferencesForm>
 
     modal.setButtons([
       {
         label: 'Save',
         className: 'btn',
         method: () => {
-          const value = ui.getValue()
-          Object.entries(value).forEach(([key, val]) => {
-            this.ctx.preferences.set(key, val).catch(console.error)
-          })
-          modal.close()
+          const value = form.getValue()
+          // Object.entries(value).forEach(([key, val]) => {
+          //   this.ctx.preferences.set(key, val).catch(console.error)
+          // })
+          // modal.close()
+          this.logger.info('Preferences to save:', value)
         },
       },
       {
@@ -88,5 +88,11 @@ export class PluginPreferencesUI extends BasePlugin {
     modal.get$modal().on('onClose.ssi-modal', () => {
       app.unmount()
     })
+  }
+
+  createFormApp() {
+    const app = createApp(PreferencesForm)
+    injectIPE(this.ctx, app)
+    return app
   }
 }

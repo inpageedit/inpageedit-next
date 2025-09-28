@@ -1,0 +1,111 @@
+:host {
+  all: initial;
+  font-family: var(--schema-font-family, ui-sans-serif, system-ui, -apple-system);
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+:host {
+  color: var(--schema-color-fg, #111827);
+}
+:host {
+  --schema-radius: var(--schema-radius, 10px);
+}
+
+.wrapper {
+  display: block;
+  background: var(--schema-color-bg, #ffffff);
+}
+.form {
+  display: grid;
+  gap: 12px;
+}
+.field {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--schema-color-muted, #e5e7eb);
+  border-radius: var(--schema-radius);
+  background: var(--schema-surface, #fff);
+}
+.label {
+  font-size: 12px;
+  color: var(--schema-color-muted-text, #6b7280);
+}
+.input,
+select,
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--schema-color-muted, #e5e7eb);
+  background: var(--schema-input-bg, #fff);
+  color: inherit;
+}
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.helper {
+  font-size: 12px;
+  color: var(--schema-color-muted-text, #6b7280);
+}
+.row {
+  display: grid;
+  gap: 8px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+}
+.btn {
+  padding: 6px 10px;
+  border: 1px solid var(--schema-color-muted, #e5e7eb);
+  background: var(--schema-btn-bg, #f8fafc);
+  border-radius: 8px;
+  cursor: pointer;
+  &.primary {
+    background: var(--schema-color-primary, #2563eb);
+    color: #fff;
+    border-color: transparent;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  &.danger {
+    background: var(--schema-color-danger, #dc2626);
+    color: #fff;
+    border-color: transparent;
+  }
+}
+.group {
+  display: grid;
+  gap: 10px;
+  border-left: 3px solid var(--schema-color-muted, #e5e7eb);
+  padding-left: 10px;
+}
+.kv {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+.badge {
+  display: inline-flex;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: var(--schema-badge-bg, #eef2ff);
+  color: var(--schema-badge-fg, #4f46e5);
+}
+.hidden {
+  display: none !important;
+}
+.toolbar {
+  display: flex;
+  gap: 6px;
+}

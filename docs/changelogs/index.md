@@ -14,6 +14,14 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 
 <Timeline title-tag='h3'>
 
+<TimelineItem time='2025-09-28T14:36:15.623Z' title='0.2.1'>
+
+- refactor!: make monorepo
+- docs: update documentation
+- chore: project housekeeping
+
+</TimelineItem>
+
 <TimelineItem time='2025-09-27T04:42:04.339Z' title='0.2.0'>
 
 - chore: publish with types declaration

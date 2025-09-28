@@ -65,14 +65,14 @@ export class PluginPreferences extends BasePlugin {
                 <h2>Portal</h2>
                 <div style="display: flex; flex-direction: column; gap: 1rem">
                   <ActionButton
-                    link="https://www.ipe.wiki"
-                    buttonProps={{ style: { display: 'block', width: '100%' } }}
+                    href="https://www.ipe.wiki"
+                    style={{ display: 'block', width: '100%' }}
                   >
                     Official Website & Help Center
                   </ActionButton>
                   <ActionButton
-                    link="https://www.ipe.wiki/update/"
-                    buttonProps={{ style: { display: 'block', width: '100%' } }}
+                    href="https://www.ipe.wiki/update/"
+                    style={{ display: 'block', width: '100%' }}
                   >
                     Update Logs
                   </ActionButton>
@@ -101,7 +101,7 @@ export class PluginPreferences extends BasePlugin {
       {}
     )
 
-    import('./PluginPreferencesUI').then((module) => {
+    import('./ui/index').then((module) => {
       const fork = this.ctx.plugin(module.PluginPreferencesUI)
       this.addDisposeHandler(() => {
         fork.dispose()

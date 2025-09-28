@@ -155,14 +155,7 @@ export class PluginQuickMove extends BasePlugin {
           )}
           <InputBox label="Reason" id="reason" name="reason" value={options?.reason} />
           <div>
-            <ActionButton
-              type="primary"
-              buttonProps={{
-                style: {
-                  width: '100%',
-                },
-              }}
-            >
+            <ActionButton type="primary" style={{ width: '100%' }}>
               Move
             </ActionButton>
           </div>

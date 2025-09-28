@@ -11,7 +11,14 @@ const BUILD_FORMAT = process.env.VITE_BUILD_FORMAT || 'import'
 export default defineConfig(() => {
   const config: UserConfig = {
     plugins: [
-      Vue(),
+      Vue({
+        // 定义 custom elements
+        template: {
+          compilerOptions: {
+            isCustomElement: (tag) => tag.includes('-'),
+          },
+        },
+      }),
       AutoImport({
         dirs: [
           './src/components/**',
@@ -61,7 +68,7 @@ export default defineConfig(() => {
   switch (BUILD_FORMAT) {
     case 'import': {
       config.build = {
-        target: 'es2020',
+        target: 'es2022',
         lib: {
           entry: {
             index: 'src/index.ts',
@@ -90,9 +97,9 @@ export default defineConfig(() => {
         ...config.plugins,
         dts({
           tsconfigPath: './tsconfig.app.json',
-          // bundleTypes: true,
           entryRoot: './src',
-          exclude: ['reggol'],
+          // TODO: 试了一下不好使
+          // bundleTypes: true,
         }),
       ]
       break
@@ -102,6 +109,7 @@ export default defineConfig(() => {
         target: 'es2020',
         outDir: 'lib',
         emptyOutDir: true,
+        sourcemap: true,
         lib: {
           entry: 'src/index.ts',
           name: 'InPageEditBundle',

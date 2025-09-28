@@ -9,38 +9,44 @@ declare global {
   const ActionButton: typeof import('./components/ActionButton')['ActionButton']
   const BasePlugin: typeof import('@/plugins/BasePlugin')['default']
   const CheckBox: typeof import('./components/CheckBox')['CheckBox']
+  const DEFAULT_I18N: typeof import('./components/SchemaForm/index')['DEFAULT_I18N']
   const Endpoints: typeof import('./constants/endpoints')['Endpoints']
+  const IPEInjectKey: typeof import('./utils/vueHooks')['IPEInjectKey']
   const InputBox: typeof import('./components/InputBox')['InputBox']
   const MBox: typeof import('./components/MBox/index')['MBox']
   const MwUserLinks: typeof import('./components/MwUserLinks')['MwUserLinks']
   const ProgressBar: typeof import('./components/ProgressBar/index')['ProgressBar']
   const RadioBox: typeof import('./components/RadioBox')['RadioBox']
   const RegisterPreferences: typeof import('./decorators/Preferences')['RegisterPreferences']
+  const SchemaForm: typeof import('./components/SchemaForm/index')['SchemaForm']
   const TabContent: typeof import('./components/TabView/index')['TabContent']
   const TabLabel: typeof import('./components/TabView/index')['TabLabel']
   const TabView: typeof import('./components/TabView/index')['TabView']
   const TwinSwapInput: typeof import('./components/TwinSwapInput/index')['TwinSwapInput']
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
-  const checkURL: typeof import('./utils/schemaValidator')['checkURL']
+  const createSchemasteryForm: typeof import('./components/SchemaForm/index')['createSchemasteryForm']
   const deepToRaw: typeof import('./utils/vueReactivity')['deepToRaw']
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
   const ensureSlash: typeof import('./utils/string')['ensureSlash']
+  const injectIPE: typeof import('./utils/vueHooks')['injectIPE']
   const noop: typeof import('./utils/noop')['noop']
-  const openLinkPreview: typeof import('./utils/schemaValidator')['openLinkPreview']
   const paramCase: typeof import('./utils/string')['paramCase']
   const promiseWithResolvers: typeof import('./polyfills/Promise.withResolvers')['promiseWithResolvers']
   const qs: typeof import('./components/utils')['qs']
   const qsa: typeof import('./components/utils')['qsa']
-  const schemaValidator: typeof import('./utils/schemaValidator')['schemaValidator']
   const setStyles: typeof import('./components/utils')['setStyles']
   const sleep: typeof import('./utils/sleep')['sleep']
   const snakeCase: typeof import('./utils/string')['snakeCase']
   const trimSlash: typeof import('./utils/string')['trimSlash']
   const uncapitalize: typeof import('./utils/string')['uncapitalize']
+  const useIPE: typeof import('./utils/vueHooks')['useIPE']
 }
 // for type re-export
 declare global {
+  // @ts-ignore
+  export type { ActionButtonProps } from './components/ActionButton'
+  import('./components/ActionButton')
   // @ts-ignore
   export type { CheckBoxProps } from './components/CheckBox'
   import('./components/CheckBox')
@@ -53,6 +59,9 @@ declare global {
   // @ts-ignore
   export type { RadioBoxProps } from './components/RadioBox'
   import('./components/RadioBox')
+  // @ts-ignore
+  export type { SchemaForm, SchemaFormI18n, JSONValue, SchemaFormChangeDetail, SchemaFormChangeEvent, FormInstance } from './components/SchemaForm/index'
+  import('./components/SchemaForm/index')
   // @ts-ignore
   export type { TabViewLabelOptions } from './components/TabView/index'
   import('./components/TabView/index')

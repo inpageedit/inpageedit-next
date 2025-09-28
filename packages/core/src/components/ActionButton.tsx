@@ -1,41 +1,41 @@
-import { JSX, ReactNode } from 'jsx-dom'
+import { h, JSX, ReactNode } from 'jsx-dom'
+
+export interface ActionButtonProps {
+  type?: 'primary' | 'secondary' | 'danger' | 'default'
+  tag?: 'a' | 'button' | 'div'
+}
+
+const origin = window?.location?.origin
 
 export const ActionButton = ({
   type,
-  link,
+  tag,
+  href,
   target,
-  buttonProps,
-  anchorProps,
   children,
-}: {
-  type?: 'primary' | 'secondary' | 'danger'
-  link?: string
-  target?: string
-  anchorProps?: JSX.IntrinsicElements['a']
-  buttonProps?: JSX.IntrinsicElements['button']
-  children?: ReactNode
-}) => {
-  const button = (
-    <button
-      className={`theme-ipe ipe-action-button btn btn-${type || 'default'}`}
-      data-href={link}
-      {...buttonProps}
-    >
-      {children}
-    </button>
-  )
-  if (!link) {
-    return button
-  } else {
-    return (
-      <a
-        className="theme-ipe ipe-action-button ipe-link-button"
-        href={link}
-        target={target}
-        {...anchorProps}
-      >
-        {button}
-      </a>
-    )
+  ...rest
+}: ActionButtonProps &
+  Omit<JSX.IntrinsicElements['button'], 'type'> &
+  JSX.IntrinsicElements['a']) => {
+  tag = tag || (href ? 'a' : 'button')
+  if (
+    typeof target === 'undefined' &&
+    href &&
+    href.startsWith('http') &&
+    !href.startsWith(origin)
+  ) {
+    target = '_blank'
   }
+  return h(
+    tag,
+    {
+      className: `theme-ipe ipe-action-button btn btn-${type || 'default'}`,
+      // @ts-ignore
+      href: tag === 'a' ? href : undefined,
+      target: tag === 'a' ? target : undefined,
+      'data-href': tag !== 'a' ? href : undefined,
+      ...rest,
+    },
+    children
+  )
 }
