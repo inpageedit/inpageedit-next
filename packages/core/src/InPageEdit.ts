@@ -77,7 +77,7 @@ export class InPageEdit extends Context {
   // TODO: 应该抽象到 PluginTheme 中去，暂时先硬编码
   async #initCoreAssets() {
     this.inject(['resourceLoader'], (ctx) => {
-      if (import.meta.env.PROD && import.meta.env.VITE_BUILD_FORMAT !== 'import') {
+      if (import.meta.env.PROD && import.meta.env.VITE_BUILD_FORMAT === 'import') {
         ctx.resourceLoader.loadStyle(import.meta.resolve('./style.css'))
       }
       ctx.resourceLoader.loadStyle(`${Endpoints.PLUGIN_CDN_BASE}/skins/ipe-default.css`)
