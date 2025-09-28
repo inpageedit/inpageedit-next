@@ -128,3 +128,13 @@
 .DocSearch {
   --docsearch-primary-color: var(--vp-c-brand-1) !important;
 }
+
+// Custom Badges
+.VPBadge {
+  &.rainbow {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    color: white;
+    box-shadow: 0 4px 15px 0 rgba(102, 126, 234, 0.3);
+    border: none;
+  }
+}

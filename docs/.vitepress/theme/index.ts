@@ -27,7 +27,7 @@ import '@shikijs/vitepress-twoslash/style.css'
 
 import 'vitepress-markdown-timeline/dist/theme/index.css'
 
-import './style.css'
+import './style.scss'
 import DateFormat from '../components/DateFormat.vue'
 
 export default {

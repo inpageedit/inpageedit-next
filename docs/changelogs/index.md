@@ -14,11 +14,29 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 
 <Timeline title-tag='h3'>
 
-<TimelineItem time='2025-09-28T14:36:15.623Z' title='0.2.1'>
+<!-- template for future use
 
+<TimelineItem info='Coming Soon' time='' title='x.x.x'>
+
+...
+
+</TimelineItem>
+
+-->
+
+<TimelineItem time='2025-09-28T19:03:39.511Z' title-id='0.3.0'>
+
+<template #title>0.3.0 <Badge type='rainbow'>重量级</Badge></template>
+
+- refactor!: drop naive-ui, rewrite SchemaForm to WebComponent
+  - 我们抛弃了对 Naive UI 的依赖，转而使用原生 WebComponent 来实现 SchemaForm 组件。
+  - 这使得 PreferencesForm 组件的打包体积大幅缩小为原来的 **1/10**！
 - refactor!: make monorepo
+  - 现在 InPageEdit NEXT 采用了 Monorepo 结构，核心功能被拆分到 `@inpageedit/core` 包中。
 - docs: update documentation
+  - 文档中心现在更加炫酷了！
 - chore: project housekeeping
+  - 更新了依赖，修复了一些小问题，提升了项目的整体质量。
 
 </TimelineItem>
 
