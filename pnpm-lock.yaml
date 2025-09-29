@@ -160,8 +160,8 @@ importers:
         specifier: ^3.17.0
         version: 3.17.0
       schemastery-form:
-        specifier: workspace:^
-        version: link:../schemastery-form
+        specifier: ^0.1.0
+        version: 0.1.0(schemastery@3.17.0)(vue@3.5.21(typescript@5.9.2))
       vue:
         specifier: ^3.5.21
         version: 3.5.21(typescript@5.9.2)
@@ -301,9 +301,6 @@ importers:
       schemastery:
         specifier: ^3.17.0
         version: 3.17.0
-      vue:
-        specifier: ^3.5.22
-        version: 3.5.22(typescript@5.9.2)
     devDependencies:
       '@microsoft/api-extractor':
         specifier: ^7.52.13
@@ -347,6 +344,9 @@ importers:
       vite:
         specifier: ^7.1.7
         version: 7.1.7(@types/node@22.18.6)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.6)
+      vue:
+        specifier: ^3.5.22
+        version: 3.5.22(typescript@5.9.2)
 
 packages:
 
@@ -3093,6 +3093,12 @@ packages:
 
   sax@1.4.1:
     resolution: {integrity: sha512-+aWOz7yVScEGoKNd4PA10LZ8sk0A/z5+nXQG5giUO5rprX9jgYsTdov9qCchZiPIZezbZH+jRut8nPodFAX4Jg==}
+
+  schemastery-form@0.1.0:
+    resolution: {integrity: sha512-vMBUaCJ3g1xicOSoR7F2TEuQ6NVYPeOICM0Ilakev+R7HTgCbq1Xmu75fDb2kEO908KHO5z1ijOFrYyjBSHWtQ==}
+    peerDependencies:
+      schemastery: ^3.17.0
+      vue: '>=3.5.0 <4.0.0'
 
   schemastery@3.17.0:
     resolution: {integrity: sha512-M/rDzlM+HJeAHT9m67FWkLmkmKcQXnJUyOwNTSU1LvVMgumYyB6GhSG+YLiG3UJ80BbIHquVT9dNvRKRcFJR7g==}
@@ -6651,6 +6657,11 @@ snapshots:
 
   sax@1.4.1:
     optional: true
+
+  schemastery-form@0.1.0(schemastery@3.17.0)(vue@3.5.21(typescript@5.9.2)):
+    dependencies:
+      schemastery: 3.17.0
+      vue: 3.5.21(typescript@5.9.2)
 
   schemastery@3.17.0:
     dependencies:

@@ -15,7 +15,7 @@
     "core:dev": "pnpm --filter core dev",
     "core:build": "pnpm --filter core build",
     "docs:dev": "pnpm --filter docs dev",
-    "docs:build": "pnpm --filter core build:import && pnpm --filter docs build"
+    "docs:build": "pnpm --filter docs build"
   },
   "devDependencies": {
     "@prettier/plugin-pug": "^3.4.2",
