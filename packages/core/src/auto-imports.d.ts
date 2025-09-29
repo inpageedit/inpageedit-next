@@ -13,7 +13,7 @@ declare global {
   const IPEInjectKey: typeof import('./utils/vueHooks')['IPEInjectKey']
   const InputBox: typeof import('./components/InputBox')['InputBox']
   const Logger: typeof import('./utils/Logger')['Logger']
-  const LoggerLevelRank: typeof import('./utils/Logger')['LoggerLevelRank']
+  const LoggerLevel: typeof import('./utils/Logger')['LoggerLevel']
   const MBox: typeof import('./components/MBox/index')['MBox']
   const MwUserLinks: typeof import('./components/MwUserLinks')['MwUserLinks']
   const ProgressBar: typeof import('./components/ProgressBar/index')['ProgressBar']
@@ -68,7 +68,7 @@ declare global {
   export type { Endpoints } from './constants/endpoints'
   import('./constants/endpoints')
   // @ts-ignore
-  export type { LoggerLevelRank, ConsoleMethod, LevelDef, LoggerOptions, GroupOptions, LogCallOptions, Hooks, EmitPayload, LoggerInstance, LoggerCallable } from './utils/Logger'
+  export type { LoggerLevel, ConsoleMethod, LevelDef, LoggerOptions, GroupOptions, LogCallOptions, Hooks, EmitPayload, LoggerInstance, LoggerCallable } from './utils/Logger'
   import('./utils/Logger')
   // @ts-ignore
   export type { PreferenceAugmented } from './decorators/Preferences'

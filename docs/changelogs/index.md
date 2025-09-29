@@ -24,7 +24,7 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 
 -->
 
-<TimelineItem info='Coming Soon' time='' title='0.4.0'>
+<TimelineItem time='2025-09-29T15:00:56.913Z' title='0.4.0'>
 
 - perf!: replace cordis with @cordisjs/core
   - 我们用 [@cordisjs/core](https://www.npmjs.com/package/@cordisjs/core) 替换了对 Cordis 完整包的依赖，大幅减小了打包体积。
@@ -32,6 +32,13 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
   - 现在你可以通过配置项 `logLevel` 来控制日志输出的详细程度了。
   - 可选值是 `enum LoggerLevelRank`（`debug = 0`, `info = 1`, `warn = 2`, `error = 3`, `silent = 4`）。
   - 默认情况下，开发环境下日志级别为 `0`，生产环境下为 `1`。嫌吵的话可以调高点。
+
+</TimelineItem>
+
+<TimelineItem time='2025-09-28T22:58:32.344Z' title='0.3.2'>
+
+- fix: ensure autoload run once
+  - 修正了自动加载功能可能被多次触发的问题
 
 </TimelineItem>
 
