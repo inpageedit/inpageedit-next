@@ -147,6 +147,9 @@ importers:
       '@cordisjs/core':
         specifier: ^3.18.1
         version: 3.18.1
+      '@inpageedit/logger':
+        specifier: workspace:*
+        version: link:../logger
       diff:
         specifier: ^8.0.2
         version: 8.0.2
@@ -250,6 +253,30 @@ importers:
       vite:
         specifier: ^7.1.7
         version: 7.1.7(@types/node@22.18.6)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)
+
+  packages/logger:
+    devDependencies:
+      '@microsoft/api-extractor':
+        specifier: ^7.52.13
+        version: 7.52.13(@types/node@22.18.6)
+      cross-env:
+        specifier: ^10.0.0
+        version: 10.0.0
+      npm-run-all2:
+        specifier: ^8.0.4
+        version: 8.0.4
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+      unplugin-dts:
+        specifier: 1.0.0-beta.6
+        version: 1.0.0-beta.6(@microsoft/api-extractor@7.52.13(@types/node@22.18.6))(@vue/language-core@3.0.8(typescript@5.9.2))(esbuild@0.25.1)(rollup@4.49.0)(typescript@5.9.2)(vite@7.1.7(@types/node@22.18.6)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.6))
+      vite:
+        specifier: ^7.1.7
+        version: 7.1.7(@types/node@22.18.6)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.6)
 
   packages/schemastery-form:
     dependencies:

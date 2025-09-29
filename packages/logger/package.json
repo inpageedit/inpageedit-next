@@ -1,7 +1,7 @@
 {
-  "name": "schemastery-form",
+  "name": "@inpageedit/logger",
   "version": "0.1.0",
-  "description": "🧩 WebComponent for Schemastery Form Generation",
+  "description": "Flexible, Extensible Console Logger with Colored Labels and Hierarchical Loggers",
   "author": "dragon-fish",
   "license": "MIT",
   "type": "module",
@@ -21,11 +21,7 @@
       "types": "./dist/index.d.ts",
       "source": "./src/index.ts",
       "import": "./dist/index.js",
-      "require": "./lib/index.umd.cjs"
-    },
-    "./vue": {
-      "types": "./dist/vue.d.ts",
-      "import": "./dist/vue.js"
+      "require": "./lib/index.cjs"
     }
   },
   "scripts": {
@@ -44,34 +40,19 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.52.13",
-    "@types/node": "^22.18.6",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/language-plugin-pug": "^3.1.0",
     "cross-env": "^10.0.0",
-    "jsx-dom": "^8.1.6",
     "npm-run-all2": "^8.0.4",
-    "pug": "^3.0.3",
     "rimraf": "^6.0.1",
-    "sass-embedded": "^1.93.2",
-    "tsx": "^4.20.6",
     "typescript": "^5.9.2",
     "unplugin-dts": "1.0.0-beta.6",
-    "vite": "^7.1.7",
-    "vue": "^3.5.22"
-  },
-  "dependencies": {},
-  "peerDependencies": {
-    "schemastery": "^3.17.0",
-    "vue": ">=3.5.0 <4.0.0"
+    "vite": "^7.1.7"
   },
   "keywords": [
-    "schema",
-    "schemastery",
-    "schema-form",
-    "form",
-    "form-generator"
+    "logger",
+    "console",
+    "inpageedit"
   ],
-  "homepage": "https://github.com/inpageedit/inpageedit-next/tree/master/packages/schemastery-form",
+  "homepage": "https://github.com/inpageedit/inpageedit-next/tree/master/packages/logger",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/inpageedit/inpageedit-next.git"

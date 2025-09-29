@@ -1,12 +1,10 @@
-/*
- * Browser Logger — keeps console stack traces pointing at the call site
- * Features
- * - Levels: debug < log < info < warn < error < silent
- * - Styled name badge (background color)
- * - Styled group label (color + underline)
- * - Callable instance: logger('group', { color }) to create sub-logger
- * - Dynamic levels via defineLevel(name, { level, label, method })
- * - Global color registry so same name/group always uses the same color
+/**
+ * @inpageedit/logger
+ *
+ * Flexible, Extensible Console Logger with Colored Labels and Hierarchical Loggers
+ *
+ * @author dragon-fish <dragon-fish@qq.com>
+ * @license MIT
  */
 
 export enum LoggerLevel {
@@ -42,13 +40,11 @@ export interface LoggerOptions {
   _levelRef?: { value: LoggerLevel }
 }
 
-/** A callable Logger: you can call it to create a sub-logger */
-export type LoggerCallable = Logger &
-  ((group: string, options?: { color?: string }) => LoggerCallable)
-
 // ------------------------
 // Global color registry
 // ------------------------
+
+// 暂时保留，因为这些颜色比较好看
 const DEFAULT_PALETTE = [
   '#10b981',
   '#3b82f6',
@@ -72,11 +68,10 @@ const DEFAULT_PALETTE = [
 
 type ColorKey = `name:${string}` | `group:${string}`
 
-const GLOBAL: any = globalThis as any
-if (!GLOBAL.__LOGGER_COLOR_MAP__) GLOBAL.__LOGGER_COLOR_MAP__ = new Map<ColorKey, string>()
-const COLOR_MAP: Map<ColorKey, string> = GLOBAL.__LOGGER_COLOR_MAP__
-
-// 保留默认调色板（兼容旧逻辑，当前未直接使用，可作为将来 fallback 或配置入口）
+const GLOBAL: any = (globalThis || window) as any
+const ColorMapSymbol = Symbol.for('__IPE_LOGGER_COLOR_MAP__')
+if (!GLOBAL[ColorMapSymbol]) GLOBAL[ColorMapSymbol] = new Map<ColorKey, string>()
+const COLOR_MAP: Map<ColorKey, string> = GLOBAL[ColorMapSymbol]
 
 // 计算字符串 hash (FNV-1a 32-bit)
 function hashString(str: string): number {
@@ -151,6 +146,26 @@ function pickColor(key: ColorKey, preferred?: string): string {
 // ------------------------
 // Logger core
 // ------------------------
+/**
+ * @inpageedit/logger
+ * Flexible, Extensible Console Logger with Colored Labels and Hierarchical Loggers
+ *
+ * @author dragon-fish <dragon-fish@qq.com>
+ * @license MIT
+ *
+ * @example
+ * ```ts
+ * const logger = new Logger({ name: 'MyApp', level: LoggerLevel.debug })
+ * // normal usage
+ * logger.info('Application started')
+ * // create sub-logger group
+ * const apiLogger = logger.group('API', { color: '#f59e0b' })
+ * apiLogger.warn('Deprecated API endpoint used')
+ * // define custom level
+ * logger.defineLevel('success', { level: LoggerLevel.info, label: '✅', method: 'info' })
+ * logger.success('User created successfully')
+ * ```
+ */
 export class Logger {
   private _name?: string
   private _nameColor?: string
@@ -178,7 +193,7 @@ export class Logger {
     for (const k of Object.keys(this._dynamicLevels))
       this._installLevelGetter(k, this._dynamicLevels[k])
 
-    // Return a callable proxy
+    // Magic: return callable proxy
     return makeCallable(this) as any
   }
 
@@ -191,7 +206,7 @@ export class Logger {
   }
 
   /** Create a sub-logger with a group label */
-  group(group: string, options?: { color?: string }): LoggerCallable {
+  group(group: string, options?: { color?: string }): Logger {
     if (group) pickColor(`group:${group}`, options?.color)
     const child = new Logger({
       name: this._name,
@@ -200,7 +215,7 @@ export class Logger {
       _dynamicLevels: this._dynamicLevels,
       _levelRef: this._levelRef,
     })
-    return child as unknown as LoggerCallable
+    return child as unknown as Logger
   }
 
   /** Define a custom level, e.g. logger.defineLevel('success', { level: info, label: '✅', method: 'info' }) */
@@ -298,17 +313,17 @@ const NOOP = () => {}
 const RESET_STYLE = 'color:inherit; background:transparent; text-decoration:none;'
 
 const BUILTIN_DEFS: Record<AnyConsoleMethod, LevelDefinition> = {
-  debug: { level: LoggerLevel.debug, label: '[D]', method: 'debug' },
-  log: { level: LoggerLevel.log, label: '[L]', method: 'log' },
+  debug: { level: LoggerLevel.debug, label: '', method: 'debug' },
+  log: { level: LoggerLevel.log, label: '', method: 'log' },
   info: { level: LoggerLevel.info, label: '[I]', method: 'info' },
   warn: { level: LoggerLevel.warn, label: '[W]', method: 'warn' },
   error: { level: LoggerLevel.error, label: '[E]', method: 'error' },
 }
 
-function makeCallable(instance: Logger): LoggerCallable {
+function makeCallable(instance: Logger): Logger {
   const fn = function (group: string, options?: { color?: string }) {
     return instance.group(group, options)
-  } as unknown as LoggerCallable
+  } as unknown as Logger
   return new Proxy(fn, {
     get(_t, p, _r) {
       // @ts-ignore
@@ -331,6 +346,11 @@ function makeCallable(instance: Logger): LoggerCallable {
 // ------------------------
 // Convenience factory
 // ------------------------
-export function createLogger(options?: LoggerOptions): LoggerCallable {
-  return new Logger(options) as unknown as LoggerCallable
+export function createLogger(options?: LoggerOptions): Logger {
+  return new Logger(options) as unknown as Logger
+}
+
+// Declaration merging: add call signature to Logger type.
+export interface Logger {
+  (group: string, options?: { color?: string }): Logger
 }

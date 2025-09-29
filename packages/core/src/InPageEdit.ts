@@ -1,18 +1,12 @@
 import { Context, Inject, Events as CordisEvents } from '@cordisjs/core'
 import Schema from 'schemastery'
-import { Logger, LoggerLevel } from './utils/Logger'
+import { LoggerLevel, createLogger, type Logger } from '@inpageedit/logger'
 import { ApiService } from '@/services/ApiService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService'
 import { SsiModalService } from '@/services/SsiModalService'
 import { StorageService } from '@/services/StorageService'
 import { SiteMetadataService } from '@/services/SiteMetadataService'
 import { WikiPageService } from '@/services/WikiPageService'
-
-export interface InPageEditCoreConfig {
-  baseURL: string | URL
-  legacyPreferences: Record<string, any>
-  logLevel: number
-}
 
 /**
  * ✏️ InPageEdit NEXT
@@ -22,6 +16,7 @@ export interface InPageEditCoreConfig {
  * @author dragon-fish <dragon-fish@qq.com>
  * @license MIT
  * @see https://github.com/inpageedit/inpageedit-next
+ * @see https://www.ipe.wiki/
  */
 export class InPageEdit extends Context {
   readonly version: string = import.meta.env.__VERSION__ || '0.0.0'
@@ -128,9 +123,15 @@ export class InPageEdit extends Context {
   }
 }
 
+export interface InPageEditCoreConfig {
+  baseURL: string | URL
+  legacyPreferences: Record<string, any>
+  logLevel: number
+}
+
 // 导出依赖包以便用户使用
 export { default as Schema } from 'schemastery'
-export * from '@/utils/Logger'
+export * from '@inpageedit/logger'
 
 // 类型体操
 export { Inject, Service } from '@cordisjs/core'

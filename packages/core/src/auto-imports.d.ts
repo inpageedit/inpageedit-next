@@ -12,8 +12,6 @@ declare global {
   const Endpoints: typeof import('./constants/endpoints')['Endpoints']
   const IPEInjectKey: typeof import('./utils/vueHooks')['IPEInjectKey']
   const InputBox: typeof import('./components/InputBox')['InputBox']
-  const Logger: typeof import('./utils/Logger')['Logger']
-  const LoggerLevel: typeof import('./utils/Logger')['LoggerLevel']
   const MBox: typeof import('./components/MBox/index')['MBox']
   const MwUserLinks: typeof import('./components/MwUserLinks')['MwUserLinks']
   const ProgressBar: typeof import('./components/ProgressBar/index')['ProgressBar']
@@ -25,7 +23,6 @@ declare global {
   const TwinSwapInput: typeof import('./components/TwinSwapInput/index')['TwinSwapInput']
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
-  const createLogger: typeof import('./utils/Logger')['createLogger']
   const deepToRaw: typeof import('./utils/vueReactivity')['deepToRaw']
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
   const ensureSlash: typeof import('./utils/string')['ensureSlash']
@@ -68,9 +65,6 @@ declare global {
   // @ts-ignore
   export type { Endpoints } from './constants/endpoints'
   import('./constants/endpoints')
-  // @ts-ignore
-  export type { LoggerLevel, Logger, LevelDefinition, LoggerOptions, LoggerCallable } from './utils/Logger'
-  import('./utils/Logger')
   // @ts-ignore
   export type { PreferenceAugmented } from './decorators/Preferences'
   import('./decorators/Preferences')
