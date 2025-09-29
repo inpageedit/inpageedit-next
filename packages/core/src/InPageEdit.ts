@@ -59,6 +59,17 @@ export class InPageEdit extends Context {
     this.plugin(StorageService)
     this.plugin(SiteMetadataService)
     this.plugin(WikiPageService)
+    this.#markServiceAsBuiltIn('api', 'resourceLoader', 'modal', 'storage', 'sitemeta', 'wikiPage')
+  }
+
+  #markServiceAsBuiltIn(...name: string[]) {
+    for (const n of name) {
+      const internal = this[InPageEdit.internal][n]
+      if (internal?.type === 'service') {
+        internal.builtin = true
+      }
+    }
+    return this
   }
 
   // TODO: 这里不应该硬编码，暂时先这样
