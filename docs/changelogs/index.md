@@ -6,8 +6,7 @@ title: 更新日志
 
 <script setup lang="ts">
 import Timeline from '@/.vitepress/components/Timeline/Timeline.vue'
-import TimelineItem from '@/.vitepress/components/Timeline/TimelineItem.vue'
-import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
+import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 </script>
 
 ## 前瞻预览版 <Badge>v0.x.x</Badge>
@@ -16,15 +15,15 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 
 <!-- template for future use
 
-<TimelineItem info='Coming Soon' time='' title='x.x.x'>
+<ChangeLog version='x.x.x'>
 
 ...
 
-</TimelineItem>
+</ChangeLog>
 
 -->
 
-<TimelineItem time='2025-09-29T19:19:58.462Z' title='0.4.1'>
+<ChangeLog version='0.4.1'>
 
 - chore: housekeeping
   - 更新了依赖，修复了一些小问题，提升了项目的整体质量
@@ -32,9 +31,9 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 - refactor!: replace logger with @inpageedit/logger
   - 我们解耦并发布了我们的简单、强大、可扩展的 Logger 库：[@inpageedit/logger](https://www.npmjs.com/package/@inpageedit/logger)
 
-</TimelineItem>
+</ChangeLog>
 
-<TimelineItem time='2025-09-29T15:00:56.913Z' title='0.4.0'>
+<ChangeLog version='0.4.0'>
 
 - perf!: replace cordis with @cordisjs/core
   - 我们用 [@cordisjs/core](https://www.npmjs.com/package/@cordisjs/core) 替换了对 Cordis 完整包的依赖，大幅减小了打包体积。
@@ -43,16 +42,16 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
   - 可选值是 `enum LoggerLevelRank`（`debug = 0`, `info = 1`, `warn = 2`, `error = 3`, `silent = 4`）。
   - 默认情况下，开发环境下日志级别为 `0`，生产环境下为 `1`。嫌吵的话可以调高点。
 
-</TimelineItem>
+</ChangeLog>
 
-<TimelineItem time='2025-09-28T22:58:32.344Z' title='0.3.2'>
+<ChangeLog version='0.3.2'>
 
 - fix: ensure autoload run once
   - 修正了自动加载功能可能被多次触发的问题
 
-</TimelineItem>
+</ChangeLog>
 
-<TimelineItem time='2025-09-28T22:27:55.339Z' title='0.3.1'>
+<ChangeLog version='0.3.1'>
 
 - fix: wrong states check for build format
   - 修正了是否自动导入 css 的错误判断
@@ -61,9 +60,9 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 - feat!: introduce schemastery-form
   - 我们解耦并发布了开箱即用、体积小巧的 [schemastery-form](https://www.npmjs.com/package/schemastery-form)。
 
-</TimelineItem>
+</ChangeLog>
 
-<TimelineItem time='2025-09-28T19:03:39.511Z' title-id='0.3.0'>
+<ChangeLog version='0.3.0'>
 
 <template #title>0.3.0 <Badge type='rainbow'>重量级</Badge></template>
 
@@ -77,25 +76,25 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 - chore: project housekeeping
   - 更新了依赖，修复了一些小问题，提升了项目的整体质量。
 
-</TimelineItem>
+</ChangeLog>
 
-<TimelineItem time='2025-09-27T04:42:04.339Z' title='0.2.0'>
+<ChangeLog version='0.2.0'>
 
 - chore: publish with types declaration
 - fix: ResourceLoader load relative path
 
-</TimelineItem>
+</ChangeLog>
 
-<TimelineItem time='2025-09-25T14:44:33.824Z' title='0.1.1'>
+<ChangeLog version='0.1.1'>
 
 - feat: add bundled pack
 
-</TimelineItem>
+</ChangeLog>
 
-<TimelineItem time='2025-09-24T10:52:35.505Z' title='0.1.0'>
+<ChangeLog version='0.1.0'>
 
 - feat: 🎉 First release
 
-</TimelineItem>
+</ChangeLog>
 
 </Timeline>
