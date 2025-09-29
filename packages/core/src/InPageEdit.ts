@@ -42,7 +42,7 @@ export class InPageEdit extends Context {
       ...InPageEdit.DEFAULT_CONFIG,
       ...config,
     }
-    this.logger = new Logger({
+    this.logger = createLogger({
       name: 'IPE',
       color: '#33aaff',
       level: this.config.logLevel,
@@ -59,12 +59,25 @@ export class InPageEdit extends Context {
     this.plugin(StorageService)
     this.plugin(SiteMetadataService)
     this.plugin(WikiPageService)
-    this.#markServiceAsBuiltIn('api', 'resourceLoader', 'modal', 'storage', 'sitemeta', 'wikiPage')
+
+    // 标记内置服务，所以用户即使忘记 inject 也能使用
+    this.#markServiceAsBuiltIn([
+      'api',
+      'resourceLoader',
+      'modal',
+      'storage',
+      // 'sitemeta', // 故意未标记此服务，因为数据是异步加载的
+      'wikiPage',
+    ])
   }
 
-  #markServiceAsBuiltIn(...name: string[]) {
-    for (const n of name) {
-      const internal = this[InPageEdit.internal][n]
+  #markServiceAsBuiltIn(services: string | string[]) {
+    if (typeof services === 'string') {
+      services = [services]
+    }
+    if (!Array.isArray(services) || services.length === 0) return this
+    for (const name of services) {
+      const internal = this[InPageEdit.internal][name]
       if (internal?.type === 'service') {
         internal.builtin = true
       }

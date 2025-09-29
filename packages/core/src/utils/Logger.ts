@@ -1,36 +1,13 @@
-/**
- * Browser Logger — tiny extensible logger for the browser.
- *
- * Goals:
- * - Support `new Logger({...})` AND callable instances: `logger('group', opts?)`.
- * - Log levels with threshold filtering; per-call override via `{ print: true }`.
- * - Prefix (app name) and nested groups with colorized labels (CSS `%c`).
- * - Deterministic colors per label; overrideable, last-set wins.
- * - Custom levels (e.g., success, debug) with `logger.defineLevel(...)`.
- * - Extensible via lightweight hooks.
- *
- * Usage:
- *   const logger = new Logger({ level: 2, name: 'MyApp', color: 'green' });
- *   logger.info('message', { any: 'value' });
- *   const group = logger('group', { color: 'blue' });
- *   group.warn('message');
- *   logger.defineLevel('success', { rank: 1, label: 'S', method: 'info' });
- *   logger.success('Saved!', { id: 123 }, { print: true });
+/*
+ * Browser Logger — keeps console stack traces pointing at the call site
+ * Features
+ * - Levels: debug < log < info < warn < error < silent
+ * - Styled name badge (background color)
+ * - Styled group label (color + underline)
+ * - Callable instance: logger('group', { color }) to create sub-logger
+ * - Dynamic levels via defineLevel(name, { level, label, method })
+ * - Global color registry so same name/group always uses the same color
  */
-
-// ------------------------------------------------------------
-// Types
-// ------------------------------------------------------------
-export type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
-
-export interface LevelDef {
-  /** Severity rank. Lower = less severe. Only messages with rank >= logger.level print, unless per-call {print:true}. */
-  rank: number
-  /** Badge shown like [I], [W]. */
-  label?: string
-  /** console method used for emission. */
-  method?: ConsoleMethod
-}
 
 export enum LoggerLevel {
   debug = -1,
@@ -41,475 +18,319 @@ export enum LoggerLevel {
   silent = 4,
 }
 
+type AnyConsoleMethod = 'debug' | 'log' | 'info' | 'warn' | 'error'
+
+export interface LevelDefinition {
+  level: LoggerLevel
+  /** e.g. "[I]" or "✅" */
+  label: string
+  /** which console method to use */
+  method: AnyConsoleMethod
+}
+
 export interface LoggerOptions {
-  /** Minimum severity to print: 0 log, 1 info, 2 warn, 3 error. */
-  level?: LoggerLevel | number
-  /** App prefix. Can be empty string to omit. */
   name?: string
-  /** CSS color for the prefix. If omitted, deterministic color will be chosen. */
+  /** preferred color for the name badge */
   color?: string
-  /** Quick on/off switch. */
-  enabled?: boolean
-  /** Optional custom levels at construction time. */
-  levels?: Record<string, LevelDef>
+  /** minimum enabled level (inclusive). default: LoggerLevel.info */
+  level?: LoggerLevel
+  /** internal: group path */
+  _groupPath?: string[]
+  /** internal: inherit dynamic levels */
+  _dynamicLevels?: Record<string, LevelDefinition>
+  /** internal: share level ref with parent */
+  _levelRef?: { value: LoggerLevel }
 }
 
-export interface GroupOptions {
-  /** CSS color for the group label. */
-  color?: string
-}
+/** A callable Logger: you can call it to create a sub-logger */
+export type LoggerCallable = Logger &
+  ((group: string, options?: { color?: string }) => LoggerCallable)
 
-export interface LogCallOptions {
-  /** Force printing this call even if below the threshold. */
-  print?: boolean
-}
+// ------------------------
+// Global color registry
+// ------------------------
+const DEFAULT_PALETTE = [
+  '#10b981',
+  '#3b82f6',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#14b8a6',
+  '#f43f5e',
+  '#84cc16',
+  '#06b6d4',
+  '#d946ef',
+  '#a3a3a3',
+  '#eab308',
+  '#22c55e',
+  '#f97316',
+  '#0ea5e9',
+  '#a855f7',
+  '#34d399',
+  '#f472b6',
+]
 
-export interface Hooks {
-  /** Called right before emitting. Return false to cancel. */
-  beforeEmit?: (payload: EmitPayload) => boolean | void
-  /** Called after a successful emit. */
-  afterEmit?: (payload: EmitPayload) => void
-}
+type ColorKey = `name:${string}` | `group:${string}`
 
-export interface EmitPayload {
-  level: string
-  rank: number
-  method: ConsoleMethod
-  prefix?: string
-  groupPath: string[]
-  args: unknown[]
-  enabled: boolean
-  willPrint: boolean
-}
+const GLOBAL: any = globalThis as any
+if (!GLOBAL.__LOGGER_COLOR_MAP__) GLOBAL.__LOGGER_COLOR_MAP__ = new Map<ColorKey, string>()
+const COLOR_MAP: Map<ColorKey, string> = GLOBAL.__LOGGER_COLOR_MAP__
 
-// ------------------------------------------------------------
-// Utilities: color registry & helpers
-// ------------------------------------------------------------
-const console = (globalThis as any)['con'.concat('sole')] as Console // avoid console stripping
+// 保留默认调色板（兼容旧逻辑，当前未直接使用，可作为将来 fallback 或配置入口）
 
-const explicitColor = new Map<string, string>() // last-set wins
-
-function setLabelColor(label: string, color: string) {
-  explicitColor.set(label, color)
-}
-
-function getLabelColor(label: string): string {
-  const found = explicitColor.get(label)
-  if (found) return found
-  const color = pickDeterministicColor(label)
-  // Do not cache auto-colors in explicitColor to allow future overrides without confusion.
-  return color
-}
-
-function pickDeterministicColor(key: string): string {
-  // Simple string hash -> [0, 360)
-  let h = 2166136261 >>> 0 // FNV-ish
-  for (let i = 0; i < key.length; i++) {
-    h ^= key.charCodeAt(i)
-    h = Math.imul(h, 16777619)
+// 计算字符串 hash (FNV-1a 32-bit)
+function hashString(str: string): number {
+  let h = 0x811c9dc5
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = (h >>> 0) * 0x01000193
   }
-  const hue = h % 360
-  const sat = 65 // pleasant saturation
-  const light = 45 // readable on light/dark backgrounds
-  return `hsl(${hue}, ${sat}%, ${light}%)`
+  return h >>> 0
 }
 
-function isPlainObject(x: unknown): x is Record<string, unknown> {
-  return !!x && Object.prototype.toString.call(x) === '[object Object]'
-}
+// 色相桶（精选区间，避免“脏”绿 & 灰橄榄）
+const HUE_BUCKETS: Array<[number, number]> = [
+  [350, 360],
+  [0, 15],
+  [15, 30],
+  [200, 230],
+  [230, 250],
+  [250, 280],
+  [280, 310],
+  [310, 330],
+  [140, 160],
+  [160, 180],
+]
 
-function maybeExtractCallOptions(args: unknown[]): { args: unknown[]; opts: LogCallOptions } {
-  if (args.length === 0) return { args, opts: {} }
-  const last = args[args.length - 1]
-  if (
-    isPlainObject(last) &&
-    'print' in last &&
-    Object.keys(last as any).every((k) => k === 'print')
-  ) {
-    const copy = args.slice(0, -1)
-    return { args: copy, opts: last as LogCallOptions }
+function seededColor(key: ColorKey, kind: 'name' | 'group'): string {
+  const hTotal = HUE_BUCKETS.length
+  const baseHash = hashString(key)
+  const bucketIndex = baseHash % hTotal
+  const [hStart, hEnd] = HUE_BUCKETS[bucketIndex]
+  const span = hEnd - hStart
+  // 再次 hash 混合
+  const mixHash = hashString(key + ':' + kind)
+  const h = hStart + (mixHash % (span || 1))
+
+  // 依据 kind 派生 S / L
+  const h2 = hashString(key + ':s')
+  const h3 = hashString(key + ':l')
+  let s: number
+  let l: number
+  if (kind === 'name') {
+    s = 62 + (h2 % 18) // 62-79
+    l = 30 + (h3 % 12) // 30-41
+  } else {
+    const warm = (h >= 0 && h < 50) || (h > 330 && h < 360)
+    const cool = h >= 200 && h <= 300
+    s = 55 + (h2 % 20) // 55-74
+    if (cool)
+      l = 55 + (h3 % 8) // 55-62
+    else if (warm)
+      l = 48 + (h3 % 6) // 48-53
+    else l = 50 + (h3 % 8) // 50-57
+    if (s < 60) s += 5
   }
-  return { args, opts: {} }
+  return `hsl(${h}, ${s}%, ${l}%)`
 }
 
-// ------------------------------------------------------------
-// Default levels
-// ------------------------------------------------------------
-const DEFAULT_LEVELS: Record<string, LevelDef> = {
-  log: { rank: 0, label: 'L', method: 'log' },
-  info: { rank: 1, label: 'I', method: 'info' },
-  warn: { rank: 2, label: 'W', method: 'warn' },
-  error: { rank: 3, label: 'E', method: 'error' },
-}
-
-// ------------------------------------------------------------
-// Core implementation
-// ------------------------------------------------------------
-interface InternalState {
-  level: number
-  enabled: boolean
-  name?: string // prefix
-  nameColor?: string
-  // groups is a path ['group', 'sub'] for nested group instances
-  groups: { label: string; color?: string }[]
-  levels: Map<string, Required<LevelDef>> // merged levels
-  hooks: Hooks
-}
-
-function cloneState(state: InternalState): InternalState {
-  return {
-    level: state.level,
-    enabled: state.enabled,
-    name: state.name,
-    nameColor: state.nameColor,
-    groups: state.groups.slice(),
-    levels: new Map(state.levels),
-    hooks: { ...state.hooks },
+function pickColor(key: ColorKey, preferred?: string): string {
+  if (preferred) {
+    COLOR_MAP.set(key, preferred)
+    return preferred
   }
+  const existing = COLOR_MAP.get(key)
+  if (existing) return existing
+  // 根据 key 前缀决定颜色类型
+  const kind = key.startsWith('name:') ? 'name' : 'group'
+  const c = seededColor(key, kind)
+  COLOR_MAP.set(key, c)
+  return c
 }
 
-// The concrete callable instance shape
-export interface LoggerInstance {
-  readonly isLogger: true
-  /** Current threshold. Set like: logger.level = 2 */
-  level: number
-  /** Toggle output. */
-  enabled: boolean
-  /** Prefix name (app). */
-  name?: string
-  /** Explicit prefix color. */
-  color?: string
+// ------------------------
+// Logger core
+// ------------------------
+export class Logger {
+  private _name?: string
+  private _nameColor?: string
+  private _groupPath: string[]
+  private _dynamicLevels: Record<string, LevelDefinition>
+  private _levelRef: { value: LoggerLevel }
 
-  // Base methods
-  log: (...args: unknown[]) => void
-  info: (...args: unknown[]) => void
-  warn: (...args: unknown[]) => void
-  error: (...args: unknown[]) => void
-  /** Emit at a specific level name. */
-  at: (levelName: string, ...args: unknown[]) => void
+  /**
+   * Note: constructor returns a callable Proxy so that you can do `logger('group')`.
+   */
+  constructor(options: LoggerOptions = {}) {
+    this._name = options.name
+    this._nameColor = options.color
+    this._groupPath = options._groupPath ? [...options._groupPath] : []
+    this._dynamicLevels = { ...options._dynamicLevels }
+    this._levelRef = options._levelRef ?? { value: options.level ?? LoggerLevel.info }
 
-  /** Define or override a level and create a convenience method. */
-  defineLevel: (name: string, def: LevelDef) => void
+    // Ensure global color is set/overridden when explicit color provided
+    if (this._name) pickColor(`name:${this._name}`, this._nameColor)
 
-  /** Return a child logger under a group (also available via calling the instance). */
-  group: (label: string, opts?: GroupOptions) => Logger
+    // Install default level getters
+    this._installBuiltinLevels()
 
-  /** Register hooks. Any missing callbacks keep their previous values. */
-  setHooks: (hooks: Hooks) => void
+    // Install any inherited dynamic level getters
+    for (const k of Object.keys(this._dynamicLevels))
+      this._installLevelGetter(k, this._dynamicLevels[k])
 
-  /** Assign or override colors for labels (prefix/groups). */
-  setLabelColor: (label: string, color: string) => void
-}
-
-// Callable signature (for grouping via function call)
-export interface LoggerCallable {
-  (label: string, opts?: GroupOptions): Logger
-}
-
-export type Logger = LoggerInstance & LoggerCallable
-
-// Public constructor type (so TS accepts `new Logger(...)`)
-export const Logger: {
-  new (opts?: LoggerOptions): Logger
-  /** Helper factory without `new` */
-  create: (opts?: LoggerOptions) => Logger
-} = function LoggerConstructor(this: any, opts?: LoggerOptions): Logger {
-  return createLogger(opts)
-} as any
-;(Logger as any).create = (opts?: LoggerOptions) => createLogger(opts)
-
-// Build the actual instance
-function createLogger(opts: LoggerOptions = {}): Logger {
-  const state: InternalState = {
-    level: opts.level ?? 0,
-    enabled: opts.enabled ?? true,
-    name: opts.name,
-    nameColor: opts.color,
-    groups: [],
-    levels: new Map(
-      Object.entries({ ...DEFAULT_LEVELS, ...(opts.levels ?? {}) }).map(([k, v]) => [
-        k,
-        withDefaults(v),
-      ])
-    ),
-    hooks: {},
+    // Return a callable proxy
+    return makeCallable(this) as any
   }
 
-  if (state.name && state.nameColor) setLabelColor(state.name, state.nameColor)
-
-  // The callable that creates a grouped child logger
-  const callable = ((label: string, gopts?: GroupOptions) =>
-    makeChild(callable, state, label, gopts)) as unknown as Logger
-
-  // Attach instance API via property definitions to keep callability
-  defineLoggerAPI(callable, state)
-
-  // Attach default methods for known levels and keep them updated on defineLevel
-  for (const levelName of state.levels.keys()) {
-    attachLevelMethod(callable, state, levelName)
+  // ---------- public API ----------
+  get level(): LoggerLevel {
+    return this._levelRef.value
+  }
+  set level(v: LoggerLevel) {
+    this._levelRef.value = v
   }
 
-  return callable
-}
-
-function withDefaults(def: LevelDef): Required<LevelDef> {
-  return {
-    rank: def.rank,
-    label: def.label ?? defRankToDefaultLabel(def.rank),
-    method: def.method ?? rankToDefaultMethod(def.rank),
+  /** Create a sub-logger with a group label */
+  group(group: string, options?: { color?: string }): LoggerCallable {
+    if (group) pickColor(`group:${group}`, options?.color)
+    const child = new Logger({
+      name: this._name,
+      color: this._nameColor,
+      _groupPath: [...this._groupPath, group],
+      _dynamicLevels: this._dynamicLevels,
+      _levelRef: this._levelRef,
+    })
+    return child as unknown as LoggerCallable
   }
-}
 
-function rankToDefaultMethod(rank: number): ConsoleMethod {
-  if (rank >= 3) return 'error'
-  if (rank === 2) return 'warn'
-  if (rank === 1) return 'info'
-  return 'log'
-}
-
-function defRankToDefaultLabel(rank: number): string {
-  switch (rank) {
-    case 3:
-      return 'E'
-    case 2:
-      return 'W'
-    case 1:
-      return 'I'
-    default:
-      return 'L'
+  /** Define a custom level, e.g. logger.defineLevel('success', { level: info, label: '✅', method: 'info' }) */
+  defineLevel(name: string, def: LevelDefinition): void {
+    this._dynamicLevels[name] = { ...def }
+    this._installLevelGetter(name, def)
   }
-}
 
-function defineLoggerAPI(target: Logger, state: InternalState) {
-  Object.defineProperties(target, {
-    isLogger: { value: true, enumerable: false },
+  // Built-in level getters
+  get debug() {
+    return this._method('debug')
+  }
+  get log() {
+    return this._method('log')
+  }
+  get info() {
+    return this._method('info')
+  }
+  get warn() {
+    return this._method('warn')
+  }
+  get error() {
+    return this._method('error')
+  }
 
-    level: {
-      get() {
-        return state.level
-      },
-      set(v: number) {
-        state.level = v | 0
-      },
-      enumerable: true,
-      configurable: false,
-    },
+  // ---------- internals ----------
+  private _installBuiltinLevels() {
+    // nothing to define here because built-ins are getters
+    // but we keep default labels for prefix rendering
+  }
 
-    enabled: {
-      get() {
-        return state.enabled
-      },
-      set(v: boolean) {
-        state.enabled = !!v
-      },
-      enumerable: true,
-      configurable: false,
-    },
-
-    name: {
-      get() {
-        return state.name
-      },
-      set(v: string | undefined) {
-        state.name = v
-      },
-      enumerable: true,
-      configurable: false,
-    },
-
-    color: {
-      get() {
-        return state.nameColor
-      },
-      set(v: string | undefined) {
-        state.nameColor = v
-        if (state.name && v) setLabelColor(state.name, v)
-      },
-      enumerable: true,
-      configurable: false,
-    },
-
-    group: {
-      value: (label: string, gopts?: GroupOptions) => makeChild(target, state, label, gopts),
+  private _installLevelGetter(name: string, def: LevelDefinition) {
+    // Create lazy getter so prefix/level checks are evaluated at call time
+    Object.defineProperty(this, name, {
+      configurable: true,
       enumerable: false,
-    },
-
-    at: {
-      value: (levelName: string, ...args: unknown[]) => emitAt(target, state, levelName, args),
-      enumerable: false,
-    },
-
-    defineLevel: {
-      value: (name: string, def: LevelDef) => {
-        state.levels.set(name, withDefaults(def))
-        attachLevelMethod(target, state, name) // (re)attach the convenience method
-      },
-      enumerable: false,
-    },
-
-    setHooks: {
-      value: (hooks: Hooks) => {
-        state.hooks = { ...state.hooks, ...hooks }
-      },
-      enumerable: false,
-    },
-
-    setLabelColor: {
-      value: (label: string, color: string) => setLabelColor(label, color),
-      enumerable: false,
-    },
-  })
-
-  // Also attach the four base methods by default (log/info/warn/error)
-  for (const base of ['log', 'info', 'warn', 'error'] as const) {
-    if (!(base in (target as any))) attachLevelMethod(target, state, base)
+      get: () => this._custom(def),
+    })
   }
-}
 
-function attachLevelMethod(target: Logger, state: InternalState, levelName: string) {
-  Object.defineProperty(target, levelName, {
-    value: (...args: unknown[]) => emitAt(target, state, levelName, args),
-    enumerable: false,
-    configurable: true,
-  })
-}
-
-function makeChild(
-  parent: Logger,
-  parentState: InternalState,
-  label: string,
-  gopts?: GroupOptions
-): Logger {
-  const childState = cloneState(parentState)
-  childState.groups.push({ label, color: gopts?.color })
-  if (gopts?.color) setLabelColor(label, gopts.color)
-
-  const callable = ((sub: string, subopts?: GroupOptions) =>
-    makeChild(callable, childState, sub, subopts)) as unknown as Logger
-  defineLoggerAPI(callable, childState)
-  for (const levelName of childState.levels.keys()) {
-    attachLevelMethod(callable, childState, levelName)
+  private _custom = (def: LevelDefinition) => {
+    if (!this._enabled(def.level)) return NOOP
+    const [fmt, styles] = this._prefix(def.label)
+    const method = this._consoleMethod(def.method)
+    return method.bind(console, fmt, ...styles)
   }
-  return callable
-}
 
-function emitAt(self: Logger, state: InternalState, levelName: string, rawArgs: unknown[]) {
-  const def = state.levels.get(levelName)
-  if (!def) {
-    // Unknown level: treat as console.log without threshold.
-    const { args } = maybeExtractCallOptions(rawArgs)
-    const payload: EmitPayload = {
-      level: levelName,
-      rank: Number.NEGATIVE_INFINITY,
-      method: 'log',
-      prefix: state.name,
-      groupPath: state.groups.map((g) => g.label),
-      args,
-      enabled: state.enabled,
-      willPrint: state.enabled,
+  private _method(method: AnyConsoleMethod) {
+    const def = BUILTIN_DEFS[method]
+    if (!this._enabled(def.level)) return NOOP
+    const [fmt, styles] = this._prefix(def.label)
+    const fn = this._consoleMethod(method)
+    return fn.bind(console, fmt, ...styles)
+  }
+
+  private _consoleMethod(method: AnyConsoleMethod): (...args: any[]) => void {
+    const m = (console as any)[method] as Function | undefined
+    return (m ? m : console.log).bind(console)
+  }
+
+  private _enabled(level: LoggerLevel): boolean {
+    return level >= this._levelRef.value && this._levelRef.value !== LoggerLevel.silent
+  }
+
+  private _prefix(label: string): [string, string[]] {
+    const styles: string[] = []
+    let fmt = ''
+
+    if (this._name) {
+      const color = pickColor(`name:${this._name}`, this._nameColor)
+      fmt += `%c${this._name}%c`
+      styles.push(
+        `background:${color}; color:#fff; padding:1px 4px; border-radius:2px; font-weight:700;`,
+        RESET_STYLE
+      )
     }
-    if (state.hooks.beforeEmit && state.hooks.beforeEmit(payload) === false) return
-    emitToConsole(
-      {
-        method: 'log',
-        prefix: state.name,
-        prefixColor: resolvePrefixColor(state),
-        groups: state.groups,
-      },
-      levelName,
-      args
-    )
-    state.hooks.afterEmit?.(payload)
-    return
+
+    if (label) {
+      // For default labels we include surrounding spaces in the label itself
+      fmt += ` ${label}`
+    }
+
+    if (this._groupPath.length) {
+      const groupText = this._groupPath.join('/')
+      const groupColor = pickColor(`group:${groupText}`)
+      fmt += ` %c${groupText}%c`
+      styles.push(`color:${groupColor}; text-decoration: underline;`, RESET_STYLE)
+    }
+
+    return [fmt, styles]
   }
+}
 
-  const { args, opts } = maybeExtractCallOptions(rawArgs)
-  const willPrint = state.enabled && (def.rank >= state.level || !!opts.print)
+const NOOP = () => {}
+const RESET_STYLE = 'color:inherit; background:transparent; text-decoration:none;'
 
-  const payload: EmitPayload = {
-    level: levelName,
-    rank: def.rank,
-    method: def.method,
-    prefix: state.name,
-    groupPath: state.groups.map((g) => g.label),
-    args,
-    enabled: state.enabled,
-    willPrint,
-  }
+const BUILTIN_DEFS: Record<AnyConsoleMethod, LevelDefinition> = {
+  debug: { level: LoggerLevel.debug, label: '[D]', method: 'debug' },
+  log: { level: LoggerLevel.log, label: '[L]', method: 'log' },
+  info: { level: LoggerLevel.info, label: '[I]', method: 'info' },
+  warn: { level: LoggerLevel.warn, label: '[W]', method: 'warn' },
+  error: { level: LoggerLevel.error, label: '[E]', method: 'error' },
+}
 
-  if (state.hooks.beforeEmit && state.hooks.beforeEmit(payload) === false) return
-  if (!willPrint) return // filtered out
-
-  emitToConsole(
-    {
-      method: def.method,
-      prefix: state.name,
-      prefixColor: resolvePrefixColor(state),
-      groups: state.groups,
-      levelBadge: def.label ?? levelName,
+function makeCallable(instance: Logger): LoggerCallable {
+  const fn = function (group: string, options?: { color?: string }) {
+    return instance.group(group, options)
+  } as unknown as LoggerCallable
+  return new Proxy(fn, {
+    get(_t, p, _r) {
+      // @ts-ignore
+      return (instance as any)[p]
     },
-    undefined,
-    args
-  )
-
-  state.hooks.afterEmit?.(payload)
+    set(_t, p, v) {
+      // @ts-ignore
+      ;(instance as any)[p] = v
+      return true
+    },
+    apply(_t, _thisArg, argArray: any[]) {
+      return instance.group(argArray[0], argArray[1])
+    },
+    has(_t, p) {
+      return p in instance
+    },
+  })
 }
 
-function resolvePrefixColor(state: InternalState): string | undefined {
-  if (!state.name) return undefined
-  return state.nameColor ?? getLabelColor(state.name)
-}
-
-interface EmitMeta {
-  method: ConsoleMethod
-  prefix?: string
-  prefixColor?: string
-  groups: { label: string; color?: string }[]
-  levelBadge?: string
-}
-
-function emitToConsole(meta: EmitMeta, levelNameForUnknown: string | undefined, args: unknown[]) {
-  // Build a `%c`-driven format string with styles array.
-  const fmts: string[] = []
-  const styles: string[] = []
-
-  // Prefix
-  if (meta.prefix) {
-    const color = meta.prefixColor ?? getLabelColor(meta.prefix)
-    fmts.push(`%c${meta.prefix}`)
-    styles.push(cssForLabel(color))
-    fmts.push('%c')
-    styles.push('')
-    fmts.push(' ')
-  }
-
-  // Level badge like [I]
-  if (meta.levelBadge) {
-    fmts.push(`[${meta.levelBadge}]`)
-    fmts.push(' ')
-  } else if (levelNameForUnknown) {
-    fmts.push(`[${levelNameForUnknown}] `)
-  }
-
-  // Groups chain: group1 group2 ... each colorized
-  for (const g of meta.groups) {
-    const color = g.color ?? getLabelColor(g.label)
-    fmts.push(`%c${g.label}`)
-    styles.push(cssForGroupLabel(color))
-    fmts.push('%c')
-    styles.push('')
-    fmts.push(' ')
-  }
-
-  // Join base message and forward extra args untouched
-  const method = console[meta.method] ? meta.method : 'log'
-  ;(console[method] as any)(fmts.join(''), ...styles, ...args)
-}
-
-function cssForLabel(color: string): string {
-  return `background: ${color}; color: #fff; font-weight: 700; padding: 1px 2px; border-radius: 4px;`
-}
-
-function cssForGroupLabel(color: string): string {
-  return `color: ${color}; font-weight: 600; text-decoration: underline;`
+// ------------------------
+// Convenience factory
+// ------------------------
+export function createLogger(options?: LoggerOptions): LoggerCallable {
+  return new Logger(options) as unknown as LoggerCallable
 }

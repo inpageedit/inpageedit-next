@@ -25,6 +25,7 @@ declare global {
   const TwinSwapInput: typeof import('./components/TwinSwapInput/index')['TwinSwapInput']
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
+  const createLogger: typeof import('./utils/Logger')['createLogger']
   const deepToRaw: typeof import('./utils/vueReactivity')['deepToRaw']
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
   const ensureSlash: typeof import('./utils/string')['ensureSlash']
@@ -68,7 +69,7 @@ declare global {
   export type { Endpoints } from './constants/endpoints'
   import('./constants/endpoints')
   // @ts-ignore
-  export type { LoggerLevel, ConsoleMethod, LevelDef, LoggerOptions, GroupOptions, LogCallOptions, Hooks, EmitPayload, LoggerInstance, LoggerCallable } from './utils/Logger'
+  export type { LoggerLevel, Logger, LevelDefinition, LoggerOptions, LoggerCallable } from './utils/Logger'
   import('./utils/Logger')
   // @ts-ignore
   export type { PreferenceAugmented } from './decorators/Preferences'
