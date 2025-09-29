@@ -56,6 +56,9 @@ export class SsiModalService {
       this.modal = module
     })
   }
+  get logger() {
+    return this.ctx.logger('SSI_MODAL')
+  }
 
   protected stop(): void | Promise<void> {
     this.modal?.closeAll()
@@ -66,7 +69,7 @@ export class SsiModalService {
 
     const init = ssiModalLib.proto.init
     ssiModalLib.proto.init = function () {
-      console.log('init', this)
+      that.logger.log('init', this)
       this.options.className ||= ''
       this.options.className += ' in-page-edit theme-ipe'
       return init.call(this)
@@ -88,7 +91,9 @@ export class SsiModalService {
 
       // start loading
       if (state) {
-        const inputsAndButtons = this.get$window().find('input:not([disabled]),button:not([disabled])')
+        const inputsAndButtons = this.get$window().find(
+          'input:not([disabled]),button:not([disabled])'
+        )
         this.get$modal().data('inputsAndButtons', inputsAndButtons)
         inputsAndButtons.prop('disabled', true)
         this.get$window().append(

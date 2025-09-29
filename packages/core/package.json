@@ -12,15 +12,17 @@
     "lib"
   ],
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
     "./package.json": {
       "types": "./package.json",
       "import": "./package.json"
     },
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./InPageEdit": {
+      "source": "./src/InPageEdit.ts",
       "types": "./dist/InPageEdit.d.ts"
     },
     "./components": {
@@ -104,7 +106,7 @@
     "zx": "^8.8.3"
   },
   "dependencies": {
-    "cordis": "^3.18.1",
+    "@cordisjs/core": "^3.18.1",
     "diff": "^8.0.2",
     "localforage": "^1.10.0",
     "naive-ui": "^2.43.1",

@@ -1,4 +1,4 @@
-import Schema from 'schemastery'
+import type Schema from 'schemastery'
 
 type AnyConstructor<T = any> = new (...args: any[]) => T
 

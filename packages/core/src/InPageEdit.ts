@@ -1,4 +1,6 @@
-import { Context, Inject, Schema, Events as CordisEvents } from 'cordis'
+import { Context, Inject, Events as CordisEvents } from '@cordisjs/core'
+import Schema from 'schemastery'
+import { Logger, LoggerLevelRank } from './utils/Logger'
 import { ApiService } from '@/services/ApiService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService'
 import { SsiModalService } from '@/services/SsiModalService'
@@ -9,6 +11,7 @@ import { WikiPageService } from '@/services/WikiPageService'
 export interface InPageEditCoreConfig {
   baseURL: string | URL
   legacyPreferences: Record<string, any>
+  logLevel: number
 }
 
 /**
@@ -21,14 +24,17 @@ export interface InPageEditCoreConfig {
  * @see https://github.com/inpageedit/inpageedit-next
  */
 export class InPageEdit extends Context {
+  readonly version: string = import.meta.env.__VERSION__ || '0.0.0'
+
   public config: InPageEditCoreConfig
   static DEFAULT_CONFIG: InPageEditCoreConfig = {
     baseURL: '',
     legacyPreferences: {},
+    logLevel: import.meta.env.DEV ? LoggerLevelRank.debug : LoggerLevelRank.info,
   }
   Endpoints = Endpoints
-  Schema = Schema
-  readonly version: string = import.meta.env.__VERSION__ || '0.0.0'
+  readonly Schema = Schema
+  readonly logger: Logger
 
   constructor(config?: Partial<InPageEditCoreConfig>) {
     super()
@@ -36,6 +42,11 @@ export class InPageEdit extends Context {
       ...InPageEdit.DEFAULT_CONFIG,
       ...config,
     }
+    this.logger = new Logger({
+      name: 'IPE',
+      color: '#33aaff',
+      level: this.config.logLevel,
+    })
     this.#initCoreServices()
     this.#initCorePlugins()
     this.#initCoreAssets()
@@ -93,8 +104,11 @@ export class InPageEdit extends Context {
   }
 }
 
+// 导出依赖包以便用户使用
+export { Logger, Schema }
+
 // 类型体操
-export { Inject, Schema, Service } from 'cordis'
+export { Inject, Service } from '@cordisjs/core'
 export interface Events<C extends InPageEdit = InPageEdit> extends CordisEvents<C> {}
 export interface InPageEdit {
   [InPageEdit.events]: Events<this>
