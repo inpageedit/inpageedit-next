@@ -24,6 +24,16 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 
 -->
 
+<TimelineItem time='2025-09-29T19:19:58.462Z' title='0.4.1'>
+
+- chore: housekeeping
+  - 更新了依赖，修复了一些小问题，提升了项目的整体质量
+  - 将部分核心服务标记为 `builtin`，以便在不声明注入时也能直接使用：`api`, `resourceLoader`, `modal`, `storage`, `sitemeta`, `wikiPage`
+- refactor!: replace logger with @inpageedit/logger
+  - 我们解耦并发布了我们的简单、强大、可扩展的 Logger 库：[@inpageedit/logger](https://www.npmjs.com/package/@inpageedit/logger)
+
+</TimelineItem>
+
 <TimelineItem time='2025-09-29T15:00:56.913Z' title='0.4.0'>
 
 - perf!: replace cordis with @cordisjs/core
@@ -49,7 +59,7 @@ import TimelinePeriod from '@/.vitepress/components/Timeline/TimelinePeriod.vue'
 - fix: wrong `__VERSION__` constant in build
   - 修正了打包时插入的错误版本号常量
 - feat!: introduce schemastery-form
-  - 我们已从 @inpageedit/core 中解耦出表单组件，发布并开源了独立的新包 [schemastery-form](https://www.npmjs.com/package/schemastery-form)。
+  - 我们解耦并发布了开箱即用、体积小巧的 [schemastery-form](https://www.npmjs.com/package/schemastery-form)。
 
 </TimelineItem>
 
