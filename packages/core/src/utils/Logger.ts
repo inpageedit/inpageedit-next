@@ -32,7 +32,7 @@ export interface LevelDef {
   method?: ConsoleMethod
 }
 
-export enum LoggerLevelRank {
+export enum LoggerLevel {
   debug = -1,
   log = 0,
   info = 1,
@@ -43,7 +43,7 @@ export enum LoggerLevelRank {
 
 export interface LoggerOptions {
   /** Minimum severity to print: 0 log, 1 info, 2 warn, 3 error. */
-  level?: LoggerLevelRank | number
+  level?: LoggerLevel | number
   /** App prefix. Can be empty string to omit. */
   name?: string
   /** CSS color for the prefix. If omitted, deterministic color will be chosen. */

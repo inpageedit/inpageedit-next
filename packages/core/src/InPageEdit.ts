@@ -1,6 +1,6 @@
 import { Context, Inject, Events as CordisEvents } from '@cordisjs/core'
 import Schema from 'schemastery'
-import { Logger, LoggerLevelRank } from './utils/Logger'
+import { Logger, LoggerLevel } from './utils/Logger'
 import { ApiService } from '@/services/ApiService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService'
 import { SsiModalService } from '@/services/SsiModalService'
@@ -30,10 +30,10 @@ export class InPageEdit extends Context {
   static DEFAULT_CONFIG: InPageEditCoreConfig = {
     baseURL: '',
     legacyPreferences: {},
-    logLevel: import.meta.env.DEV ? LoggerLevelRank.debug : LoggerLevelRank.info,
+    logLevel: import.meta.env.DEV ? LoggerLevel.debug : LoggerLevel.info,
   }
   Endpoints = Endpoints
-  readonly Schema = Schema
+  readonly schema = Schema
   readonly logger: Logger
 
   constructor(config?: Partial<InPageEditCoreConfig>) {
@@ -105,7 +105,8 @@ export class InPageEdit extends Context {
 }
 
 // 导出依赖包以便用户使用
-export { Logger, Schema }
+export { default as Schema } from 'schemastery'
+export * from '@/utils/Logger'
 
 // 类型体操
 export { Inject, Service } from '@cordisjs/core'

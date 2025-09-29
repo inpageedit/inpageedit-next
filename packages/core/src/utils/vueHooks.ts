@@ -13,5 +13,9 @@ export const injectIPE = (ipe: InPageEdit, app?: App) => {
 }
 
 export const useIPE = () => {
-  return inject<InPageEdit>(IPEInjectKey)
+  const ipe = inject<InPageEdit>(IPEInjectKey)
+  if (!ipe) {
+    throw new Error('InPageEdit instance is not provided')
+  }
+  return ipe
 }
