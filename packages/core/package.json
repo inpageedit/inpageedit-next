@@ -1,6 +1,6 @@
 {
   "name": "@inpageedit/core",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "🚀 Modular, Extensible Supercharged Plugin for MediaWiki",
   "author": "dragon-fish",
   "license": "MIT",
@@ -93,7 +93,7 @@
   },
   "dependencies": {
     "@cordisjs/core": "^3.18.1",
-    "@inpageedit/logger": "workspace:*",
+    "@inpageedit/logger": "^0.1.0",
     "diff": "^8.0.2",
     "localforage": "^1.10.0",
     "schemastery": "^3.17.0",

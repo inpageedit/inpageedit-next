@@ -148,8 +148,8 @@ importers:
         specifier: ^3.18.1
         version: 3.18.1
       '@inpageedit/logger':
-        specifier: workspace:*
-        version: link:../logger
+        specifier: ^0.1.0
+        version: 0.1.0
       diff:
         specifier: ^8.0.2
         version: 8.0.2
@@ -657,6 +657,9 @@ packages:
 
   '@iconify/utils@3.0.2':
     resolution: {integrity: sha512-EfJS0rLfVuRuJRn4psJHtK2A9TqVnkxPpHY6lYHiB9+8eSuudsxbwMiavocG45ujOo6FJ+CIRlRnlOGinzkaGQ==}
+
+  '@inpageedit/logger@0.1.0':
+    resolution: {integrity: sha512-6QwdbtkH/Bwg/P/+s0uVPzxbMpk8GSPzJmafyJKCEtUdgbNXSm22mqltCbN8k2EuSV45Dn+nwouHKTSqFY1A1A==}
 
   '@isaacs/balanced-match@4.0.1':
     resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
@@ -3816,6 +3819,8 @@ snapshots:
       mlly: 1.8.0
     transitivePeerDependencies:
       - supports-color
+
+  '@inpageedit/logger@0.1.0': {}
 
   '@isaacs/balanced-match@4.0.1': {}
 
