@@ -153,9 +153,6 @@ importers:
       localforage:
         specifier: ^1.10.0
         version: 1.10.0
-      naive-ui:
-        specifier: ^2.43.1
-        version: 2.43.1(vue@3.5.21(typescript@5.9.2))
       schemastery:
         specifier: ^3.17.0
         version: 3.17.0
@@ -175,27 +172,12 @@ importers:
       '@eslint/js':
         specifier: ^9.36.0
         version: 9.36.0
-      '@inpageedit/core':
-        specifier: workspace:^
-        version: 'link:'
       '@microsoft/api-extractor':
         specifier: ^7.52.13
         version: 7.52.13(@types/node@22.18.6)
-      '@nolebase/vitepress-plugin-git-changelog':
-        specifier: ^2.18.2
-        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2))(vue@3.5.21(typescript@5.9.2))
-      '@nolebase/vitepress-plugin-inline-link-preview':
-        specifier: ^2.18.2
-        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2))(vue@3.5.21(typescript@5.9.2))
-      '@nolebase/vitepress-plugin-page-properties':
-        specifier: ^2.18.2
-        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2))(vue@3.5.21(typescript@5.9.2))
       '@prettier/plugin-pug':
         specifier: ^3.4.2
         version: 3.4.2(prettier@3.6.2)
-      '@shikijs/vitepress-twoslash':
-        specifier: ^3.13.0
-        version: 3.13.0(typescript@5.9.2)
       '@tabler/icons-vue':
         specifier: ^3.35.0
         version: 3.35.0(vue@3.5.21(typescript@5.9.2))
@@ -235,12 +217,6 @@ importers:
       jsx-dom:
         specifier: ^8.1.6
         version: 8.1.6
-      markdown-it-task-lists:
-        specifier: ^2.1.1
-        version: 2.1.1
-      mermaid:
-        specifier: ^11.12.0
-        version: 11.12.0
       npm-run-all2:
         specifier: ^8.0.4
         version: 8.0.4
@@ -274,27 +250,6 @@ importers:
       vite:
         specifier: ^7.1.7
         version: 7.1.7(@types/node@22.18.6)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)
-      vitepress:
-        specifier: 2.0.0-alpha.12
-        version: 2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2)
-      vitepress-i18n:
-        specifier: ^1.3.4
-        version: 1.3.4
-      vitepress-markdown-timeline:
-        specifier: ^1.2.2
-        version: 1.2.2
-      vitepress-plugin-group-icons:
-        specifier: ^1.6.3
-        version: 1.6.3(markdown-it@14.1.0)(vite@7.1.7(@types/node@22.18.6)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5))
-      vitepress-plugin-mermaid:
-        specifier: ^2.0.17
-        version: 2.0.17(mermaid@11.12.0)(vitepress@2.0.0-alpha.12(@types/node@22.18.6)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.5)(typescript@5.9.2))
-      vitepress-sidebar:
-        specifier: ^1.33.0
-        version: 1.33.0
-      zx:
-        specifier: ^8.8.3
-        version: 8.8.3
 
   packages/schemastery-form:
     dependencies:
