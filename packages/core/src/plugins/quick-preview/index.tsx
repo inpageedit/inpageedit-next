@@ -72,7 +72,7 @@ export class PluginQuickPreview extends BasePlugin {
     modal.setContent(
       (
         <section>
-          <ProgressBar />
+          <ipe-progress-bar progress={-1} />
         </section>
       ) as HTMLElement
     )

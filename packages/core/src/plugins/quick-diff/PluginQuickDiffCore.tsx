@@ -292,7 +292,7 @@ export class PluginQuickDiffCore extends BasePlugin {
     const modal = this.ctx.modal
       .createObject({
         title: 'Loading diff...',
-        content: (<ProgressBar />) as HTMLElement,
+        content: (<ipe-progress-bar progress={-1} />) as HTMLElement,
         className: 'quick-diff',
       })
       .init()

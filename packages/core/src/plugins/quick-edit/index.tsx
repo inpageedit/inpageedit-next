@@ -174,7 +174,7 @@ export class PluginQuickEdit extends BasePlugin {
             alignItems: 'center',
           }}
         >
-          <ProgressBar />
+          <ipe-progress-bar progress={-1} />
         </section>
       ) as HTMLElement
     )
@@ -215,9 +215,9 @@ export class PluginQuickEdit extends BasePlugin {
       <form className="ipe-quickEdit-form">
         {/* 页面不存在 */}
         {wikiPage.pageInfo.pageid === 0 && (
-          <MBox title="Attention" type="important">
+          <ipe-mbox title="Attention" type="important" closeable={true}>
             <p>This page does not exist.</p>
-          </MBox>
+          </ipe-mbox>
         )}
         <textarea className="editArea" name="text" id="wpTextbox1">
           {wikiPage.revisions[0]?.content || ''}

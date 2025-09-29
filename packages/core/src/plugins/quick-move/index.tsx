@@ -80,7 +80,7 @@ export class PluginQuickMove extends BasePlugin {
     const modal = this.ctx.modal
       .createObject({
         title: 'Quick Move',
-        content: (<ProgressBar />) as HTMLElement,
+        content: (<ipe-progress-bar progress={-1} />) as HTMLElement,
         className: 'quick-move',
         sizeClass: 'medium',
         center: true,

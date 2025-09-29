@@ -1,27 +1,32 @@
-import { JSX } from 'vue/jsx-runtime'
-import styles from './styles.module.sass'
+import { defineCustomElement } from 'vue'
+import ProgressBarVue, { type ProgressBarProps } from './ProgressBar.ce.vue'
+import { h } from 'jsx-dom'
 
-export const ProgressBar = (
-  attrs: JSX.IntrinsicElements['div'] & { indeterminate?: boolean; progress?: number }
-) => {
-  const indeterminate = attrs.indeterminate ?? true
-  const bar = (
-    <div
-      class={`${styles.ipe_progress}`}
-      data-indeterminate={`${indeterminate}`}
-      // @ts-ignore
-      style={{ width: '100%', '--progress': attrs.progress ? `${attrs.progress}%` : '0%' }}
-      {...attrs}
-    ></div>
-  ) as HTMLElement & { setProgress: (progress: number) => void }
-  bar.setProgress = (progress: number | undefined) => {
-    if (typeof progress === 'number') {
-      bar.dataset.indeterminate = 'false'
-      bar.style.setProperty('--progress', `${progress}%`)
-    } else {
-      bar.dataset.indeterminate = 'true'
-      bar.style.setProperty('--progress', '0%')
+const ProgressBarElement = defineCustomElement(ProgressBarVue)
+registerCustomElement('ipe-progress-bar', ProgressBarElement)
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'ipe-progress-bar': InstanceType<typeof ProgressBarElement>
+  }
+}
+
+declare module 'jsx-dom' {
+  namespace JSX {
+    interface IntrinsicElements {
+      'ipe-progress-bar': DefineJSXCustomElement<ProgressBarProps>
     }
   }
-  return bar
+}
+
+// 兼容旧函数式调用：ProgressBar({...}) 返回元素实例
+export const ProgressBar = (attrs: ProgressBarProps) => {
+  const el = h('ipe-progress-bar')
+  if (typeof attrs?.progress === 'number') {
+    el.progress = attrs.progress
+    el.indeterminate = false
+  } else if (typeof attrs.indeterminate !== 'undefined') {
+    el.indeterminate = !!attrs.indeterminate
+  }
+  return el
 }

@@ -1,6 +1,7 @@
 import { Context, Inject, Events as CordisEvents } from '@cordisjs/core'
 import Schema from 'schemastery'
 import { Logger, LoggerLevel } from './utils/Logger'
+import '@/components'
 import { ApiService } from '@/services/ApiService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService'
 import { SsiModalService } from '@/services/SsiModalService'

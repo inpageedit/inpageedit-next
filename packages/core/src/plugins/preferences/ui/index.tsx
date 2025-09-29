@@ -50,7 +50,7 @@ export class PluginPreferencesUI extends BasePlugin {
       title: 'InPageEdit Prefrences',
       content: (
         <>
-          <ProgressBar />
+          <ipe-progress-bar progress={-1} />
         </>
       ) as HTMLElement,
     })

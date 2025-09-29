@@ -1,5 +1,6 @@
 import { InPageEdit } from '@/InPageEdit'
 import { MwApi } from 'wiki-saikou/browser'
+import { BaseService } from './BaseService'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -11,7 +12,7 @@ export interface ApiServiceOptions {
   baseURL: string | URL
 }
 
-export class ApiService {
+export class ApiService extends BaseService<ApiServiceOptions> {
   constructor(
     public ctx: InPageEdit,
     options?: Partial<ApiServiceOptions>
@@ -21,6 +22,9 @@ export class ApiService {
     if (baseURL?.startsWith('/')) {
       baseURL = new URL(baseURL, location.origin).href
     }
+    super({
+      baseURL: baseURL!,
+    })
     const api = new MwApi(baseURL, {
       headers: {
         'x-api-user-agent': `InPageEdit-NEXT ${ctx.version}`,

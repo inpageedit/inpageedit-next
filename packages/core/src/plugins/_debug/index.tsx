@@ -47,11 +47,21 @@ class PluginDebug extends BasePlugin {
     const schemaForm = h('schema-form') as unknown as SchemaForm<TestSchema>
     schemaForm.schema = schema
 
+    let progressBar: HTMLElementTagNameMap['ipe-progress-bar']
     const modal = this.ctx.modal
       .createObject({
         title: 'Debug Info',
         content: (
           <div>
+            <h2>Progress Bar</h2>
+            <ipe-progress-bar ref={(el) => (progressBar = el)} progress={-1}></ipe-progress-bar>
+            <button onClick={() => ((progressBar.progress ||= 0), (progressBar!.progress -= 10))}>
+              - 10%
+            </button>
+            <button onClick={() => (progressBar.progress = -1)}>Set Indeterminate</button>
+            <button onClick={() => ((progressBar.progress ||= 0), (progressBar!.progress += 10))}>
+              + 10%
+            </button>
             <h2>Site Metadata</h2>
             <pre style={{ maxHeight: '20em', overflow: 'auto' }}>
               {JSON.stringify(this.ctx.sitemeta._raw, null, 2)}
@@ -77,6 +87,9 @@ class PluginDebug extends BasePlugin {
                 {type[0].toUpperCase() + type.slice(1).toLowerCase()} box
               </MBox>
             ))}
+            <ipe-mbox type="info" closeable>
+              Test web component
+            </ipe-mbox>
           </div>
         ) as HTMLElement,
       })

@@ -112,7 +112,7 @@ export class SsiModalService {
               zIndex: 2000,
             }}
           >
-            <ProgressBar style={{ width: '80%', maxWidth: '800px' }} />
+            <ipe-progress-bar progress={-1} style={{ width: '80%', maxWidth: '800px' }} />
           </div>
         )
       } else {

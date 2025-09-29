@@ -1,89 +1,32 @@
-import { ReactNode } from 'jsx-dom'
+import { defineCustomElement } from 'vue'
+import MBoxVue, { type MBoxProps } from './MBox.ce.vue'
 import { JSX } from 'jsx-dom/jsx-runtime'
-import styles from './styles.module.sass'
+import { DetailedHTMLProps, h, HTMLAttributes, ReactNode } from 'jsx-dom'
 
-export type MBoxProps = {
-  type?:
-    | ''
-    | 'default'
-    | 'note'
-    | 'info'
-    | 'tip'
-    | 'success'
-    | 'important'
-    | 'done'
-    | 'warning'
-    | 'caution'
-    | 'error'
-  title?: ReactNode
-  content?: ReactNode
-  closeable?: boolean
-  titleProps?: JSX.IntrinsicElements['div']
-  contentProps?: JSX.IntrinsicElements['div']
-} & JSX.IntrinsicElements['div']
+const HTMLMBoxElement = defineCustomElement(MBoxVue)
 
-export type MBoxElement = HTMLElement & {
-  close: () => Promise<void>
+registerCustomElement('ipe-mbox', HTMLMBoxElement)
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'ipe-mbox': InstanceType<typeof HTMLMBoxElement>
+  }
 }
 
-export const MBox = (props: MBoxProps) => {
-  const {
-    type = 'default',
-    title,
-    content,
-    closeable = true,
-    titleProps,
-    contentProps,
-    children,
-    ...rest
-  } = props
-  let titleContent = title
-  if (typeof title === 'undefined' && type !== 'default') {
-    titleContent = type[0].toUpperCase() + type.slice(1).toLowerCase()
-  }
-
-  const close = async () => {
-    if (!box) {
-      return Promise.resolve()
+declare module 'jsx-dom' {
+  namespace JSX {
+    interface IntrinsicElements {
+      'ipe-mbox': DefineJSXCustomElement<MBoxProps>
     }
-    const { promise, resolve } = Promise.withResolvers<void>()
-
-    const animation = box.animate(
-      [
-        { opacity: '1', height: box.clientHeight + 'px' },
-        { opacity: '0', height: '0px', margin: '0px' },
-      ],
-      {
-        duration: 300,
-        easing: 'ease',
-      }
-    )
-
-    animation.addEventListener('finish', () => {
-      box.remove()
-      resolve()
-    })
-
-    return promise
   }
+}
 
-  const box = (
-    <div className={`theme-ipe ipe-mbox mbox-type-${type || 'default'} ${styles.mbox}`} {...rest}>
-      {titleContent && (
-        <div className={`ipe-mbox-title ${styles.title}`} {...titleProps}>
-          {titleContent}
-        </div>
-      )}
-      <div className={`ipe-mbox-content ${styles.content}`} {...contentProps}>
-        {children || content}
-      </div>
-      {closeable && (
-        <a onClick={close} className={`ipe-mbox-close ${styles.close}`}>
-          ×
-        </a>
-      )}
-    </div>
-  ) as MBoxElement
-  box.close = close
-  return box
+/**
+ * 工厂函数：保持与原先的 JSX / 函数式创建 API 兼容。
+ * 使用方式：MBox({ type, title, content, closeable, children })
+ */
+export const MBox = (props: MBoxProps & Omit<JSX.IntrinsicElements['div'], keyof MBoxProps>) => {
+  const { type = 'default', title = '', content = '', closeable = true, children, ...rest } = props
+  const el = h('ipe-mbox', props)
+  return el
 }

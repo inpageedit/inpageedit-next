@@ -76,7 +76,7 @@ export class PluginQuickRedirect extends BasePlugin {
     const modal = this.ctx.modal
       .createObject({
         title: 'Quick Redirect',
-        content: (<ProgressBar />) as HTMLElement,
+        content: (<ipe-progress-bar progress={-1} />) as HTMLElement,
         className: 'quick-redirect',
         sizeClass: 'medium',
         center: true,
