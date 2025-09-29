@@ -80,15 +80,15 @@ declare global {
 
 const CACHE_KEY = Symbol.for('NPM_REGISTRY_DATA')
 const REGISTRY_BASE = 'https://registry.npmjs.org/'
-if (!window[CACHE_KEY]) {
+if (typeof window !== 'undefined' && !window[CACHE_KEY]) {
   window[CACHE_KEY] = new Map()
 }
-const cache = window[CACHE_KEY]!
 
 export async function getNpmRegistryPackage(
   name: string,
   noCache = false
 ): Promise<NpmRegistryPackage> {
+  const cache = window[CACHE_KEY]!
   if (cache.has(name) && !noCache) {
     return cache.get(name)!
   }
