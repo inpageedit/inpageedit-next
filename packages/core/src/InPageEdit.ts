@@ -3,10 +3,10 @@ import Schema from 'schemastery'
 import { LoggerLevel, createLogger, type Logger } from '@inpageedit/logger'
 import { ApiService } from '@/services/ApiService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService'
-import { SsiModalService } from '@/services/SsiModalService'
 import { StorageService } from '@/services/StorageService'
 import { SiteMetadataService } from '@/services/SiteMetadataService'
 import { WikiPageService } from '@/services/WikiPageService'
+import { ModalService } from './services/ModalService/index.js'
 
 /**
  * ✏️ InPageEdit NEXT
@@ -50,7 +50,7 @@ export class InPageEdit extends Context {
   async #initCoreServices() {
     this.plugin(ApiService, { baseURL: this.config.baseURL })
     this.plugin(ResourceLoaderService)
-    this.plugin(SsiModalService)
+    this.plugin(ModalService)
     this.plugin(StorageService)
     this.plugin(SiteMetadataService)
     this.plugin(WikiPageService)

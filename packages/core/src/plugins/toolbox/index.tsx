@@ -16,7 +16,7 @@ declare module '@/InPageEdit' {
     toolboxAlwaysShow: Schema.boolean()
       .description('Make the toolbox opened by default')
       .default(false),
-  }),
+  }).description('Toolbox preferences'),
   {
     toolboxAlwaysShow: false,
   }
@@ -133,8 +133,8 @@ export class PluginToolbox extends Service {
   addButton(payload: {
     id: string
     group?: 'auto' | 'group1' | 'group2'
-    icon: string | HTMLElement | SVGElement | JQuery | ReactElement
-    tooltip?: string | HTMLElement | JQuery
+    icon: string | HTMLElement | SVGElement | ReactElement
+    tooltip?: string | HTMLElement
     buttonProps?: Record<string, any>
     onClick?: (event: MouseEvent) => void
     index?: number

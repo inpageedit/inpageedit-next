@@ -133,7 +133,11 @@ export class PluginQuickDiffCore extends BasePlugin {
   }
 
   private injectQuickEdit({ modal, wikiPage }: QuickEditInitPayload) {
-    modal.setButtons([
+    if (wikiPage.pageid === 0) {
+      // User is creating a new page, no need to show diff button
+      return
+    }
+    modal.addButton(
       {
         label: 'Diff',
         side: 'left',
@@ -142,7 +146,8 @@ export class PluginQuickDiffCore extends BasePlugin {
           const pageTitle = wikiPage.title
           const fromtext = wikiPage.revisions?.[0]?.content || ''
           const totext =
-            (modal.get$content().find('textarea[name="text"]').prop('value') as string) || ''
+            (modal.get$content().querySelector<HTMLTextAreaElement>('textarea[name="text"]')
+              ?.value as string) || ''
 
           return this.comparePages({
             fromtitle: pageTitle,
@@ -152,7 +157,8 @@ export class PluginQuickDiffCore extends BasePlugin {
           })
         },
       },
-    ])
+      1
+    )
   }
 
   simpleTextDiff(oldText: string, newText: string) {

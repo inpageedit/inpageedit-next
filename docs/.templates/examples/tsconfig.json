@@ -1,9 +1,9 @@
 {
-  "extends": "../../../tsconfig.app.json",
+  "extends": "../../tsconfig.json",
   "include": ["./plugins"],
   "compilerOptions": {
     "allowJs": true,
     "noEmit": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "@inpageedit/core"]
   }
 }

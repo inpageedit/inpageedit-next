@@ -3,6 +3,7 @@ import { type QuickEditInitPayload } from '@/plugins/quick-edit'
 import { WikiPage } from '@/models/WikiPage'
 import { MwApiParams } from 'wiki-saikou'
 import { PageParseData } from '@/models/WikiPage/types/PageParseData'
+import { IPEModal } from '@/services/ModalService/IPEModal.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -12,12 +13,12 @@ declare module '@/InPageEdit' {
     'quickPreview/showModal'(payload: {
       ctx: InPageEdit
       text: string
-      modal: SsiModal
+      modal: IPEModal
       wikiPage: WikiPage
     }): void
     'quickPreview/loaded'(payload: {
       ctx: InPageEdit
-      modal: SsiModal
+      modal: IPEModal
       wikiPage: WikiPage
       text: string
       parseData: PageParseData
@@ -41,20 +42,22 @@ export class PluginQuickPreview extends BasePlugin {
   }
 
   private injectQuickEdit({ ctx, modal, wikiPage }: QuickEditInitPayload) {
-    modal.setButtons([
+    modal.addButton(
       {
         label: 'Preview',
         side: 'left',
         className: 'btn btn-secondary',
         method: () => {
           this.quickPreview(
-            (modal.get$content().find('textarea.editArea').val() as string) || '',
+            (modal.get$content().querySelector<HTMLTextAreaElement>('textarea[name="text"]')
+              ?.value as string) || '',
             undefined,
             wikiPage
           )
         },
       },
-    ])
+      2
+    )
   }
 
   async quickPreview(text: string, params?: MwApiParams, wikiPage?: WikiPage) {

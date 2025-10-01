@@ -20,7 +20,9 @@
 
   details
     summary Debug Info
-    pre(style='max-height: 20em; overflow: auto') {{ activeSchema }}
+    h3 Active Schema
+    pre(style='max-height: 20em; overflow: auto') {{ activeSchema?.toJSON() }}
+    h3 Value
     pre(style='max-height: 20em; overflow: auto') {{ value }}
 </template>
 

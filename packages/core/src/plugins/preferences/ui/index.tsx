@@ -55,7 +55,7 @@ export class PluginPreferencesUI extends BasePlugin {
       ) as HTMLElement,
     })
 
-    modal.get$wrapper().addClass('dialog')
+    modal.get$window().classList.add('dialog')
 
     const root = <div id="ipe-preferences-app" style={{ minHeight: '65vh' }}></div>
     modal.setContent(root as HTMLElement)
@@ -84,7 +84,8 @@ export class PluginPreferencesUI extends BasePlugin {
       },
     ])
 
-    modal.get$modal().on('onClose.ssi-modal', () => {
+    modal.on(modal.Event.Close, () => {
+      this.logger.log('preferences modal closed, vue app unmounting')
       app.unmount()
     })
   }

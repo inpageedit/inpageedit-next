@@ -2,6 +2,7 @@ import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { WikiPage } from '@/models/WikiPage'
 import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
 import { PluginQuickEditInArticleLinks } from './PluginQuickEditInArticleLinks'
+import { IPEModal } from '@/services/ModalService/IPEModal'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -33,7 +34,7 @@ export interface QuickEditOptions {
 export interface QuickEditInitPayload {
   ctx: InPageEdit
   options: QuickEditOptions
-  modal: SsiModal
+  modal: IPEModal
   wikiPage: WikiPage
 }
 
@@ -178,17 +179,15 @@ export class PluginQuickEdit extends BasePlugin {
         </section>
       ) as HTMLElement
     )
-    modal.setButtons([
-      {
-        side: 'right',
-        type: 'button',
-        className: 'btn btn-danger btn-secondary',
-        label: 'Cancel',
-        method() {
-          modal.close()
-        },
+    modal.addButton({
+      side: 'right',
+      type: 'button',
+      className: 'btn btn-danger btn-secondary',
+      label: 'Cancel',
+      method() {
+        modal.close()
       },
-    ])
+    })
     modal.show()
     this.ctx.emit('quickEdit/showModal', { ctx: this.ctx, modal, options })
 
@@ -273,51 +272,53 @@ export class PluginQuickEdit extends BasePlugin {
       </form>
     ) as HTMLFormElement
     modal.setContent(editForm)
-    const submitButton = modal.generateButton({
-      side: 'left',
-      className: 'btn btn-primary submit-btn',
-      label: 'Submit',
-      method: () => {
-        const formData = new FormData(editForm)
-        console.info(wikiPage, editForm, {
-          text: formData.get('text') as string,
-          summary: formData.get('summary') as string,
-          minor: formData.get('minor') === 'on',
-        })
-        modal.setLoadingState(true)
-        this.handleSubmit(
-          { ctx: this.ctx, modal, wikiPage, options },
-          {
+    // shamefully fix: make sure the submit button is always the first
+    modal.addButton(
+      {
+        side: 'left',
+        className: 'btn btn-primary submit-btn',
+        label: 'Submit',
+        method: () => {
+          const formData = new FormData(editForm)
+          console.info(wikiPage, editForm, {
             text: formData.get('text') as string,
             summary: formData.get('summary') as string,
             minor: formData.get('minor') === 'on',
-          }
-        )
-          .then(async () => {
-            modal.setOptions({
-              beforeClose: noop,
-            })
-            modal.close()
-            this.ctx.modal.notify('success', {
-              title: 'Submission Successful',
-              content: 'Your changes have been saved.',
-            })
-            if (formData.get('reloadAfterSave')) {
-              await sleep(500)
-              location.reload()
+          })
+          modal.setLoadingState(true)
+          this.handleSubmit(
+            { ctx: this.ctx, modal, wikiPage, options },
+            {
+              text: formData.get('text') as string,
+              summary: formData.get('summary') as string,
+              minor: formData.get('minor') === 'on',
             }
-          })
-          .catch((error) => {
-            this.ctx.modal.notify('error', {
-              title: 'Submission Error',
-              content: error instanceof Error ? error.message : String(error),
+          )
+            .then(async () => {
+              modal.setOptions({
+                beforeClose: noop,
+              })
+              modal.close()
+              this.ctx.modal.notify('success', {
+                title: 'Submission Successful',
+                content: 'Your changes have been saved.',
+              })
+              if (formData.get('reloadAfterSave')) {
+                await sleep(500)
+                location.reload()
+              }
             })
-            modal.setLoadingState(false)
-          })
+            .catch((error) => {
+              this.ctx.modal.notify('error', {
+                title: 'Submission Error',
+                content: error instanceof Error ? error.message : String(error),
+              })
+              modal.setLoadingState(false)
+            })
+        },
       },
-    })
-    // shamefully fix: make sure the submit button is always the first
-    modal.get$buttons('leftButtons').prepend(submitButton)
+      0
+    )
     modal.setOptions({
       beforeClose: () => {
         const oldStr = wikiPage.revisions[0]?.content || ''

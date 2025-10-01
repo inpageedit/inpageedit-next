@@ -1,0 +1,211 @@
+/* --------------------------------------------------------------------------
+   IPE Modal — Base styles with CSS variables
+   Customize via :root { --ipe-modal-* } or on a container scope
+   -------------------------------------------------------------------------- */
+:root {
+  --ipe-modal-z: 1000;
+  --ipe-modal-backdrop-bg: rgba(0, 0, 0, 0.5);
+  --ipe-modal-bg: #ffffff;
+  --ipe-modal-fg: #111827; // gray-900
+  --ipe-modal-muted: #6b7280; // gray-500
+  --ipe-modal-accent: #3b82f6; // blue-500
+  --ipe-modal-radius: 16px;
+  --ipe-modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+  --ipe-modal-spacing: 16px;
+  --ipe-modal-window-max-w: 720px;
+  --ipe-modal-anim: fade; // default animation key
+}
+
+html.ipe-no-scroll,
+body.ipe-no-scroll {
+  overflow: hidden;
+}
+
+/* Backdrop */
+.ipe-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ipe-modal-z);
+  display: grid;
+  place-items: center;
+  background: transparent;
+  transition: background 180ms ease;
+}
+.ipe-backdrop.is-open {
+  background: var(--ipe-modal-backdrop-bg);
+}
+.ipe-backdrop.no-backdrop,
+.ipe-backdrop.no-backdrop.is-open {
+  background: transparent;
+  pointer-events: none;
+}
+.ipe-backdrop.no-backdrop .ipe-modal {
+  pointer-events: auto;
+}
+
+/* Modal shell */
+.ipe-modal {
+  outline: none;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  transition:
+    opacity 180ms ease,
+    transform 220ms ease;
+}
+.ipe-modal.is-open {
+  opacity: 1;
+  transform: none;
+}
+
+.ipe-modal.is-centered {
+  align-items: center;
+}
+.ipe-modal.is-fullscreen .ipe-modal__window {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  border-radius: 0;
+}
+
+/* Window */
+.ipe-modal__window {
+  position: relative;
+  background: var(--ipe-modal-bg);
+  color: var(--ipe-modal-fg);
+  border-radius: var(--ipe-modal-radius);
+  box-shadow: var(--ipe-modal-shadow);
+  max-width: var(--ipe-modal-window-max-w);
+  width: min(92vw, var(--ipe-modal-window-max-w));
+  max-height: 86vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  animation: var(--ipe-modal-anim-show) 220ms ease both;
+}
+
+/* Sizes */
+.size--dialog {
+  max-width: 420px;
+}
+.size--small {
+  max-width: 520px;
+}
+.size--smallToMedium {
+  max-width: 640px;
+}
+.size--medium {
+  max-width: 720px;
+}
+.size--mediumToLarge {
+  max-width: 860px;
+}
+.size--large {
+  max-width: 1040px;
+}
+.size--full {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  border-radius: 0;
+}
+.size--auto {
+  max-width: var(--ipe-modal-window-max-w);
+}
+
+/* Header */
+.ipe-modal__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: calc(var(--ipe-modal-spacing) * 0.75) var(--ipe-modal-spacing);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.ipe-modal__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+.ipe-modal__icons {
+  display: inline-flex;
+  gap: 6px;
+}
+.ipe-modal__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+}
+
+/* Close button */
+.ipe-modal__close {
+  margin-left: 6px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ipe-modal-muted);
+  cursor: pointer;
+}
+.ipe-modal__close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--ipe-modal-fg);
+}
+
+/* Content */
+.ipe-modal__content {
+  padding: var(--ipe-modal-spacing);
+  overflow: auto;
+}
+
+/* Footer */
+.ipe-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: calc(var(--ipe-modal-spacing) * 0.75) var(--ipe-modal-spacing);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+.ipe-modal__buttons {
+  display: inline-flex;
+  gap: 8px;
+}
+
+/* Buttons */
+.ipe-btn {
+  appearance: none;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: #fff;
+  color: var(--ipe-modal-fg);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+}
+.ipe-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.ipe-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ipe-btn.is-primary {
+  border-color: var(--ipe-modal-accent);
+  background: var(--ipe-modal-accent);
+  color: white;
+}
+.ipe-btn.is-ghost {
+  background: transparent;
+}
