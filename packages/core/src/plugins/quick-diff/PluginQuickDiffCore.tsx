@@ -5,6 +5,7 @@ import { JsDiffDiffType } from './JsDiffService'
 import styles from './styles.module.sass'
 import { ChangeObject } from 'diff'
 import { DiffTable } from './components/DiffTable'
+import { IPEModal } from '@/services/ModalService/IPEModal.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -137,6 +138,7 @@ export class PluginQuickDiffCore extends BasePlugin {
       // User is creating a new page, no need to show diff button
       return
     }
+    let latestDiffModal: IPEModal | undefined = undefined
     modal.addButton(
       {
         label: 'Diff',
@@ -149,12 +151,16 @@ export class PluginQuickDiffCore extends BasePlugin {
             (modal.get$content().querySelector<HTMLTextAreaElement>('textarea[name="text"]')
               ?.value as string) || ''
 
-          return this.comparePages({
-            fromtitle: pageTitle,
-            fromtext,
-            totitle: pageTitle,
-            totext,
-          })
+          latestDiffModal = this.comparePages(
+            {
+              fromtitle: pageTitle,
+              fromtext,
+              totitle: pageTitle,
+              totext,
+            },
+            latestDiffModal
+          )
+          return latestDiffModal
         },
       },
       1
@@ -294,14 +300,22 @@ export class PluginQuickDiffCore extends BasePlugin {
     ].join('|'),
     difftype: 'table',
   }
-  comparePages(options: Partial<CompareApiRequestOptions>) {
-    const modal = this.ctx.modal
-      .createObject({
-        title: 'Loading diff...',
-        content: (<ProgressBar />) as HTMLElement,
-        className: 'quick-diff',
-      })
-      .init()
+
+  comparePages(options: Partial<CompareApiRequestOptions>, modal?: IPEModal) {
+    if (!modal || modal.isDestroyed) {
+      modal = this.ctx.modal
+        .createObject({
+          title: 'Loading diff...',
+          content: '',
+          className: 'quick-diff',
+          backdrop: false,
+          draggable: true,
+        })
+        .init()
+    }
+
+    modal.setContent(<ProgressBar />)
+    modal.bringToFront()
 
     if (window.mw && mw.loader.getState('mediawiki.diff.styles') !== 'ready') {
       mw.loader.load(['mediawiki.diff.styles'])

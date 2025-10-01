@@ -77,7 +77,7 @@ export class PluginQuickRedirect extends BasePlugin {
       .createObject({
         title: 'Quick Redirect',
         content: (<ProgressBar />) as HTMLElement,
-        className: 'quick-redirect',
+        className: 'quick-redirect compact-buttons',
         sizeClass: 'medium',
         center: true,
       })
@@ -97,10 +97,17 @@ export class PluginQuickRedirect extends BasePlugin {
             e.preventDefault()
             const formData = new FormData(formRef!)
             const options = {
-              from: formData.get('from') as string,
-              to: formData.get('to') as string,
+              from: formData.get('from')?.toString().trim()!,
+              to: formData.get('to')?.toString().trim()!,
               reason: (formData.get('reason') as string) || '',
               overwrite: formData.get('overwrite') === 'on',
+            }
+            if (!options.from || !options.to) {
+              this.ctx.modal.notify('error', {
+                title: 'Failed to redirect',
+                content: 'From and to are required.',
+              })
+              return
             }
             modal.setLoadingState(true)
             this.redirectPage(options)
@@ -140,12 +147,18 @@ export class PluginQuickRedirect extends BasePlugin {
               Force create redirect even if the from page already exists
             </CheckBox>
           </div>
-          <ActionButton type="primary" style={{ width: '100%' }}>
-            Create Redirect
-          </ActionButton>
         </form>
       ) as HTMLFormElement
     )
+    modal.setButtons([
+      {
+        label: 'Create Redirect',
+        className: 'btn btn-primary',
+        method: () => {
+          formRef?.dispatchEvent(new Event('submit'))
+        },
+      },
+    ])
 
     return modal.show()
   }

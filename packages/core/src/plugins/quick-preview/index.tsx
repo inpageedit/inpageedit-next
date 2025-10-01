@@ -42,17 +42,19 @@ export class PluginQuickPreview extends BasePlugin {
   }
 
   private injectQuickEdit({ ctx, modal, wikiPage }: QuickEditInitPayload) {
+    let latestPreviewModal: IPEModal | undefined = undefined
     modal.addButton(
       {
         label: 'Preview',
         side: 'left',
         className: 'btn btn-secondary',
         method: () => {
-          this.quickPreview(
+          latestPreviewModal = this.quickPreview(
             (modal.get$content().querySelector<HTMLTextAreaElement>('textarea[name="text"]')
               ?.value as string) || '',
             undefined,
-            wikiPage
+            wikiPage,
+            latestPreviewModal
           )
         },
       },
@@ -60,26 +62,26 @@ export class PluginQuickPreview extends BasePlugin {
     )
   }
 
-  async quickPreview(text: string, params?: MwApiParams, wikiPage?: WikiPage) {
+  quickPreview(text: string, params?: MwApiParams, wikiPage?: WikiPage, modal?: IPEModal) {
     wikiPage ||= this.ctx.wikiPage.newBlankPage({
       title: 'API',
     })
 
-    const modal = this.ctx.modal
-      .createObject({
-        className: 'in-page-edit ipe-quickPreview',
-        sizeClass: 'large',
-      })
-      .init()
-    modal.setTitle('Preview loading...')
-    modal.setContent(
-      (
-        <section>
-          <ProgressBar />
-        </section>
-      ) as HTMLElement
-    )
+    if (!modal || modal.isDestroyed) {
+      modal = this.ctx.modal
+        .createObject({
+          className: 'in-page-edit ipe-quickPreview',
+          sizeClass: 'large',
+          backdrop: false,
+          draggable: true,
+        })
+        .init()
+    }
+
     modal.show()
+    modal.setTitle('Preview loading...')
+    modal.setContent(<ProgressBar />)
+    modal.bringToFront()
     this.ctx.emit('quickPreview/showModal', {
       ctx: this.ctx,
       text,
@@ -87,29 +89,44 @@ export class PluginQuickPreview extends BasePlugin {
       wikiPage,
     })
 
-    const {
-      data: { parse },
-    } = await wikiPage.preview(text, params)
-    modal.setTitle(`Preview - ${parse.title}`)
-    let outputRef: HTMLElement | null = null
-    modal.setContent(
-      (
-        <section>
-          <div
-            ref={(el) => (outputRef = el)}
-            className="mw-parser-output"
-            innerHTML={parse.text}
-          ></div>
-        </section>
-      ) as HTMLElement
-    )
-    window.mw?.hook('wikipage.content').fire($(outputRef!))
-    this.ctx.emit('quickPreview/loaded', {
-      ctx: this.ctx,
-      modal,
-      wikiPage,
-      text,
-      parseData: parse,
-    })
+    wikiPage
+      .preview(text, params)
+      .then((ret) => {
+        const {
+          data: { parse },
+        } = ret
+        modal.setTitle(`Preview - ${parse.title}`)
+        let outputRef: HTMLElement | null = null
+        modal.setContent(
+          (
+            <section>
+              <div
+                ref={(el) => (outputRef = el)}
+                className="mw-parser-output"
+                innerHTML={parse.text}
+              ></div>
+            </section>
+          ) as HTMLElement
+        )
+        window.mw?.hook('wikipage.content').fire($(outputRef!))
+        this.ctx.emit('quickPreview/loaded', {
+          ctx: this.ctx,
+          modal,
+          wikiPage,
+          text,
+          parseData: parse,
+        })
+      })
+      .catch((error) => {
+        modal.setTitle('Preview failed')
+        modal.setContent(
+          <>
+            <p>Failed to preview</p>
+            <p>{error instanceof Error ? error.message : String(error)}</p>
+          </>
+        )
+      })
+
+    return modal
   }
 }

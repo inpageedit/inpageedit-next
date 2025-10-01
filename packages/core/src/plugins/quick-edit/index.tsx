@@ -151,7 +151,7 @@ export class PluginQuickEdit extends BasePlugin {
 
     const modal = this.ctx.modal
       .createObject({
-        className: 'in-page-edit ipe-quickEdit ipe-editor',
+        className: 'ipe-quickEdit',
         sizeClass: 'large',
         outSideClose,
       })
@@ -182,7 +182,7 @@ export class PluginQuickEdit extends BasePlugin {
     modal.addButton({
       side: 'right',
       type: 'button',
-      className: 'btn btn-danger btn-secondary',
+      className: 'is-danger is-ghost',
       label: 'Cancel',
       method() {
         modal.close()
@@ -276,7 +276,7 @@ export class PluginQuickEdit extends BasePlugin {
     modal.addButton(
       {
         side: 'left',
-        className: 'btn btn-primary submit-btn',
+        className: 'is-primary submit-btn',
         label: 'Submit',
         method: () => {
           const formData = new FormData(editForm)
@@ -335,11 +335,11 @@ export class PluginQuickEdit extends BasePlugin {
               center: true,
               okBtn: {
                 label: 'Give Up',
-                className: 'btn btn-danger',
+                className: 'is-danger',
               },
               cancelBtn: {
                 label: 'Continue',
-                className: 'btn',
+                className: 'is-ghost',
               },
             },
             (result) => {

@@ -81,7 +81,7 @@ export class PluginQuickMove extends BasePlugin {
       .createObject({
         title: 'Quick Move',
         content: (<ProgressBar />) as HTMLElement,
-        className: 'quick-move',
+        className: 'quick-move compact-buttons',
         sizeClass: 'medium',
         center: true,
       })
@@ -101,12 +101,19 @@ export class PluginQuickMove extends BasePlugin {
             e.preventDefault()
             const formData = new FormData(formRef!)
             const options = {
-              from: formData.get('from') as string,
-              to: formData.get('to') as string,
+              from: formData.get('from')?.toString().trim()!,
+              to: formData.get('to')?.toString().trim()!,
               reason: (formData.get('reason') as string) || '',
               movetalk: formData.get('movetalk') === 'on',
               movesubpages: formData.get('movesubpages') === 'on',
               noredirect: formData.get('noredirect') === 'on',
+            }
+            if (!options.from || !options.to) {
+              this.ctx.modal.notify('error', {
+                title: 'Failed to move',
+                content: 'From and to are required.',
+              })
+              return
             }
             modal.setLoadingState(true)
             this.movePage(options)
@@ -154,14 +161,19 @@ export class PluginQuickMove extends BasePlugin {
             </div>
           )}
           <InputBox label="Reason" id="reason" name="reason" value={options?.reason} />
-          <div>
-            <ActionButton type="primary" style={{ width: '100%' }}>
-              Move
-            </ActionButton>
-          </div>
         </form>
       ) as HTMLElement
     )
+
+    modal.setButtons([
+      {
+        label: 'Move',
+        className: 'is-primary',
+        method: () => {
+          formRef?.dispatchEvent(new Event('submit'))
+        },
+      },
+    ])
 
     return modal.show()
   }

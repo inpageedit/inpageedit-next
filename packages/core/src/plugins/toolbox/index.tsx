@@ -1,5 +1,6 @@
 import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit'
 import { ReactElement } from 'jsx-dom'
+import './styles.scss'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {

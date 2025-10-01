@@ -29,7 +29,7 @@ export const ActionButton = ({
   return h(
     tag,
     {
-      className: `theme-ipe ipe-action-button btn btn-${type || 'default'}`,
+      className: `theme-ipe ipe-action-button ipe-modal-btn is-${type || 'default'}`,
       // @ts-ignore
       href: tag === 'a' ? href : undefined,
       target: tag === 'a' ? target : undefined,

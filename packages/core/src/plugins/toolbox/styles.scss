@@ -1,0 +1,191 @@
+/** 右下角小工具箱 **/
+#ipe-edit-toolbox {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  user-select: none;
+  z-index: 199;
+}
+
+@media print {
+  #ipe-edit-toolbox {
+    display: none;
+  }
+}
+
+#ipe-edit-toolbox .ipe-toolbox-btn {
+  color: white;
+  background: #bebebe;
+  text-align: center;
+  height: 35px;
+  width: 35px;
+  font-size: 20px;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 5px gray;
+  text-shadow: 0 0 2px #4c4c4c;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+#ipe-edit-toolbox #toolbox-toggle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 42px;
+  height: 42px;
+  background: #3f51b5;
+  font-size: 24px;
+  line-height: 1;
+  margin: 0;
+  transition: all 0.26s ease-in-out;
+  transform: rotate(0deg);
+}
+
+#ipe-edit-toolbox #toolbox-toggle.opened {
+  transform: rotate(45deg);
+}
+
+#ipe-edit-toolbox .btn-group.group1 .btn-tip-group {
+  transform: translate3d(0, 100%, 0);
+}
+
+#ipe-edit-toolbox .btn-group.group2 .btn-tip-group {
+  transform: translate3d(100%, 0, 0);
+}
+
+#ipe-edit-toolbox .btn-group .btn-tip-group {
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.3s;
+  opacity: 0;
+}
+
+#ipe-edit-toolbox .btn-group.opened .btn-tip-group {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+}
+
+#ipe-edit-toolbox .btn-group.opened .btn-tip-group:nth-of-type(1),
+#ipe-edit-toolbox .btn-group:not(.opened) .btn-tip-group:nth-of-type(3) {
+  transition-delay: 0s;
+}
+
+#ipe-edit-toolbox .btn-group .btn-tip-group:nth-of-type(2) {
+  transition-delay: 0.06s;
+}
+
+#ipe-edit-toolbox .btn-group:not(.opened) .btn-tip-group:nth-of-type(1),
+#ipe-edit-toolbox .btn-group.opened .btn-tip-group:nth-of-type(3) {
+  transition-delay: 0.108s;
+}
+
+/* 不显示时使其完全缩小到没有，以防被点到 */
+#ipe-edit-toolbox .btn-group:not(.opened) {
+  transform: scaleZ(0);
+  transition-delay: 0.408s;
+}
+
+#ipe-edit-toolbox .btn-group.opened {
+  transform: scaleZ(1);
+}
+
+#ipe-edit-toolbox .ipe-toolbox-btn#toolbox-toggle.click {
+  box-shadow:
+    0 0 4px gray,
+    0 0 10px #444 inset;
+}
+
+#toolbox-toggle.click:before {
+  content: '\f023'; /*fa-lock*/
+  font-family: 'FontAwesome';
+  display: block;
+  position: absolute;
+  bottom: 50%;
+  right: 0;
+  font-size: 12px;
+  transform: rotateZ(-45deg);
+}
+
+#ipe-edit-toolbox .ipe-toolbox-btn#edit-btn {
+  background: #2196f3;
+}
+
+#ipe-edit-toolbox .ipe-toolbox-btn#redirectfrom-btn {
+  background: #00bcd4;
+}
+
+#ipe-edit-toolbox .ipe-toolbox-btn#redirectto-btn {
+  background: #009688;
+}
+
+#ipe-edit-toolbox .ipe-toolbox-btn#deletepage-btn {
+  background: #e91e63;
+}
+
+#ipe-edit-toolbox .ipe-toolbox-btn#renamepage-btn {
+  background: #ff5722;
+}
+
+#ipe-edit-toolbox .ipe-toolbox-btn#preference-btn {
+  background: #ffc107;
+}
+
+#ipe-edit-toolbox .btn-group {
+  position: absolute;
+  float: right;
+  list-style: none;
+  margin: 0;
+}
+
+#ipe-edit-toolbox .btn-group.group1 {
+  bottom: calc(35px + 6px);
+  right: 2px;
+}
+
+#ipe-edit-toolbox .btn-group.group2 {
+  bottom: 0;
+  right: calc(35px + 6px);
+}
+
+#ipe-edit-toolbox .btn-group.group1 .btn-tip-group {
+  margin-bottom: 6px;
+}
+
+#ipe-edit-toolbox .btn-group.group2 .btn-tip-group {
+  margin-right: 6px;
+}
+
+#ipe-edit-toolbox .btn-group.opened {
+  visibility: visible;
+}
+
+#ipe-edit-toolbox .btn-tip-group .btn-tip {
+  position: absolute;
+  text-align: center;
+  font-size: 12px;
+  width: 6em;
+  right: -20px;
+  top: -2.1em;
+  background: white;
+  padding: 0px 4px;
+  box-shadow: 0 0 4px gray;
+  pointer-events: none;
+  display: none;
+}
+
+#ipe-edit-toolbox .btn-tip-group:hover .btn-tip {
+  display: block;
+}
+
+#ipe-edit-toolbox .btn-tip-group .btn-tip:after {
+  content: '';
+  display: block;
+  border: 5px solid transparent;
+  border-right-color: #fff;
+  border-bottom-color: #fff;
+  position: absolute;
+  bottom: -4px;
+  left: calc(50% - 2.5px);
+  transform: rotate(45deg);
+}

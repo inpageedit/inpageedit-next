@@ -7,6 +7,7 @@ import { StorageService } from '@/services/StorageService'
 import { SiteMetadataService } from '@/services/SiteMetadataService'
 import { WikiPageService } from '@/services/WikiPageService'
 import { ModalService } from './services/ModalService/index.js'
+import '@/styles/index.scss'
 
 /**
  * ✏️ InPageEdit NEXT
@@ -110,7 +111,7 @@ export class InPageEdit extends Context {
       if (import.meta.env.PROD && import.meta.env.VITE_BUILD_FORMAT === 'import') {
         ctx.resourceLoader.loadStyle(import.meta.resolve('./style.css'))
       }
-      ctx.resourceLoader.loadStyle(`${Endpoints.PLUGIN_CDN_BASE}/skins/ipe-default.css`)
+      // ctx.resourceLoader.loadStyle(`${Endpoints.PLUGIN_CDN_BASE}/skins/ipe-default.css`)
     })
   }
 

@@ -1,0 +1,212 @@
+// TODO: 这里的样式很乱，需要逐步拆分到组件里
+.theme-ipe {
+  // ===== 颜色变量 =====
+  // 主色调
+  --color-primary: #36c;
+  --color-primary-hover: #447ff5;
+  --color-primary-active: #2a4b8d;
+
+  // 基础颜色
+  --color-white: #fff;
+  --color-text-dark: #222;
+  --color-text-medium: #252525;
+  --color-text-hover: #454545;
+
+  // 背景色
+  --color-bg-light: #f8f9fa;
+  --color-bg-lighter: #fafafa;
+  --color-bg-lightest: #f8f8f8;
+  --color-bg-gray: #f4f4f4;
+
+  // 边框颜色
+  --color-border-gray: #c8ccd1;
+  --color-border-light: #efefef;
+  --color-border-input: #ccc;
+  --color-border-dark: #72777d;
+  --color-border-disabled: #d6d6d6;
+
+  // 危险色
+  --color-danger: #d33;
+  --color-danger-hover: #ff4242;
+  --color-danger-active: #d00;
+
+  // 禁用状态
+  --color-disabled-bg: #c8ccd1;
+  --color-disabled-dark: #a0a0a0;
+
+  // ===== 尺寸变量 =====
+  // 字体大小
+  --font-size-button: 14px;
+  --font-size-label: 1rem;
+  --font-weight-label: 700;
+
+  // 边框宽度
+  --border-width: 1px;
+  --border-width-radio-checked: 6px;
+
+  // 圆角
+  --border-radius-button: 6px;
+  --border-radius-input: 4px;
+
+  // 内边距
+  --padding-button-y: 0.5em;
+  --padding-button-x: 1em;
+  --padding-button-dialog: 1em;
+  --padding-input-y: 0.25em;
+  --padding-input-x: 0.35em;
+
+  // 尺寸
+  --size-checkbox: 1.2em;
+  --size-radio: 1.4em;
+  --margin-checkbox-top: 0.15em;
+  --margin-checkbox-right: 0.375em;
+
+  // textarea
+  --textarea-height: 50vh;
+  --textarea-min-height: 20em;
+
+  // 行高
+  --line-height-input: 1.5em;
+  --line-height-checkbox: 1.2em;
+
+  // ===== 过渡时间 =====
+  --transition-fast: 0.1s;
+  --transition-medium: 0.12s;
+  --transition-slow: 0.2s;
+
+  // for modal
+  --ipe-modal-accent: var(--color-primary);
+  --ipe-modal-danger: var(--color-danger);
+  --ipe-modal-button-radius: var(--border-radius-button);
+
+  // textarea
+  textarea[name='text'] {
+    width: 100%;
+    height: var(--textarea-height);
+    min-height: var(--textarea-min-height);
+    resize: vertical;
+    border: var(--border-width) solid var(--color-border-input);
+    border-radius: var(--border-radius-input);
+    transition: all var(--transition-slow);
+    line-height: var(--line-height-input);
+    padding: var(--padding-input-y) var(--padding-input-x);
+    outline: none;
+    &:focus {
+      border-color: var(--color-primary);
+      box-shadow: inset 0 0 0 var(--border-width) var(--color-primary);
+    }
+    &:disabled {
+      background-color: var(--color-disabled-bg);
+      color: var(--color-white);
+      cursor: not-allowed;
+    }
+  }
+
+  // text input
+  input {
+    padding: var(--padding-input-y) var(--padding-input-x);
+    border: var(--border-width) solid var(--color-border-input);
+    border-radius: var(--border-radius-input);
+    transition: all var(--transition-slow);
+    line-height: var(--line-height-input);
+    outline: none;
+  }
+
+  input:focus {
+    border-color: var(--color-primary);
+    box-shadow: inset 0 0 0 var(--border-width) var(--color-primary);
+  }
+
+  // checkbox + radio
+  label input[type='checkbox'] + span,
+  label input[type='radio'] + span {
+    user-select: none;
+    line-height: var(--line-height-checkbox);
+  }
+
+  label input[type='checkbox'] + span::before,
+  label input[type='radio'] + span::before {
+    /* 不换行空格可以保持选择框的高度 */
+    content: '\a0';
+    display: inline-block;
+    width: var(--size-checkbox);
+    height: var(--size-checkbox);
+    margin-top: var(--margin-checkbox-top);
+    margin-right: var(--margin-checkbox-right);
+    border-radius: var(--border-radius-input);
+    background-color: var(--color-bg-lightest);
+    border: var(--border-width) solid var(--color-border-dark);
+    cursor: pointer;
+    transition: all var(--transition-medium);
+  }
+
+  label input[type='radio'] + span::before {
+    border-radius: 50%;
+    box-sizing: border-box;
+    vertical-align: text-bottom;
+    width: var(--size-radio);
+    height: var(--size-radio);
+  }
+
+  label input[type='checkbox']:checked + span::before {
+    content: '\a0';
+    background-color: var(--color-primary);
+    background-image: url(data:image/svg+xml;base64,PHN2ZyBzdHlsZT0iZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kOyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxnIGlkPSJjaGVja21hcmsiPjxwYXRoIGQ9Ik0xMy43NDkyKzMuNDkwOTVMNS44NjMxMisxMS42MzM3TDIuMjUwNzcrNy45NjA4MkwxLjQ4NzYrOC43NTc3OEw1Ljg2MzEyKzEzLjE5M0wxNC41MTI0KzQuMjg3OUwxMy43NDkyKzMuNDkwOTVaIiBvcGFjaXR5PSIxIiBmaWxsPSIjZmZmZmZmIi8+PC9nPjwvc3ZnPg==);
+    background-repeat: no-repeat;
+  }
+
+  label input[type='radio']:checked + span::before {
+    border-color: var(--color-primary);
+    border-width: var(--border-width-radio-checked);
+  }
+
+  label input[type='checkbox']:checked + span:hover::before {
+    background-color: var(--color-primary-hover);
+  }
+
+  label input[type='radio']:checked + span:hover::before {
+    border-color: var(--color-primary-hover);
+  }
+
+  label input[type='checkbox']:active + span::before,
+  label input[type='checkbox']:focus + span::before {
+    box-shadow: inset 0 0px 0px var(--border-width) var(--color-white);
+    border-color: var(--color-primary);
+  }
+
+  label input[type='checkbox'],
+  label input[type='radio'] {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .cm-panel label input[type='checkbox'],
+  .cm-panel label input[type='radio'] {
+    position: initial;
+    clip: initial;
+  }
+
+  label input[type='checkbox']:disabled + span::before {
+    border-color: var(--color-border-disabled);
+  }
+
+  label input[type='radio']:disabled + span::before {
+    background-color: var(--color-disabled-bg);
+    border-color: var(--color-disabled-bg);
+  }
+
+  label input[type='checkbox']:disabled:checked + span::before {
+    background-color: var(--color-disabled-dark);
+  }
+
+  label input[type='radio']:disabled:checked + span::before {
+    background-color: var(--color-white);
+  }
+
+  .ipe-radio-box,
+  .ipe-checkbox {
+    span {
+      vertical-align: middle;
+    }
+  }
+}

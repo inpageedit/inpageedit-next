@@ -6,7 +6,7 @@ import type { InPageEdit } from '@inpageedit/core'
 
 import type {} from '@inpageedit/core/services/ApiService'
 import type {} from '@inpageedit/core/services/SiteMetadataService'
-import type {} from '@inpageedit/core/services/SsiModalService'
+import type {} from '@inpageedit/core/services/ModalService/index'
 import type {} from '@inpageedit/core/services/WikiPageService'
 
 import type {} from '@inpageedit/core/plugins/preferences/index'

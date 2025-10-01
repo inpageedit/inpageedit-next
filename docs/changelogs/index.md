@@ -23,6 +23,14 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.5.0'>
+
+- refactor!: drop jquery, drop ssi-modal
+  - 我们完全抛弃了对 jQuery 和 ssi-modal 的依赖，使用原生 DOM API 和 CSS 来实现 Modal 服务。
+  - 我们计划在不久的将来解耦并发布该轻量级 modal 库。
+
+</ChangeLog>
+
 <ChangeLog version='0.4.1'>
 
 - chore: housekeeping
