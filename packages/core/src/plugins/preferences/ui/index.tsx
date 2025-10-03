@@ -66,7 +66,7 @@ export class PluginPreferencesUI extends BasePlugin {
     modal.setButtons([
       {
         label: 'Save',
-        className: 'is-primary',
+        className: 'is-primary is-ghost',
         method: () => {
           const value = form.getValue()
           Object.entries(value).forEach(([key, val]) => {
@@ -77,7 +77,7 @@ export class PluginPreferencesUI extends BasePlugin {
       },
       {
         label: 'Cancel',
-        className: 'is-danger is-text',
+        className: 'is-danger is-ghost',
         method: () => {
           modal.close()
         },

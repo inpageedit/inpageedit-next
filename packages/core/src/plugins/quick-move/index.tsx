@@ -99,6 +99,10 @@ export class PluginQuickMove extends BasePlugin {
           }}
           onSubmit={(e) => {
             e.preventDefault()
+            formRef?.checkValidity()
+            if (!formRef?.reportValidity()) {
+              return
+            }
             const formData = new FormData(formRef!)
             const options = {
               from: formData.get('from')?.toString().trim()!,
@@ -135,11 +139,13 @@ export class PluginQuickMove extends BasePlugin {
                 label: 'Move from',
                 name: 'from',
                 value: options?.from,
+                required: true,
               },
               {
                 label: 'Move to',
                 name: 'to',
                 value: options?.to,
+                required: true,
               },
             ]}
           />
@@ -168,7 +174,7 @@ export class PluginQuickMove extends BasePlugin {
     modal.setButtons([
       {
         label: 'Move',
-        className: 'is-primary',
+        className: 'is-primary is-ghost',
         method: () => {
           formRef?.dispatchEvent(new Event('submit'))
         },

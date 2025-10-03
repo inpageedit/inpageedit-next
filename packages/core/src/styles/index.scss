@@ -104,6 +104,24 @@
     }
   }
 
+  .ipe-input-box {
+    label {
+      display: block;
+      font-size: 0.875rem;
+      margin-bottom: 0.5em;
+      font-weight: 500;
+    }
+    input[type='text'],
+    input[type='number'],
+    input[type='email'],
+    input[type='password'],
+    input[type='url'],
+    input[type='tel'],
+    input[type='search'] {
+      width: 100%;
+    }
+  }
+
   // text input
   input {
     padding: var(--padding-input-y) var(--padding-input-x);

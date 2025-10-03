@@ -153,6 +153,8 @@ export class PluginQuickEdit extends BasePlugin {
       .createObject({
         className: 'ipe-quickEdit',
         sizeClass: 'large',
+        backdrop: false,
+        draggable: true,
         outSideClose,
       })
       .init()
@@ -227,10 +229,11 @@ export class PluginQuickEdit extends BasePlugin {
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem',
+            marginTop: '1rem',
           }}
         >
           <InputBox label="Summary" id="summary" name="summary" value={options.editSummary} />
-          <div>
+          <div className="ipe-input-box">
             <label htmlFor="watchlist" style={{ display: 'block' }}>
               Watchlist
             </label>
@@ -328,18 +331,18 @@ export class PluginQuickEdit extends BasePlugin {
         } else {
           this.ctx.modal.confirm(
             {
-              className: 'in-page-edit',
+              className: 'is-primary',
               title: 'Unsaved Changes',
               content:
                 'All edit contents will be lost after closing the modal. Are you sure you want to close?',
               center: true,
               okBtn: {
                 label: 'Give Up',
-                className: 'is-danger',
+                className: 'is-danger is-ghost',
               },
               cancelBtn: {
                 label: 'Continue',
-                className: 'is-ghost',
+                className: 'is-primary is-ghost',
               },
             },
             (result) => {
@@ -361,6 +364,18 @@ export class PluginQuickEdit extends BasePlugin {
       options,
       modal,
       wikiPage,
+    })
+
+    const beforeUnload = (e: BeforeUnloadEvent) => {
+      if (editForm.querySelector('textarea')?.value === wikiPage.revisions[0]?.content) {
+        return true
+      }
+      e.preventDefault()
+      return 'You have unsaved changes. Are you sure you want to leave?'
+    }
+    window.addEventListener('beforeunload', beforeUnload)
+    modal.on(modal.Event.Close, () => {
+      window.removeEventListener('beforeunload', beforeUnload)
     })
   }
 

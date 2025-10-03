@@ -95,6 +95,10 @@ export class PluginQuickRedirect extends BasePlugin {
           }}
           onSubmit={(e) => {
             e.preventDefault()
+            formRef?.checkValidity()
+            if (!formRef?.reportValidity()) {
+              return
+            }
             const formData = new FormData(formRef!)
             const options = {
               from: formData.get('from')?.toString().trim()!,
@@ -133,11 +137,13 @@ export class PluginQuickRedirect extends BasePlugin {
                 label: 'From',
                 name: 'from',
                 value: options?.from,
+                required: true,
               },
               {
                 label: 'To',
                 name: 'to',
                 value: options?.to,
+                required: true,
               },
             ]}
           />
@@ -153,7 +159,7 @@ export class PluginQuickRedirect extends BasePlugin {
     modal.setButtons([
       {
         label: 'Create Redirect',
-        className: 'is-primary',
+        className: 'is-primary is-ghost',
         method: () => {
           formRef?.dispatchEvent(new Event('submit'))
         },

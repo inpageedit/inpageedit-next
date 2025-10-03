@@ -216,6 +216,52 @@ body.ipe-modal-no-scroll {
   gap: 8px;
 }
 
+/* toast */
+.ipe-modal-toast-container {
+  position: fixed;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  pointer-events: none;
+  &.top {
+    top: 16px;
+  }
+  &.bottom {
+    bottom: 16px;
+    flex-direction: column-reverse;
+  }
+  &.right {
+    right: 16px;
+  }
+  &.left {
+    left: 16px;
+  }
+}
+.ipe-modal-modal__window.plugin--toast {
+  width: 300px;
+  border-radius: calc(var(--ipe-modal-radius) * 0.5);
+  .ipe-modal-modal__header {
+    padding: 0.5em;
+    .ipe-modal-modal__close {
+      width: 20px;
+      height: 20px;
+      font-size: 16px;
+    }
+  }
+  .ipe-modal-modal__content {
+    padding: 1em 0.5em;
+  }
+  .ipe-modal-modal__footer {
+    padding: 0.5em;
+    padding-top: 0;
+    .ipe-modal-btn {
+      padding: 0.5em 0.75em;
+    }
+  }
+}
+
 /* Buttons */
 .ipe-modal-btn {
   --accent-color: #fff;
@@ -293,7 +339,27 @@ body.ipe-modal-no-scroll {
     flex: 1;
     border: 0;
     margin: none;
-    padding: 1em;
+    padding: 1rem;
     border-radius: 0;
+    &:not(:first-child) {
+      border-left: 1px solid rgba(0, 0, 0, 0.06);
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }

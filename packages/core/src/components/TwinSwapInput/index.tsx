@@ -12,6 +12,7 @@ export interface TwinSwapInputInput {
   name: string
   value?: string
   disabled?: boolean
+  required?: boolean
   inputProps?: Omit<JSX.IntrinsicElements['input'], 'name' | 'value'>
 }
 
@@ -102,7 +103,7 @@ export const TwinSwapInput = (props: TwinSwapInputProps) => {
   const container = (
     <div className={`twin-swap-input ${styles.twinSwapInput}`} {...rest}>
       {normalizedInputs.map((input, index) => {
-        const { label, id, name, value, disabled, inputProps } = input
+        const { label, id, name, value, disabled, required, inputProps } = input
         const isLeft = index === 0
         const inputId = id || name
 
@@ -118,6 +119,7 @@ export const TwinSwapInput = (props: TwinSwapInputProps) => {
               name={name}
               value={value}
               disabled={disabled}
+              required={required}
               {...inputProps}
             />
           </div>

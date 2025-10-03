@@ -115,16 +115,18 @@ export interface IPEModalOptions {
    */
   animationSpeed?: number
   /** Auto-close options. */
-  closeAfter?: {
-    /**
-     * Close the modal/toast after `time` ms. For toast: defaults to 3000ms.
-     */
-    time: number
-    /** Not used by library (reserved for UI display). */
-    displayTime?: number
-    /** Reset countdown when hovered. */
-    resetOnHover?: boolean
-  }
+  closeAfter?:
+    | {
+        /**
+         * Close the modal/toast after `time` ms. For toast: defaults to 3000ms.
+         */
+        time: number
+        /** Not used by library (reserved for UI display). */
+        displayTime?: number
+        /** Reset countdown when hovered. */
+        resetOnHover?: boolean
+      }
+    | number
 
   // --- positioning ---------------------------------------------------------
   /** Kept for parity; CSS controls actual layout. */
@@ -149,6 +151,16 @@ export interface IPEModalOptions {
    */
   onClickClose?: boolean | ((modal: IPEModal) => boolean | void)
 }
+
+export type IPEModalNotifyType =
+  | 'success'
+  | 'error'
+  | 'warning'
+  | 'info'
+  | 'dialog'
+  | 'confirm'
+  | string
+export type IPEModalNotifyPosition = 'top right' | 'top left' | 'bottom right' | 'bottom left'
 
 // ---------------------------------------------------------------------------
 // Events
@@ -359,13 +371,14 @@ export class IPEModal {
       const viewportWidth = window.innerWidth
 
       $modal.style.top = `${scrollTop + 60}px`
-      $modal.style.left = `${scrollLeft + viewportWidth / 2}px`
-      $modal.style.transform = 'translateX(-50%)'
+      this.once(IPEModalEvent.Show, () => {
+        $modal.style.left = `${scrollLeft + viewportWidth / 2 - $modal.offsetWidth / 2}px`
+      })
     }
 
     // Window
     const $window = document.createElement('div') as HTMLDivElement & { modal: IPEModal }
-    $window.className = `ipe-modal-modal__window size--${this.options.sizeClass}`
+    $window.className = `ipe-modal-modal__window size--${this.options.sizeClass || 'auto'} plugin--${this.pluginName}`
     $window.modal = this
 
     // Header
@@ -510,13 +523,17 @@ export class IPEModal {
     this.emit(IPEModalEvent.Show)
 
     // auto close
-    if (this.options.closeAfter?.time) {
-      this.startCloseTimer(this.options.closeAfter.time)
-      if (this.options.closeAfter.resetOnHover) {
+    const closeAfterTime =
+      typeof this.options.closeAfter === 'number'
+        ? this.options.closeAfter
+        : this.options.closeAfter?.time
+    const resetOnHover =
+      typeof this.options.closeAfter === 'number' ? true : this.options.closeAfter?.resetOnHover
+    if (closeAfterTime) {
+      this.startCloseTimer(closeAfterTime)
+      if (resetOnHover) {
         this.$window?.addEventListener('mouseenter', this.stopCloseTimer)
-        this.$window?.addEventListener('mouseleave', () =>
-          this.startCloseTimer(this.options!.closeAfter!.time)
-        )
+        this.$window?.addEventListener('mouseleave', () => this.startCloseTimer(closeAfterTime))
       }
     }
 
@@ -825,6 +842,12 @@ export class IPEModal {
   }
 
   setPluginName(name: string): this {
+    if (this.$window) {
+      this.$window.className = this.$window.className.replace(
+        `plugin--${this.pluginName}`,
+        `plugin--${name}`
+      )
+    }
     this.pluginName = name
     return this
   }
@@ -1058,22 +1081,32 @@ export class IPEModal {
 
   // ------------------------------ toast ------------------------------- //
   /** Show as toast (no backdrop, bottom-right stack). */
-  showToast(): this {
+  showToast(
+    options: Partial<{
+      position: IPEModalNotifyPosition
+    }>
+  ): this {
     if (!this.$window) this.init()
-    const container = ensureToastContainer()
+    const container = ensureToastContainer(options.position ?? 'top right')
     const win = this.get$window()
     this.isToast = true
     win.style.pointerEvents = 'auto' // allow interactions on toast
     container.appendChild(win)
 
     // auto close (default 3000ms; hover to pause)
-    const time = this.options.closeAfter?.time ?? 3000
-    const resetOnHover = this.options.closeAfter?.resetOnHover ?? true
-    if (time > 0) {
-      this.startCloseTimer(time)
+    const closeAfterTime =
+      (typeof this.options.closeAfter === 'number'
+        ? this.options.closeAfter
+        : this.options.closeAfter?.time) ?? 3000
+    const resetOnHover =
+      (typeof this.options.closeAfter === 'number'
+        ? true
+        : this.options.closeAfter?.resetOnHover) ?? true
+    if (closeAfterTime > 0) {
+      this.startCloseTimer(closeAfterTime)
       if (resetOnHover) {
         win.addEventListener('mouseenter', this.stopCloseTimer)
-        win.addEventListener('mouseleave', () => this.startCloseTimer(time))
+        win.addEventListener('mouseleave', () => this.startCloseTimer(closeAfterTime))
       }
     }
 
@@ -1123,7 +1156,10 @@ export class IPEModal {
         {
           label: 'OK',
           className: 'is-primary',
-          method: (e, mm) => method(e, mm),
+          method: (e, mm) => {
+            method?.(e, mm)
+            if (!e.defaultPrevented) m.close()
+          },
           keyPress: 'Enter',
         },
       ],
@@ -1140,8 +1176,9 @@ export class IPEModal {
       }>,
     method: (e: MouseEvent, m: IPEModal) => void
   ) {
+    options.title ??= 'Confirm'
     const ok = options.okBtn ?? { label: 'OK', className: 'is-primary' }
-    const cancel = options.cancelBtn ?? { label: 'Cancel', className: 'is-ghost' }
+    const cancel = options.cancelBtn ?? { label: 'Cancel', className: 'is-danger is-ghost' }
     const m = new this({
       sizeClass: 'dialog',
       ...options,
@@ -1149,24 +1186,40 @@ export class IPEModal {
         {
           label: cancel.label,
           className: cancel.className,
-          side: 'left',
           keyPress: 'n',
           method: () => m.close(),
         },
-        { label: ok.label, className: ok.className, keyPress: 'y', method: (e) => method(e, m) },
+        {
+          label: ok.label,
+          className: ok.className,
+          keyPress: 'y',
+          method: (e) => {
+            method?.(e, m)
+            if (!e.defaultPrevented) m.close()
+          },
+        },
       ],
     })
     return m.init().show()
   }
 
+  static notifyIcons: Record<IPEModalNotifyType, string> = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️',
+    dialog: '💬',
+    confirm: '💬',
+  }
   static notify(
-    type: 'success' | 'error' | 'warning' | 'info' | 'dialog' | 'confirm' | string,
+    type: IPEModalNotifyType,
     options: Partial<IPEModalOptions> &
       Partial<{
         icon: string
         okBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
         cancelBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
         overrideOther: boolean
+        position: IPEModalNotifyPosition
       }>,
     callback?: (result: boolean) => void
   ) {
@@ -1174,43 +1227,66 @@ export class IPEModal {
       ;[...TOASTS].forEach((t) => t.close())
     }
 
-    const classes = `is-${type}`
+    if (typeof options.title === 'undefined') {
+      options.title = type[0].toUpperCase() + type.slice(1).toLowerCase()
+    }
+    const icon = this.notifyIcons[type]
+    options.title = `${icon} ${options.title}`.trimStart()
+
+    if (options.okBtn) {
+      options.okBtn.label ??= 'OK'
+      options.okBtn.className ??= 'is-primary is-ghost ok-btn'
+      ;(options.okBtn as Partial<IPEModalButtonOptions>).method = () => {
+        callback?.(true)
+        m.close()
+      }
+    }
+    if (options.cancelBtn) {
+      options.cancelBtn.label ??= 'Cancel'
+      options.cancelBtn.className ??= 'is-danger is-ghost cancel-btn'
+      ;(options.cancelBtn as Partial<IPEModalButtonOptions>).method = () => {
+        callback?.(false)
+        m.close()
+      }
+    }
+    options.buttons = [options.okBtn, options.cancelBtn, ...(options.buttons ?? [])].filter(
+      Boolean
+    ) as Partial<IPEModalButtonOptions>[]
+
+    const classes = `is-${type || 'dialog'} is-toast compact-buttons ${options.className ?? ''}`
     const m = new this({
+      ...options,
       className: classes,
-      sizeClass: 'dialog',
+      sizeClass: 'auto',
       center: false,
       fitScreen: false,
       closeIcon: true,
       outSideClose: false,
       bodyScroll: true,
-      animation: false,
+      animation: options.animation ?? {
+        show: 'fadeIn',
+        hide: 'fadeOut',
+      },
       buttons: options.buttons ?? [],
-      closeAfter: options.closeAfter ?? { time: 3000, resetOnHover: true },
-      ...options,
     })
     m.setPluginName('toast')
-    return m.showToast()
+    return m.showToast({
+      position: options.position ?? 'top right',
+    })
   }
 }
 
 // ------------------------------ toast utils ------------------------------- //
 const TOASTS: IPEModal[] = []
-function ensureToastContainer(): HTMLDivElement {
-  const id = 'ipe-modal-toast-container'
+function ensureToastContainer(position: IPEModalNotifyPosition = 'top right'): HTMLDivElement {
+  const className = 'ipe-modal-toast-container'
+  const id = `${className}-${position.replace(/[\s-\.\/]+/g, '-')}`
   let el = document.getElementById(id) as HTMLDivElement | null
   if (!el) {
     el = document.createElement('div')
     el.id = id
-    el.style.position = 'fixed'
-    el.style.right = '16px'
-    el.style.bottom = '16px'
-    el.style.zIndex = '2000'
-    el.style.display = 'flex'
-    el.style.flexDirection = 'column'
-    el.style.gap = '8px'
-    el.style.alignItems = 'flex-end'
-    // Allow children to receive pointer events; container ignores them
-    el.style.pointerEvents = 'none'
+    el.className = `${className} ${position}`
+    el.dataset.position = position
     document.body.appendChild(el)
   }
   return el
