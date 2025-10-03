@@ -153,7 +153,7 @@ export class PluginQuickRedirect extends BasePlugin {
     modal.setButtons([
       {
         label: 'Create Redirect',
-        className: 'btn btn-primary',
+        className: 'is-primary',
         method: () => {
           formRef?.dispatchEvent(new Event('submit'))
         },

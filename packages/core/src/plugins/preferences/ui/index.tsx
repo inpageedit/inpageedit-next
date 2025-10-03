@@ -43,7 +43,7 @@ export class PluginPreferencesUI extends BasePlugin {
 
   showModal() {
     const modal = this.ctx.modal.show({
-      className: 'in-page-edit',
+      className: 'ipe-preference compact-buttons',
       sizeClass: 'small',
       outSideClose: false,
       center: true,
@@ -66,7 +66,7 @@ export class PluginPreferencesUI extends BasePlugin {
     modal.setButtons([
       {
         label: 'Save',
-        className: 'btn',
+        className: 'is-primary',
         method: () => {
           const value = form.getValue()
           Object.entries(value).forEach(([key, val]) => {
@@ -77,7 +77,7 @@ export class PluginPreferencesUI extends BasePlugin {
       },
       {
         label: 'Cancel',
-        className: 'btn btn-danger',
+        className: 'is-danger is-text',
         method: () => {
           modal.close()
         },

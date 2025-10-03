@@ -7,9 +7,12 @@
   --ipe-modal-backdrop-bg: rgba(0, 0, 0, 0.5);
   --ipe-modal-bg: #ffffff;
   --ipe-modal-fg: #111827; // gray-900
+  --ipe-modal-fg--rgb: 17, 24, 39;
   --ipe-modal-muted: #6b7280; // gray-500
   --ipe-modal-accent: #3b82f6; // blue-500
+  --ipe-modal-accent--rgb: 59, 130, 246;
   --ipe-modal-danger: #ef4444; // red-500
+  --ipe-modal-danger--rgb: 239, 68, 68;
   --ipe-modal-radius: 16px;
   --ipe-modal-button-radius: 10px;
   --ipe-modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
@@ -215,14 +218,18 @@ body.ipe-modal-no-scroll {
 
 /* Buttons */
 .ipe-modal-btn {
+  --accent-color: #fff;
+  --text-color: var(--ipe-modal-fg);
+  --active-color: rgba(0, 0, 0, 0.1);
   appearance: none;
   border: 1px solid rgba(0, 0, 0, 0.14);
-  background: #fff;
-  color: var(--ipe-modal-fg);
+  background: var(--accent-color);
+  color: var(--text-color);
   padding: 8px 12px;
   border-radius: var(--ipe-modal-button-radius);
   cursor: pointer;
   font: inherit;
+  transition: all 0.2s;
 }
 .ipe-modal-btn:hover {
   background: rgba(0, 0, 0, 0.04);
@@ -233,35 +240,35 @@ body.ipe-modal-no-scroll {
 }
 .ipe-modal-btn:active {
   background: rgba(0, 0, 0, 0.06);
-  box-shadow:
-    0 0 0 1px #fff,
-    0 0 0 2px var(--ipe-modal-fg);
+  box-shadow: 0 0 0 2px var(--active-color);
 }
 .ipe-modal-btn:focus {
-  box-shadow:
-    0 0 0 1px #fff,
-    0 0 0 2px var(--ipe-modal-fg);
+  box-shadow: 0 0 0 2px var(--active-color);
 }
 
 .ipe-modal-btn.is-primary {
-  --ipe-modal-fg: var(--ipe-modal-accent);
-  border-color: var(--ipe-modal-accent);
-  background: var(--ipe-modal-accent);
-  color: white;
+  --accent-color: var(--ipe-modal-accent);
+  --text-color: #fff;
+  --active-color: rgba(var(--ipe-modal-accent--rgb), 0.5);
+  border-color: var(--accent-color);
+  background: var(--accent-color);
 }
 .ipe-modal-btn.is-danger {
-  border-color: var(--ipe-modal-danger);
-  background: var(--ipe-modal-danger);
-  color: white;
+  --accent-color: var(--ipe-modal-danger);
+  --text-color: #fff;
+  --active-color: rgba(var(--ipe-modal-danger--rgb), 0.2);
+  border-color: var(--accent-color);
+  background: var(--accent-color);
+  color: var(--text-color);
 }
 .ipe-modal-btn.is-ghost,
 .ipe-modal-btn.is-text {
   background: transparent;
   &.is-primary {
-    color: var(--ipe-modal-accent);
+    color: var(--accent-color);
   }
   &.is-danger {
-    color: var(--ipe-modal-danger);
+    color: var(--accent-color);
   }
 }
 .ipe-modal-btn.is-text {
@@ -287,13 +294,6 @@ body.ipe-modal-no-scroll {
     border: 0;
     margin: none;
     padding: 1em;
-    &.is-primary {
-      color: var(--ipe-modal-accent);
-      background: transparent;
-    }
-    &.is-danger {
-      color: var(--ipe-modal-danger);
-      background: transparent;
-    }
+    border-radius: 0;
   }
 }
