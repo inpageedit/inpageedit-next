@@ -2,7 +2,18 @@
 import Gallery from '@/.vitepress/components/Gallery.vue'
 import ColorPreview from '@/.vitepress/components/ColorPreview.vue'
 
-const logos = [
+const nextLogos = [
+  {
+    src: 'https://r2.epb.wiki/icons/inpageedit/ipe-uwu.png',
+    alt: 'InPageEdit UwU',
+  },
+  {
+    src: 'https://r2.epb.wiki/icons/inpageedit/ipe-next-uwu.png',
+    alt: 'InPageEdit NEXT UwU',
+  },
+]
+
+const legacyLogos = [
   {
     src: '/images/logo/InPageEdit.png',
     alt: 'InPageEdit',
@@ -24,11 +35,43 @@ const logos = [
 
 # 关于 Logo
 
-<Gallery :items="logos" />
+## InPageEdit UwU
+
+<Gallery :items="nextLogos" />
+
+Original by [dragon-fish](https://github.com/dragon-fish)
+
+Via Adobe Photoshop 2025
+
+### 设计&字体
+
+- Font: [ユールカ Std (FOT - Eureka)](https://lets.fontworks.co.jp/fonts/218)
+
+### 版权信息
+
+> [!IMPORTANT]
+>
+> - **The font required additional licensing. Please go to the [LETS Website](https://lets.fontworks.co.jp/) for more information.**
+
+- MediaWiki logo
+  - https://commons.wikimedia.org/wiki/File:MediaWiki-2020-icon.svg
+  - Wikimedia Foundation, Inc.
+  - CC BY-SA 4.0
+- Wikitext_Blue.svg
+  - https://commons.wikimedia.org/wiki/File:WikiText_blue.svg
+  - [Jmarchn](https://commons.wikimedia.org/wiki/User:Jmarchn)
+  - CC BY-SA 3.0
+- The creator of these logos is @dragon-fish. Copyright is not fully relinquished.
+- You CAN'T use this logo for commercial purposes.
+- The @inpageedit organization and its members have the right to use this logo for any purpose. (Except for the font.)
+
+## 关于旧版 Logo (v1 & v2)
+
+<Gallery :items="legacyLogos" />
 
 [Dianliang233](https://github.com/dianliang233/) 使用 [Sketch](https://www.sketch.com/) 制作
 
-## 设计&字体
+### 设计&字体
 
 - 色卡：[Atlassian Design](https://atlassian.design/)
   - In: Pacific Bridge B400 (<ColorPreview color="#0052CC" />)

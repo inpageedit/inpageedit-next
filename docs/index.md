@@ -6,9 +6,9 @@ hero:
   name: 'InPageEdit NEXT'
   text: 'For MediaWiki'
   tagline: '🚀 模块化、可扩展的 MediaWiki 超级增强插件'
-  # image:
-  #   src: /images/logo/InPageEdit.png
-  #   alt: InPageEdit Logo
+  image:
+    src: /images/logo/uwu/ipe-next-uwu.png
+    alt: InPageEdit Logo
   actions:
     - theme: brand
       text: 快速开始
