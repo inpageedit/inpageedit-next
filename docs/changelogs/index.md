@@ -28,6 +28,13 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 - refactor!: drop jquery, drop ssi-modal
   - 我们完全抛弃了对 jQuery 和 ssi-modal 的依赖，使用原生 DOM API 和 CSS 来实现 Modal 服务。
   - 我们计划在不久的将来解耦并发布该轻量级 modal 库。
+- feat: + ipe-next logos
+  - 我们彻底重新设计了[InPageEdit Logos](../about/logo.md)！
+- chore: batch improvements
+  - feat(schemastery-form): transition for array/dict reorder
+  - feat(schemastery-form): const support raw-html
+  - feat(schemastery-form): add support for date/time/datetime
+  - chore(core): IPEModal batch improvements
 
 </ChangeLog>
 

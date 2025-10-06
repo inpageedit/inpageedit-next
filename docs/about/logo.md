@@ -1,33 +1,34 @@
 <script setup lang="ts">
+import { withBase } from 'vitepress'
 import Gallery from '@/.vitepress/components/Gallery.vue'
 import ColorPreview from '@/.vitepress/components/ColorPreview.vue'
 
 const nextLogos = [
   {
-    src: 'https://r2.epb.wiki/icons/inpageedit/ipe-uwu.png',
+    src: withBase('/images/uwu/ipe-uwu.png'),
     alt: 'InPageEdit UwU',
   },
   {
-    src: 'https://r2.epb.wiki/icons/inpageedit/ipe-next-uwu.png',
+    src: withBase('/images/uwu/ipe-next-uwu.png'),
     alt: 'InPageEdit NEXT UwU',
   },
 ]
 
 const legacyLogos = [
   {
-    src: '/images/logo/InPageEdit.png',
+    src: withBase('/images/logo/InPageEdit.png'),
     alt: 'InPageEdit',
   },
   {
-    src: '/images/logo/IPE.png',
+    src: withBase('/images/logo/IPE.png'),
     alt: 'IPE',
   },
   {
-    src: '/images/logo/InPageEdit-v2.png',
+    src: withBase('/images/logo/InPageEdit-v2.png'),
     alt: 'InPageEdit-v2',
   },
   {
-    src: '/images/logo/IPE-v2.png',
+    src: withBase('/images/logo/IPE-v2.png'),
     alt: 'IPE-v2',
   },
 ]
