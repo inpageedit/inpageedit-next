@@ -21,6 +21,9 @@ export default defineConfig(() => {
         },
       }),
     ],
+    esbuild: {
+      drop: DEV ? undefined : ['console'],
+    },
     resolve: {
       alias: {
         '@': resolve(import.meta.dirname, 'src'),

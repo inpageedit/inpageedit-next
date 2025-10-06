@@ -74,7 +74,7 @@ onMounted(async () => {
   border-bottom: 1px solid #efefef
   margin-bottom: 1em
   .tab
-    padding: 0.25em 0.5em
+    padding: 0.5em 1em
     cursor: pointer
     user-select: none
     color: var(--tab-color)

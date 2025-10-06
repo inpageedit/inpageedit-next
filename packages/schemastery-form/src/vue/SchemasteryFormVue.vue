@@ -85,7 +85,7 @@ watch(
       })
     }
   },
-  { deep: false }
+  { deep: true, immediate: true }
 )
 
 watch(
@@ -110,7 +110,7 @@ watch(
       isUpdatingFromProps = false
     })
   },
-  { deep: true }
+  { deep: true, immediate: true }
 )
 
 // 暴露实例方法（TS 友好）

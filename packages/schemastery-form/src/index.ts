@@ -367,7 +367,6 @@ class SchemaFormNumber extends BaseFieldElement<number | undefined> {
     const $input = document.createElement('input')
     this.$input = $input
     $input.className = 'input'
-    $input.type = 'number'
     $input.name = nameOf(this._path)
     $input.id = idOf(this._path)
     if (meta?.min != null) $input.min = String(meta.min)
@@ -378,6 +377,13 @@ class SchemaFormNumber extends BaseFieldElement<number | undefined> {
     $input.oninput = () => this.emitChange(castToType(t, $input.value) as any)
     const $label = $field.querySelector('label.label') as HTMLLabelElement | null
     if ($label) $label.htmlFor = $input.id
+
+    if (meta.role === 'slider') {
+      $input.type = 'range'
+    } else {
+      $input.type = 'number'
+    }
+
     $field.appendChild($input)
     this.$root.appendChild($field)
   }
@@ -408,15 +414,44 @@ class SchemaFormBoolean extends BaseFieldElement<boolean> {
 }
 registerCustomElement('schema-form-boolean', SchemaFormBoolean)
 
+// 日期/时间格式化工具：统一生成符合 <input> 期望的字符串
+function pad2(n: number) {
+  return String(n).padStart(2, '0')
+}
+function formatDate(d: Date) {
+  // 注意：这里返回的字符串用于 <input type="date">，浏览器会将其视为本地日期而不做时区转换。
+  // 不应使用 d.toISOString().slice(0,10) —— 那样会把本地日期转换成 UTC 造成跨时区偏移。
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+}
+function formatTime(d: Date) {
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+}
+function formatDateTimeLocal(d: Date) {
+  return `${formatDate(d)}T${formatTime(d)}`
+}
+
 class SchemaFormDate extends BaseFieldElement<Date | undefined> {
   private $input?: HTMLInputElement
 
   protected render() {
     // 如果已经有输入框，只更新值而不重新创建
     if (this.$input && this.$root.contains(this.$input)) {
-      const currentDate = (this._value ?? null) as Date | null
+      const meta = metaOf(this._schema)
+      const role = meta.role || 'date'
       if (document.activeElement !== this.$input) {
-        this.$input.valueAsDate = currentDate
+        if (this._value instanceof Date) {
+          if (role === 'date') this.$input.value = formatDate(this._value)
+          else if (role === 'time') this.$input.value = formatTime(this._value)
+          else if (role === 'datetime') this.$input.value = formatDateTimeLocal(this._value)
+        } else if (typeof this._value === 'string' && role !== 'time') {
+          const d = new Date(this._value)
+          if (!isNaN(+d)) {
+            if (role === 'date') this.$input.value = formatDate(d)
+            else if (role === 'datetime') this.$input.value = formatDateTimeLocal(d)
+          }
+        } else if (!this._value) {
+          this.$input.value = ''
+        }
       }
       return
     }
@@ -427,11 +462,37 @@ class SchemaFormDate extends BaseFieldElement<Date | undefined> {
     const $input = document.createElement('input')
     this.$input = $input
     $input.className = 'input'
-    $input.type = 'date'
+    const role = meta.role || 'date'
+    if (role === 'datetime') $input.type = 'datetime-local'
+    else if (role === 'time') $input.type = 'time'
+    else $input.type = 'date'
     $input.name = nameOf(this._path)
     $input.id = idOf(this._path)
-    $input.valueAsDate = (this._value ?? null) as any
-    $input.oninput = () => this.emitChange(castToType('date', $input.value) as any)
+    if (this._value instanceof Date) {
+      if (role === 'date') {
+        // 使用本地日期格式，不受时区偏移影响
+        $input.value = formatDate(this._value)
+      } else if (role === 'time') $input.value = formatTime(this._value)
+      else if (role === 'datetime') $input.value = formatDateTimeLocal(this._value)
+    } else if (typeof this._value === 'string' && role !== 'time') {
+      const d = new Date(this._value)
+      if (!isNaN(+d)) {
+        if (role === 'date') $input.value = formatDate(d)
+        else if (role === 'datetime') $input.value = formatDateTimeLocal(d)
+      }
+    }
+    $input.oninput = () => {
+      const role = meta.role || 'date'
+      let next: Date | undefined
+      if (!$input.value) {
+        next = undefined
+      } else {
+        // date 或 datetime-local: 浏览器 value 可以被 new Date() 解析（标准格式）
+        const d = new Date($input.value)
+        next = Number.isNaN(+d) ? undefined : d
+      }
+      this.emitChange(next as any)
+    }
     const $label = $field.querySelector('label.label') as HTMLLabelElement | null
     if ($label) $label.htmlFor = $input.id
     $field.appendChild($input)
@@ -444,16 +505,28 @@ class SchemaFormConst extends BaseFieldElement<any> {
   protected render() {
     this.$root.innerHTML = `<style>${BASE_STYLE}</style>`
     const meta = metaOf(this._schema)
+    const value = (this._schema as any).value
+
+    if (meta.role === 'raw-html') {
+      if (value instanceof Node) {
+        this.$root.appendChild(value)
+        return
+      }
+
+      const htmlNode = document.createElement('div')
+      htmlNode.innerHTML = String(value)
+      this.$root.appendChild(htmlNode)
+      return
+    }
+
     const $field = this.makeFieldContainer('const', meta.description)
-    const $ro = document.createElement('input')
-    $ro.className = 'input'
-    $ro.readOnly = true
-    $ro.value = String((this._schema as any).value)
-    $ro.name = nameOf(this._path)
-    $ro.id = idOf(this._path)
+    const $text = document.createElement('section')
+    $text.className = 'const content'
+    $text.textContent = String(value)
+    $text.id = idOf(this._path)
     const $label = $field.querySelector('label.label') as HTMLLabelElement | null
-    if ($label) $label.htmlFor = $ro.id
-    $field.appendChild($ro)
+    if ($label) $label.htmlFor = $text.id
+    $field.appendChild($text)
     this.$root.appendChild($field)
   }
 }
@@ -485,8 +558,25 @@ function tagForSchema(schema: Schema<any>): keyof HTMLElementTagNameMap {
       return 'schema-form-tuple' as any
     case 'dict':
       return 'schema-form-dict' as any
-    case 'union':
-      return 'schema-form-union' as any
+    case 'union': {
+      const list: any[] = (schema as any).list || []
+      // For Schema.date(), it will be transformed into:
+      // 1) transform(inner:string meta.role=datetime)
+      // 2) union[ is(Date), transform(inner:string meta.role=datetime) ]
+      if (
+        list.length === 2 &&
+        list[0]?.type === 'is' &&
+        list[0]?.constructor === Date &&
+        list[1]?.type === 'transform' &&
+        (list[1]?.inner?.meta?.role === 'datetime' ||
+          list[1]?.inner?.meta?.role === 'date' ||
+          list[1]?.inner?.meta?.role === 'time')
+      ) {
+        return 'schema-form-date' as any
+      } else {
+        return 'schema-form-union' as any
+      }
+    }
     default:
       return 'schema-form-string' as any
   }
@@ -637,7 +727,55 @@ class SchemaFormObject extends BaseFieldElement<Record<string, any>> {
 registerCustomElement('schema-form-object', SchemaFormObject)
 
 class SchemaFormArray extends BaseFieldElement<any[]> {
+  // 稳定 ID（与索引解耦）用于 FLIP 动画
+  private _itemIds: string[] = []
+  private static _idCounter = 0
+  private generateItemId() {
+    try {
+      if (typeof crypto !== 'undefined' && typeof (crypto as any).randomUUID === 'function') {
+        return (crypto as any).randomUUID()
+      }
+    } catch {}
+    return 'i' + SchemaFormArray._idCounter++
+  }
+  private ensureItemIds(len: number) {
+    while (this._itemIds.length < len) this._itemIds.push(this.generateItemId())
+    if (this._itemIds.length > len) this._itemIds.length = len
+  }
+
+  // 采集当前行位置信息（用于 FLIP）
+  private capturePositions($box: HTMLElement): Record<string, DOMRect> {
+    const map: Record<string, DOMRect> = {}
+    $box.querySelectorAll<HTMLElement>('.row').forEach((row) => {
+      const id = row.dataset.uid
+      if (id) map[id] = row.getBoundingClientRect()
+    })
+    return map
+  }
+  private playFLIP($box: HTMLElement, before: Record<string, DOMRect>) {
+    const rows = Array.from($box.querySelectorAll<HTMLElement>('.row'))
+    rows.forEach((row) => {
+      const id = row.dataset.uid
+      if (!id) return
+      const prev = before[id]
+      if (!prev) return
+      const now = row.getBoundingClientRect()
+      const dx = prev.left - now.left
+      const dy = prev.top - now.top
+      if (dx || dy) {
+        row.style.transition = 'none'
+        row.style.transform = `translate(${dx}px, ${dy}px)`
+        // 下一帧播放动画
+        requestAnimationFrame(() => {
+          row.style.transition = 'transform .25s ease'
+          row.style.transform = ''
+        })
+      }
+    })
+  }
+
   protected render() {
+    // 基础样式（数组动画相关样式已迁移至 style.scss）
     this.$root.innerHTML = `<style>${BASE_STYLE}</style>`
     const meta = metaOf(this._schema)
     const $field = this.makeFieldContainer('array', meta.description)
@@ -646,14 +784,17 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
 
     const innerSchema = (this._schema as any).inner!
     const currentList = () => (Array.isArray(this._value) ? this._value : [])
+    this.ensureItemIds(currentList().length)
 
-    const renderRows = () => {
+    const renderRows = (before?: Record<string, DOMRect>, addedId?: string) => {
       $box.innerHTML = ''
       const list = currentList()
       list.forEach((item, idx) => {
         const rowPath = [...this._path, idx]
         const row = document.createElement('div')
-        row.className = 'row'
+        row.className = 'row schema-collection-row'
+        const stableId = this._itemIds[idx]
+        row.dataset.uid = stableId
         row.setAttribute('data-path', dotPath(rowPath))
 
         const child = createFieldForSchema(
@@ -663,70 +804,123 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
           `${this._label ?? ''}[${idx}]`
         )
         child.addEventListener('change', (e: any) => {
-          e.stopPropagation() // ✅
+          e.stopPropagation()
           const base = currentList().slice()
           base[idx] = e.detail.value
-          this.emitChange(base) // 普通输入不强制重渲染
+          this._value = base
+          // 仅值更新，不触发重渲，避免输入框失焦；结构变化（增删/移动）才重渲
+          this.emitChange(base)
         })
 
         const toolbar = document.createElement('div')
         toolbar.className = 'actions'
+
+        // 上移
         const up = document.createElement('button')
         up.type = 'button'
         up.className = 'btn'
         up.textContent = this._i18n.arrayMoveUp ?? '↑'
         up.onclick = () => {
-          if (idx > 0) {
-            const base = currentList().slice()
-            ;[base[idx - 1], base[idx]] = [base[idx], base[idx - 1]]
-            this.emitChange(base)
-            renderRows() // 结构变化需要刷新
-          }
+          if (idx <= 0) return
+          const beforePos = this.capturePositions($box)
+          const base = currentList().slice()
+          ;[base[idx - 1], base[idx]] = [base[idx], base[idx - 1]]
+          ;[this._itemIds[idx - 1], this._itemIds[idx]] = [
+            this._itemIds[idx],
+            this._itemIds[idx - 1],
+          ]
+          this._value = base
+          renderRows(beforePos)
+          this.emitChange(base)
         }
 
+        // 下移
         const down = document.createElement('button')
         down.type = 'button'
         down.className = 'btn'
         down.textContent = this._i18n.arrayMoveDown ?? '↓'
         down.onclick = () => {
           const now = currentList()
-          if (idx < now.length - 1) {
-            const base = now.slice()
-            ;[base[idx + 1], base[idx]] = [base[idx], base[idx + 1]]
-            this.emitChange(base)
-            renderRows()
-          }
+          if (idx >= now.length - 1) return
+          const beforePos = this.capturePositions($box)
+          const base = now.slice()
+          ;[base[idx + 1], base[idx]] = [base[idx], base[idx + 1]]
+          ;[this._itemIds[idx + 1], this._itemIds[idx]] = [
+            this._itemIds[idx],
+            this._itemIds[idx + 1],
+          ]
+          this._value = base
+          renderRows(beforePos)
+          this.emitChange(base)
         }
 
+        // 删除
         const del = document.createElement('button')
         del.type = 'button'
         del.className = 'btn danger'
         del.textContent = this._i18n.arrayRemove ?? '×'
         del.onclick = () => {
-          const base = currentList().filter((_, i) => i !== idx)
-          this.emitChange(base)
-          renderRows()
+          // 离场动画：不立即更新 state，先让该行缩放淡出
+          row.classList.add('leaving')
+          const duration = 250
+          let done = false
+          const cleanup = () => {
+            if (done) return
+            done = true
+            clearTimeout(fallback)
+            const base = currentList().filter((_, i) => i !== idx)
+            this._itemIds.splice(idx, 1)
+            const beforePos = this.capturePositions($box) // 采集剩余行位置（删除前）
+            this._value = base
+            renderRows(beforePos)
+            this.emitChange(base)
+          }
+          row.addEventListener('transitionend', cleanup, { once: true })
+          // 兜底：防止某些环境下 transition 事件不触发
+          const fallback = setTimeout(cleanup, duration + 80)
         }
 
         toolbar.append(up, down, del)
         row.appendChild(child)
         row.appendChild(toolbar)
         $box.appendChild(row)
+
+        // 新增行入场动画
+        if (addedId && addedId === stableId) {
+          row.classList.add('enter')
+          requestAnimationFrame(() => {
+            row.classList.add('enter-active')
+          })
+          // 在第二帧移除 enter class（保持 enter-active 最终状态即可）
+          requestAnimationFrame(() => {
+            row.classList.remove('enter')
+          })
+        }
       })
+
+      if (before) this.playFLIP($box, before)
     }
 
+    // 初始渲染
     renderRows()
 
+    // 新增
     const add = document.createElement('button')
     add.type = 'button'
     add.className = 'btn primary'
     add.textContent = this._i18n.arrayAdd ?? '+'
     add.onclick = () => {
+      const beforePos = this.capturePositions($box)
       const base = currentList().slice()
-      base.push(defaultOf(innerSchema))
+      const newItem = defaultOf(innerSchema)
+      base.push(newItem)
+      const newId = this.generateItemId()
+      this._itemIds.push(newId)
+      this._value = base
+      renderRows(beforePos, newId)
       this.emitChange(base)
-      renderRows()
     }
+
     const actions = document.createElement('div')
     actions.className = 'actions'
     actions.appendChild(add)
@@ -746,64 +940,122 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
     const $box = document.createElement('div')
     $box.className = 'group'
 
-    const map: Record<string, any> = this._value ?? {}
     const innerSchema = (this._schema as any).inner!
+    const map: Record<string, any> = this._value ?? {}
 
-    Object.keys(map).forEach((k) => {
-      const rowPath = [...this._path, k]
-      const row = document.createElement('div')
-      row.className = 'kv'
-      row.setAttribute('data-path', dotPath(rowPath))
-      const $k = document.createElement('input')
-      $k.className = 'input'
-      $k.value = k
-      $k.name = nameOf(rowPath) + '.__key'
-      $k.id = idOf(rowPath) + '__key'
-      const $v = createFieldForSchema(innerSchema, rowPath, map[k], `${this._label ?? ''}[${k}]`)
+    // 为 dict 条目分配稳定 ID
+    const keys = Object.keys(map)
+    // 将稳定 ID 存放在临时映射（保存在 element dataset 中即可）
+    const ensureId = (k: string) => `d_${k}` // 以 key 直接生成，若重命名再更新
 
-      const $del = document.createElement('button')
-      $del.type = 'button'
-      $del.className = 'btn danger'
-      $del.textContent = this._i18n.dictRemove ?? '×'
-      $del.onclick = () => {
-        const base = { ...(this._value ?? {}) }
-        delete base[k]
-        this.emitChange(base)
-        // 行被删除，重渲染以移除 UI
-        this.render()
-      }
-
-      $k.onchange = () => {
-        const nv = $k.value
-        if (!nv || nv === k) return
-        const base = { ...(this._value ?? {}) }
-        base[nv] = base[k]
-        delete base[k]
-        this.emitChange(base)
-        this.render()
-      }
-
-      $v.addEventListener('change', (e: any) => {
-        e.stopPropagation() // ✅
-        const base = { ...(this._value ?? {}) }
-        base[k] = e.detail.value
-        this.emitChange(base)
+    const capturePositions = (): Record<string, DOMRect> => {
+      const pos: Record<string, DOMRect> = {}
+      $box.querySelectorAll<HTMLElement>('.kv').forEach((row) => {
+        const uid = row.dataset.uid
+        if (uid) pos[uid] = row.getBoundingClientRect()
       })
+      return pos
+    }
+    const playFLIP = (before: Record<string, DOMRect>) => {
+      $box.querySelectorAll<HTMLElement>('.kv').forEach((row) => {
+        const uid = row.dataset.uid
+        if (!uid) return
+        const prev = before[uid]
+        if (!prev) return
+        const now = row.getBoundingClientRect()
+        const dx = prev.left - now.left
+        const dy = prev.top - now.top
+        if (dx || dy) {
+          row.style.transition = 'none'
+          row.style.transform = `translate(${dx}px, ${dy}px)`
+          requestAnimationFrame(() => {
+            row.style.transition = 'transform .25s ease'
+            row.style.transform = ''
+          })
+        }
+      })
+    }
 
-      row.append($k, $v, $del)
-      $box.appendChild(row)
-    })
+    const renderRows = (before?: Record<string, DOMRect>, addedKey?: string) => {
+      $box.innerHTML = ''
+      Object.keys(map).forEach((k) => {
+        const rowPath = [...this._path, k]
+        const row = document.createElement('div')
+        row.className = 'kv schema-collection-row'
+        row.dataset.uid = ensureId(k)
+        row.setAttribute('data-path', dotPath(rowPath))
+        const $k = document.createElement('input')
+        $k.className = 'input'
+        $k.value = k
+        $k.name = nameOf(rowPath) + '.__key'
+        $k.id = idOf(rowPath) + '__key'
+        const $v = createFieldForSchema(innerSchema, rowPath, map[k], `${this._label ?? ''}[${k}]`)
+
+        const $del = document.createElement('button')
+        $del.type = 'button'
+        $del.className = 'btn danger'
+        $del.textContent = this._i18n.dictRemove ?? '×'
+        $del.onclick = () => {
+          const beforePos = capturePositions()
+          delete map[k]
+          const base = { ...(this._value ?? {}) }
+          delete base[k]
+          this._value = base
+          renderRows(beforePos)
+          this.emitChange(base)
+        }
+
+        $k.onchange = () => {
+          const nv = $k.value.trim()
+          if (!nv || nv === k || map[nv] !== undefined) return
+          const beforePos = capturePositions()
+          map[nv] = map[k]
+          delete map[k]
+          const base = { ...(this._value ?? {}) }
+          base[nv] = base[k]
+          delete base[k]
+          this._value = base
+          renderRows(beforePos)
+          this.emitChange(base)
+        }
+
+        $v.addEventListener('change', (e: any) => {
+          e.stopPropagation()
+          const base = { ...(this._value ?? {}) }
+          base[k] = e.detail.value
+          this._value = base
+          this.emitChange(base)
+        })
+
+        row.append($k, $v, $del)
+        $box.appendChild(row)
+
+        if (addedKey === k) {
+          row.classList.add('enter')
+          requestAnimationFrame(() => row.classList.add('enter-active'))
+          requestAnimationFrame(() => row.classList.remove('enter'))
+        }
+      })
+      if (before) playFLIP(before)
+    }
+
+    renderRows()
 
     const add = document.createElement('button')
     add.type = 'button'
     add.className = 'btn primary'
     add.textContent = this._i18n.dictAdd ?? '+'
     add.onclick = () => {
-      const keyName = `k${Object.keys(this._value ?? {}).length + 1}`
-      const nextVal = defaultOf(innerSchema)
-      const base = { ...(this._value ?? {}), [keyName]: nextVal }
+      // 生成不冲突的 key
+      let idx = Object.keys(map).length + 1
+      let keyName = `k${idx}`
+      while (map[keyName] !== undefined) keyName = `k${++idx}`
+      const beforePos = capturePositions()
+      map[keyName] = defaultOf(innerSchema)
+      const base = { ...(this._value ?? {}), [keyName]: map[keyName] }
+      this._value = base
+      renderRows(beforePos, keyName)
       this.emitChange(base)
-      this.render()
     }
     const actions = document.createElement('div')
     actions.className = 'actions'

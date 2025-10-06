@@ -153,8 +153,9 @@ export class PluginQuickEdit extends BasePlugin {
       .createObject({
         className: 'ipe-quickEdit',
         sizeClass: 'large',
-        backdrop: false,
-        draggable: true,
+        // backdrop: false,
+        // draggable: true,
+        center: false,
         outSideClose,
       })
       .init()

@@ -204,8 +204,8 @@ function toNode(v: AnyContent): Node {
   return document.createTextNode(String(v))
 }
 
-function assertEl<T extends HTMLElement>(el: T | null, name: string): T {
-  if (!el) throw new Error(`${name} not found`)
+function assertEl<T extends HTMLElement>(el: T | null | undefined, name?: string): T {
+  if (!el) throw new Error(`${name ?? 'Element'} not found`)
   return el
 }
 
@@ -223,7 +223,21 @@ function getFocusable(root: HTMLElement): HTMLElement[] {
   )
 }
 
-// Simple stack manager
+function createEl<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  opts: { className?: string; attrs?: Record<string, string>; html?: string; text?: string } = {}
+): HTMLElementTagNameMap[K] {
+  const el = document.createElement(tag)
+  if (opts.className) el.className = opts.className
+  if (opts.html != null) el.innerHTML = opts.html
+  if (opts.text != null) el.textContent = opts.text
+  if (opts.attrs) {
+    for (const [k, v] of Object.entries(opts.attrs)) el.setAttribute(k, v)
+  }
+  return el
+}
+
+// Simple stack manager（仅管理“模态”窗口，不含 Toast）
 class ModalStackManager {
   zBase = 1000
   stack: IPEModal[] = []
@@ -298,9 +312,11 @@ export class IPEModal {
   private $footer?: HTMLDivElement
   private $buttonsLeft?: HTMLDivElement
   private $buttonsRight?: HTMLDivElement
+
   // maintain current button elements by side for indexing and updates
   private buttonElsLeft: (HTMLButtonElement | HTMLAnchorElement)[] = []
   private buttonElsRight: (HTMLButtonElement | HTMLAnchorElement)[] = []
+  private keyMap: Map<string, HTMLElement> = new Map() // 键盘快捷键映射
 
   // state
   private isOpen = false
@@ -348,19 +364,17 @@ export class IPEModal {
     // Backdrop (only when needed)
     let $backdrop: HTMLDivElement | undefined
     if (hasBackdrop) {
-      $backdrop = document.createElement('div')
-      $backdrop.id = this.backdropId
-      $backdrop.className = `ipe-modal-backdrop`
-      $backdrop.setAttribute('data-modal-id', this.modalId)
+      $backdrop = createEl('div', {
+        className: 'ipe-modal-backdrop',
+        attrs: { id: this.backdropId, 'data-modal-id': this.modalId },
+      }) as HTMLDivElement
     }
 
     // Host
-    const $modal = document.createElement('div') as HTMLDivElement & { modal: IPEModal }
-    $modal.id = this.modalId
-    $modal.className = 'ipe-modal-modal'
-    $modal.role = 'dialog'
-    $modal.ariaModal = 'true'
-    $modal.tabIndex = -1 // make focusable for a11y/focus-trap fallback
+    const $modal = createEl('div', {
+      className: 'ipe-modal-modal',
+      attrs: { id: this.modalId, role: 'dialog', 'aria-modal': 'true', tabindex: '-1' },
+    }) as HTMLDivElement & { modal: IPEModal }
     $modal.modal = this
 
     // If no backdrop, absolutely position around viewport top-center
@@ -377,27 +391,31 @@ export class IPEModal {
     }
 
     // Window
-    const $window = document.createElement('div') as HTMLDivElement & { modal: IPEModal }
-    $window.className = `ipe-modal-modal__window size--${this.options.sizeClass || 'auto'} plugin--${this.pluginName}`
+    const $window = createEl('div', {
+      className: `ipe-modal-modal__window size--${this.options.sizeClass || 'auto'} plugin--${
+        this.pluginName
+      }`,
+    }) as HTMLDivElement & { modal: IPEModal }
     $window.modal = this
 
     // Header
-    const $header = document.createElement('div')
-    $header.className = 'ipe-modal-modal__header'
+    const $header = createEl('div', { className: 'ipe-modal-modal__header' })
 
-    const $title = document.createElement('div')
-    $title.className = 'ipe-modal-modal__title'
-    $title.role = 'heading'
+    const titleId = `${this.modalId}-title`
+    const $title = createEl('h2', {
+      className: 'ipe-modal-modal__title',
+      attrs: { id: titleId, role: 'heading', 'aria-level': '2' },
+    }) as HTMLHeadingElement
+    $modal.setAttribute('aria-labelledby', titleId)
 
-    const $icons = document.createElement('div')
-    $icons.className = 'ipe-modal-modal__icons'
+    const $icons = createEl('div', { className: 'ipe-modal-modal__icons' })
 
     if (this.options.closeIcon) {
-      const closeBtn = document.createElement('button')
-      closeBtn.className = 'ipe-modal-modal__close'
-      closeBtn.type = 'button'
-      closeBtn.setAttribute('aria-label', 'Close')
-      closeBtn.innerHTML = '&times;'
+      const closeBtn = createEl('button', {
+        className: 'ipe-modal-modal__close',
+        attrs: { type: 'button', 'aria-label': 'Close' },
+        html: '&times;',
+      }) as HTMLButtonElement
       closeBtn.addEventListener('click', () => {
         let proceed = true
         if (typeof this.options.onClickClose === 'function') {
@@ -417,23 +435,22 @@ export class IPEModal {
     if (!hasBackdrop && this.options.draggable) {
       $header.style.cursor = 'move'
       $header.style.userSelect = 'none'
-      $header.addEventListener('mousedown', this.onDragStart.bind(this))
-      $header.addEventListener('touchstart', this.onDragStart.bind(this), { passive: false })
+      $header.addEventListener('pointerdown', this.onDragStart.bind(this))
     }
 
     // Content
-    const $content = document.createElement('div')
-    $content.className = 'ipe-modal-modal__content'
+    const $content = createEl('div', { className: 'ipe-modal-modal__content' })
 
     // Footer (buttons)
-    const $footer = document.createElement('div')
-    $footer.className = 'ipe-modal-modal__footer'
+    const $footer = createEl('div', { className: 'ipe-modal-modal__footer' })
 
-    const $btnsLeft = document.createElement('div')
-    $btnsLeft.className = 'ipe-modal-modal__buttons ipe-modal-modal__buttons--left'
+    const $btnsLeft = createEl('div', {
+      className: 'ipe-modal-modal__buttons ipe-modal-modal__buttons--left',
+    })
 
-    const $btnsRight = document.createElement('div')
-    $btnsRight.className = 'ipe-modal-modal__buttons ipe-modal-modal__buttons--right'
+    const $btnsRight = createEl('div', {
+      className: 'ipe-modal-modal__buttons ipe-modal-modal__buttons--right',
+    })
 
     $footer.append($btnsLeft, $btnsRight)
 
@@ -449,8 +466,8 @@ export class IPEModal {
     this.$icons = $icons
     this.$content = $content
     this.$footer = $footer
-    this.$buttonsLeft = $btnsLeft
-    this.$buttonsRight = $btnsRight
+    this.$buttonsLeft = $btnsLeft as HTMLDivElement
+    this.$buttonsRight = $btnsRight as HTMLDivElement
 
     // content + title + buttons
     if (this.options.title) this.setTitle(this.options.title)
@@ -462,20 +479,26 @@ export class IPEModal {
       $footer.style.display = 'none'
     }
 
-    // position helpers
+    // position helpers & classes
     if (this.options.center) this.$modal.classList.add('is-centered')
     if (this.options.fitScreen) this.$modal.classList.add('is-fullscreen')
+    if (this.options.iconButtons) this.$header.classList.add('has-icon-buttons')
     if (this.options.className) {
-      this.$window.classList.add(...this.options.className.split(/[\s\.#]+/g).filter(Boolean))
+      this.$window.classList.add(...this.options.className.split(/[\s\.#+]+/g).filter(Boolean))
     }
 
-    // interactions - backdrop close
+    // fixedHeight 支持：true => 使用 CSS 布局；number => 直接设定高度
+    if (typeof this.options.fixedHeight === 'number') {
+      this.$window.style.height = `${Math.max(0, this.options.fixedHeight)}px`
+    } else if (this.options.fixedHeight === true) {
+      this.$window.classList.add('is-fixed-height')
+    }
+
+    // interactions - backdrop close（使用 pointerdown 兼容触控）
     if ($backdrop) {
-      $backdrop.addEventListener('mousedown', (e) => {
+      $backdrop.addEventListener('pointerdown', (e) => {
         if (!this.options.outSideClose) return
-        if (e.target === $backdrop) {
-          this.close()
-        }
+        if (e.target === $backdrop) this.close()
       })
     }
 
@@ -490,6 +513,7 @@ export class IPEModal {
   show(): this {
     if (!this.$modal) this.init()
     if (!this.$modal) throw new Error('Failed to initialize modal')
+    if (this.isOpen) return this // 避免重复 show
 
     // beforeShow lifecycle (cancelable)
     {
@@ -552,7 +576,6 @@ export class IPEModal {
       if (!allowedByEvent || !allowedByHook) return this
     }
 
-    // Toast: close immediately
     if (this.isToast) {
       this.emit(IPEModalEvent.Close)
       this.emit(IPEModalEvent.ToastClose)
@@ -597,6 +620,8 @@ export class IPEModal {
 
   /** Immediately removes DOM and listeners */
   destroy(): this {
+    if (this._isDestroyed) return this
+
     this.stopCloseTimer()
     document.removeEventListener('keydown', this.onKeyDown)
 
@@ -614,12 +639,10 @@ export class IPEModal {
     } else {
       if (this.$backdrop?.parentElement) this.$backdrop.parentElement.removeChild(this.$backdrop)
       if (this.$modal?.parentElement) this.$modal.parentElement.removeChild(this.$modal)
+      STACK.remove(this)
+      // unlock body scroll if this was the last locking modal
+      if (this.shouldUnlockBodyOnClose()) STACK.unlockBodyScroll()
     }
-
-    STACK.remove(this)
-
-    // unlock body scroll if this was the last locking modal
-    if (this.shouldUnlockBodyOnClose()) STACK.unlockBodyScroll()
 
     this.isOpen = false
 
@@ -684,9 +707,10 @@ export class IPEModal {
     const wrap = this.get$icons()
     wrap.innerHTML = ''
     for (const ic of icons) {
-      const btn = document.createElement('button')
-      btn.type = 'button'
-      btn.className = `ipe-modal-modal__icon ${ic.className}`
+      const btn = createEl('button', {
+        className: `ipe-modal-modal__icon ${ic.className}`,
+        attrs: { type: 'button' },
+      }) as HTMLButtonElement
       btn.addEventListener('click', ic.method)
       wrap.appendChild(btn)
     }
@@ -699,6 +723,7 @@ export class IPEModal {
     ;[left, right].forEach((c) => (c.innerHTML = ''))
     this.buttonElsLeft = []
     this.buttonElsRight = []
+    this.keyMap.clear()
 
     const target = area ?? this.$footer!
 
@@ -720,8 +745,9 @@ export class IPEModal {
 
   generateButton(opts: Partial<IPEModalButtonOptions>): HTMLButtonElement | HTMLAnchorElement {
     const type = opts.type ?? 'button'
-    const base = type === 'link' ? document.createElement('a') : document.createElement('button')
-    if (type === 'button') (base as HTMLButtonElement).type = 'button'
+    const base = (
+      type === 'link' ? createEl('a') : createEl('button', { attrs: { type: 'button' } })
+    ) as HTMLAnchorElement | HTMLButtonElement
 
     if (opts.id) base.id = opts.id
     base.className = `ipe-modal-btn ${opts.className ?? ''}`.trim()
@@ -764,8 +790,8 @@ export class IPEModal {
       window.setTimeout(unblock, opts.enableAfter)
     }
 
-    // Keyboard shortcut mapping (handled in onKeyDown)
-    if (opts.keyPress) (base as any)._ipe_key = opts.keyPress
+    // Keyboard shortcut mapping
+    if (opts.keyPress) this.keyMap.set(String(opts.keyPress).toLowerCase(), base)
 
     return base
   }
@@ -798,6 +824,9 @@ export class IPEModal {
     else if (target instanceof HTMLElement) el = combined.find((e) => e === target) ?? null
 
     if (!el) return this
+
+    // 同步移除 keyMap 中的快捷键映射（若存在）
+    for (const [k, v] of this.keyMap.entries()) if (v === el) this.keyMap.delete(k)
 
     let idx = left.indexOf(el as any)
     if (idx !== -1) {
@@ -868,6 +897,7 @@ export class IPEModal {
     if (!nameWin || (nameWin as any) === false) {
       modal.style.transition = 'none'
       ;(win.style as any).animation = 'none'
+      win.style.removeProperty('--ipe-modal-anim')
     } else {
       modal.style.removeProperty('transition')
       win.style.setProperty('--ipe-modal-anim', nameWin as string)
@@ -924,7 +954,7 @@ export class IPEModal {
   }
 
   private onKeyDown(e: KeyboardEvent) {
-    // Only top-most modal responds
+    // Only top-most modal responds（Toast 不绑定全局 keydown）
     if (STACK.top() !== this) return
 
     // Close on ESC regardless of current focus
@@ -953,12 +983,9 @@ export class IPEModal {
       }
     }
 
-    // button keyPress mapping
-    const btns = modal.querySelectorAll<HTMLElement>('.ipe-modal-btn')
-    btns.forEach((b) => {
-      const key = (b as any)._ipe_key as string | undefined
-      if (key && key.toLowerCase() === e.key.toLowerCase()) b.click()
-    })
+    // button keyPress mapping（O(1) 查表）
+    const hit = this.keyMap.get(e.key.toLowerCase())
+    if (hit) (hit as HTMLElement).click()
   }
 
   private startCloseTimer = (ms: number) => {
@@ -1008,7 +1035,7 @@ export class IPEModal {
   }
 
   // ------------------------------ drag handlers ------------------------------- //
-  private onDragStart(e: MouseEvent | TouchEvent): void {
+  private onDragStart(e: PointerEvent): void {
     // Only when no backdrop & draggable
     if (this.options.backdrop !== false || !this.options.draggable) return
 
@@ -1019,11 +1046,8 @@ export class IPEModal {
     // Re-stack on drag start
     this.bringToFront()
 
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-
-    this.dragStartX = clientX
-    this.dragStartY = clientY
+    this.dragStartX = e.clientX
+    this.dragStartY = e.clientY
 
     const modal = this.get$modal()
     const rect = modal.getBoundingClientRect()
@@ -1036,25 +1060,18 @@ export class IPEModal {
     modal.style.left = `${this.modalStartX}px`
     modal.style.top = `${this.modalStartY}px`
 
-    document.addEventListener('mousemove', this.onDragMove)
-    document.addEventListener('mouseup', this.onDragEnd)
-    document.addEventListener('touchmove', this.onDragMove, { passive: false })
-    document.addEventListener('touchend', this.onDragEnd)
-    document.addEventListener('touchcancel', this.onDragEnd)
+    document.addEventListener('pointermove', this.onDragMove)
+    document.addEventListener('pointerup', this.onDragEnd)
 
     modal.classList.add('is-dragging')
   }
 
-  private onDragMove = (e: MouseEvent | TouchEvent): void => {
+  private onDragMove = (e: PointerEvent): void => {
     if (!this.isDragging) return
-
     e.preventDefault()
 
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-
-    const deltaX = clientX - this.dragStartX
-    const deltaY = clientY - this.dragStartY
+    const deltaX = e.clientX - this.dragStartX
+    const deltaY = e.clientY - this.dragStartY
 
     const modal = this.get$modal()
     const newX = this.modalStartX + deltaX
@@ -1069,18 +1086,15 @@ export class IPEModal {
 
     this.isDragging = false
 
-    document.removeEventListener('mousemove', this.onDragMove)
-    document.removeEventListener('mouseup', this.onDragEnd)
-    document.removeEventListener('touchmove', this.onDragMove)
-    document.removeEventListener('touchend', this.onDragEnd)
-    document.removeEventListener('touchcancel', this.onDragEnd)
+    document.removeEventListener('pointermove', this.onDragMove)
+    document.removeEventListener('pointerup', this.onDragEnd)
 
     const modal = this.get$modal()
     modal.classList.remove('is-dragging')
   }
 
   // ------------------------------ toast ------------------------------- //
-  /** Show as toast (no backdrop, bottom-right stack). */
+  /** Show as toast (no backdrop, container stack). */
   showToast(
     options: Partial<{
       position: IPEModalNotifyPosition
@@ -1091,6 +1105,10 @@ export class IPEModal {
     const win = this.get$window()
     this.isToast = true
     win.style.pointerEvents = 'auto' // allow interactions on toast
+
+    // 让 Toast 也具备进入动画
+    this.applyAnimation(true)
+
     container.appendChild(win)
 
     // auto close (default 3000ms; hover to pause)
@@ -1129,6 +1147,7 @@ export class IPEModal {
   }
 
   static close(modalId?: string | HTMLElement) {
+    // 先找 modal 堆栈，再找 toast
     if (!modalId) {
       const top = STACK.top()
       top?.close()
@@ -1136,17 +1155,37 @@ export class IPEModal {
     }
     const id = typeof modalId === 'string' ? modalId : modalId.id
     const modal = STACK.stack.find((m) => m.modalId === id)
-    modal?.close()
-    return modal
+    if (modal) {
+      modal.close()
+      return modal
+    }
+    const toast = TOASTS.find((t) => t.modalId === id)
+    toast?.close()
+    return toast
   }
 
   static closeAll(group?: string | string[], except?: string | string[]) {
+    // 统一关闭：Modal + Toast
+    const exceptSet = new Set((Array.isArray(except) ? except : except ? [except] : []).map(String))
+    const groupSet = new Set((Array.isArray(group) ? group : group ? [group] : []).map(String))
+
+    // modals
     STACK.closeAll(group, except)
+
+    // toasts
+    ;[...TOASTS].forEach((t) => {
+      const id = t.modalId
+      const belongs = groupSet.size ? groupSet.has(t.pluginName) : true
+      const excluded = exceptSet.has(id)
+      if (belongs && !excluded) t.close()
+    })
+
     return STACK.top() ?? new IPEModal()
   }
 
   static removeAll() {
     STACK.removeAll()
+    ;[...TOASTS].forEach((t) => t.destroy())
   }
 
   static dialog(options: Partial<IPEModalOptions>, method: (e: MouseEvent, m: IPEModal) => void) {
@@ -1280,13 +1319,13 @@ export class IPEModal {
 const TOASTS: IPEModal[] = []
 function ensureToastContainer(position: IPEModalNotifyPosition = 'top right'): HTMLDivElement {
   const className = 'ipe-modal-toast-container'
-  const id = `${className}-${position.replace(/[\s-\.\/]+/g, '-')}`
+  const id = `${className}-${position.replace(/[\s-\.|\/]+/g, '-')}`
   let el = document.getElementById(id) as HTMLDivElement | null
   if (!el) {
-    el = document.createElement('div')
-    el.id = id
-    el.className = `${className} ${position}`
-    el.dataset.position = position
+    el = createEl('div', {
+      className: `${className} ${position}`,
+      attrs: { id, 'data-position': position },
+    }) as HTMLDivElement
     document.body.appendChild(el)
   }
   return el

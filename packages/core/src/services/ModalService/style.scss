@@ -6,29 +6,48 @@
   --ipe-modal-z: 1000;
   --ipe-modal-backdrop-bg: rgba(0, 0, 0, 0.5);
   --ipe-modal-bg: #ffffff;
-  --ipe-modal-fg: #111827; // gray-900
+  --ipe-modal-fg: #111827; /* gray-900 */
   --ipe-modal-fg--rgb: 17, 24, 39;
-  --ipe-modal-muted: #6b7280; // gray-500
-  --ipe-modal-accent: #3b82f6; // blue-500
+  --ipe-modal-muted: #6b7280; /* gray-500 */
+  --ipe-modal-accent: #3b82f6; /* blue-500 */
   --ipe-modal-accent--rgb: 59, 130, 246;
-  --ipe-modal-danger: #ef4444; // red-500
+  --ipe-modal-danger: #ef4444; /* red-500 */
   --ipe-modal-danger--rgb: 239, 68, 68;
   --ipe-modal-radius: 16px;
   --ipe-modal-button-radius: 10px;
   --ipe-modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
   --ipe-modal-spacing: 16px;
+  --ipe-modal-viewport-gap-y: 20px; /* 窗口上下留白 */
   --ipe-modal-window-max-w: 720px;
-  --ipe-modal-anim: fade; // default animation key
+  /* 动画变量（由 JS 注入 animation-name 到 --ipe-modal-anim） */
+  --ipe-modal-anim: none;
+
+  /* 视口与安全区变量 */
+  --ipe-modal-safe-area-top: env(safe-area-inset-top);
+  --ipe-modal-safe-area-bottom: env(safe-area-inset-bottom);
+  --ipe-modal-vh: 100vh; /* fallback */
+}
+@supports (height: 100dvh) {
+  :root {
+    --ipe-modal-vh: 100dvh;
+  }
 }
 
+/* 统一计算：窗口最大高度，保证任何模式下都不会超出视口（可滚动在 content 内部） */
+:root {
+  --ipe-modal-window-max-h: calc(
+    var(--ipe-modal-vh) - var(--ipe-modal-safe-area-top) - var(--ipe-modal-safe-area-bottom) -
+      (var(--ipe-modal-viewport-gap-y) * 2)
+  );
+}
+
+/* ------------------------- Lock background scrolling ------------------------ */
 html.ipe-modal-no-scroll,
 body.ipe-modal-no-scroll {
-  overflow: hidden !important;
-  // 防止移动端滚动穿透
-  touch-action: none;
+  overflow: hidden !important; /* 防止页面滚动 */
+  touch-action: none; /* 防止移动端滚动穿透 */
   -webkit-overflow-scrolling: auto;
 }
-
 body.ipe-modal-no-scroll {
   position: fixed;
   width: 100%;
@@ -36,76 +55,82 @@ body.ipe-modal-no-scroll {
   right: 0;
 }
 
-/* Backdrop - 独立的背景层 */
+/* ------------------------------- Backdrop ---------------------------------- */
 .ipe-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: var(--ipe-modal-z);
   background: transparent;
   transition: background 180ms ease;
-  pointer-events: none; // 允许点击穿透到modal
+  pointer-events: none; /* 初始允许穿透；is-open 时接管点击 */
 }
 .ipe-modal-backdrop.is-open {
   background: var(--ipe-modal-backdrop-bg);
-  pointer-events: auto; // 打开时拦截点击
+  pointer-events: auto;
 }
 
-/* Modal shell - 独立的模态框容器 */
+/* ------------------------------- Modal shell -------------------------------- */
 .ipe-modal-modal {
   position: fixed;
   inset: 0;
-  z-index: var(--ipe-modal-z);
+  z-index: calc(var(--ipe-modal-z) + 1);
   outline: none;
-  display: grid;
-  place-items: center;
+  align-items: start; /* 默认顶对齐 */
   overflow: auto;
   opacity: 0;
   transform: translateY(8px) scale(0.98);
   transition:
     opacity 180ms ease,
     transform 220ms ease;
-  pointer-events: none; // 默认不拦截点击，只有window拦截
+  pointer-events: none; /* 点外部命中 backdrop */
+  align-items: start;
+  justify-items: center;
 }
 .ipe-modal-modal.is-open {
   opacity: 1;
   transform: none;
 }
 
+/* 居中模式（与 TS 中 options.center 对应） */
 .ipe-modal-modal.is-centered {
+  display: grid;
   align-items: center;
   .ipe-modal-modal__content {
-    max-height: 80vh;
+    max-height: 75dvh;
     overflow: auto;
   }
 }
+
+/* 全屏模式：窗口撑满视口 */
 .ipe-modal-modal.is-fullscreen .ipe-modal-modal__window {
   width: 100vw;
-  height: 100vh;
+  height: var(--ipe-modal-vh);
   max-width: none;
+  max-height: none;
   border-radius: 0;
 }
 
-/* 无背景模态框 - 使用绝对定位 */
+/* 无背景模态框（由 JS 绝对定位） */
 .ipe-modal-modal.no-backdrop {
   position: absolute;
   inset: auto;
   display: block;
+  padding: 0;
   overflow: visible;
-  // 可以通过 position 选项或自定义样式来定位
 }
 
-/* 拖动状态 */
+/* 拖动状态：禁用过渡/动画，提高跟手性 */
 .ipe-modal-modal.is-dragging {
-  transition: none; // 禁用过渡动画以获得即时响应
-  .ipe-modal-modal__window {
-    animation: none; // 禁用窗口动画
-  }
-  .ipe-modal-modal__header {
-    cursor: grabbing !important; // 拖动时显示抓取光标
-  }
+  transition: none;
+}
+.ipe-modal-modal.is-dragging .ipe-modal-modal__window {
+  animation: none;
+}
+.ipe-modal-modal.is-dragging .ipe-modal-modal__header {
+  cursor: grabbing !important;
 }
 
-/* Window */
+/* -------------------------------- Window ----------------------------------- */
 .ipe-modal-modal__window {
   position: relative;
   background: var(--ipe-modal-bg);
@@ -114,14 +139,16 @@ body.ipe-modal-no-scroll {
   box-shadow: var(--ipe-modal-shadow);
   max-width: var(--ipe-modal-window-max-w);
   width: min(92vw, var(--ipe-modal-window-max-w));
-  display: grid;
-  grid-template-rows: auto 1fr auto;
   overflow: hidden;
-  animation: var(--ipe-modal-anim-show) 220ms ease both;
-  pointer-events: auto; // 确保window可以拦截点击
+  display: block;
+  animation: var(--ipe-modal-anim, none) 220ms ease both; /* 由 JS 注入动画名 */
+  pointer-events: auto; /* window 可拦截点击 */
+  overscroll-behavior: contain; /* 阻止滚动串联到背景 */
+  margin-top: var(--ipe-modal-viewport-gap-y, 20px);
+  margin-bottom: var(--ipe-modal-viewport-gap-y, 20px);
 }
 
-/* Sizes */
+/* ------------------------------- Sizes ------------------------------------- */
 .size--dialog {
   max-width: 420px;
 }
@@ -142,22 +169,28 @@ body.ipe-modal-no-scroll {
 }
 .size--full {
   width: 100vw;
-  height: 100vh;
+  height: var(--ipe-modal-vh);
   max-width: none;
+  max-height: none;
   border-radius: 0;
 }
 .size--auto {
   max-width: var(--ipe-modal-window-max-w);
 }
 
-/* Header */
+/* 固定高度模式（TS 会加上 .is-fixed-height） */
+.ipe-modal-modal__window.is-fixed-height {
+  height: min(var(--ipe-modal-window-max-h), 80vh);
+}
+
+/* -------------------------------- Header ----------------------------------- */
 .ipe-modal-modal__header {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px;
   align-items: center;
   padding: calc(var(--ipe-modal-spacing) * 0.75) var(--ipe-modal-spacing);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid color-mix(in oklab, black 6%, transparent);
 }
 .ipe-modal-modal__title {
   font-size: 1.1rem;
@@ -176,7 +209,7 @@ body.ipe-modal-no-scroll {
   background: transparent;
 }
 
-/* Close button */
+/* -------------------------------- Close ------------------------------------ */
 .ipe-modal-modal__close {
   margin-left: 6px;
   width: 32px;
@@ -196,27 +229,28 @@ body.ipe-modal-no-scroll {
   color: var(--ipe-modal-fg);
 }
 
-/* Content */
+/* ------------------------------- Content ----------------------------------- */
 .ipe-modal-modal__content {
   padding: var(--ipe-modal-spacing);
-  overflow: auto;
+  overflow: visible;
+  -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
 }
 
-/* Footer */
+/* -------------------------------- Footer ----------------------------------- */
 .ipe-modal-modal__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: calc(var(--ipe-modal-spacing) * 0.75) var(--ipe-modal-spacing);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid color-mix(in oklab, black 6%, transparent);
 }
 .ipe-modal-modal__buttons {
   display: inline-flex;
   gap: 8px;
 }
 
-/* toast */
+/* -------------------------------- Toast ------------------------------------ */
 .ipe-modal-toast-container {
   position: fixed;
   z-index: 2000;
@@ -225,44 +259,45 @@ body.ipe-modal-no-scroll {
   gap: 8px;
   align-items: flex-end;
   pointer-events: none;
-  &.top {
-    top: 16px;
-  }
-  &.bottom {
-    bottom: 16px;
-    flex-direction: column-reverse;
-  }
-  &.right {
-    right: 16px;
-  }
-  &.left {
-    left: 16px;
-  }
 }
+.ipe-modal-toast-container.top {
+  top: 16px;
+}
+.ipe-modal-toast-container.bottom {
+  bottom: 16px;
+  flex-direction: column-reverse;
+}
+.ipe-modal-toast-container.right {
+  right: 16px;
+}
+.ipe-modal-toast-container.left {
+  left: 16px;
+}
+
 .ipe-modal-modal__window.plugin--toast {
   width: 300px;
   border-radius: calc(var(--ipe-modal-radius) * 0.5);
-  .ipe-modal-modal__header {
-    padding: 0.5em;
-    .ipe-modal-modal__close {
-      width: 20px;
-      height: 20px;
-      font-size: 16px;
-    }
-  }
-  .ipe-modal-modal__content {
-    padding: 1em 0.5em;
-  }
-  .ipe-modal-modal__footer {
-    padding: 0.5em;
-    padding-top: 0;
-    .ipe-modal-btn {
-      padding: 0.5em 0.75em;
-    }
-  }
+}
+.ipe-modal-modal__window.plugin--toast .ipe-modal-modal__header {
+  padding: 0.5em;
+}
+.ipe-modal-modal__window.plugin--toast .ipe-modal-modal__close {
+  width: 20px;
+  height: 20px;
+  font-size: 16px;
+}
+.ipe-modal-modal__window.plugin--toast .ipe-modal-modal__content {
+  padding: 1em 0.5em;
+}
+.ipe-modal-modal__window.plugin--toast .ipe-modal-modal__footer {
+  padding: 0.5em;
+  padding-top: 0;
+}
+.ipe-modal-modal__window.plugin--toast .ipe-modal-btn {
+  padding: 0.5em 0.75em;
 }
 
-/* Buttons */
+/* -------------------------------- Buttons ---------------------------------- */
 .ipe-modal-btn {
   --accent-color: #fff;
   --text-color: var(--ipe-modal-fg);
@@ -310,19 +345,21 @@ body.ipe-modal-no-scroll {
 .ipe-modal-btn.is-ghost,
 .ipe-modal-btn.is-text {
   background: transparent;
-  &.is-primary {
-    color: var(--accent-color);
-  }
-  &.is-danger {
-    color: var(--accent-color);
-  }
+}
+.ipe-modal-btn.is-ghost.is-primary {
+  color: var(--ipe-modal-accent);
+}
+.ipe-modal-btn.is-ghost.is-danger {
+  color: var(--ipe-modal-danger);
 }
 .ipe-modal-btn.is-text {
   border: 0;
 }
 
+/* 紧凑按钮布局（dialog/notify） */
 .ipe-modal-modal__window.size--dialog,
 .ipe-modal-modal__window.compact-buttons {
+  /* 为了在窄屏上也可滚动，footer 依旧占位，窗口仍受 max-height 限制 */
   .ipe-modal-modal__footer {
     padding: 0;
   }
@@ -338,15 +375,16 @@ body.ipe-modal-no-scroll {
   .ipe-modal-btn {
     flex: 1;
     border: 0;
-    margin: none;
+    margin: 0;
     padding: 1rem;
     border-radius: 0;
-    &:not(:first-child) {
-      border-left: 1px solid rgba(0, 0, 0, 0.06);
-    }
+  }
+  .ipe-modal-btn:not(:first-child) {
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
   }
 }
 
+/* ------------------------------- Keyframes --------------------------------- */
 @keyframes fadeIn {
   from {
     opacity: 0;

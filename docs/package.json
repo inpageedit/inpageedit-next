@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vitepress dev",
-    "prebuild": "pnpm --filter core build:import || true",
+    "prebuild": "(pnpm --filter schemastery-form build && pnpm --filter core build:import) || true",
     "build": "vitepress build",
     "preview": "vitepress preview"
   },
@@ -55,9 +55,10 @@
   },
   "dependencies": {
     "naive-ui": "^2.43.1",
+    "schemastery": "^3.17.0",
+    "schemastery-form": "workspace:^",
     "vue": "^3.5.21"
   },
-  "peerDependencies": {},
   "bugs": {
     "url": "https://github.com/inpageedit/inpageedit-next/issues"
   }

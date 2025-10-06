@@ -107,6 +107,13 @@ export default withMermaid(
       hostname: 'https://www.ipe.wiki',
     },
 
+    vue: {
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.startsWith('schema-'),
+        },
+      },
+    },
     vite: {
       plugins: [
         groupIconVitePlugin({

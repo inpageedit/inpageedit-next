@@ -1,19 +1,9 @@
-<template lang="pug">
-#demo-app
-  h1 Schemastery Form Vue Demo
-  SchemasteryFormVue(:schema='schema', v-model:value='value')
-  button(@click='onGetValue') Get Value
-  pre {{ schema(value) }}
-  pre {{ schema.toJSON() }}
-</template>
-
-<script setup lang="ts">
-import SchemasteryFormVue from '@/vue'
-import Schema from 'schemastery'
 import { ref } from 'vue'
+import Schema from 'schemastery'
+export { default as SchemaForm } from 'schemastery-form/vue'
 ;(window as any).Schema = Schema // for debug
 
-interface TestSchema {
+export interface TestSchema {
   string: string
   number: number
   boolean: boolean
@@ -27,7 +17,7 @@ interface TestSchema {
   }
 }
 
-const schema = ref(
+export const schema = ref(
   new Schema<TestSchema>(
     Schema.object({
       string: Schema.string().description('Test String').default('Hello, World!'),
@@ -53,14 +43,14 @@ const schema = ref(
   )
 )
 
-const value = ref<TestSchema>({
+export const value = ref<TestSchema>({
   string: 'Initial String',
   number: 100,
   boolean: false,
   date: new Date('2000-10-05T00:00:00+08:00'),
   enum: 'option2',
   tuple: ['initial', 1, true],
-  array: ['initial', 'array'],
+  array: ['initial', 'array', 'another'],
   dict: { key1: 'value1', key2: 'value2' },
   deep: {
     nested: {
@@ -70,10 +60,3 @@ const value = ref<TestSchema>({
     },
   },
 })
-
-const onGetValue = () => {
-  console.log('Current Value:', schema.value(value.value))
-}
-</script>
-
-<style scoped lang="scss"></style>

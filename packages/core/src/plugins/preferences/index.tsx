@@ -55,47 +55,39 @@ export class PluginPreferences extends BasePlugin {
     this.registerCustomConfig(
       'about',
       Schema.object({
-        about: Schema.string()
-          .role('html-info')
-          .description(
-            (
-              <div className="prose">
-                <h2>✏️ InPageEdit NEXT</h2>
-                <i>v{this.ctx.version}</i>
-                <h2>Portal</h2>
-                <div style="display: flex; flex-direction: column; gap: 1rem">
-                  <ActionButton
-                    href="https://www.ipe.wiki"
-                    style={{ display: 'block', width: '100%' }}
-                  >
-                    Official Website & Help Center
-                  </ActionButton>
-                  <ActionButton
-                    href="https://www.ipe.wiki/update/"
-                    style={{ display: 'block', width: '100%' }}
-                  >
-                    Update Logs
-                  </ActionButton>
-                </div>
-                <h2>Join us</h2>
-                <ul>
-                  <li>
-                    <strong>GitHub</strong>:{' '}
-                    <a href="https://github.com/inpageedit/inpageedit-next" target="_blank">
-                      inpageedit/inpageedit-next
-                    </a>
-                  </li>
-                  <li>
-                    <strong>QQ Group</strong>: 1026023666
-                  </li>
-                </ul>
-                <hr />
-                <p>🚀 Modular, Extensible Supercharged Plugin for MediaWiki.</p>
-                <p>InPageEdit-NEXT Copyright © 2025-present dragon-fish</p>
-              </div>
-            ).outerHTML
-          )
-          .default(''),
+        about: Schema.const(
+          <div className="prose">
+            <h2>✏️ InPageEdit NEXT</h2>
+            <i>v{this.ctx.version}</i>
+            <h2>Portal</h2>
+            <div style="display: flex; flex-direction: column; gap: 1rem">
+              <ActionButton href="https://www.ipe.wiki" style={{ display: 'block', width: '100%' }}>
+                Official Website & Help Center
+              </ActionButton>
+              <ActionButton
+                href="https://www.ipe.wiki/update/"
+                style={{ display: 'block', width: '100%' }}
+              >
+                Update Logs
+              </ActionButton>
+            </div>
+            <h2>Join us</h2>
+            <ul>
+              <li>
+                <strong>GitHub</strong>:{' '}
+                <a href="https://github.com/inpageedit/inpageedit-next" target="_blank">
+                  inpageedit/inpageedit-next
+                </a>
+              </li>
+              <li>
+                <strong>QQ Group</strong>: 1026023666
+              </li>
+            </ul>
+            <hr />
+            <p>🚀 Modular, Extensible Supercharged Plugin for MediaWiki.</p>
+            <p>InPageEdit-NEXT Copyright © 2025-present dragon-fish</p>
+          </div>
+        ).role('raw-html'),
       }).description(''),
       'about',
       {}
