@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 /// <reference types="types-mediawiki" />
+/// <reference types="vitest" />
 
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'

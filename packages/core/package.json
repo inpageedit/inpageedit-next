@@ -50,11 +50,10 @@
     "build:bundle": "cross-env VITE_BUILD_FORMAT=bundle vite build",
     "prepublish": "npm run build",
     "lint": "eslint ./src",
+    "unit-test": "vitest run ./src",
+    "unit-test:watch": "vitest ./src",
     "clean": "rimraf dist/* lib/*",
     "format": "prettier --write ./src",
-    "doc:dev": "vitepress dev docs",
-    "doc:build": "npm run build:import && vitepress build docs",
-    "doc:preview": "vitepress preview docs",
     "typecheck": "tsc -b --pretty false --noEmit"
   },
   "publishConfig": {
@@ -87,7 +86,8 @@
     "typescript": "^5.9.2",
     "unplugin-auto-import": "^20.2.0",
     "unplugin-dts": "1.0.0-beta.6",
-    "vite": "^7.1.7"
+    "vite": "^7.1.7",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@cordisjs/core": "^3.18.1",

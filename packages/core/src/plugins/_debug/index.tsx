@@ -1,8 +1,10 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import { install, SchemaForm } from 'schemastery-form'
+import { install as installSchemaForm, SchemaForm } from 'schemastery-form'
+import { interpolate } from '@/utils/interpolate.js'
 import { h } from 'jsx-dom'
 
-install()
+installSchemaForm()
+;(window as any).interpolate = interpolate
 
 interface TestSchema {
   test: string
