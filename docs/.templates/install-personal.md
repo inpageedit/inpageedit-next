@@ -6,23 +6,23 @@
 
 ```js [Special:MyPage/common.js]
 // InPageEdit NEXT
-$('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
+document.body.append(
+  Object.assign(document.createElement('script'), {
+    src: 'https://unpkg.com/@inpageedit/core',
+    type: 'module',
+  })
+)
 ```
 
 ::: details 其他安装方式
 
-### Vanilla JS
+### jQuery
 
-大多数 MediaWiki 站点都预装了 jQuery，不过你也可以直接使用原生 JavaScript 来加载：
+你当然可以使用jQuery简化语法，大多数 MediaWiki 环境都自带 jQuery。
 
 ```js [Special:MyPage/common.js]
 // InPageEdit NEXT
-;(() => {
-  var s = document.createElement('script')
-  s.src = 'https://unpkg.com/@inpageedit/core'
-  s.type = 'module' // [!code warning]
-  document.head.appendChild(s)
-})()
+$('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
 ```
 
 ### 浏览器插件
