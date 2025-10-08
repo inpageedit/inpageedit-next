@@ -95,6 +95,10 @@ export default withMermaid(
             },
           },
           floatingVue: {},
+          throws: false,
+          onTwoslashError(error, code, lang, options) {
+            console.error('[TwoSlashError]', error, code, lang)
+          },
         }),
       ],
       languages: ['js', 'jsx', 'ts', 'tsx', 'wiki', 'json', 'css', 'html', 'bash'],
@@ -107,6 +111,7 @@ export default withMermaid(
       hostname: 'https://www.ipe.wiki',
     },
 
+    ignoreDeadLinks: true,
     vue: {
       template: {
         compilerOptions: {
