@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import TimelineItem from './Timeline/TimelineItem.vue'
-import { getNpmRegistryPackage, type NpmRegistryPackage } from '../utils/getNpmRegistry'
+import { fetchNpmPackage, type NpmPackage } from '../utils/npmFetch'
 
 const props = defineProps<{
   version: string
@@ -54,9 +54,9 @@ const props = defineProps<{
   time?: string
 }>()
 
-const npm = ref<NpmRegistryPackage | null>(null)
+const npm = ref<NpmPackage | null>(null)
 const load = async () => {
-  npm.value = await getNpmRegistryPackage('@inpageedit/core')
+  npm.value = await fetchNpmPackage('@inpageedit/core')
 }
 
 const currentVersionInfo = computed(() => {

@@ -1,4 +1,4 @@
-export interface NpmRegistryPackage {
+export interface NpmPackage {
   _id?: string
   name: string
   description?: string
@@ -74,30 +74,36 @@ export interface NpmPackageVersion {
 
 declare global {
   interface Window {
-    [CACHE_KEY]?: Map<string, Promise<NpmRegistryPackage>>
+    [CACHE_KEY]?: Map<string, Promise<NpmPackage>>
   }
 }
 
 const CACHE_KEY = Symbol.for('NPM_REGISTRY_DATA')
-const REGISTRY_BASE = 'https://registry.npmjs.org/'
-if (typeof window !== 'undefined' && !window[CACHE_KEY]) {
+const DEFAULT_NPM_REGISTRY = 'https://registry.npmjs.org/'
+if (typeof document !== 'undefined' && !window[CACHE_KEY]) {
   window[CACHE_KEY] = new Map()
 }
 
-export async function getNpmRegistryPackage(
+interface FetchNpmPackageOptions {
+  noCache: boolean
+  registry: string
+}
+
+export async function fetchNpmPackage(
   name: string,
-  noCache = false
-): Promise<NpmRegistryPackage> {
-  const cache = window[CACHE_KEY]!
+  options?: Partial<FetchNpmPackageOptions>
+): Promise<NpmPackage> {
+  const { noCache = false, registry = DEFAULT_NPM_REGISTRY } = options || {}
+  const cache = globalThis?.[CACHE_KEY] || new Map()
   if (cache.has(name) && !noCache) {
     return cache.get(name)!
   }
-  const promise = fetch(new URL(`/${name}`, REGISTRY_BASE))
+  const promise = fetch(new URL(`/${name}`, registry))
     .then((res) => {
       if (!res.ok) {
         throw new Error(`Failed to fetch package info: ${res.status} ${res.statusText}`)
       }
-      return res.json() as Promise<NpmRegistryPackage>
+      return res.json() as Promise<NpmPackage>
     })
     .catch((err) => {
       cache.delete(name)

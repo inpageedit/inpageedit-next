@@ -4,7 +4,7 @@ span.ipe-version(@click='enableClickToRefresh ? load(true) : void 0', :title='mo
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { getNpmRegistryPackage } from '../utils/getNpmRegistry'
+import { fetchNpmPackage } from '../utils/npmFetch'
 
 defineProps<{
   enableClickToRefresh?: boolean
@@ -15,7 +15,7 @@ const tags = ref<Record<string, string>>({})
 const modifiedTime = ref('')
 
 onMounted(async () => {
-  const info = await getNpmRegistryPackage('@inpageedit/core')
+  const info = await fetchNpmPackage('@inpageedit/core')
   const distTags = info['dist-tags']
   tags.value = distTags
   latest.value = distTags.latest
