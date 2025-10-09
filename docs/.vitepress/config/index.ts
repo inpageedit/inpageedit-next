@@ -44,7 +44,7 @@ export default withMermaid(
       },
     },
     themeConfig: {
-      logo: '/images/logos/ipe-uwu.png',
+      logo: '/images/logo/ipe-uwu.png',
       outline: {
         level: [2, 3],
       },
