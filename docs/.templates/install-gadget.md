@@ -10,21 +10,13 @@
 * IPE-NEXT[ResourceLoader|rights=edit,skipcaptcha]|IPE-NEXT.js
 ```
 
-```js [MediaWiki:Gadget-IPE-NEXT.js ~vscode-icons:file-type-js~]
-// MediaWiki < 1.40
-window.RLQ = window.RLQ || []
-window.RLQ.push(function () {
-  $('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
-})
-
-// MediaWiki >= 1.40
-window.RLQ = window.RLQ || []
-window.RLQ.push([
-  ['jquery'],
-  () => {
-    $('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
-  },
-])
+```js [MediaWiki:Gadget-IPE-NEXT.js]
+document.body.append(
+  Object.assign(document.createElement('script'), {
+    src: 'https://unpkg.com/@inpageedit/core',
+    type: 'module',
+  })
+)
 ```
 
 ```wiki [MediaWiki:Gadget-IPE-NEXT]

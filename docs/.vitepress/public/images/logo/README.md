@@ -1,20 +1,27 @@
-# InPageEdit Logos
+# InPageEdit UwU
 
-Made by [Dianliang233](https://github.com/dianliang233/) with [Sketch](https://www.sketch.com/).
+Original by [@dragon-fish](https://github.com/dragon-fish)
+
+Via Adobe Photoshop 2025
 
 ## Design & Font
 
-- Color palette: [Atlassian Design](https://atlassian.design/)
-  - In: Pacific Bridge B400 (#0052CC)
-  - Page: Sodium Explosion B300 (#0065FF)
-  - Edit: Coogee B200 (#2684FF)
-- The "Edit"(i/I) icon: [Material Design Icon](https://material.io/resources/icons/)
-- Font: Google "Product" Sans
+- Font: [ユールカ Std (FOT - Eureka)](https://lets.fontworks.co.jp/fonts/218)
 
----
+## Copyright Information
 
 > [!IMPORTANT]
 >
-> The IPE logo is subject to an open-source license different from that of this repository.
->
-> Copyright (c) 2019-present @dianliang233, [GNU General Public License 3.0](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
+> - **The font required additional licensing. Please go to the [LETS Website](https://lets.fontworks.co.jp/) for more information.**
+
+- MediaWiki logo
+  - https://commons.wikimedia.org/wiki/File:MediaWiki-2020-icon.svg
+  - Wikimedia Foundation, Inc.
+  - CC BY-SA 4.0
+- Wikitext_Blue.svg
+  - https://commons.wikimedia.org/wiki/File:WikiText_blue.svg
+  - [Jmarchn](https://commons.wikimedia.org/wiki/User:Jmarchn)
+  - CC BY-SA 3.0
+- The creator of these logos is @dragon-fish. Copyright is not fully relinquished.
+- You CAN'T use this logo for commercial purposes.
+- The @inpageedit organization and its members have the right to use this logo for any purpose. (Except for the font.)

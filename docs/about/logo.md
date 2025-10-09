@@ -5,30 +5,30 @@ import ColorPreview from '@/.vitepress/components/ColorPreview.vue'
 
 const nextLogos = [
   {
-    src: withBase('/images/uwu/ipe-uwu.png'),
+    src: withBase('/images/logo/ipe-uwu.png'),
     alt: 'InPageEdit UwU',
   },
   {
-    src: withBase('/images/uwu/ipe-next-uwu.png'),
+    src: withBase('/images/logo/ipe-next-uwu.png'),
     alt: 'InPageEdit NEXT UwU',
   },
 ]
 
 const legacyLogos = [
   {
-    src: withBase('/images/logo/InPageEdit.png'),
+    src: withBase('/images/legacy-logo/InPageEdit.png'),
     alt: 'InPageEdit',
   },
   {
-    src: withBase('/images/logo/IPE.png'),
+    src: withBase('/images/legacy-logo/IPE.png'),
     alt: 'IPE',
   },
   {
-    src: withBase('/images/logo/InPageEdit-v2.png'),
+    src: withBase('/images/legacy-logo/InPageEdit-v2.png'),
     alt: 'InPageEdit-v2',
   },
   {
-    src: withBase('/images/logo/IPE-v2.png'),
+    src: withBase('/images/legacy-logo/IPE-v2.png'),
     alt: 'IPE-v2',
   },
 ]

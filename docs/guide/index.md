@@ -4,7 +4,7 @@ title: 用户指南
 
 # InPageEdit 种草指南
 
-![InPageEdit Logo](/images/logo/InPageEdit.png)
+![InPageEdit Logo](/images/logo/ipe-uwu.png)
 
 ## 何谓 InPageEdit NEXT？
 
