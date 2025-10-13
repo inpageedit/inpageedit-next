@@ -30,28 +30,52 @@ InPageEdit NEXT 最熟为人知的功能是“快速编辑”。
 即便是核心功能“快速编辑”，也仅仅是一个基于事件总线的插件，它并不关心wiki配置，也不关心页面内容，它只是基于 SiteMetadataService + WikiPageService 服务提供的数据，显示了一个编辑框，而预览、保存编辑内容也并非由它负责。
 
 ```mermaid
-mindmap
-  root)@inpageedit/core(
-    (Services)
-      ApiService
-      ResourceLoaderService
-      SsiModalService
-      StorageService
-      SiteMetadataService
-      WikiPageService
-      ...
-    (Plugins)
-      PluginPreferences
-      PluginQuickEdit
-      PluginQuickMove
-      PluginQuickPreview
-      PluginQuickDiff
-      PluginQuickRedirect
-      PluginToolbox
-      ...
+graph
+    Core["@inpageedit/core<br/>核心框架"]
+
+    subgraph Services["Services 服务层"]
+        Api["ApiService"]
+        Modal["ModalService"]
+        Storage["StorageService"]
+        Site["SiteMetadataService"]
+        Wiki["WikiPageService"]
+    end
+
+    subgraph Plugins["Plugins 插件层"]
+        Toolbox["PluginToolbox"]
+        Edit["PluginQuickEdit"]
+        Preview["PluginQuickPreview"]
+        Diff["PluginQuickDiff"]
+        Prefs["PluginPreferences"]
+    end
+
+    Core -.-> Services
+    Core -.-> Plugins
+
+    Edit --> Site
+    Edit --> Wiki
+    Edit --> Modal
+    Edit -.-> Diff
+    Edit -.-> Preview
+
+    Preview --> Wiki
+    Preview --> Modal
+
+    Diff --> Wiki
+    Diff --> Modal
+
+    Prefs --> Storage
+    Prefs --> Modal
+
+    Toolbox -.-> Edit
+    Toolbox -.-> Diff
+    Toolbox -.-> Prefs
+
+    Wiki --> Api
+    Site --> Api
 ```
 
-好像有点难以理解？没关系，接下来的章节会逐步为你揭开 InPageEdit NEXT 的神秘面纱。
+看上去有点乱七八糟的？没关系，接下来的章节会逐步为你揭开 InPageEdit NEXT 的神秘面纱。
 
 - [插件101](plugins-101/1.first-plugin.md) 一章将带你从零开始，开发你的第一个插件。
 - [参与核心开发](contribute-to-core/1.start.md) 一章将带你了解 InPageEdit NEXT 的代码结构，参与核心功能的开发或错误修复。
