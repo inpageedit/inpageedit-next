@@ -112,10 +112,18 @@ export class WikiPage {
       appendtext?: string
       summary?: string
       watchlist?: WatchlistAction
+      section?: number | 'new' | undefined
     },
     params?: MwApiParams
   ) {
-    const { text, prependtext, appendtext, summary = '', watchlist = 'preferences' } = payload
+    const {
+      text,
+      prependtext,
+      appendtext,
+      summary = '',
+      watchlist = WatchlistAction.preferences,
+      section,
+    } = payload
     return this.api.postWithEditToken({
       action: 'edit',
       title: this.title,
@@ -126,6 +134,7 @@ export class WikiPage {
       appendtext,
       summary,
       watchlist,
+      section,
       ...params,
     })
   }

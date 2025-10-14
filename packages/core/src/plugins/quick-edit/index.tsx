@@ -386,12 +386,14 @@ export class PluginQuickEdit extends BasePlugin {
     const minor = payload.minor || false
     const createonly = payload.createonly || false
     const watchlist = payload.watchlist || WatchlistAction.nochange
+    const section = init.options.section
 
     return init.wikiPage.edit(
       {
         summary,
         text,
         watchlist,
+        section,
       },
       {
         minor,
