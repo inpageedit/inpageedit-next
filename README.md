@@ -1,6 +1,6 @@
 <div align="center">
 
-[![InPageEdit Logo](https://ipe.js.org/images/logo/InPageEdit.png)](https://ipe.js.org/images/logo/InPageEdit.png)
+[![InPageEdit Logo](docs/.vitepress/public/images/logo/ipe-next-uwu.png)](https://www.ipe.wiki)
 
 # InPageEdit NEXT
 
@@ -21,18 +21,25 @@
 <!-- prettier-ignore -->
 ```javascript
 // InPageEdit NEXT
-$('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
+document.body.append(
+  Object.assign(document.createElement('script'), {
+    src: 'https://unpkg.com/@inpageedit/core',
+    type: 'module',
+  })
+)
 ```
 
 ## For developers
 
 This is a monorepo:
 
-| package          | description   | directory                      |
-| ---------------- | ------------- | ------------------------------ |
-| @inpageedit/core | Core package  | [packages/core](packages/core) |
-| docs             | Documentation | [docs](docs)                   |
-| plugins          | Plugins       | [plugins](plugins)             |
+| package            | description                                                                      | directory                                              |
+| ------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| @inpageedit/core   | 🚀 Modular, Extensible Supercharged Plugin for MediaWiki                         | [packages/core](packages/core)                         |
+| @inpageedit/logger | Flexible, Extensible Console Logger with Colored Labels and Hierarchical Loggers | [packages/logger](packages/logger)                     |
+| schemastery-form   | 🧩 WebComponent for Schemastery Form Generation                                  | [packages/schemastery-form](packages/schemastery-form) |
+| docs               | InPageEdit Documentation                                                         | [docs](docs)                                           |
+| plugins            | Official Plugins                                                                 | [plugins](plugins)                                     |
 
 ---
 

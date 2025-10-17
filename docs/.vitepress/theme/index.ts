@@ -84,5 +84,34 @@ export default {
         ],
       },
     })
+
+    // https://gtranslate.io/website-translator-widget
+    if (typeof window !== 'undefined') {
+      if (window.gtranslateSettings) return
+      window.gtranslateSettings = {
+        default_language: 'zh-CN',
+        languages: ['zh-CN', 'en', 'fr', 'ru', 'de', 'ja'],
+        native_language_names: true,
+        wrapper_selector: '#gtranslate_wrapper',
+        alt_flags: { en: 'usa' },
+      }
+      const container =
+        document.getElementById('gtranslate_wrapper') ||
+        (Object.assign(document.createElement('div'), {
+          id: 'gtranslate_wrapper',
+        }) as HTMLDivElement)
+      document.body.appendChild(container)
+      const script = Object.assign(document.createElement('script'), {
+        src: 'https://cdn.gtranslate.net/widgets/latest/float.js',
+        defer: true,
+      })
+      container.appendChild(script)
+    }
   },
 } satisfies Theme
+
+declare global {
+  interface Window {
+    gtranslateSettings?: any
+  }
+}

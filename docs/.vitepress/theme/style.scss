@@ -138,3 +138,35 @@
     border: none;
   }
 }
+
+// GTranslate
+#gtranslate_wrapper {
+  .gt_float_switcher {
+    font-size: 18px;
+    border-radius: 0.25em;
+    border: 1px solid var(--vp-c-divider);
+    .gt-selected,
+    & {
+      color: var(--vp-c-text-1);
+      background-color: var(--vp-c-bg-soft);
+    }
+    .nturl {
+      color: var(--vp-c-text-1);
+      padding: 0.5em;
+    }
+  }
+  .gt-current-lang {
+    padding: 0.25em 0.5em;
+    color: var(--vp-c-text-1);
+  }
+  .gt-current-lang img,
+  .nturl img {
+    height: 1em;
+    width: auto;
+  }
+  .gt_options {
+    border-bottom: 1px solid var(--vp-c-divider);
+    padding-bottom: 0.25em;
+    margin-bottom: 0.25em;
+  }
+}
