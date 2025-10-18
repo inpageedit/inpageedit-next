@@ -58,4 +58,34 @@ describe('interpolate', () => {
     expect(interpolate('hello, {{ name || $1 || "world" }}', 'dragon')).toBe('hello, dragon')
     expect(interpolate('hello, {{ name || $1 || "world" }}', { name: 'fish' })).toBe('hello, fish')
   })
+
+  it('deep object access', () => {
+    expect(
+      interpolate('user: {{ user.name.first || "Guest" }}', { user: { name: { first: 'Alice' } } })
+    ).toBe('user: Alice')
+    expect(interpolate('user: {{ user.name.first || "Guest" }}', { user: { name: {} } })).toBe(
+      'user: Guest'
+    )
+    expect(interpolate('user: {{ user?.name?.first || "Guest" }}')).toBe('user: Guest')
+  })
+
+  // Why not? Because we can.
+  it('crazy cases', () => {
+    expect(
+      interpolate('Value: {{ obj.arr[0].prop || $1 || "default" }}', {
+        obj: { arr: [{ prop: 'value' }] },
+      })
+    ).toBe('Value: value')
+    expect(
+      interpolate(
+        `hello {{
+  name.first[0].toUpperCase() + name.first.slice(1).toLowerCase() }}·{{ name.last[0].toUpperCase() + name.last.slice(1).toLowerCase() }}!`,
+        { name: { first: 'foo', last: 'bar' } }
+      )
+    ).toBe('hello Foo·Bar!')
+    expect(
+      interpolate('Result: {{ ((a + b) * c - d) / e }}', { a: 2, b: 3, c: 4, d: 10, e: 2 })
+    ).toBe('Result: 5')
+    expect(interpolate('{{ Math.random() > 0.5 ? "High" : "Low" }}')).toMatch(/^(High|Low)$/)
+  })
 })

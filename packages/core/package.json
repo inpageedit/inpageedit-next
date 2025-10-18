@@ -45,6 +45,7 @@
   "scripts": {
     "start": "zx dev/scripts/setup-dev.ts",
     "dev": "vite",
+    "test": "vitest run ./src",
     "build": "run-p build:*",
     "build:import": "cross-env VITE_BUILD_FORMAT=import vite build",
     "build:bundle": "cross-env VITE_BUILD_FORMAT=bundle vite build",
