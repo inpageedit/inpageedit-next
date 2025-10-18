@@ -1,4 +1,4 @@
-import { InPageEdit, Schema } from '@/InPageEdit'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { snakeCase } from '@/utils/string'
 
 interface DisposeHandler {
@@ -10,7 +10,7 @@ export default class BasePlugin<ConfigType extends unknown = any> {
   public config: ConfigType
   private disposeHandlers: DisposeHandler[] = []
   /** 依赖注入 */
-  static inject?: string[] | { required?: string[]; optional?: string[] } = []
+  static inject?: Inject = []
   /** 可重用？ */
   static reusable = false
   /** 插件的偏好设置模式 */
