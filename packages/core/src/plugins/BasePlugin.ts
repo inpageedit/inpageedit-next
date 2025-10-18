@@ -1,22 +1,30 @@
-import { InPageEdit } from '@/InPageEdit'
+import { InPageEdit, Schema } from '@/InPageEdit'
 import { snakeCase } from '@/utils/string'
 
 interface DisposeHandler {
   (ctx: InPageEdit): Promise<void> | void
 }
 
-export default class BasePlugin<T extends unknown = any> {
+export default class BasePlugin<ConfigType extends unknown = any> {
   #name!: string
-  public config: T
+  public config: ConfigType
   private disposeHandlers: DisposeHandler[] = []
+  /** 依赖注入 */
+  static inject?: string[] | { required?: string[]; optional?: string[] } = []
+  /** 可重用？ */
+  static reusable = false
+  /** 插件的偏好设置模式 */
+  static PreferencesSchema?: Schema
+  /** 插件的偏好设置默认值 */
+  static PreferencesDefaults?: Record<string, any>
 
   constructor(
     public ctx: InPageEdit,
-    config: T = undefined as unknown as T,
+    config: ConfigType = undefined as unknown as ConfigType,
     name?: string
   ) {
     this.name = name || this.constructor.name
-    this.config = config || ({} as T)
+    this.config = config || ({} as ConfigType)
     const { promise, resolve, reject } = Promise.withResolvers<void>()
     queueMicrotask(() => {
       try {
