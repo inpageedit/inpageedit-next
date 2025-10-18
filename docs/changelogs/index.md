@@ -23,7 +23,18 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.5.1'>
+
+- fix: edit section should not replace fulltext
+  - 段落编辑不再覆盖全文内容
+- chore: minor css improvements
+  - 优化了部分组件的布局
+
+</ChangeLog>
+
 <ChangeLog version='0.5.0'>
+
+<template #title>0.5.0 <Badge type='rainbow'>重量级</Badge></template>
 
 - refactor!: drop jquery, drop ssi-modal
   - 我们完全抛弃了对 jQuery 和 ssi-modal 的依赖，使用原生 DOM API 和 CSS 来实现 Modal 服务。
