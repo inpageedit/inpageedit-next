@@ -1,6 +1,6 @@
 <div align="center">
 
-[![InPageEdit Logo](docs/.vitepress/public/images/logo/ipe-next-uwu.png)](https://www.ipe.wiki)
+[<img src="docs/.vitepress/public/images/logo/ipe-next-uwu.png" width="280">](https://www.ipe.wiki)
 
 # InPageEdit NEXT
 
