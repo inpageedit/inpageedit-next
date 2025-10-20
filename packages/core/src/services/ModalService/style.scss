@@ -8,17 +8,19 @@
   --ipe-modal-bg: #ffffff;
   --ipe-modal-fg: #111827; /* gray-900 */
   --ipe-modal-fg--rgb: 17, 24, 39;
+  --ipe-modal-footer-bg: #eaecf0;
   --ipe-modal-muted: #6b7280; /* gray-500 */
   --ipe-modal-accent: #3b82f6; /* blue-500 */
   --ipe-modal-accent--rgb: 59, 130, 246;
   --ipe-modal-danger: #ef4444; /* red-500 */
   --ipe-modal-danger--rgb: 239, 68, 68;
-  --ipe-modal-radius: 16px;
+  --ipe-modal-border-color: #c3c3c3;
+  --ipe-modal-radius: 8px;
   --ipe-modal-button-radius: 10px;
-  --ipe-modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
-  --ipe-modal-spacing: 16px;
+  --ipe-modal-shadow: 0 0 40px rgba(128, 128, 128, 0.5);
+  --ipe-modal-spacing: 12px;
   --ipe-modal-viewport-gap-y: 20px; /* 窗口上下留白 */
-  --ipe-modal-window-max-w: 720px;
+  --ipe-modal-window-max-w: 96vw;
   /* 动画变量（由 JS 注入 animation-name 到 --ipe-modal-anim） */
   --ipe-modal-anim: none;
 
@@ -75,7 +77,9 @@ body.ipe-modal-no-scroll {
   inset: 0;
   z-index: calc(var(--ipe-modal-z) + 1);
   outline: none;
-  align-items: start; /* 默认顶对齐 */
+  display: grid;
+  align-items: start;
+  justify-items: center;
   overflow: auto;
   opacity: 0;
   transform: translateY(8px) scale(0.98);
@@ -83,8 +87,6 @@ body.ipe-modal-no-scroll {
     opacity 180ms ease,
     transform 220ms ease;
   pointer-events: none; /* 点外部命中 backdrop */
-  align-items: start;
-  justify-items: center;
 }
 .ipe-modal-modal.is-open {
   opacity: 1;
@@ -159,13 +161,13 @@ body.ipe-modal-no-scroll {
   max-width: 640px;
 }
 .size--medium {
-  max-width: 720px;
+  max-width: max(64%, 860px);
 }
 .size--mediumToLarge {
-  max-width: 860px;
+  max-width: max(72%, 1080px);
 }
 .size--large {
-  max-width: 1040px;
+  max-width: max(80%, 1200px);
 }
 .size--full {
   width: 100vw;
@@ -190,11 +192,12 @@ body.ipe-modal-no-scroll {
   gap: 8px;
   align-items: center;
   padding: calc(var(--ipe-modal-spacing) * 0.75) var(--ipe-modal-spacing);
-  border-bottom: 1px solid color-mix(in oklab, black 6%, transparent);
+  border-bottom: 1px solid var(--ipe-modal-footer-bg);
 }
 .ipe-modal-modal__title {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1;
   margin: 0;
 }
 .ipe-modal-modal__icons {
@@ -238,12 +241,13 @@ body.ipe-modal-no-scroll {
 
 /* -------------------------------- Footer ----------------------------------- */
 .ipe-modal-modal__footer {
+  background: var(--ipe-modal-footer-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: calc(var(--ipe-modal-spacing) * 0.75) var(--ipe-modal-spacing);
-  border-top: 1px solid color-mix(in oklab, black 6%, transparent);
+  border-top: 1px solid var(--ipe-modal-border-color);
 }
 .ipe-modal-modal__buttons {
   display: inline-flex;
@@ -381,6 +385,9 @@ body.ipe-modal-no-scroll {
   }
   .ipe-modal-btn:not(:first-child) {
     border-left: 1px solid rgba(0, 0, 0, 0.06);
+  }
+  .ipe-modal-modal__footer {
+    background-color: transparent;
   }
 }
 
