@@ -9,55 +9,66 @@
       :data-value='tab.name'
     ) {{ tab.label }}
 
-  template(v-for='reg in regs', :key='reg.name')
-    SchemaFormVue(
-      v-show='activeCategoryName === reg.category',
-      :schema='reg.schema',
-      v-model:value='value',
-      :validate-on-change='false',
-      :i18n='{ rootLabel: "" }'
-    )
+  SchemaFormVue(
+    v-for='(schema, index) in activeSchemas',
+    :key='`${activeCategoryName}-${index}`',
+    :schema='schema',
+    :value='formData',
+    @update:value='lazyValue = $event',
+    :validate-on-change='false',
+    :i18n='{ rootLabel: "" }'
+  )
 
   details
-    summary Debug Info
-    h3 Active Schema
-    pre(style='max-height: 20em; overflow: auto') {{ activeSchema?.toJSON() }}
-    h3 Value
-    pre(style='max-height: 20em; overflow: auto') {{ value }}
+    pre(style='max-height: 20em; overflow: auto') {{ lazyValue }}
 </template>
 
 <script setup lang="ts" vapor>
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, onMounted, ref, watch, shallowRef } from 'vue'
 import { useIPE } from '@/utils/vueHooks'
 import type { InPageEditPreferenceUIRegistryItem, InPageEditPreferenceUICategory } from '../index'
 import SchemaFormVue from 'schemastery-form/vue'
-import Schema from 'schemastery'
 
 const ctx = useIPE()!
 
 const tabs = ref<InPageEditPreferenceUICategory[]>([])
 const activeCategoryName = ref('')
-const activeSchema = computed(() => {
-  return regs.value.find((r) => r.category === activeCategoryName.value)?.schema as Schema
-})
+const activeRegistries = shallowRef<InPageEditPreferenceUIRegistryItem[]>([])
+const activeSchemas = computed(() => activeRegistries.value.map((reg) => reg.schema))
 
-const value = ref<any>({})
-const regs = ref<InPageEditPreferenceUIRegistryItem[]>([])
+/**
+ * 为什么要维护两个 value：
+ * 存在多个 SchemaForm 共享一个 value 的竞态问题
+ * 为了避免这种情况，我们维护两个 value：
+ * 1. formData：用于表单的 value
+ * 2. lazyValue：用于保存原始值，每次表单更新时，我们都会先更新 lazyValue
+ * 3. 切换标签页时，我们会懒更新 formData，这样既能同步表单值，又能避免竞态问题
+ * 在 getValue 时，我们返回 lazyValue
+ */
+const formData = shallowRef<any>({})
+const lazyValue = shallowRef<any>({})
 
 defineExpose({
   getValue() {
-    return deepToRaw(value)
+    return deepToRaw(lazyValue)
   },
 })
 
-watchEffect(() => {
-  activeCategoryName.value &&
-    (regs.value = ctx.preferences.getConfigRegistries(activeCategoryName.value))
-})
+watch(
+  activeCategoryName,
+  (newCategory) => {
+    if (newCategory) {
+      formData.value = lazyValue.value
+      activeRegistries.value = ctx.preferences.getConfigRegistries(newCategory)
+    }
+  },
+  { immediate: true }
+)
 
 onMounted(async () => {
   ctx.inject(['preferences'], async (ctx) => {
-    value.value = await ctx.preferences.getAll()
+    const all = await ctx.preferences.getAll()
+    formData.value = lazyValue.value = all
     tabs.value = ctx.preferences.getConfigCategories()
     activeCategoryName.value = tabs.value[0].name
   })
