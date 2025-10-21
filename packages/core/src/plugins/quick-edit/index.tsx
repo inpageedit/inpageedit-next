@@ -3,15 +3,17 @@ import { WikiPage } from '@/models/WikiPage'
 import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
 import { PluginQuickEditInArticleLinks } from './PluginQuickEditInArticleLinks'
 import { IPEModal } from '@/services/ModalService/IPEModal'
+import { ReactNode } from 'jsx-dom'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
     quickEdit: PluginQuickEdit['quickEdit']
   }
   interface Events {
-    'quickEdit/initOptions'(payload: Omit<QuickEditInitPayload, 'modal' | 'wikiPage'>): void
-    'quickEdit/showModal'(payload: Omit<QuickEditInitPayload, 'wikiPage'>): void
-    'quickEdit/wikiPage'(payload: QuickEditInitPayload): void
+    'quick-edit/init-options'(payload: Omit<QuickEditInitPayload, 'modal' | 'wikiPage'>): void
+    'quick-edit/show-modal'(payload: Omit<QuickEditInitPayload, 'wikiPage'>): void
+    'quick-edit/wiki-page'(payload: QuickEditInitPayload): void
+    'quick-edit/edit-notice'(payload: QuickEditInitPayload & { editNotices: ReactNode[] }): void
   }
 }
 
@@ -147,7 +149,7 @@ export class PluginQuickEdit extends BasePlugin {
     if (!options.editSummary) {
       options.editSummary = (await this.ctx.preferences.get<string>('editSummary')) || ''
     }
-    if (!options) this.ctx.emit('quickEdit/initOptions', { ctx: this.ctx, options })
+    if (!options) this.ctx.emit('quick-edit/init-options', { ctx: this.ctx, options })
 
     const modal = this.ctx.modal
       .createObject({
@@ -192,7 +194,7 @@ export class PluginQuickEdit extends BasePlugin {
       },
     })
     modal.show()
-    this.ctx.emit('quickEdit/showModal', { ctx: this.ctx, modal, options })
+    this.ctx.emit('quick-edit/show-modal', { ctx: this.ctx, modal, options })
 
     let wikiPage: WikiPage
     try {
@@ -213,19 +215,42 @@ export class PluginQuickEdit extends BasePlugin {
         </>
       ) as HTMLElement
     )
+
+    const editNotices = [] as ReactNode[]
+    // Page not exists
+    if (wikiPage.pageInfo.pageid === 0) {
+      editNotices.push(
+        <MBox title="Attention" type="important">
+          <p>This page does not exist.</p>
+        </MBox>
+      )
+    }
+    // Edit based on old revision
+    if (wikiPage.pageInfo.pageid && wikiPage.pageInfo.lastrevid !== wikiPage.revisions[0]?.revid) {
+      editNotices.push(
+        <MBox title="Attention" type="warning">
+          <p>You are editing a revision that is not the latest.</p>
+        </MBox>
+      )
+    }
+    this.ctx.emit('quick-edit/edit-notice', {
+      ctx: this.ctx,
+      options,
+      modal,
+      wikiPage,
+      editNotices,
+    })
+
     const editForm = (
-      <form className="ipe-quickEdit-form">
-        {/* 页面不存在 */}
-        {wikiPage.pageInfo.pageid === 0 && (
-          <MBox title="Attention" type="important">
-            <p>This page does not exist.</p>
-          </MBox>
-        )}
-        <textarea className="editArea" name="text" id="wpTextbox1">
-          {wikiPage.revisions[0]?.content || ''}
-        </textarea>
+      <form className="ipe-quickEdit__form">
+        <div className="ipe-quickEdit__notices">{editNotices}</div>
+        <div className="ipe-quickEdit__content">
+          <textarea className="ipe-quickEdit__textarea" name="text" id="wpTextbox1">
+            {wikiPage.revisions[0]?.content || ''}
+          </textarea>
+        </div>
         <div
-          class="ipe-quickEdit-options"
+          class="ipe-quickEdit__options"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -360,7 +385,7 @@ export class PluginQuickEdit extends BasePlugin {
         }
       },
     })
-    this.ctx.emit('quickEdit/wikiPage', {
+    this.ctx.emit('quick-edit/wiki-page', {
       ctx: this.ctx,
       options,
       modal,
@@ -427,7 +452,10 @@ export class PluginQuickEdit extends BasePlugin {
         </svg>
       ) as HTMLElement,
       tooltip: 'Edit this page quickly',
-      onClick: () => this.quickEdit(),
+      onClick: () =>
+        this.quickEdit({
+          revision: mw.config.get('wgRevisionId'),
+        }),
     })
   }
 

@@ -94,12 +94,12 @@ export class PluginQuickDiffCore extends BasePlugin {
 
   protected start(): Promise<void> | void {
     this.ctx.set('quickDiff', this)
-    this.ctx.on('quickEdit/wikiPage', this.injectQuickEdit.bind(this))
+    this.ctx.on('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
     window.RLQ.push(this.injectHistoryPage.bind(this))
   }
 
   protected stop(): Promise<void> | void {
-    this.ctx.off('quickEdit/wikiPage', this.injectQuickEdit.bind(this))
+    this.ctx.off('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
   }
 
   private injectHistoryPage() {

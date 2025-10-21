@@ -10,13 +10,13 @@ declare module '@/InPageEdit' {
     quickPreview: PluginQuickPreview['quickPreview']
   }
   interface Events {
-    'quickPreview/showModal'(payload: {
+    'quick-preview/show-modal'(payload: {
       ctx: InPageEdit
       text: string
       modal: IPEModal
       wikiPage: WikiPage
     }): void
-    'quickPreview/loaded'(payload: {
+    'quick-preview/loaded'(payload: {
       ctx: InPageEdit
       modal: IPEModal
       wikiPage: WikiPage
@@ -34,11 +34,11 @@ export class PluginQuickPreview extends BasePlugin {
 
   protected start(): Promise<void> | void {
     this.ctx.set('quickPreview', this.quickPreview.bind(this))
-    this.ctx.on('quickEdit/wikiPage', this.injectQuickEdit.bind(this))
+    this.ctx.on('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
   }
 
   protected stop(): Promise<void> | void {
-    this.ctx.off('quickEdit/wikiPage', this.injectQuickEdit.bind(this))
+    this.ctx.off('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
   }
 
   private injectQuickEdit({ ctx, modal, wikiPage }: QuickEditInitPayload) {
@@ -79,10 +79,10 @@ export class PluginQuickPreview extends BasePlugin {
     }
 
     modal.show()
-    modal.setTitle('Preview loading...')
+    modal.setTitle('Preview - Loading...')
     modal.setContent(<ProgressBar />)
     modal.bringToFront()
-    this.ctx.emit('quickPreview/showModal', {
+    this.ctx.emit('quick-preview/show-modal', {
       ctx: this.ctx,
       text,
       modal,
@@ -109,7 +109,7 @@ export class PluginQuickPreview extends BasePlugin {
           ) as HTMLElement
         )
         window.mw?.hook('wikipage.content').fire($(outputRef!))
-        this.ctx.emit('quickPreview/loaded', {
+        this.ctx.emit('quick-preview/loaded', {
           ctx: this.ctx,
           modal,
           wikiPage,
@@ -118,7 +118,7 @@ export class PluginQuickPreview extends BasePlugin {
         })
       })
       .catch((error) => {
-        modal.setTitle('Preview failed')
+        modal.setTitle('Preview - Failed')
         modal.setContent(
           <>
             <p>Failed to preview</p>

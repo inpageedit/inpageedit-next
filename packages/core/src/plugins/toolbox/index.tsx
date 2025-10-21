@@ -7,8 +7,8 @@ declare module '@/InPageEdit' {
     toolbox: PluginToolbox
   }
   interface Events {
-    'toolbox/button/added'(payload: { ctx: InPageEdit; button: HTMLElement }): void
-    'toolbox/button/removed'(payload: { ctx: InPageEdit; id: string }): void
+    'toolbox/button-added'(payload: { ctx: InPageEdit; button: HTMLElement }): void
+    'toolbox/button-removed'(payload: { ctx: InPageEdit; id: string }): void
   }
 }
 
@@ -183,7 +183,7 @@ export class PluginToolbox extends Service {
       groupEl.appendChild(button)
     }
 
-    this.ctx.emit('toolbox/button/added', {
+    this.ctx.emit('toolbox/button-added', {
       ctx: this.ctx,
       button: button as HTMLElement,
     })
@@ -194,6 +194,6 @@ export class PluginToolbox extends Service {
   removeButton(id: string) {
     const button = this.container.querySelector(`.ipe-toolbox-btn#${id}`)
     button?.remove()
-    this.ctx.emit('toolbox/button/removed', { ctx: this.ctx, id })
+    this.ctx.emit('toolbox/button-removed', { ctx: this.ctx, id })
   }
 }
