@@ -103,7 +103,7 @@
     resize: vertical;
     border: var(--border-width) solid var(--color-border-input);
     border-radius: var(--border-radius-input);
-    transition: all var(--transition-slow);
+    transition: border var(--transition-slow);
     line-height: var(--line-height-input);
     padding: var(--padding-input-y) var(--padding-input-x);
     outline: none;
@@ -141,7 +141,7 @@
     padding: var(--padding-input-y) var(--padding-input-x);
     border: var(--border-width) solid var(--color-border-input);
     border-radius: var(--border-radius-input);
-    transition: all var(--transition-slow);
+    transition: border var(--transition-slow);
     line-height: var(--line-height-input);
     outline: none;
   }
