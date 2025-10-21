@@ -40,7 +40,7 @@
   }
 }
 
-#ipe-edit-toolbox #toolbox-toggle {
+#ipe-edit-toolbox #toolbox-toggler {
   position: absolute;
   right: 0;
   bottom: 0;
@@ -54,7 +54,7 @@
   transform: rotate(0deg);
 }
 
-#ipe-edit-toolbox #toolbox-toggle.opened {
+#ipe-edit-toolbox.is-persistent #toolbox-toggler {
   transform: rotate(45deg);
 }
 
@@ -69,39 +69,27 @@
 #ipe-edit-toolbox .btn-group .btn-tip-group {
   transition-timing-function: cubic-bezier(0.68, -0.55, 0.27, 1.55);
   transition-duration: 0.3s;
+  transition-delay: var(--transition-delay, 0s);
   opacity: 0;
 }
 
-#ipe-edit-toolbox .btn-group.opened .btn-tip-group {
+#ipe-edit-toolbox.is-persistent .btn-group .btn-tip-group,
+#ipe-edit-toolbox.is-hovered .btn-group .btn-tip-group {
   transform: translate3d(0, 0, 0);
   opacity: 1;
 }
 
-#ipe-edit-toolbox .btn-group.opened .btn-tip-group:nth-of-type(1),
-#ipe-edit-toolbox .btn-group:not(.opened) .btn-tip-group:nth-of-type(3) {
-  transition-delay: 0s;
+/* 关闭动画：反向延迟 */
+#ipe-edit-toolbox:not(.is-persistent):not(.is-hovered) .btn-group .btn-tip-group {
+  transition-delay: calc(var(--max-transition-delay) - var(--transition-delay));
 }
 
-#ipe-edit-toolbox .btn-group .btn-tip-group:nth-of-type(2) {
-  transition-delay: 0.06s;
-}
-
-#ipe-edit-toolbox .btn-group:not(.opened) .btn-tip-group:nth-of-type(1),
-#ipe-edit-toolbox .btn-group.opened .btn-tip-group:nth-of-type(3) {
-  transition-delay: 0.108s;
-}
-
-/* 不显示时使其完全缩小到没有，以防被点到 */
-#ipe-edit-toolbox .btn-group:not(.opened) {
-  transform: scaleZ(0);
-  transition-delay: 0.408s;
-}
-
-#ipe-edit-toolbox .btn-group.opened {
+#ipe-edit-toolbox.is-persistent .btn-group,
+#ipe-edit-toolbox.is-hovered .btn-group {
   transform: scaleZ(1);
 }
 
-#ipe-edit-toolbox .ipe-toolbox-btn#toolbox-toggle.click {
+#ipe-edit-toolbox .ipe-toolbox-btn#toolbox-toggler.click {
   box-shadow:
     0 0 4px gray,
     0 0 10px #444 inset;
@@ -150,7 +138,8 @@
   right: 3.375em;
 }
 
-#ipe-edit-toolbox .btn-group.opened {
+#ipe-edit-toolbox.is-persistent .btn-group,
+#ipe-edit-toolbox.is-hovered .btn-group {
   visibility: visible;
 }
 

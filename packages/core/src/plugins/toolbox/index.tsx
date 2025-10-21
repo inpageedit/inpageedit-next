@@ -17,15 +17,11 @@ declare module '@/InPageEdit' {
     toolboxAlwaysShow: Schema.boolean()
       .description('Make the toolbox opened by default')
       .default(false),
-  }).description('Toolbox preferences'),
-  {
-    toolboxAlwaysShow: false,
-  }
+  }).description('Toolbox preferences')
 )
 @Inject(['preferences'])
 export class PluginToolbox extends Service {
   container!: HTMLElement
-  private forceShow = false
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'toolbox', false)
@@ -35,30 +31,97 @@ export class PluginToolbox extends Service {
     this.container = this.createToolbox()
     this.ctx.preferences.get('toolboxAlwaysShow').then((val) => {
       if (val) {
-        this.container.querySelector('#toolbox-toggle')?.classList.add('opened')
-        this.container.querySelectorAll('.btn-group').forEach((el) => {
-          el.classList.add('opened')
-        })
+        this.container.classList.add('is-persistent')
       }
     })
+    this.setupHoverLogic()
     document.body.appendChild(this.container)
+
+    // 初始化时更新按钮延迟
+    this.updateButtonDelays()
   }
 
   protected stop(): void | Promise<void> {
     this.container?.remove()
   }
 
+  private setupHoverLogic() {
+    let hoverTimeout: number | null = null
+
+    // 检查是否处于持久化状态的辅助函数
+    const isPersistent = () => {
+      return this.container.classList.contains('is-persistent')
+    }
+
+    // 鼠标进入时暂时展开
+    this.container.addEventListener('mouseenter', () => {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout)
+        hoverTimeout = null
+      }
+
+      // 如果不在持久化状态，则添加hover展开效果
+      if (!isPersistent()) {
+        this.container.classList.add('is-hovered')
+      }
+    })
+
+    // 鼠标离开时收起（如果不是持久化状态）
+    this.container.addEventListener('mouseleave', () => {
+      if (!isPersistent()) {
+        hoverTimeout = window.setTimeout(() => {
+          this.container.classList.remove('is-hovered')
+        }, 150) // 延迟150ms收起，避免快速移动鼠标时闪烁
+      }
+    })
+  }
+
+  /**
+   * 计算按钮动画延迟
+   * @param index 按钮索引（从0开始）
+   * @param totalCount 总按钮数量
+   * @returns 延迟时间（秒）
+   */
+  private calculateButtonDelay(index: number, totalCount: number): number {
+    if (totalCount <= 1) return 0
+
+    // 总动画时长150ms = 0.15s
+    const totalDuration = 0.15
+    // 使用平方根函数创建非线性延迟，差值逐渐缩小
+    const normalizedIndex = index / (totalCount - 1)
+    const delay = totalDuration * Math.sqrt(normalizedIndex)
+
+    return Math.round(delay * 1000) / 1000 // 保留3位小数
+  }
+
+  /**
+   * 更新按钮组的动画延迟
+   */
+  private updateButtonDelays() {
+    const btnGroups = this.container.querySelectorAll('.btn-group')
+
+    btnGroups.forEach((group) => {
+      const buttons = group.querySelectorAll('.btn-tip-group')
+      const totalCount = buttons.length
+
+      buttons.forEach((button, index) => {
+        const delay = this.calculateButtonDelay(index, totalCount)
+        ;(button as HTMLElement).style.setProperty('--transition-delay', `${delay}s`)
+        ;(button as HTMLElement).style.setProperty('--max-transition-delay', '0.15s')
+      })
+    })
+  }
+
   private createToolbox() {
     const toggler = (
       <button
         className="ipe-toolbox-btn"
-        id="toolbox-toggle"
-        onClick={function (e) {
-          const isOpened = this.classList.contains('opened')
-          this.classList.toggle('opened', !isOpened)
-          element.querySelectorAll('.btn-group').forEach((el) => {
-            el.classList.toggle('opened', !isOpened)
-          })
+        id="toolbox-toggler"
+        onClick={() => {
+          const isPersistent = this.container.classList.contains('is-persistent')
+          const newPersistent = !isPersistent
+          this.container.classList.toggle('is-persistent', newPersistent)
+          this.ctx.preferences.set('toolboxAlwaysShow', newPersistent)
         }}
       >
         {/* Font Awesome 5 Solid: Plus */}
@@ -80,35 +143,6 @@ export class PluginToolbox extends Service {
     )
 
     return element as HTMLElement
-  }
-
-  private createIndicatorForNotArticlePage() {
-    const indicator = (
-      <div id="ipe-edit-toolbox">
-        <div
-          id="ipe-toolbox-placeholder"
-          style="width: 0.75rem; height: 0.75rem; border-radius: 50%; background: #3f51b5; color: #fff; pointer-events: none;"
-        >
-          <svg
-            style="width: 0.5em; height: 0.5em; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="icon icon-tabler icons-tabler-outline icon-tabler-check"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <path d="M5 12l5 5l10 -10" />
-          </svg>
-        </div>
-      </div>
-    )
-    return indicator as HTMLElement
   }
 
   private normalizeButtonId(id: string) {
@@ -175,6 +209,9 @@ export class PluginToolbox extends Service {
       button: button as HTMLElement,
     })
 
+    // 更新按钮延迟
+    this.updateButtonDelays()
+
     return button as HTMLElement
   }
 
@@ -182,5 +219,8 @@ export class PluginToolbox extends Service {
     const button = this.container.querySelector(`.ipe-toolbox-btn#${id}`)
     button?.remove()
     this.ctx.emit('toolbox/button-removed', { ctx: this.ctx, id })
+
+    // 更新按钮延迟
+    this.updateButtonDelays()
   }
 }
