@@ -17,11 +17,26 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 <ChangeLog version='x.x.x'>
 
-...
+- 更新了依赖，修复了一些小问题，提升了项目的整体质量。
 
 </ChangeLog>
 
 -->
+
+<ChangeLog version='0.5.3'>
+
+- chore: improve toolbox styles
+  - 优化了工具盒™的样式，它看起来更有趣了！
+- refactor: dynamically calculating toolbox transition-delay
+  - 动态计算按钮的动画间延迟，现在创建无数个按钮也能获得非线性动画效果！
+- fix: modal.notify logic, improve modal css
+  - 优化了吐司通知的逻辑以及样式，终于不是一片雪白了！
+- fix: schema value race condition
+  - 修复了参数设置中，修改文本框内容时总是丢失焦点的问题
+- chore: batch improvements
+  - 修复了一些小问题，提升了项目的整体质量
+
+</ChangeLog>
 
 <ChangeLog version='0.5.2'>
 
