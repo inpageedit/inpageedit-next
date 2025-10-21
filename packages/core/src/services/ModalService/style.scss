@@ -6,18 +6,22 @@
   --ipe-modal-z: 1000;
   --ipe-modal-backdrop-bg: rgba(0, 0, 0, 0.5);
   --ipe-modal-bg: #ffffff;
-  --ipe-modal-fg: #111827; /* gray-900 */
-  --ipe-modal-fg--rgb: 17, 24, 39;
-  --ipe-modal-footer-bg: #eaecf0;
+  --ipe-modal-secondary-bg: #eaecf0;
+  --ipe-modal-text: #111827; /* gray-900 */
+  --ipe-modal-text--rgb: 17, 24, 39;
   --ipe-modal-muted: #6b7280; /* gray-500 */
   --ipe-modal-accent: #3b82f6; /* blue-500 */
   --ipe-modal-accent--rgb: 59, 130, 246;
+  --ipe-modal-success: #10b981; /* emerald-500 */
+  --ipe-modal-info: #3b82f6; /* blue-500 */
+  --ipe-modal-warning: #f59e0b; /* amber-500 */
   --ipe-modal-danger: #ef4444; /* red-500 */
   --ipe-modal-danger--rgb: 239, 68, 68;
-  --ipe-modal-border-color: #c3c3c3;
+  --ipe-modal-border-color: #eaecf0;
+  --ipe-modal-divider-color: #e5e7eb;
   --ipe-modal-radius: 8px;
   --ipe-modal-button-radius: 10px;
-  --ipe-modal-shadow: 0 0 40px rgba(128, 128, 128, 0.5);
+  --ipe-modal-shadow: 0 0 40px rgba(127, 127, 127, 0.5);
   --ipe-modal-spacing: 12px;
   --ipe-modal-viewport-gap-y: 20px; /* 窗口上下留白 */
   --ipe-modal-window-max-w: 96vw;
@@ -136,14 +140,14 @@ body.ipe-modal-no-scroll {
 .ipe-modal-modal__window {
   position: relative;
   background: var(--ipe-modal-bg);
-  color: var(--ipe-modal-fg);
+  color: var(--ipe-modal-text);
   border-radius: var(--ipe-modal-radius);
   box-shadow: var(--ipe-modal-shadow);
   max-width: var(--ipe-modal-window-max-w);
   width: min(92vw, var(--ipe-modal-window-max-w));
   overflow: hidden;
   display: block;
-  animation: var(--ipe-modal-anim, none) 220ms ease both; /* 由 JS 注入动画名 */
+  animation: var(--ipe-modal-anim, none) 220ms ease-in-out both; /* 由 JS 注入动画名 */
   pointer-events: auto; /* window 可拦截点击 */
   overscroll-behavior: contain; /* 阻止滚动串联到背景 */
   margin-top: var(--ipe-modal-viewport-gap-y, 20px);
@@ -192,7 +196,7 @@ body.ipe-modal-no-scroll {
   gap: 8px;
   align-items: center;
   padding: calc(var(--ipe-modal-spacing) * 0.75) var(--ipe-modal-spacing);
-  border-bottom: 1px solid var(--ipe-modal-footer-bg);
+  border-bottom: 1px solid var(--ipe-modal-divider-color);
 }
 .ipe-modal-modal__title {
   font-size: 1.125rem;
@@ -229,7 +233,7 @@ body.ipe-modal-no-scroll {
 }
 .ipe-modal-modal__close:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: var(--ipe-modal-fg);
+  color: var(--ipe-modal-text);
 }
 
 /* ------------------------------- Content ----------------------------------- */
@@ -241,13 +245,13 @@ body.ipe-modal-no-scroll {
 
 /* -------------------------------- Footer ----------------------------------- */
 .ipe-modal-modal__footer {
-  background: var(--ipe-modal-footer-bg);
+  background: var(--ipe-modal-secondary-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: calc(var(--ipe-modal-spacing) * 0.75) var(--ipe-modal-spacing);
-  border-top: 1px solid var(--ipe-modal-border-color);
+  border-top: 1px solid var(--ipe-modal-divider-color);
 }
 .ipe-modal-modal__buttons {
   display: inline-flex;
@@ -263,48 +267,102 @@ body.ipe-modal-no-scroll {
   gap: 8px;
   align-items: flex-end;
   pointer-events: none;
-}
-.ipe-modal-toast-container.top {
-  top: 16px;
-}
-.ipe-modal-toast-container.bottom {
-  bottom: 16px;
-  flex-direction: column-reverse;
-}
-.ipe-modal-toast-container.right {
-  right: 16px;
-}
-.ipe-modal-toast-container.left {
-  left: 16px;
+
+  &.top {
+    top: 16px;
+  }
+  &.bottom {
+    bottom: 16px;
+    flex-direction: column-reverse;
+  }
+  &.right {
+    right: 16px;
+  }
+  &.left {
+    left: 16px;
+  }
 }
 
 .ipe-modal-modal__window.plugin--toast {
+  --type-color: var(--ipe-modal-bg);
+  --text-color: var(--ipe-modal-text);
+
   width: 300px;
-  border-radius: calc(var(--ipe-modal-radius) * 0.5);
-}
-.ipe-modal-modal__window.plugin--toast .ipe-modal-modal__header {
-  padding: 0.5em;
-}
-.ipe-modal-modal__window.plugin--toast .ipe-modal-modal__close {
-  width: 20px;
-  height: 20px;
-  font-size: 16px;
-}
-.ipe-modal-modal__window.plugin--toast .ipe-modal-modal__content {
-  padding: 1em 0.5em;
-}
-.ipe-modal-modal__window.plugin--toast .ipe-modal-modal__footer {
-  padding: 0.5em;
-  padding-top: 0;
-}
-.ipe-modal-modal__window.plugin--toast .ipe-modal-btn {
-  padding: 0.5em 0.75em;
+  border-radius: calc(var(--ipe-modal-radius) * 0.75);
+  margin-top: 0;
+  margin-bottom: 0;
+  border: 0;
+  border-left: calc(var(--ipe-modal-radius) * 0.75) solid var(--type-color);
+
+  &.type-default {
+    --type-color: var(--ipe-modal-secondary-bg);
+    // .ipe-modal-modal__header {
+    //   border-bottom: 1px solid var(--ipe-modal-divider-color);
+    // }
+  }
+  &.type-info {
+    --type-color: var(--ipe-modal-info);
+    --text-color: #fff;
+    --ipe-modal-muted: #fff;
+  }
+  &.type-success {
+    --type-color: var(--ipe-modal-success);
+    --text-color: #fff;
+    --ipe-modal-muted: #fff;
+  }
+  &.type-warning {
+    --type-color: var(--ipe-modal-warning);
+    --text-color: #fff;
+    --ipe-modal-muted: #fff;
+  }
+  &.type-error {
+    --type-color: var(--ipe-modal-danger);
+    --text-color: #fff;
+    --ipe-modal-muted: #fff;
+  }
+
+  .ipe-modal-modal__header {
+    padding: 0.5em 0.5em;
+    background-color: var(--type-color);
+    color: var(--text-color);
+    border-bottom: 0;
+    .ipe-modal-modal__title {
+      display: flex;
+      align-items: center;
+      .ipe-modal-notify-icon {
+        margin-right: 0.5em;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+
+  .ipe-modal-modal__close {
+    width: 20px;
+    height: 20px;
+    font-size: 16px;
+    color: var(--ipe-modal-muted);
+  }
+
+  .ipe-modal-modal__content {
+    padding: 1em 0.5em;
+  }
+
+  .ipe-modal-modal__footer {
+    padding: 0.5em;
+    background-color: transparent;
+    border-top: 0;
+  }
+
+  .ipe-modal-btn {
+    padding: 0.25em 0.75em !important;
+  }
 }
 
 /* -------------------------------- Buttons ---------------------------------- */
 .ipe-modal-btn {
   --accent-color: #fff;
-  --text-color: var(--ipe-modal-fg);
+  --text-color: var(--ipe-modal-text);
   --active-color: rgba(0, 0, 0, 0.1);
   appearance: none;
   border: 1px solid rgba(0, 0, 0, 0.14);
@@ -392,19 +450,23 @@ body.ipe-modal-no-scroll {
 }
 
 /* ------------------------------- Keyframes --------------------------------- */
-@keyframes fadeIn {
+@keyframes ipe-modal-fade-in {
   from {
+    transform: scale(0.95);
     opacity: 0;
   }
   to {
+    transform: scale(1);
     opacity: 1;
   }
 }
-@keyframes fadeOut {
+@keyframes ipe-modal-fade-out {
   from {
+    transform: scale(1);
     opacity: 1;
   }
   to {
+    transform: scale(0.85);
     opacity: 0;
   }
 }

@@ -153,11 +153,11 @@ export interface IPEModalOptions {
 }
 
 export type IPEModalNotifyType =
-  | 'success'
-  | 'error'
-  | 'warning'
+  | 'default'
   | 'info'
-  | 'dialog'
+  | 'success'
+  | 'warning'
+  | 'error'
   | 'confirm'
   | string
 export type IPEModalNotifyPosition = 'top right' | 'top left' | 'bottom right' | 'bottom left'
@@ -577,10 +577,39 @@ export class IPEModal {
     }
 
     if (this.isToast) {
+      // 应用关闭动画
+      this.applyAnimation(false)
+
+      // 触发关闭事件
       this.emit(IPEModalEvent.Close)
       this.emit(IPEModalEvent.ToastClose)
-      this.destroy()
-      this.options.onClose?.(this)
+
+      // 使用动画延迟销毁
+      const fallback = this.isAnimationDisabled() ? 0 : (this.options.animationSpeed ?? 200)
+      let done = false
+      const finish = () => {
+        if (done) return
+        done = true
+        this.destroy()
+        this.options.onClose?.(this)
+      }
+
+      const once = (el: HTMLElement, type: 'transitionend' | 'animationend') => {
+        const handler = () => {
+          el.removeEventListener(type, handler)
+          finish()
+        }
+        el.addEventListener(type, handler, { once: true })
+      }
+
+      if (fallback > 0 && this.$window) {
+        once(this.$window, 'transitionend')
+        once(this.$window, 'animationend')
+        window.setTimeout(finish, fallback + 20)
+      } else {
+        window.setTimeout(finish, fallback)
+      }
+
       return this
     }
 
@@ -914,8 +943,10 @@ export class IPEModal {
     this._hooks.push({ type, listener })
     return () => this.off(type, listener)
   }
-  off(type: IPEModalEvent, listener: IPEModalHook) {
-    this._hooks = this._hooks.filter((event) => event.type !== type || event.listener !== listener)
+  off(type: IPEModalEvent, listener?: IPEModalHook) {
+    this._hooks = this._hooks.filter(
+      (event) => event.type !== type && (listener ? event.listener !== listener : true)
+    )
     return this
   }
   once(type: IPEModalEvent, listener: IPEModalHook) {
@@ -1090,7 +1121,20 @@ export class IPEModal {
     document.removeEventListener('pointerup', this.onDragEnd)
 
     const modal = this.get$modal()
+    const window = this.get$window()
+
+    // 移除拖拽状态类
     modal.classList.remove('is-dragging')
+
+    // 确保拖拽结束后不会重新播放动画
+    // 通过设置 animation: none 来防止动画重新开始
+    window.style.animation = 'none'
+
+    // 使用 requestAnimationFrame 确保样式更改生效
+    requestAnimationFrame(() => {
+      // 重新应用动画设置，但不会触发新的动画
+      this.applyAnimation(true)
+    })
   }
 
   // ------------------------------ toast ------------------------------- //
@@ -1216,7 +1260,8 @@ export class IPEModal {
     method: (e: MouseEvent, m: IPEModal) => void
   ) {
     options.title ??= 'Confirm'
-    const ok = options.okBtn ?? { label: 'OK', className: 'is-primary' }
+    options.content ??= 'Are you sure you want to perform this action?'
+    const ok = options.okBtn ?? { label: 'OK', className: 'is-primary is-ghost' }
     const cancel = options.cancelBtn ?? { label: 'Cancel', className: 'is-danger is-ghost' }
     const m = new this({
       sizeClass: 'dialog',
@@ -1242,19 +1287,108 @@ export class IPEModal {
     return m.init().show()
   }
 
-  static notifyIcons: Record<IPEModalNotifyType, string> = {
-    success: '✅',
-    error: '❌',
-    warning: '⚠️',
-    info: 'ℹ️',
-    dialog: '💬',
-    confirm: '💬',
+  static getDefaultNotifyIcon(type: IPEModalNotifyType) {
+    switch (type) {
+      case 'success':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="icon icon-tabler icons-tabler-filled icon-tabler-circle-check"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" />
+          </svg>
+        )
+      case 'error':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="icon icon-tabler icons-tabler-filled icon-tabler-alert-triangle"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" />
+          </svg>
+        )
+      case 'warning':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="icon icon-tabler icons-tabler-filled icon-tabler-alert-circle"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm.01 13l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -8a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" />
+          </svg>
+        )
+      case 'info':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="icon icon-tabler icons-tabler-filled icon-tabler-info-circle"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 9h-1l-.117 .007a1 1 0 0 0 0 1.986l.117 .007v3l.007 .117a1 1 0 0 0 .876 .876l.117 .007h1l.117 -.007a1 1 0 0 0 .876 -.876l.007 -.117l-.007 -.117a1 1 0 0 0 -.764 -.857l-.112 -.02l-.117 -.006v-3l-.007 -.117a1 1 0 0 0 -.876 -.876l-.117 -.007zm.01 -3l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" />
+          </svg>
+        )
+      case 'dialog':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-message-dots"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 11v.01" />
+            <path d="M8 11v.01" />
+            <path d="M16 11v.01" />
+            <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3z" />
+          </svg>
+        )
+      case 'confirm':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="icon icon-tabler icons-tabler-filled icon-tabler-copy-check"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M18.333 6a3.667 3.667 0 0 1 3.667 3.667v8.666a3.667 3.667 0 0 1 -3.667 3.667h-8.666a3.667 3.667 0 0 1 -3.667 -3.667v-8.666a3.667 3.667 0 0 1 3.667 -3.667zm-3.333 -4c1.094 0 1.828 .533 2.374 1.514a1 1 0 1 1 -1.748 .972c-.221 -.398 -.342 -.486 -.626 -.486h-10c-.548 0 -1 .452 -1 1v9.998c0 .32 .154 .618 .407 .805l.1 .065a1 1 0 1 1 -.99 1.738a3 3 0 0 1 -1.517 -2.606v-10c0 -1.652 1.348 -3 3 -3zm1.293 9.293l-3.293 3.292l-1.293 -1.292a1 1 0 0 0 -1.414 1.414l2 2a1 1 0 0 0 1.414 0l4 -4a1 1 0 0 0 -1.414 -1.414" />
+          </svg>
+        )
+      default:
+        return null
+    }
   }
   static notify(
     type: IPEModalNotifyType,
     options: Partial<IPEModalOptions> &
       Partial<{
-        icon: string
+        icon: string | Element
         okBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
         cancelBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
         overrideOther: boolean
@@ -1267,10 +1401,21 @@ export class IPEModal {
     }
 
     if (typeof options.title === 'undefined') {
-      options.title = type[0].toUpperCase() + type.slice(1).toLowerCase()
+      const defaultTitle = type || 'Notification'
+      options.title = defaultTitle[0].toUpperCase() + defaultTitle.slice(1).toLowerCase()
     }
-    const icon = this.notifyIcons[type]
-    options.title = `${icon} ${options.title}`.trimStart()
+    const icon = options.icon ?? this.getDefaultNotifyIcon(type)
+    if (icon) {
+      if (icon instanceof Element) {
+        icon.classList.add('ipe-modal-notify-icon')
+      }
+      options.title = (
+        <>
+          {icon}
+          {options.title}
+        </>
+      )
+    }
 
     if (options.okBtn) {
       options.okBtn.label ??= 'OK'
@@ -1288,11 +1433,11 @@ export class IPEModal {
         m.close()
       }
     }
-    options.buttons = [options.okBtn, options.cancelBtn, ...(options.buttons ?? [])].filter(
+    options.buttons = [options.cancelBtn, options.okBtn, ...(options.buttons ?? [])].filter(
       Boolean
     ) as Partial<IPEModalButtonOptions>[]
 
-    const classes = `is-${type || 'dialog'} is-toast compact-buttons ${options.className ?? ''}`
+    const classes = `is-notify type-${type || 'default'} ${options.className ?? ''}`
     const m = new this({
       ...options,
       className: classes,

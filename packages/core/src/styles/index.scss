@@ -244,3 +244,10 @@
     }
   }
 }
+
+// Shamefully fix for MoeSkin
+.skin-moeskin {
+  #ipe-edit-toolbox {
+    bottom: 5rem;
+  }
+}
