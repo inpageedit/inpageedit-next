@@ -23,6 +23,22 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.5.2'>
+
+- chore: minor css adjustments
+- chore!: normalize event names
+  - 我们调整了官方插件的事件名称，统一了事件名称的命名规范。
+  - 完整的调整列表：
+    - `quickEdit/initOptions` -> `quick-edit/init-options`
+    - `quickEdit/showModal` -> `quick-edit/show-modal`
+    - `quickEdit/wikiPage` -> `quick-edit/wiki-page`
+    - `quickPreview/showModal` -> `quick-preview/show-modal`
+    - `quickPreview/loaded` -> `quick-preview/loaded`
+    - `toolbox/button/added` -> `toolbox/button-added`
+    - `toolbox/button/removed` -> `toolbox/button-removed`
+
+</ChangeLog>
+
 <ChangeLog version='0.5.1'>
 
 - fix: edit section should not replace fulltext
