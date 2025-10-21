@@ -11,7 +11,6 @@ declare module '@/InPageEdit' {
 @Inject(['api', 'storage'])
 export class SiteMetadataService extends Service {
   private _data!: SiteMetadata
-  private siteIdentity?: string
   private readonly CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
   private readonly VERSION = 2
   private db: IPEStorageManager<SiteMetadata>
@@ -26,19 +25,21 @@ export class SiteMetadataService extends Service {
     this.db = ctx.storage.createDatabse<SiteMetadata>('sitemeta', this.CACHE_TTL, this.VERSION)
   }
 
+  logger = this.ctx.logger('SiteMetadataService')
+
   get api() {
     return this.ctx.api
   }
 
   get mwConfig(): ReturnType<typeof mw.config.get> {
     // @ts-expect-error
-    return mw.config.values
+    return window?.mw?.config?.values
   }
 
   protected async start(): Promise<void> {
     const cached = await this.fetchFromCache()
     if (cached) {
-      this.ctx.logger('SiteMetadataService').info('Using cached metadata')
+      this.logger.info('Using cached metadata', cached)
       this._data = cached
       return
     }
@@ -47,8 +48,7 @@ export class SiteMetadataService extends Service {
     this._data = meta
   }
 
-  async computeSiteIdentity() {
-    if (this.siteIdentity) return this.siteIdentity
+  computeSiteIdentity() {
     let path: string
     if (!window.mw?.config) {
       path = new URL(location.href).origin
@@ -56,8 +56,14 @@ export class SiteMetadataService extends Service {
       const { wgServer, wgArticlePath } = window.mw.config.get()
       path = `${wgServer}${wgArticlePath}`
     }
-    this.siteIdentity = path
-    return this.siteIdentity
+    // magic caching
+    Reflect.defineProperty(this, 'computeSiteIdentity', {
+      value: () => path,
+      writable: false,
+      configurable: false,
+      enumerable: true,
+    })
+    return path
   }
 
   async fetchFromApi() {
@@ -79,12 +85,23 @@ export class SiteMetadataService extends Service {
   }
 
   async fetchFromCache() {
-    const key = await this.computeSiteIdentity()
-    return this.db.get(key)
+    const key = this.computeSiteIdentity()
+    const userId = this.mwConfig?.wgUserId || 0
+    const data = await this.db.get(key)
+    if (data && data.userinfo.id === userId) {
+      return data
+    }
+    this.logger.info('UserID changed, invalidating cache')
+    this.invalidateCache()
+    return null
   }
   async saveToCache(data: SiteMetadata) {
-    const key = await this.computeSiteIdentity()
+    const key = this.computeSiteIdentity()
     return this.db.set(key, data)
+  }
+  async invalidateCache() {
+    const key = this.computeSiteIdentity()
+    return this.db.delete(key)
   }
 
   // shortcuts

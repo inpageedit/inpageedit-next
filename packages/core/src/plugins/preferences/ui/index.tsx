@@ -76,16 +76,21 @@ export class PluginPreferencesUI extends BasePlugin {
         className: 'is-primary is-ghost',
         method: () => {
           const value = form.getValue()
-          Object.entries(value).forEach(([key, val]) => {
-            this.ctx.preferences.set(key, val).catch(console.error)
-          })
+          this.logger.info('saving preferences', value)
+          try {
+            Object.entries(value).forEach(([key, val]) => {
+              this.ctx.preferences.set(key, val).catch(console.error)
+            })
+          } catch (error) {
+            this.logger.error('failed to save preferences', error)
+          }
           modal.close()
         },
       },
     ])
 
     modal.on(modal.Event.Close, () => {
-      this.logger.log('preferences modal closed, vue app unmounting')
+      this.logger.debug('preferences modal closed, vue app unmounting')
       app.unmount()
     })
   }

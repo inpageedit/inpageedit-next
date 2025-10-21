@@ -194,7 +194,7 @@ export class Logger {
       this._installLevelGetter(k, this._dynamicLevels[k])
 
     // Magic: return callable proxy
-    return makeCallable(this) as any
+    return makeCallable(this, 'group')
   }
 
   // ---------- public API ----------
@@ -308,6 +308,10 @@ export class Logger {
     return [fmt, styles]
   }
 }
+// Declaration merging: add call signature to Logger type.
+export interface Logger {
+  (...args: Parameters<Logger['group']>): ReturnType<Logger['group']>
+}
 
 const NOOP = () => {}
 const RESET_STYLE = 'color:inherit; background:transparent; text-decoration:none;'
@@ -320,37 +324,59 @@ const BUILTIN_DEFS: Record<AnyConsoleMethod, LevelDefinition> = {
   error: { level: LoggerLevel.error, label: '[E]', method: 'error' },
 }
 
-function makeCallable(instance: Logger): Logger {
-  const fn = function (group: string, options?: { color?: string }) {
-    return instance.group(group, options)
-  } as unknown as Logger
-  return new Proxy(fn, {
-    get(_t, p, _r) {
-      // @ts-ignore
-      return (instance as any)[p]
+function makeCallable<C extends object, M extends keyof C>(
+  instance: C,
+  method: M
+): C &
+  ((
+    ...args: C[M] extends (...a: infer P) => any ? P : never
+  ) => C[M] extends (...a: any[]) => infer R ? R : never) {
+  if (typeof instance !== 'object' || instance === null || Array.isArray(instance)) {
+    throw new TypeError('instance is not an object')
+  }
+
+  const apply: any = (...args: any[]) => {
+    const fn = (instance as any)[method]
+    if (typeof fn !== 'function') {
+      throw new TypeError(`Property "${String(method)}" is not a function`)
+    }
+    return fn.apply(instance, args)
+  }
+
+  const ctorName = (instance as any)?.constructor?.name
+  if (ctorName) (apply as any)[Symbol.toStringTag] = ctorName
+
+  const proxy = new Proxy(apply, {
+    get(_, p, receiver) {
+      if (p === 'prototype') return Reflect.get(apply, p, receiver)
+      return Reflect.get(instance as any, p, instance)
     },
-    set(_t, p, v) {
-      // @ts-ignore
-      ;(instance as any)[p] = v
-      return true
+    set(_, p, v) {
+      return Reflect.set(instance as any, p, v)
     },
-    apply(_t, _thisArg, argArray: any[]) {
-      return instance.group(argArray[0], argArray[1])
+    has(_, p) {
+      return Reflect.has(instance as any, p)
     },
-    has(_t, p) {
-      return p in instance
+    deleteProperty(_, p) {
+      return Reflect.deleteProperty(instance as any, p)
+    },
+    ownKeys() {
+      return Reflect.ownKeys(instance as any)
+    },
+    getOwnPropertyDescriptor(_, p) {
+      return Object.getOwnPropertyDescriptor(instance as any, p)
+    },
+    defineProperty(_, p, desc) {
+      return Object.defineProperty(instance as any, p, desc)
     },
   })
+
+  return proxy as unknown as any
 }
 
 // ------------------------
 // Convenience factory
 // ------------------------
 export function createLogger(options?: LoggerOptions): Logger {
-  return new Logger(options) as unknown as Logger
-}
-
-// Declaration merging: add call signature to Logger type.
-export interface Logger {
-  (group: string, options?: { color?: string }): Logger
+  return new Logger(options)
 }

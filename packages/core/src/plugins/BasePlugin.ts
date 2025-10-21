@@ -45,7 +45,7 @@ export default class BasePlugin<ConfigType extends unknown = any> {
       }
 
       promise.then(() => {
-        this.logger.info('Plugin started')
+        this.logger.debug('Plugin started')
       })
       promise.catch((e) => {
         this.logger.error('Plugin start failed', e)

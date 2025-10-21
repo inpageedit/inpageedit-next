@@ -1,5 +1,6 @@
-import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import { IPEStorageItem, IPEStorageManager } from '@/services/StorageService'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit.js'
+import { IPEStorageItem, IPEStorageManager } from '@/services/StorageService.js'
+import { computeFallback, ComputeAble } from '@/utils/computeable.js'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -101,17 +102,17 @@ export class PluginPreferences extends BasePlugin {
     })
   }
 
-  get<T = any>(key: string, fallback?: () => T | Promise<T>): Promise<T | null> {
-    fallback ||= () => {
+  async get<T = any>(key: string, fallback?: ComputeAble<T>): Promise<T | null> {
+    fallback ??= () => {
       const defaultValue = this.getDefaultValue(key)
-      this.logger.info('default value used', defaultValue)
+      this.logger.debug(key, `(fallback value: ${defaultValue})`)
       return defaultValue as T
     }
-    const value = this.db.get(key, undefined, fallback)
-    return value
+    const value = (await this.db.get(key, undefined)) as T | null
+    return value !== null ? value : ((await computeFallback(fallback)) as T)
   }
 
-  getDefaultValue(key: string) {
+  getDefaultValue(key: string): unknown {
     return (this._defaultPreferences[key] ??= this.loadDefaultConfigs()[key])
   }
 
@@ -135,12 +136,25 @@ export class PluginPreferences extends BasePlugin {
   private loadDefaultConfigs() {
     const data = {} as Record<string, any>
     this.getConfigRegistries().forEach((item) => {
+      // 首先读取 schema 上的默认值
+      try {
+        const defaultValues = item.schema({}) as any
+        Object.entries(defaultValues).forEach(([key, val]) => {
+          data[key] = val
+        })
+      } catch {}
+
+      // 然后读取注册时定义的默认值
       item.defaults &&
         Object.entries(item.defaults).forEach(([key, val]) => {
           data[key] = val
-          this._defaultPreferences[key] = val
         })
     })
+
+    Object.entries(data).forEach(([key, val]) => {
+      this._defaultPreferences[key] = val
+    })
+
     return data
   }
 
@@ -168,7 +182,7 @@ export class PluginPreferences extends BasePlugin {
       }>(([plugin, fork]) => {
         if (plugin === null) {
           return {
-            name: 'root',
+            name: '@root',
             schema: (InPageEdit as any)?.PreferencesSchema || null,
             defaults: (InPageEdit as any)?.PreferencesDefaults || {},
           }

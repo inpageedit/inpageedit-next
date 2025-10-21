@@ -8,6 +8,8 @@ export {}
 declare global {
   const ActionButton: typeof import('./components/ActionButton')['ActionButton']
   const BasePlugin: typeof import('@/plugins/BasePlugin')['default']
+  const CALLABLE_APPLY_SYMBOL: typeof import('./utils/makeCallable')['CALLABLE_APPLY_SYMBOL']
+  const CALLABLE_CTOR_SYMBOL: typeof import('./utils/makeCallable')['CALLABLE_CTOR_SYMBOL']
   const CheckBox: typeof import('./components/CheckBox')['CheckBox']
   const Endpoints: typeof import('./constants/endpoints')['Endpoints']
   const IPEInjectKey: typeof import('./utils/vueHooks')['IPEInjectKey']
@@ -23,6 +25,7 @@ declare global {
   const TwinSwapInput: typeof import('./components/TwinSwapInput/index')['TwinSwapInput']
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
+  const computeFallback: typeof import('./utils/computeable')['computeFallback']
   const deepToRaw: typeof import('./utils/vueReactivity')['deepToRaw']
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
   const ensureSlash: typeof import('./utils/string')['ensureSlash']
@@ -67,6 +70,9 @@ declare global {
   // @ts-ignore
   export type { Endpoints } from './constants/endpoints'
   import('./constants/endpoints')
+  // @ts-ignore
+  export type { ComputeAble } from './utils/computeable'
+  import('./utils/computeable')
   // @ts-ignore
   export type { PreferenceAugmented } from './decorators/Preferences'
   import('./decorators/Preferences')
