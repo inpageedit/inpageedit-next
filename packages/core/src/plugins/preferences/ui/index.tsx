@@ -65,6 +65,13 @@ export class PluginPreferencesUI extends BasePlugin {
 
     modal.setButtons([
       {
+        label: 'Cancel',
+        className: 'is-danger is-ghost',
+        method: () => {
+          modal.close()
+        },
+      },
+      {
         label: 'Save',
         className: 'is-primary is-ghost',
         method: () => {
@@ -72,13 +79,6 @@ export class PluginPreferencesUI extends BasePlugin {
           Object.entries(value).forEach(([key, val]) => {
             this.ctx.preferences.set(key, val).catch(console.error)
           })
-          modal.close()
-        },
-      },
-      {
-        label: 'Cancel',
-        className: 'is-danger is-ghost',
-        method: () => {
           modal.close()
         },
       },

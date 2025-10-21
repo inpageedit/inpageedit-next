@@ -82,7 +82,7 @@ export class PluginQuickMove extends BasePlugin {
         title: 'Quick Move',
         content: (<ProgressBar />) as HTMLElement,
         className: 'quick-move compact-buttons',
-        sizeClass: 'medium',
+        sizeClass: 'smallToMedium',
         center: true,
       })
       .init()

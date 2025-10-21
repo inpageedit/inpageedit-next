@@ -78,7 +78,7 @@ export class PluginQuickRedirect extends BasePlugin {
         title: 'Quick Redirect',
         content: (<ProgressBar />) as HTMLElement,
         className: 'quick-redirect compact-buttons',
-        sizeClass: 'medium',
+        sizeClass: 'smallToMedium',
         center: true,
       })
       .init()
