@@ -14,6 +14,10 @@ export class CustomIPEModal extends IPEModal {
   constructor(options: Partial<IPEModalOptions> = {}) {
     options.className ||= ''
     options.className += ' theme-ipe'
+    options.modalAnimation ||= {
+      show: 'ipe-modal-fade-in',
+      hide: 'ipe-modal-fade-out',
+    }
     super(options)
   }
 
@@ -68,34 +72,21 @@ export class ModalService {
   IPEModal = CustomIPEModal
   IPEModalEvent = IPEModalEvent
   show = CustomIPEModal.show.bind(CustomIPEModal) as (
-    options: Partial<IPEModalOptions>
+    ...args: Parameters<typeof CustomIPEModal.show>
   ) => CustomIPEModal
   createObject = CustomIPEModal.createObject.bind(CustomIPEModal) as (
-    options: Partial<IPEModalOptions>
+    ...args: Parameters<typeof CustomIPEModal.createObject>
   ) => CustomIPEModal
   close = CustomIPEModal.close.bind(CustomIPEModal)
   closeAll = CustomIPEModal.closeAll.bind(CustomIPEModal)
   removeAll = CustomIPEModal.removeAll.bind(CustomIPEModal)
   dialog = CustomIPEModal.dialog.bind(CustomIPEModal) as (
-    options: Partial<IPEModalOptions>
+    ...args: Parameters<typeof CustomIPEModal.dialog>
   ) => CustomIPEModal
   confirm = CustomIPEModal.confirm.bind(CustomIPEModal) as (
-    options: Partial<IPEModalOptions> &
-      Partial<{
-        okBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
-        cancelBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
-      }>,
-    method: (e: MouseEvent, m: IPEModal) => void
+    ...args: Parameters<typeof CustomIPEModal.confirm>
   ) => CustomIPEModal
   notify = CustomIPEModal.notify.bind(CustomIPEModal) as (
-    type: 'success' | 'error' | 'warning' | 'info' | 'dialog' | 'confirm' | string,
-    options: Partial<IPEModalOptions> &
-      Partial<{
-        icon: string
-        okBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
-        cancelBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
-        overrideOther: boolean
-      }>,
-    callback?: (result: boolean) => void
+    ...args: Parameters<typeof CustomIPEModal.notify>
   ) => CustomIPEModal
 }

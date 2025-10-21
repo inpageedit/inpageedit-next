@@ -151,6 +151,10 @@ export class PluginQuickDiffCore extends BasePlugin {
             (modal.get$content().querySelector<HTMLTextAreaElement>('textarea[name="text"]')
               ?.value as string) || ''
 
+          if (fromtext === totext) {
+            return this.ctx.modal.notify('info', { content: 'No chages' })
+          }
+
           latestDiffModal = this.comparePages(
             {
               fromtitle: pageTitle,

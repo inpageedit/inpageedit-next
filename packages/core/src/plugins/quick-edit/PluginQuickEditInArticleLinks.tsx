@@ -37,8 +37,8 @@ export class PluginQuickEditInArticleLinks extends BasePlugin<{
   }
 
   protected async start() {
-    mw.hook('wikipage.content').add(() => {
-      const anchorList = document.querySelectorAll<HTMLAnchorElement>('#mw-content-text a[href]')
+    mw.hook('wikipage.content').add(($content) => {
+      const anchorList = $content.find<HTMLAnchorElement>('a[href]').toArray()
       anchorList.forEach((anchor) => {
         const info = this.checkEditAnchor(anchor)
         if (!info || anchor.dataset.ipeQuickEditLink) {
@@ -56,7 +56,7 @@ export class PluginQuickEditInArticleLinks extends BasePlugin<{
             }}
             onClick={(e) => {
               e.preventDefault()
-              this.ctx.quickEdit(info)
+              this.ctx.quickEdit.showModal(info)
             }}
           >
             <svg

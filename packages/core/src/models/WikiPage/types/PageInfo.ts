@@ -56,4 +56,6 @@ export interface PageInfo {
     ns: number
     title: string
   }[]
+  missing?: boolean
+  special?: boolean
 }

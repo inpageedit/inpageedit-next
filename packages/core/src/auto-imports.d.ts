@@ -28,6 +28,7 @@ declare global {
   const ensureSlash: typeof import('./utils/string')['ensureSlash']
   const injectIPE: typeof import('./utils/vueHooks')['injectIPE']
   const interpolate: typeof import('./utils/interpolate')['interpolate']
+  const makeCallable: typeof import('./utils/makeCallable')['makeCallable']
   const noop: typeof import('./utils/noop')['noop']
   const paramCase: typeof import('./utils/string')['paramCase']
   const promiseWithResolvers: typeof import('./polyfills/Promise.withResolvers')['promiseWithResolvers']

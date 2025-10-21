@@ -4,10 +4,13 @@ import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
 import { PluginQuickEditInArticleLinks } from './PluginQuickEditInArticleLinks'
 import { IPEModal } from '@/services/ModalService/IPEModal'
 import { ReactNode } from 'jsx-dom'
+import { makeCallable } from '@/utils/makeCallable.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickEdit: PluginQuickEdit['quickEdit']
+    quickEdit: PluginQuickEdit & {
+      (...args: Parameters<PluginQuickEdit['showModal']>): ReturnType<PluginQuickEdit['showModal']>
+    }
   }
   interface Events {
     'quick-edit/init-options'(payload: Omit<QuickEditInitPayload, 'modal' | 'wikiPage'>): void
@@ -41,8 +44,10 @@ export interface QuickEditInitPayload {
 }
 
 export interface QuickEditSubmitPayload {
+  wikiPage: WikiPage
   text?: string
   summary?: string
+  section?: number | 'new' | undefined
   minor?: boolean
   createonly?: boolean
   watchlist?: WatchlistAction
@@ -66,13 +71,7 @@ export interface QuickEditSubmitPayload {
       .default(WatchlistAction.preferences),
   })
     .description('Quick edit options')
-    .extra('category', 'edit'),
-  {
-    editSummary: '[IPE-NEXT] Quick edit',
-    editMinor: false,
-    outSideClose: true,
-    watchList: WatchlistAction.preferences,
-  }
+    .extra('category', 'edit')
 )
 export class PluginQuickEdit extends BasePlugin {
   private readonly DEFAULT_OPTIONS: QuickEditOptions = {
@@ -88,10 +87,10 @@ export class PluginQuickEdit extends BasePlugin {
 
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-edit')
+    this.ctx.root.set('quickEdit', makeCallable(this, 'showModal'))
   }
 
   protected start(): Promise<void> | void {
-    this.ctx.root.set('quickEdit', this.quickEdit.bind(this))
     this.ctx.inject(['toolbox'], (ctx) => {
       this.injectToolbox(ctx)
       ctx.on('dispose', () => {
@@ -102,7 +101,7 @@ export class PluginQuickEdit extends BasePlugin {
     this.ctx.plugin(PluginQuickEditInArticleLinks)
   }
 
-  async quickEdit(payload?: string | Partial<QuickEditOptions>) {
+  async showModal(payload?: string | Partial<QuickEditOptions>) {
     if (typeof payload === 'undefined') {
       payload = {}
     } else if (typeof payload === 'string') {
@@ -199,10 +198,13 @@ export class PluginQuickEdit extends BasePlugin {
     let wikiPage: WikiPage
     try {
       wikiPage = await this.getWikiPageFromPayload(options)
+      if (wikiPage.pageInfo.special) {
+        throw new Error('Special page is not editable')
+      }
     } catch (e) {
+      modal.off(modal.Event.Close)
       modal.close()
       this.ctx.modal.notify('error', {
-        title: 'Error',
         content: e instanceof Error ? e.message : String(e),
       })
       return
@@ -315,14 +317,15 @@ export class PluginQuickEdit extends BasePlugin {
             minor: formData.get('minor') === 'on',
           })
           modal.setLoadingState(true)
-          this.handleSubmit(
-            { ctx: this.ctx, modal, wikiPage, options },
-            {
-              text: formData.get('text') as string,
-              summary: formData.get('summary') as string,
-              minor: formData.get('minor') === 'on',
-            }
-          )
+          this.handleSubmit({
+            wikiPage,
+            text: formData.get('text') as string,
+            summary: formData.get('summary') as string,
+            minor: formData.get('minor') === 'on',
+            section: options.section,
+            createonly: wikiPage.pageid === 0,
+            watchlist: watchList,
+          })
             .then(async () => {
               modal.setOptions({
                 beforeClose: noop,
@@ -367,12 +370,12 @@ export class PluginQuickEdit extends BasePlugin {
                 className: 'is-danger is-ghost',
               },
               cancelBtn: {
-                label: 'Continue',
+                label: 'Continue Editing',
                 className: 'is-primary is-ghost',
               },
             },
-            (result) => {
-              if (result) {
+            (confirmed) => {
+              if (confirmed) {
                 modal.setOptions({
                   beforeClose: noop,
                 })
@@ -405,15 +408,16 @@ export class PluginQuickEdit extends BasePlugin {
     })
   }
 
-  private handleSubmit(init: QuickEditInitPayload, payload: QuickEditSubmitPayload) {
+  async handleSubmit(payload: QuickEditSubmitPayload) {
+    const wikiPage = payload.wikiPage
     const summary = payload.summary || ''
     const text = payload.text || ''
-    const minor = payload.minor || false
-    const createonly = payload.createonly || false
-    const watchlist = payload.watchlist || WatchlistAction.nochange
-    const section = init.options.section
+    const minor = payload.minor
+    const createonly = payload.createonly
+    const watchlist = payload.watchlist
+    const section = payload.section
 
-    return init.wikiPage.edit(
+    return wikiPage.edit(
       {
         summary,
         text,
@@ -425,6 +429,17 @@ export class PluginQuickEdit extends BasePlugin {
         createonly,
       }
     )
+  }
+
+  async getWikiPageFromPayload(payload: Partial<QuickEditOptions>) {
+    if (payload.revision) {
+      return this.ctx.wikiPage.newFromRevision(payload.revision, payload.section)
+    } else if (payload.pageId) {
+      return this.ctx.wikiPage.newFromPageId(payload.pageId, payload.section)
+    } else if (payload.title) {
+      return this.ctx.wikiPage.newFromTitle(payload.title, false, payload.section)
+    }
+    throw new Error('Invalid payload')
   }
 
   private injectToolbox(ctx: InPageEdit) {
@@ -453,21 +468,10 @@ export class PluginQuickEdit extends BasePlugin {
       ) as HTMLElement,
       tooltip: 'Edit this page quickly',
       onClick: () =>
-        this.quickEdit({
+        this.showModal({
           revision: mw.config.get('wgRevisionId'),
         }),
     })
-  }
-
-  private async getWikiPageFromPayload(payload: Partial<QuickEditOptions>) {
-    if (payload.revision) {
-      return this.ctx.wikiPage.newFromRevision(payload.revision, payload.section)
-    } else if (payload.pageId) {
-      return this.ctx.wikiPage.newFromPageId(payload.pageId, payload.section)
-    } else if (payload.title) {
-      return this.ctx.wikiPage.newFromTitle(payload.title, false, payload.section)
-    }
-    throw new Error('Invalid payload')
   }
 
   protected removeToolbox(ctx: InPageEdit) {
