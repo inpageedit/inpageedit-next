@@ -12,11 +12,7 @@
     "lib"
   ],
   "exports": {
-    "./package.json": {
-      "types": "./package.json",
-      "import": "./package.json",
-      "require": "./package.json"
-    },
+    "./package.json": "./package.json",
     ".": {
       "types": "./dist/index.d.ts",
       "source": "./src/index.ts",
@@ -43,25 +39,25 @@
     "access": "public"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.52.13",
-    "@types/node": "^22.18.6",
+    "@microsoft/api-extractor": "^7.53.1",
+    "@types/node": "^22.18.12",
     "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/language-plugin-pug": "^3.1.0",
-    "cross-env": "^10.0.0",
+    "@vue/language-plugin-pug": "^3.1.1",
+    "cross-env": "^10.1.0",
     "jsx-dom": "^8.1.6",
     "npm-run-all2": "^8.0.4",
     "pug": "^3.0.3",
     "rimraf": "^6.0.1",
     "sass-embedded": "^1.93.2",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "unplugin-dts": "1.0.0-beta.6",
-    "vite": "^7.1.7",
+    "vite": "^7.1.11",
     "vue": "^3.5.22"
   },
   "dependencies": {},
   "peerDependencies": {
-    "schemastery": "^3.17.0",
+    "schemastery": "^3.17.1",
     "vue": ">=3.5.0 <4.0.0"
   },
   "keywords": [

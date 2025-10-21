@@ -12,11 +12,7 @@
     "lib"
   ],
   "exports": {
-    "./package.json": {
-      "types": "./package.json",
-      "import": "./package.json",
-      "require": "./package.json"
-    },
+    "./package.json": "./package.json",
     ".": {
       "types": "./dist/index.d.ts",
       "source": "./src/index.ts",
@@ -39,13 +35,13 @@
     "access": "public"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.52.13",
-    "cross-env": "^10.0.0",
+    "@microsoft/api-extractor": "^7.53.1",
+    "cross-env": "^10.1.0",
     "npm-run-all2": "^8.0.4",
     "rimraf": "^6.0.1",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "unplugin-dts": "1.0.0-beta.6",
-    "vite": "^7.1.7"
+    "vite": "^7.1.11"
   },
   "keywords": [
     "logger",
