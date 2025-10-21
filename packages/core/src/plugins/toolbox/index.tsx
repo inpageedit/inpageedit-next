@@ -32,13 +32,7 @@ export class PluginToolbox extends Service {
   }
 
   protected async start(): Promise<void> {
-    if (mw && mw.config.get('wgIsArticle') === false && !this.forceShow) {
-      this.container = this.createIndicatorForNotArticlePage()
-    } else {
-      this.container = this.createToolbox()
-    }
-    document.body.appendChild(this.container)
-    await sleep(0) // wait nextTick
+    this.container = this.createToolbox()
     this.ctx.preferences.get('toolboxAlwaysShow').then((val) => {
       if (val) {
         this.container.querySelector('#toolbox-toggle')?.classList.add('opened')
@@ -47,6 +41,7 @@ export class PluginToolbox extends Service {
         })
       }
     })
+    document.body.appendChild(this.container)
   }
 
   protected stop(): void | Promise<void> {
@@ -66,21 +61,13 @@ export class PluginToolbox extends Service {
           })
         }}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-plus"
-        >
-          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-          <path d="M12 5l0 14" />
-          <path d="M5 12l14 0" />
+        {/* Font Awesome 5 Solid: Plus */}
+        <svg xmlns="http://www.w3.org/2000/svg" width="448" height="512" viewBox="0 0 448 512">
+          <rect width="448" height="512" fill="none" />
+          <path
+            fill="currentColor"
+            d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32"
+          />
         </svg>
       </button>
     )

@@ -1,10 +1,11 @@
 /** 右下角小工具箱 **/
 #ipe-edit-toolbox {
+  font-size: 16px;
   position: fixed;
-  right: 32px;
-  bottom: 32px;
+  right: 2em;
+  bottom: 2em;
   user-select: none;
-  z-index: 199;
+  z-index: 42;
 }
 
 @media print {
@@ -16,13 +17,13 @@
 #ipe-edit-toolbox .ipe-toolbox-btn {
   color: white;
   background: #bebebe;
-  height: 36px;
-  width: 36px;
-  font-size: 20px;
+  height: 1.5em;
+  width: 1.5em;
+  font-size: 1.5em;
   line-height: 1;
   border: 0;
   border-radius: 50%;
-  box-shadow: 0 0 8px #999;
+  box-shadow: 0 0 8px rgba(127, 127, 127, 0.5);
   text-shadow: 0 0 2px #4c4c4c;
   padding: 0;
   margin: 0;
@@ -43,13 +44,13 @@
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 42px;
-  height: 42px;
+  width: 2em;
+  height: 2em;
   background: #3f51b5;
-  font-size: 32px;
+  font-size: 1.5em;
   line-height: 1;
   margin: 0;
-  transition: all 0.26s ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   transform: rotate(0deg);
 }
 
@@ -66,7 +67,7 @@
 }
 
 #ipe-edit-toolbox .btn-group .btn-tip-group {
-  transition-timing-function: ease-in-out;
+  transition-timing-function: cubic-bezier(0.68, -0.55, 0.27, 1.55);
   transition-duration: 0.3s;
   opacity: 0;
 }
@@ -133,20 +134,20 @@
 #ipe-edit-toolbox .btn-group {
   position: absolute;
   display: flex;
-  gap: 8px;
+  gap: 0.5em;
   list-style: none;
   margin: 0;
 }
 
 #ipe-edit-toolbox .btn-group.group1 {
-  bottom: calc(35px + 6px + 8px);
-  right: 4px;
+  bottom: 3.5em;
+  right: 0.375em;
   flex-direction: column;
 }
 
 #ipe-edit-toolbox .btn-group.group2 {
-  bottom: 2px;
-  right: calc(35px + 6px + 8px);
+  bottom: 0.25em;
+  right: 3.375em;
 }
 
 #ipe-edit-toolbox .btn-group.opened {
@@ -161,9 +162,10 @@
   left: 50%;
   bottom: calc(100% + 0.5em);
   transform: translateX(-50%);
-  background: white;
+  background: #fff;
+  color: #252525;
   padding: 0.2em 0.5em;
-  box-shadow: 0 0 0.5em #999;
+  box-shadow: 0 0 0.5em rgba(127, 127, 127, 0.5);
   border-radius: 0.5em;
   pointer-events: none;
   opacity: 0;
