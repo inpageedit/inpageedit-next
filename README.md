@@ -1,6 +1,6 @@
 <div align="center">
 
-[<img src="docs/.vitepress/public/images/logo/ipe-next-uwu.png" width="280">](https://www.ipe.wiki)
+[<img src="/docs/.vitepress/public/images/logo/ipe-next-uwu.png" width="280" alt="InPageEdit Logo">](https://www.ipe.wiki)
 
 # InPageEdit NEXT
 
@@ -49,4 +49,4 @@ This is a monorepo:
 >
 > InPageEdit-NEXT Copyright © 2025-present dragon-fish
 
-See more: [GitHub](https://github.com/inpageedit/inpageedit-next) | [Update logs](https://ipe.js.org/update/) | [File issues](https://github.com/inpageedit/inpageedit-next/issues)
+See more: [GitHub](https://github.com/inpageedit/inpageedit-next) | [Change Logs](https://www.ipe.wiki/changelogs/) | [File Issues](https://github.com/inpageedit/inpageedit-next/issues)

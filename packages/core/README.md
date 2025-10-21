@@ -1,6 +1,6 @@
 <div align="center">
 
-[![InPageEdit Logo](https://ipe.js.org/images/logo/InPageEdit.png)](https://ipe.js.org/images/logo/InPageEdit.png)
+[<img src="/docs/.vitepress/public/images/logo/ipe-next-uwu.png" width="280" alt="InPageEdit Logo">](https://www.ipe.wiki)
 
 # InPageEdit NEXT
 
@@ -52,4 +52,4 @@ $('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').ap
 >
 > InPageEdit-NEXT Copyright © 2025-present dragon-fish
 
-See more: [GitHub](https://github.com/inpageedit/inpageedit-next) | [Update logs](https://ipe.js.org/update/) | [File issues](https://github.com/inpageedit/inpageedit-next/issues)
+See more: [GitHub](https://github.com/inpageedit/inpageedit-next) | [Change Logs](https://www.ipe.wiki/changelogs/) | [File Issues](https://github.com/inpageedit/inpageedit-next/issues)

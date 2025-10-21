@@ -60,13 +60,17 @@ export class PluginPreferences extends BasePlugin {
           <div className="prose">
             <h2>✏️ InPageEdit NEXT</h2>
             <i>v{this.ctx.version}</i>
-            <h2>Portal</h2>
+            <h2>Portals</h2>
             <div style="display: flex; flex-direction: column; gap: 1rem">
-              <ActionButton href="https://www.ipe.wiki" style={{ display: 'block', width: '100%' }}>
+              <a
+                href={this.ctx.Endpoints.HOME_URL}
+                target="_blank"
+                style={{ display: 'block', width: '100%' }}
+              >
                 Official Website & Help Center
-              </ActionButton>
+              </a>
               <ActionButton
-                href="https://www.ipe.wiki/update/"
+                href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version}`}
                 style={{ display: 'block', width: '100%' }}
               >
                 Update Logs
@@ -76,7 +80,7 @@ export class PluginPreferences extends BasePlugin {
             <ul>
               <li>
                 <strong>GitHub</strong>:{' '}
-                <a href="https://github.com/inpageedit/inpageedit-next" target="_blank">
+                <a href={this.ctx.Endpoints.GITHUB_URL} target="_blank">
                   inpageedit/inpageedit-next
                 </a>
               </li>
