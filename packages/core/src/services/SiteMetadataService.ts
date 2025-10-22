@@ -31,9 +31,16 @@ export class SiteMetadataService extends Service {
     return this.ctx.api
   }
 
-  get mwConfig(): ReturnType<typeof mw.config.get> {
-    // @ts-expect-error
-    return window?.mw?.config?.values
+  mwConfig = {
+    get: ((key: string, fallback?: any) => {
+      return window?.mw?.config?.get?.(key, fallback) ?? fallback
+    }) as typeof mw.config.get,
+    has: ((key: string) => {
+      return window?.mw?.config?.exists?.(key) ?? false
+    }) as typeof mw.config.exists,
+    get values() {
+      return ((window?.mw?.config as any)?.values || {}) as ReturnType<typeof mw.config.get>
+    },
   }
 
   protected async start(): Promise<void> {
@@ -86,7 +93,7 @@ export class SiteMetadataService extends Service {
 
   async fetchFromCache() {
     const key = this.computeSiteIdentity()
-    const userId = this.mwConfig?.wgUserId || 0
+    const userId = this.mwConfig.get('wgUserId', 0)
     const data = await this.db.get(key)
     if (data && data.userinfo.id === userId) {
       return data

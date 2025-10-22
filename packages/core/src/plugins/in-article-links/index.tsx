@@ -28,15 +28,15 @@ export class PluginInArticleLinks extends BasePlugin<{
 }> {
   constructor(ctx: InPageEdit) {
     const mwConfig = ctx.sitemeta.mwConfig
-    const wikiArticlePath = mwConfig.wgArticlePath.replace('$1', '')
-    const wikiBaseUrl = `${location.protocol}//${mwConfig.wgServer.split('//')[1]}`
+    const wikiArticlePath = mwConfig.get('wgArticlePath', '').replace('$1', '')
+    const wikiBaseUrl = `${location.protocol}//${mwConfig.get('wgServer', '').split('//')[1]}`
     super(
       ctx,
       {
         wikiBaseUrl,
         wikiArticlePath,
         wikiArticleBaseUrl: `${wikiBaseUrl}${wikiArticlePath}`,
-        wikiScriptBaseUrl: `${wikiBaseUrl}${mwConfig.wgScriptPath}`,
+        wikiScriptBaseUrl: `${wikiBaseUrl}${mwConfig.get('wgScriptPath', '')}`,
         linkClassName: 'ipe__in-article-link',
       },
       'InArticleLinks'

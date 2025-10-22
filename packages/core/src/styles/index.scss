@@ -247,7 +247,9 @@
 
 // Shamefully fix for MoeSkin
 .skin-moeskin {
-  #ipe-edit-toolbox {
-    bottom: 5rem;
+  @media (min-width: 768px) {
+    #ipe-edit-toolbox {
+      bottom: 5rem;
+    }
   }
 }
