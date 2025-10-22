@@ -8,7 +8,7 @@ declare module '@/InPageEdit' {
 }
 
 export class WikiTitleService extends Service {
-  static readonly inject = ['sitemeta'] as const
+  static readonly inject: Inject = ['sitemeta']
 
   readonly WikiTitle: WikiTitleConstructor
   constructor(public ctx: InPageEdit) {

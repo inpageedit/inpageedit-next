@@ -1,4 +1,4 @@
-import { InPageEdit, Service } from '@/InPageEdit'
+import { Inject, InPageEdit, Service } from '@/InPageEdit'
 import { WikiPage } from '@/models/WikiPage'
 import { PageInfo } from '@/models/WikiPage/types/PageInfo'
 
@@ -9,7 +9,7 @@ declare module '@/InPageEdit' {
 }
 
 export class WikiPageService extends Service {
-  static inject = ['api']
+  static readonly inject: Inject = ['api']
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'wikiPage', true)
