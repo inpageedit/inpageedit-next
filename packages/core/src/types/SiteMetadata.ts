@@ -92,7 +92,7 @@ export interface SiteNameSpaceAlias {
 }
 
 export interface SiteNamespace {
-  canonical: string
+  canonical?: string
   case: 'first-letter' | string // ?
   content: boolean
   id: number

@@ -1,12 +1,13 @@
 import { Context, Inject, Events as CordisEvents } from '@cordisjs/core'
 import Schema from 'schemastery'
 import { LoggerLevel, createLogger, type Logger } from '@inpageedit/logger'
-import { ApiService } from '@/services/ApiService'
-import { ResourceLoaderService } from '@/services/ResourceLoaderService'
-import { StorageService } from '@/services/StorageService'
-import { SiteMetadataService } from '@/services/SiteMetadataService'
-import { WikiPageService } from '@/services/WikiPageService'
-import { ModalService } from './services/ModalService/index.js'
+import { ApiService } from '@/services/ApiService.js'
+import { ResourceLoaderService } from '@/services/ResourceLoaderService.js'
+import { ModalService } from '@/services/ModalService/index.js'
+import { SiteMetadataService } from '@/services/SiteMetadataService.js'
+import { StorageService } from '@/services/StorageService.js'
+import { WikiPageService } from '@/services/WikiPageService.js'
+import { WikiTitleService } from '@/services/WikiTitleService.js'
 import '@/styles/index.scss'
 
 /**
@@ -33,7 +34,9 @@ export class InPageEdit extends Context {
   readonly logger: Logger
 
   constructor(config?: Partial<InPageEditCoreConfig>) {
-    super()
+    super({
+      name: 'InPageEdit',
+    })
     this.config = {
       ...InPageEdit.DEFAULT_CONFIG,
       ...config,
@@ -55,6 +58,7 @@ export class InPageEdit extends Context {
     this.plugin(StorageService)
     this.plugin(SiteMetadataService)
     this.plugin(WikiPageService)
+    this.plugin(WikiTitleService)
 
     // 标记内置服务，所以用户即使忘记 inject 也能使用
     this.#markServiceAsBuiltIn([
@@ -64,6 +68,7 @@ export class InPageEdit extends Context {
       'storage',
       // 'sitemeta', // 故意未标记此服务，因为数据是异步加载的
       'wikiPage',
+      'wikiTitle',
     ])
   }
 
