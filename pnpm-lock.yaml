@@ -96,6 +96,9 @@ importers:
       fexios:
         specifier: ^3.2.0
         version: 3.2.0
+      hono:
+        specifier: ^4.10.2
+        version: 4.10.2
       jsx-dom:
         specifier: ^8.1.6
         version: 8.1.6
@@ -147,6 +150,9 @@ importers:
       vitepress-sidebar:
         specifier: ^1.33.0
         version: 1.33.0
+      wiki-saikou:
+        specifier: ^5.2.0
+        version: 5.2.0
 
   packages/core:
     dependencies:
@@ -2227,6 +2233,10 @@ packages:
   highlight.js@11.11.1:
     resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
     engines: {node: '>=12.0.0'}
+
+  hono@4.10.2:
+    resolution: {integrity: sha512-p6fyzl+mQo6uhESLxbF5WlBOAJMDh36PljwlKtP5V1v09NxlqGru3ShK+4wKhSuhuYf8qxMmrivHOa/M7q0sMg==}
+    engines: {node: '>=16.9.0'}
 
   hookable@5.5.3:
     resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
@@ -5650,6 +5660,8 @@ snapshots:
   he@1.2.0: {}
 
   highlight.js@11.11.1: {}
+
+  hono@4.10.2: {}
 
   hookable@5.5.3: {}
 

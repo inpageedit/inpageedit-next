@@ -35,6 +35,7 @@
     "cross-env": "^10.1.0",
     "eslint": "^9.38.0",
     "fexios": "^3.2.0",
+    "hono": "^4.10.2",
     "jsx-dom": "^8.1.6",
     "markdown-it-task-lists": "^2.1.1",
     "mermaid": "^11.12.0",
@@ -51,7 +52,8 @@
     "vitepress-markdown-timeline": "^1.2.2",
     "vitepress-plugin-group-icons": "^1.6.4",
     "vitepress-plugin-mermaid": "^2.0.17",
-    "vitepress-sidebar": "^1.33.0"
+    "vitepress-sidebar": "^1.33.0",
+    "wiki-saikou": "^5.2.0"
   },
   "dependencies": {
     "naive-ui": "^2.43.1",
@@ -61,5 +63,8 @@
   },
   "bugs": {
     "url": "https://github.com/inpageedit/inpageedit-next/issues"
+  },
+  "peerDependencies": {
+    "wiki-saikou": "^5.2.0"
   }
 }

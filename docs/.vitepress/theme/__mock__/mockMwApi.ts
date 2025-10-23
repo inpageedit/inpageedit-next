@@ -1,0 +1,3466 @@
+import { Context, Hono } from 'hono'
+import type {
+  SiteInfo,
+  SiteMetadata,
+  SiteUserInfo,
+  SiteUserOptions,
+} from '@inpageedit/core/src/types/SiteMetadata.js'
+import { MwApiResponse } from 'wiki-saikou/browser'
+
+export const MOCK_API_ENDPOINT_URL = new URL('https://test.ipe.wiki/api.php')
+export const MOCK_MW_SITE_NAME = 'InPageEdit Test'
+export const MOCK_MW_GENERAL: SiteInfo = {
+  mainpage: 'Mainpage',
+  base: 'https://example.com/',
+  sitename: 'Example Wiki',
+  mainpageisdomainroot: true,
+  logo: 'https://example.com/logo.png',
+  generator: 'MediaWiki 1.43.3',
+  phpversion: '8.3.22',
+  phpsapi: 'fpm-fcgi',
+  dbtype: 'mysql',
+  dbversion: '5.7.44',
+  imagewhitelistenabled: false,
+  langconversion: true,
+  titleconversion: true,
+  linkprefixcharset: '',
+  linkprefix: '',
+  linktrail: '/^()(.*)$/sD',
+  legaltitlechars: ' %!"$&\'()*,\\-.\\/0-9:;=?@A-Z\\\\^_`a-z~\\x80-\\xFF+',
+  invalidusernamechars: '@:>=',
+  allunicodefixes: false,
+  fixarabicunicode: true,
+  fixmalayalamunicode: true,
+  case: 'first-letter',
+  lang: 'zh',
+  fallback: [
+    {
+      code: 'zh-hans',
+    },
+    {
+      code: 'zh-hant',
+    },
+    {
+      code: 'zh-cn',
+    },
+    {
+      code: 'zh-tw',
+    },
+    {
+      code: 'zh-hk',
+    },
+    {
+      code: 'en',
+    },
+  ],
+  variants: [
+    {
+      code: 'zh',
+      name: '不转换',
+    },
+    {
+      code: 'zh-hans',
+      name: '简体',
+    },
+    {
+      code: 'zh-hant',
+      name: '繁體',
+    },
+    {
+      code: 'zh-cn',
+      name: '大陆简体',
+    },
+    {
+      code: 'zh-hk',
+      name: '香港繁體',
+    },
+    {
+      code: 'zh-tw',
+      name: '臺灣正體',
+    },
+  ],
+  rtl: false,
+  fallback8bitEncoding: 'windows-936',
+  readonly: false,
+  writeapi: true,
+  maxarticlesize: 2097152,
+  timezone: 'Asia/Shanghai',
+  timeoffset: 480,
+  articlepath: '/wiki/$1',
+  scriptpath: '',
+  script: '/index.php',
+  variantarticlepath: '/$2/$1',
+  server: 'https://example.com',
+  servername: 'localhost',
+  wikiid: 'example',
+  time: '2025-01-01T08:00:00Z',
+  misermode: false,
+  uploadsenabled: true,
+  maxuploadsize: 104857600,
+  minuploadchunksize: 1024,
+  galleryoptions: {
+    imagesPerRow: 0,
+    imageWidth: 120,
+    imageHeight: 120,
+    captionLength: true,
+    showBytes: true,
+    showDimensions: true,
+    mode: 'traditional',
+  },
+  thumblimits: {
+    '0': 120,
+    '1': 150,
+    '2': 180,
+    '3': 200,
+    '4': 250,
+    '5': 300,
+  },
+  imagelimits: {
+    '0': {
+      width: 320,
+      height: 240,
+    },
+    '1': {
+      width: 640,
+      height: 480,
+    },
+    '2': {
+      width: 800,
+      height: 600,
+    },
+    '3': {
+      width: 1024,
+      height: 768,
+    },
+    '4': {
+      width: 1280,
+      height: 1024,
+    },
+    '5': {
+      width: 2560,
+      height: 2048,
+    },
+  },
+  favicon: 'https://example.com/favicon.ico',
+  centralidlookupprovider: 'local',
+  allcentralidlookupproviders: ['local'],
+  interwikimagic: true,
+  magiclinks: {
+    ISBN: false,
+    PMID: false,
+    RFC: false,
+  },
+  categorycollation: 'pinyin-noprefix',
+  citeresponsivereferences: true,
+}
+export const MOCK_MW_USER_INFO: SiteUserInfo & { options: SiteUserOptions } = {
+  id: 316917,
+  name: '机智的小鱼君',
+  groups: ['interface-admin', 'sysop', 'widgeteditor', '*', 'user', 'autoconfirmed'],
+  rights: [
+    'editinterface',
+    'editsitecss',
+    'editsitejson',
+    'editsitejs',
+    'editusercss',
+    'edituserjson',
+    'edituserjs',
+    'hideuser',
+    'suppressrevision',
+    'viewsuppressed',
+    'suppressionlog',
+    'deleterevision',
+    'deletelogentry',
+    'abusefilter-hidden-log',
+    'abusefilter-hide-log',
+    'block',
+    'createaccount',
+    'delete',
+    'bigdelete',
+    'deletedhistory',
+    'deletedtext',
+    'undelete',
+    'import',
+    'importupload',
+    'move',
+    'move-subpages',
+    'move-rootuserpages',
+    'move-categorypages',
+    'patrol',
+    'autopatrol',
+    'protect',
+    'editprotected',
+    'rollback',
+    'upload',
+    'reupload',
+    'reupload-shared',
+    'unwatchedpages',
+    'autoconfirmed',
+    'editsemiprotected',
+    'apihighlimits',
+    'noratelimit',
+    'movefile',
+    'interwiki',
+    'editwidgets',
+    'read',
+    'createpage',
+    'createtalk',
+    'viewmyprivateinfo',
+    'editmyprivateinfo',
+    'editmyoptions',
+    'edit',
+    'minoredit',
+    'editmyusercss',
+    'editmyuserjson',
+    'editmyuserjs',
+    'editmyuserjsredirect',
+    'sendemail',
+    'applychangetags',
+    'changetags',
+    'editcontentmodel',
+    'viewmywatchlist',
+    'editmywatchlist',
+    'upload_by_url',
+    'skipcaptcha',
+    'unblock',
+  ],
+  options: {
+    minordefault: 0,
+    watchcreations: 1,
+    watchdefault: 1,
+    watchdeletion: 0,
+    watchmoves: 0,
+    watchuploads: 1,
+    language: 'zh',
+  },
+}
+export const MOCK_MW_METADATA: SiteMetadata = {
+  general: MOCK_MW_GENERAL,
+  specialpagealiases: [
+    {
+      realname: 'BrokenRedirects',
+      aliases: ['受损重定向', '受损重定向', '損壞的重新導向', '損壞的重定向頁', 'BrokenRedirects'],
+    },
+    {
+      realname: 'Deadendpages',
+      aliases: [
+        '断链页面',
+        '斷鏈頁面',
+        '斷連頁面',
+        '断链页面',
+        '無連結頁面',
+        '斷鏈頁面',
+        'DeadendPages',
+      ],
+    },
+    {
+      realname: 'DoubleRedirects',
+      aliases: [
+        '双重重定向',
+        '雙重重新導向',
+        '双重重定向',
+        '两次重定向',
+        '雙重的重新導向',
+        '雙重重定向頁面',
+        'DoubleRedirects',
+      ],
+    },
+    {
+      realname: 'Longpages',
+      aliases: ['长页面', '長頁面', '长页面', '過長的頁面', '長頁面', 'LongPages'],
+    },
+    {
+      realname: 'Ancientpages',
+      aliases: [
+        '最早页面',
+        '最早頁面',
+        '最老页面',
+        '最舊頁面',
+        '最早頁面',
+        '最舊頁面',
+        'AncientPages',
+      ],
+    },
+    {
+      realname: 'Lonelypages',
+      aliases: ['孤立页面', '孤立頁面', '孤立页面', '孤立頁面', 'LonelyPages', 'OrphanedPages'],
+    },
+    {
+      realname: 'Fewestrevisions',
+      aliases: [
+        '最少修订页面',
+        '最少修訂頁面',
+        '版本最少页面',
+        '最少修订页面',
+        '最少修訂頁面',
+        'FewestRevisions',
+      ],
+    },
+    {
+      realname: 'Withoutinterwiki',
+      aliases: [
+        '无跨wiki',
+        '无跨wiki链接页面',
+        '無跨wiki連結頁面',
+        '無跨維基連結頁面',
+        '沒有跨語言連結的頁面',
+        'WithoutInterwiki',
+      ],
+    },
+    {
+      realname: 'Protectedpages',
+      aliases: [
+        '已保护页面',
+        '已保護頁面',
+        '已保护页面',
+        '受保護頁面',
+        '已保護頁面',
+        'ProtectedPages',
+      ],
+    },
+    {
+      realname: 'Protectedtitles',
+      aliases: [
+        '已保护标题',
+        '已保護標題',
+        '已保护标题',
+        '受保護標題',
+        '已保護標題',
+        'ProtectedTitles',
+      ],
+    },
+    {
+      realname: 'Shortpages',
+      aliases: ['短页面', '短頁面', '短页面', '過短的頁面', '短頁面', 'ShortPages'],
+    },
+    {
+      realname: 'Uncategorizedcategories',
+      aliases: [
+        '未归类分类',
+        '未歸類分類',
+        '未分类分类',
+        '未分類的分類',
+        '未歸類分類',
+        'UncategorizedCategories',
+      ],
+    },
+    {
+      realname: 'Uncategorizedimages',
+      aliases: [
+        '未归类文件',
+        '未歸類文件',
+        '未歸類檔案',
+        '未分类文件',
+        '未分类图像',
+        '未分類的檔案',
+        '未分類的圖片',
+        '未歸類檔案',
+        'UncategorizedFiles',
+        'UncategorizedImages',
+      ],
+    },
+    {
+      realname: 'Uncategorizedpages',
+      aliases: [
+        '未归类页面',
+        '未歸類頁面',
+        '未分类页面',
+        '未分類的頁面',
+        '未歸類頁面',
+        'UncategorizedPages',
+      ],
+    },
+    {
+      realname: 'Uncategorizedtemplates',
+      aliases: [
+        '未归类模板',
+        '未歸類模板',
+        '未分类模板',
+        '未分類的模板',
+        '未歸類模板',
+        'UncategorizedTemplates',
+      ],
+    },
+    {
+      realname: 'Unusedcategories',
+      aliases: [
+        '未使用分类',
+        '未使用分類',
+        '未使用分类',
+        '未使用的分類',
+        '未使用分類',
+        'UnusedCategories',
+      ],
+    },
+    {
+      realname: 'Unusedimages',
+      aliases: [
+        '未使用文件',
+        '未使用檔案',
+        '未使用文件',
+        '未使用图像',
+        '未使用的檔案',
+        '未使用檔案',
+        'UnusedFiles',
+        'UnusedImages',
+      ],
+    },
+    {
+      realname: 'Unusedtemplates',
+      aliases: ['未使用模板', '未使用模板', '未使用的模板', '未使用模板', 'UnusedTemplates'],
+    },
+    {
+      realname: 'Unwatchedpages',
+      aliases: [
+        '未受监视页面',
+        '未監視的頁面',
+        '未被監視的頁面',
+        '未被監視的頁面',
+        'UnwatchedPages',
+      ],
+    },
+    {
+      realname: 'Wantedcategories',
+      aliases: [
+        '需要的分类',
+        '需要的分类',
+        '待撰分类',
+        '需要的分類',
+        '待撰分類',
+        'WantedCategories',
+      ],
+    },
+    {
+      realname: 'Wantedfiles',
+      aliases: ['需要的文件', '需要的檔案', '需要的文件', '需要的檔案', 'WantedFiles'],
+    },
+    {
+      realname: 'Wantedpages',
+      aliases: [
+        '需要的页面',
+        '需要的页面',
+        '待撰页面',
+        '受损链接',
+        '需要的頁面',
+        '待撰頁面',
+        'WantedPages',
+        'BrokenLinks',
+      ],
+    },
+    {
+      realname: 'Wantedtemplates',
+      aliases: ['需要的模板', '需要的模板', '需要的模板', 'WantedTemplates'],
+    },
+    {
+      realname: 'Allpages',
+      aliases: ['所有页面', '所有頁面', '所有页面', '所有頁面', 'AllPages'],
+    },
+    {
+      realname: 'Prefixindex',
+      aliases: [
+        '前缀索引',
+        '前綴索引',
+        '字首索引',
+        '前缀索引',
+        '前綴索引',
+        '字首索引',
+        'PrefixIndex',
+      ],
+    },
+    {
+      realname: 'Categories',
+      aliases: ['页面分类', '頁面分類', '页面分类', '分類', '頁面分類', 'Categories'],
+    },
+    {
+      realname: 'Listredirects',
+      aliases: [
+        '重定向页列表',
+        '重定向列表',
+        '重新導向清單',
+        '重定向页列表',
+        '重新導向清單',
+        '重定向頁面列表',
+        '重新導向頁面清單',
+        'ListRedirects',
+      ],
+    },
+    {
+      realname: 'PagesWithProp',
+      aliases: [
+        '带属性的页面',
+        '基于属性的页面',
+        '擁有屬性的頁面',
+        '帶屬性頁面',
+        'PagesWithProp',
+        'Pageswithprop',
+        'PagesByProp',
+        'Pagesbyprop',
+      ],
+    },
+    {
+      realname: 'TrackingCategories',
+      aliases: ['追踪分类', '追踪分类', '追蹤分類', '跟蹤分類', 'TrackingCategories'],
+    },
+    {
+      realname: 'Userlogin',
+      aliases: [
+        '用户登录',
+        '用戶登入',
+        '使用者登入',
+        '用户登录',
+        '登录',
+        '使用者登入',
+        'UserLogin',
+        'Login',
+      ],
+    },
+    {
+      realname: 'Userlogout',
+      aliases: [
+        '用户退出',
+        '用戶登出',
+        '使用者登出',
+        '用户退出',
+        '退出',
+        '使用者登出',
+        'UserLogout',
+        'Logout',
+      ],
+    },
+    {
+      realname: 'CreateAccount',
+      aliases: [
+        '创建账户',
+        '創建賬戶',
+        '建立帳戶',
+        '建立帳號',
+        '建立帐号',
+        '创建账户',
+        '建立帳號',
+        '建立帳戶',
+        '建立帳號',
+        'CreateAccount',
+      ],
+    },
+    {
+      realname: 'LinkAccounts',
+      aliases: ['链接账号', '連結帳號', 'LinkAccounts'],
+    },
+    {
+      realname: 'UnlinkAccounts',
+      aliases: ['取消关联账号', '解除連結帳號', 'UnlinkAccounts'],
+    },
+    {
+      realname: 'ChangeCredentials',
+      aliases: ['更改凭据', '變更憑證', 'ChangeCredentials'],
+    },
+    {
+      realname: 'RemoveCredentials',
+      aliases: ['移除凭据', '移除憑證', 'RemoveCredentials'],
+    },
+    {
+      realname: 'AuthenticationPopupSuccess',
+      aliases: ['认证成功弹窗', '認證成功彈窗', 'AuthenticationPopupSuccess'],
+    },
+    {
+      realname: 'Activeusers',
+      aliases: ['活跃用户', '活躍使用者', 'ActiveUsers'],
+    },
+    {
+      realname: 'Block',
+      aliases: [
+        '封禁',
+        '封禁IP',
+        '封禁用户',
+        '封',
+        '封鎖',
+        '封鎖IP',
+        '封鎖使用者',
+        '封禁',
+        '封禁IP',
+        '封禁使用者',
+        '封鎖使用者',
+        'Block',
+        'BlockIP',
+        'BlockUser',
+      ],
+    },
+    {
+      realname: 'Unblock',
+      aliases: [
+        '解除封禁',
+        '解封',
+        '解除封鎖',
+        '解除封禁',
+        '解禁',
+        '解除封鎖',
+        '解除封禁',
+        'Unblock',
+      ],
+    },
+    {
+      realname: 'BlockList',
+      aliases: [
+        '封禁列表',
+        '封禁列表',
+        'IP封禁列表',
+        '封鎖清單',
+        'IP封鎖清單',
+        '封禁列表',
+        'IP封禁列表',
+        'BlockList',
+        'ListBlocks',
+        'IPBlockList',
+      ],
+    },
+    {
+      realname: 'AutoblockList',
+      aliases: [
+        '自动封禁列表',
+        '列出自动封禁',
+        '自動封鎖清單',
+        '列出自動封鎖',
+        'AutoblockList',
+        'ListAutoblocks',
+      ],
+    },
+    {
+      realname: 'ChangePassword',
+      aliases: [
+        '修改密码',
+        '修改密碼',
+        '修改密码',
+        '重置密码',
+        '找回密码',
+        '變更密碼',
+        '修改密碼',
+        '密碼重設',
+        'ChangePassword',
+        'ResetPass',
+        'ResetPassword',
+      ],
+    },
+    {
+      realname: 'BotPasswords',
+      aliases: ['机器人密码', '機器人密碼', 'BotPasswords'],
+    },
+    {
+      realname: 'PasswordReset',
+      aliases: ['重置密码', '重設密碼', '重设密码', '重設密碼', 'PasswordReset'],
+    },
+    {
+      realname: 'DeletedContributions',
+      aliases: [
+        '删除的贡献',
+        '已删除的用户贡献',
+        '已刪除的貢獻',
+        '已刪除的用戶貢獻',
+        'DeletedContributions',
+      ],
+    },
+    {
+      realname: 'Preferences',
+      aliases: ['参数设置', '偏好設定', '參數設置', '参数设置', '设置', '偏好設定', 'Preferences'],
+    },
+    {
+      realname: 'ResetTokens',
+      aliases: ['重置密钥', '重設金鑰', '重置权标', '重設密鑰', '覆寫令牌', 'ResetTokens'],
+    },
+    {
+      realname: 'Contributions',
+      aliases: [
+        '用户贡献',
+        '用戶貢獻',
+        '使用者貢獻',
+        '使用者贡献',
+        '用户贡献',
+        '贡献',
+        '使用者貢獻',
+        '用戶貢獻',
+        'Contributions',
+        'Contribs',
+      ],
+    },
+    {
+      realname: 'Listgrouprights',
+      aliases: [
+        '群组权限',
+        '群組權限',
+        '用户组权限',
+        '群組權限清單',
+        '使用者群組權限',
+        '群組權限列表',
+        'ListGroupRights',
+        'UserGroupRights',
+      ],
+    },
+    {
+      realname: 'Listgrants',
+      aliases: ['列出授权', '列出授權', 'ListGrants'],
+    },
+    {
+      realname: 'Listusers',
+      aliases: [
+        '用户列表',
+        '用戶列表',
+        '使用者清單',
+        '用户列表',
+        '使用者清單',
+        '使用者列表',
+        'ListUsers',
+        'UserList',
+        'Users',
+      ],
+    },
+    {
+      realname: 'Listadmins',
+      aliases: ['管理员列表', '管理員列表', '管理员列表', '管理員清單', '管理員列表', 'ListAdmins'],
+    },
+    {
+      realname: 'Listbots',
+      aliases: [
+        '机器人列表',
+        '機器人清單',
+        '機械人清單',
+        '机器人列表',
+        '機器人清單',
+        '機械人列表',
+        'ListBots',
+      ],
+    },
+    {
+      realname: 'Userrights',
+      aliases: [
+        '用户权限',
+        '用戶權限',
+        '使用者權限',
+        '用户权限',
+        '使用者權限',
+        '使用者權限',
+        'UserRights',
+        'MakeSysop',
+        'MakeBot',
+      ],
+    },
+    {
+      realname: 'EditWatchlist',
+      aliases: ['编辑监视列表', '編輯監視清單', '編輯監視列表', 'EditWatchlist'],
+    },
+    {
+      realname: 'PasswordPolicies',
+      aliases: ['密码策略', '密碼原則', 'PasswordPolicies'],
+    },
+    {
+      realname: 'Newimages',
+      aliases: [
+        '新建文件',
+        '新建檔案',
+        '新建文件',
+        '新建图像',
+        '新增檔案',
+        '新增圖片',
+        '新增檔案',
+        'NewFiles',
+        'NewImages',
+      ],
+    },
+    {
+      realname: 'Log',
+      aliases: ['日志', '日誌', '日志', '日誌', 'Log', 'Logs'],
+    },
+    {
+      realname: 'Watchlist',
+      aliases: [
+        '监视列表',
+        '監視列表',
+        '監視清单',
+        '监视列表',
+        '監視清單',
+        '監視清單',
+        'Watchlist',
+      ],
+    },
+    {
+      realname: 'Newpages',
+      aliases: ['最新页面', '最新頁面', '新建页面', '新增頁面', '新頁面', 'NewPages'],
+    },
+    {
+      realname: 'Recentchanges',
+      aliases: [
+        '最近更改',
+        '近期變動',
+        '最近更改',
+        '最近變更',
+        '最近更改',
+        '近期變動',
+        'RecentChanges',
+      ],
+    },
+    {
+      realname: 'Recentchangeslinked',
+      aliases: [
+        '链出更改',
+        '鏈出更改',
+        '連出更改',
+        '最近链出更改',
+        '相关更改',
+        '已連結的最近變更',
+        '相關變更',
+        '連出更改',
+        'RecentChangesLinked',
+        'RelatedChanges',
+      ],
+    },
+    {
+      realname: 'Tags',
+      aliases: ['标签', '標籤', '标签', '標籤', 'Tags'],
+    },
+    {
+      realname: 'Listfiles',
+      aliases: [
+        '文件列表',
+        '檔案列表',
+        '档案列表',
+        '文件列表',
+        '图像列表',
+        '檔案清單',
+        '圖片清單',
+        '檔案列表',
+        '圖像列表',
+        '檔案清單',
+        'ListFiles',
+        'FileList',
+        'ImageList',
+      ],
+    },
+    {
+      realname: 'Filepath',
+      aliases: ['文件路径', '文件路徑', '檔案路徑', '档案路径', '文件路径', '檔案路徑', 'FilePath'],
+    },
+    {
+      realname: 'MediaStatistics',
+      aliases: ['媒体统计', '媒體統計', 'MediaStatistics'],
+    },
+    {
+      realname: 'MIMEsearch',
+      aliases: [
+        'MIME搜索',
+        'MIME搜尋',
+        'MIME搜寻',
+        'MIME搜索',
+        'MIME搜尋',
+        'MIME搜尋',
+        'MIMESearch',
+      ],
+    },
+    {
+      realname: 'FileDuplicateSearch',
+      aliases: [
+        '搜索重复文件',
+        '重複檔案搜尋',
+        '搜尋重複檔案',
+        '搜尋重復檔案',
+        'FileDuplicateSearch',
+      ],
+    },
+    {
+      realname: 'Upload',
+      aliases: [
+        '上传文件',
+        '上傳檔案',
+        '上載檔案',
+        '上载档案',
+        '上传文件',
+        '上傳',
+        '上載檔案',
+        'Upload',
+      ],
+    },
+    {
+      realname: 'UploadStash',
+      aliases: ['上传藏匿', '上傳儲藏庫', 'UploadStash'],
+    },
+    {
+      realname: 'ListDuplicatedFiles',
+      aliases: [
+        '重复文件列表',
+        '重複檔案清單',
+        '重複檔案列表',
+        'ListDuplicatedFiles',
+        'ListFileDuplicates',
+      ],
+    },
+    {
+      realname: 'ApiSandbox',
+      aliases: ['API沙盒', 'API沙盒', 'ApiSandbox'],
+    },
+    {
+      realname: 'Statistics',
+      aliases: [
+        '统计',
+        '统计信息',
+        '統計',
+        '統計資訊',
+        '统计信息',
+        '統計資訊',
+        'Statistics',
+        'Stats',
+      ],
+    },
+    {
+      realname: 'Allmessages',
+      aliases: [
+        '所有消息',
+        '所有訊息',
+        '所有讯息',
+        '所有信息',
+        '所有訊息',
+        '所有訊息',
+        'AllMessages',
+      ],
+    },
+    {
+      realname: 'Version',
+      aliases: ['版本', '版本', '版本信息', '版本', '版本資訊', 'Version'],
+    },
+    {
+      realname: 'Lockdb',
+      aliases: ['锁定数据库', '鎖定資料庫', '鎖定數據庫', '鎖定資料庫', 'LockDB'],
+    },
+    {
+      realname: 'Unlockdb',
+      aliases: ['解除数据库锁定', '解除鎖定資料庫', '解除資料庫鎖定', '解除資料庫鎖定', 'UnlockDB'],
+    },
+    {
+      realname: 'NamespaceInfo',
+      aliases: ['命名空间信息', '命名空間資訊', 'NamespaceInfo'],
+    },
+    {
+      realname: 'LinkSearch',
+      aliases: [
+        '链接搜索',
+        '鏈接搜索',
+        '連結搜尋',
+        '连结搜寻',
+        '搜索网页链接',
+        '連結搜尋',
+        '搜尋網頁連結',
+        '搜尋網頁連結',
+        'LinkSearch',
+      ],
+    },
+    {
+      realname: 'Randompage',
+      aliases: ['随机页面', '隨機頁面', '随机', '随机页面', '隨機頁面', 'Random', 'RandomPage'],
+    },
+    {
+      realname: 'RandomInCategory',
+      aliases: ['分类内随机', '隨機分類頁面', '於分類中隨機', 'RandomInCategory'],
+    },
+    {
+      realname: 'Randomredirect',
+      aliases: [
+        '随机重定向',
+        '随机重定向页',
+        '隨機重新導向',
+        '隨機重定向頁面',
+        '隨機重新導向頁面',
+        'RandomRedirect',
+      ],
+    },
+    {
+      realname: 'Randomrootpage',
+      aliases: ['随机根页面', '隨機根頁面', 'RandomRootpage'],
+    },
+    {
+      realname: 'GoToInterwiki',
+      aliases: ['去往跨wiki页面', '前往跨wiki頁面', 'GoToInterwiki'],
+    },
+    {
+      realname: 'Mostlinkedcategories',
+      aliases: [
+        '最多链接分类',
+        '最多連結分類',
+        '最多链接分类',
+        '被連結最多的分類',
+        '最多連結分類',
+        'MostLinkedCategories',
+        'MostUsedCategories',
+      ],
+    },
+    {
+      realname: 'Mostimages',
+      aliases: [
+        '最多链接文件',
+        '最多鏈接文件',
+        '最多連結檔案',
+        '最多链接文件',
+        '被連結最多的檔案',
+        '最多連結檔案',
+        'MostLinkedFiles',
+        'MostFiles',
+        'MostImages',
+      ],
+    },
+    {
+      realname: 'Mostinterwikis',
+      aliases: [
+        '最多跨wiki链接页面',
+        '最多跨wiki連結的頁面',
+        '最多_Interwiki_連結的頁面',
+        '最多跨wiki連結',
+        'MostInterwikis',
+      ],
+    },
+    {
+      realname: 'Mostlinked',
+      aliases: [
+        '最多链接页面',
+        '最多連結頁面',
+        '最多链接页面',
+        '被連結最多的頁面',
+        '最多連結頁面',
+        'MostLinkedPages',
+        'MostLinked',
+      ],
+    },
+    {
+      realname: 'Mostlinkedtemplates',
+      aliases: [
+        '最多链接模板',
+        '最多連結模板',
+        '最多嵌入页面',
+        '最多链接模板',
+        '最多使用模板',
+        '被引用最多的頁面',
+        '被連結最多的模板',
+        '被使用最多的模板',
+        'MostTranscludedPages',
+        'MostLinkedTemplates',
+        'MostUsedTemplates',
+      ],
+    },
+    {
+      realname: 'Mostcategories',
+      aliases: [
+        '最多分类页面',
+        '最多分類頁面',
+        '最多分类页面',
+        '最多分類的頁面',
+        '最多分類頁面',
+        'MostCategories',
+      ],
+    },
+    {
+      realname: 'Mostrevisions',
+      aliases: [
+        '最多修订页面',
+        '最多修訂頁面',
+        '最多修订页面',
+        '最多修訂的頁面',
+        '最多修訂頁面',
+        'MostRevisions',
+      ],
+    },
+    {
+      realname: 'ComparePages',
+      aliases: ['对比页面', '頁面比較', '頁面比較', 'ComparePages'],
+    },
+    {
+      realname: 'Import',
+      aliases: [
+        '导入页面',
+        '導入頁面',
+        '匯入頁面',
+        '汇入页面',
+        '导入页面',
+        '导入',
+        '匯入',
+        '匯入頁面',
+        'Import',
+      ],
+    },
+    {
+      realname: 'Undelete',
+      aliases: ['恢复被删页面', '恢復被刪頁面', '恢复被删页面', '取消刪除', 'Undelete'],
+    },
+    {
+      realname: 'Whatlinkshere',
+      aliases: [
+        '链入页面',
+        '鏈入頁面',
+        '連入頁面',
+        '链入页面',
+        '連入頁面',
+        '連入頁面',
+        'WhatLinksHere',
+      ],
+    },
+    {
+      realname: 'MergeHistory',
+      aliases: ['合并历史', '合併歷史', '合并历史', '合併歷史', 'MergeHistory'],
+    },
+    {
+      realname: 'ExpandTemplates',
+      aliases: ['展开模板', '展開模板', 'ExpandTemplates'],
+    },
+    {
+      realname: 'ChangeContentModel',
+      aliases: ['更改内容模型', '變更內容模型', 'ChangeContentModel'],
+    },
+    {
+      realname: 'Booksources',
+      aliases: [
+        '网络书源',
+        '網絡書源',
+        '網路書源',
+        '网络书源',
+        '書籍來源',
+        '網路書源',
+        'BookSources',
+      ],
+    },
+    {
+      realname: 'ApiHelp',
+      aliases: ['API帮助', 'API說明', 'API使用說明', 'ApiHelp'],
+    },
+    {
+      realname: 'Blankpage',
+      aliases: ['空白页面', '空白頁面', '空白页面', '空白頁面', 'BlankPage'],
+    },
+    {
+      realname: 'DeletePage',
+      aliases: ['删除页面', '刪除頁面', '刪除', 'DeletePage', 'Delete'],
+    },
+    {
+      realname: 'Diff',
+      aliases: ['差异', '差異', '编辑差异', '編輯差異', 'Diff'],
+    },
+    {
+      realname: 'EditPage',
+      aliases: ['编辑页面', '编辑', '編輯頁面', '編輯', 'EditPage', 'Edit'],
+    },
+    {
+      realname: 'EditTags',
+      aliases: ['编辑标签', '編輯標籤', 'EditTags'],
+    },
+    {
+      realname: 'Emailuser',
+      aliases: [
+        '电邮联系',
+        '電郵聯絡',
+        '电邮联系',
+        '寄信給使用者',
+        '寄信',
+        '電郵使用者',
+        'EmailUser',
+        'Email',
+      ],
+    },
+    {
+      realname: 'Movepage',
+      aliases: ['移动页面', '移動頁面', '移动页面', '移動頁面', 'MovePage'],
+    },
+    {
+      realname: 'Mycontributions',
+      aliases: ['我的贡献', '我的貢獻', '我的贡献', '我的貢獻', 'MyContributions', 'MyContribs'],
+    },
+    {
+      realname: 'MyLanguage',
+      aliases: ['我的语言', '我的語言', '我的语言', '我的語言', 'MyLanguage'],
+    },
+    {
+      realname: 'Mylog',
+      aliases: ['我的日志', '我的日誌', 'MyLog'],
+    },
+    {
+      realname: 'Mypage',
+      aliases: [
+        '我的用户页',
+        '我的用戶頁',
+        '我的使用者頁面',
+        '我的用户页',
+        '我的使用者頁面',
+        '我的用戶頁',
+        'MyPage',
+      ],
+    },
+    {
+      realname: 'Mytalk',
+      aliases: [
+        '我的讨论页',
+        '我的討論頁',
+        '我的讨论页',
+        '我的对话页',
+        '我的對話',
+        '我的討論頁',
+        'MyTalk',
+      ],
+    },
+    {
+      realname: 'PageHistory',
+      aliases: ['页面历史', '頁面歷史', '歷史', 'PageHistory', 'History'],
+    },
+    {
+      realname: 'PageInfo',
+      aliases: ['页面信息', '頁面資訊', '資訊', 'PageInfo', 'Info'],
+    },
+    {
+      realname: 'ProtectPage',
+      aliases: ['保护页面', '保护', '保護頁面', '保護', 'ProtectPage', 'Protect'],
+    },
+    {
+      realname: 'Purge',
+      aliases: ['刷新', '更新快取', 'Purge'],
+    },
+    {
+      realname: 'Myuploads',
+      aliases: [
+        '我上传的文件',
+        '我的文件',
+        '我的上傳',
+        '我的上載',
+        '我的檔案',
+        'MyUploads',
+        'MyFiles',
+      ],
+    },
+    {
+      realname: 'AllMyUploads',
+      aliases: [
+        '我上传的所有文件',
+        '我的所有文件',
+        '所有我的上傳',
+        '所有我的檔案',
+        '所有本人上載',
+        '所有本人檔案',
+        'AllMyUploads',
+        'AllMyFiles',
+      ],
+    },
+    {
+      realname: 'NewSection',
+      aliases: ['新章节', '新章節', 'NewSection', 'Newsection'],
+    },
+    {
+      realname: 'PermanentLink',
+      aliases: [
+        '固定链接',
+        '永久链接',
+        '固定連結',
+        '靜態連結',
+        '永久連結',
+        'PermanentLink',
+        'PermaLink',
+      ],
+    },
+    {
+      realname: 'Redirect',
+      aliases: ['重定向', '重新導向', '重定向', '重新導向', '重定向', 'Redirect'],
+    },
+    {
+      realname: 'Renameuser',
+      aliases: [
+        '重命名用户',
+        '重新命名用户',
+        '重新命名用戶',
+        '重新命名使用者',
+        '重命名用户',
+        '重新命名使用者',
+        'RenameUser',
+      ],
+    },
+    {
+      realname: 'Revisiondelete',
+      aliases: [
+        '版本删除',
+        '删除修订',
+        '恢复修订',
+        '修訂刪除',
+        '刪除或恢復版本',
+        '刪除或恢復版本',
+        'RevisionDelete',
+      ],
+    },
+    {
+      realname: 'RunJobs',
+      aliases: ['运行工作', '執行作業', '運行工作', 'RunJobs'],
+    },
+    {
+      realname: 'Specialpages',
+      aliases: ['特殊页面', '特殊頁面', '特殊页面', '特殊頁面', 'SpecialPages'],
+    },
+    {
+      realname: 'PageData',
+      aliases: ['页面数据', '頁面資料', 'PageData'],
+    },
+    {
+      realname: 'Contribute',
+      aliases: ['做出贡献', '做出貢獻', 'Contribute'],
+    },
+    {
+      realname: 'TalkPage',
+      aliases: ['讨论页', '討論頁', 'TalkPage'],
+    },
+    {
+      realname: 'Search',
+      aliases: ['搜索', '搜尋', '搜索', '搜尋', 'Search'],
+    },
+    {
+      realname: 'ChangeEmail',
+      aliases: ['修改邮箱地址', '變更信箱', '修改郵箱', 'ChangeEmail'],
+    },
+    {
+      realname: 'AbuseLog',
+      aliases: ['滥用日志', '过滤日志', '濫用日誌', 'AbuseLog'],
+    },
+    {
+      realname: 'AbuseFilter',
+      aliases: ['滥用过滤器', '防滥用过滤器', '濫用過濾器', 'AbuseFilter'],
+    },
+    {
+      realname: 'BlockedExternalDomains',
+      aliases: ['已封禁的外部域名', '已封鎖的外部網域', 'BlockedExternalDomains'],
+    },
+    {
+      realname: 'UploadAvatar',
+      aliases: ['上传头像', '上傳頭像', 'UploadAvatar'],
+    },
+    {
+      realname: 'ViewAvatar',
+      aliases: ['查看头像', '檢視頭像', 'ViewAvatar'],
+    },
+    {
+      realname: 'CategoryTree',
+      aliases: ['分类树', '分類樹', 'CategoryTree'],
+    },
+    {
+      realname: 'CheckUser',
+      aliases: ['用户查核', '使用者查核', '用戶查核', 'CheckUser'],
+    },
+    {
+      realname: 'CheckUserLog',
+      aliases: ['用户查核日志', '使用者查核日誌', '用戶查核日誌', 'CheckUserLog'],
+    },
+    {
+      realname: 'Investigate',
+      aliases: ['Investigate'],
+    },
+    {
+      realname: 'InvestigateBlock',
+      aliases: ['InvestigateBlock'],
+    },
+    {
+      realname: 'CiteThisPage',
+      aliases: ['引用此页面', '引用', '引用', 'CiteThisPage', 'Cite'],
+    },
+    {
+      realname: 'DeleteBatch',
+      aliases: ['批量删除', '批次刪除', 'DeleteBatch'],
+    },
+    {
+      realname: 'TopicSubscriptions',
+      aliases: ['话题订阅', 'TopicSubscriptions'],
+    },
+    {
+      realname: 'FindComment',
+      aliases: ['查找留言', 'FindComment'],
+    },
+    {
+      realname: 'GoToComment',
+      aliases: ['转到留言', 'GoToComment'],
+    },
+    {
+      realname: 'DiscussionToolsDebug',
+      aliases: ['讨论工具调试', 'DiscussionToolsDebug'],
+    },
+    {
+      realname: 'DisambiguationPages',
+      aliases: ['消歧义页面', '消歧義頁面', 'DisambiguationPages'],
+    },
+    {
+      realname: 'DisambiguationPageLinks',
+      aliases: ['链接到消歧义页的页面', '消歧義頁面連結', 'DisambiguationPageLinks'],
+    },
+    {
+      realname: 'Notifications',
+      aliases: ['通知', '通知', 'Notifications'],
+    },
+    {
+      realname: 'DisplayNotificationsConfiguration',
+      aliases: ['显示通知配置', '顯示通知設定', 'DisplayNotificationsConfiguration'],
+    },
+    {
+      realname: 'NotificationsMarkRead',
+      aliases: ['标记通知为已读', '標記通知為已讀', 'NotificationsMarkRead'],
+    },
+    {
+      realname: 'Gadgets',
+      aliases: ['小工具', '小工具', 'Gadgets'],
+    },
+    {
+      realname: 'GadgetUsage',
+      aliases: ['小工具使用统计', '小工具使用統計', 'GadgetUsage'],
+    },
+    {
+      realname: 'MostGloballyLinkedFiles',
+      aliases: [
+        '全域最多链接文件',
+        '全域最多連結檔案',
+        '全域最多連接檔案',
+        'MostGloballyLinkedFiles',
+      ],
+    },
+    {
+      realname: 'GloballyWantedFiles',
+      aliases: ['全域需要的文件', '全域需要的檔案', 'GloballyWantedFiles'],
+    },
+    {
+      realname: 'GloballyUnusedFiles',
+      aliases: ['全域未使用文件', '全域未使用的檔案', 'GloballyUnusedFiles'],
+    },
+    {
+      realname: 'GlobalUsage',
+      aliases: ['全域使用情况', '全域使用狀況', 'GlobalUsage'],
+    },
+    {
+      realname: 'Interwiki',
+      aliases: ['跨wiki', '跨维基', '跨Wiki', '跨維基', 'Interwiki'],
+    },
+    {
+      realname: 'LintErrors',
+      aliases: ['Lint错误', 'Lint錯誤', 'LintErrors'],
+    },
+    {
+      realname: 'MassEditRegex',
+      aliases: ['批量正则编辑', '大量編輯_Regex', 'MassEditRegex'],
+    },
+    {
+      realname: 'MathShowImage',
+      aliases: ['MathShowImage'],
+    },
+    {
+      realname: 'MathStatus',
+      aliases: ['数学状态', '數學狀態', 'MathStatus'],
+    },
+    {
+      realname: 'MoeAuth',
+      aliases: ['MoeAuth', '萌の入', '萌娘登录', 'MoeAuth', 'Moelogin'],
+    },
+    {
+      realname: 'Boilerplates',
+      aliases: [
+        '样板',
+        '范本',
+        '格式模板',
+        '预加载格式模板（boilerplates）',
+        '範本',
+        '樣板',
+        '格式模板',
+        '預加載格式模板（boilerplates）',
+        'Boilerplates',
+      ],
+    },
+    {
+      realname: 'Nuke',
+      aliases: ['大量删除', '大量刪除', 'Nuke'],
+    },
+    {
+      realname: 'ReplaceText',
+      aliases: ['替换文字', '替换文本', '取代文字', '替換文字', '替換文本', 'ReplaceText'],
+    },
+    {
+      realname: 'TemplateSandbox',
+      aliases: ['模板沙盒', '模板沙盒', 'TemplateSandbox'],
+    },
+    {
+      realname: 'Thanks',
+      aliases: ['感谢', '感謝', 'Thanks'],
+    },
+    {
+      realname: 'OrphanedTimedText',
+      aliases: ['孤立定时文本', 'OrphanedTimedText'],
+    },
+    {
+      realname: 'TranscodeStatistics',
+      aliases: [
+        '定时媒体处理器',
+        'Transcode_statistics',
+        'Transcode_Statistics',
+        'TimedMediaHandler',
+      ],
+    },
+    {
+      realname: 'CollabPad',
+      aliases: ['CollabPad', 'Collab_Pad'],
+    },
+    {
+      realname: 'Moderation',
+      aliases: ['Moderation'],
+    },
+    {
+      realname: 'LookupUser',
+      aliases: ['查阅用户', '搜尋使用者', 'LookupUser'],
+    },
+  ],
+  namespacealiases: [
+    {
+      id: -2,
+      alias: '媒体',
+    },
+    {
+      id: -2,
+      alias: '媒体文件',
+    },
+    {
+      id: -2,
+      alias: '媒体档案',
+    },
+    {
+      id: -2,
+      alias: '媒體',
+    },
+    {
+      id: -2,
+      alias: '媒體文件',
+    },
+    {
+      id: -2,
+      alias: '媒體檔案',
+    },
+    {
+      id: -1,
+      alias: '特殊',
+    },
+    {
+      id: 1,
+      alias: '对话',
+    },
+    {
+      id: 1,
+      alias: '對話',
+    },
+    {
+      id: 1,
+      alias: '討論',
+    },
+    {
+      id: 1,
+      alias: '讨论',
+    },
+    {
+      id: 2,
+      alias: '使用者',
+    },
+    {
+      id: 2,
+      alias: '用戶',
+    },
+    {
+      id: 2,
+      alias: '用户',
+    },
+    {
+      id: 3,
+      alias: '使用者对话',
+    },
+    {
+      id: 3,
+      alias: '使用者對話',
+    },
+    {
+      id: 3,
+      alias: '使用者討論',
+    },
+    {
+      id: 3,
+      alias: '使用者讨论',
+    },
+    {
+      id: 3,
+      alias: '用戶對話',
+    },
+    {
+      id: 3,
+      alias: '用戶討論',
+    },
+    {
+      id: 3,
+      alias: '用户对话',
+    },
+    {
+      id: 3,
+      alias: '用户讨论',
+    },
+    {
+      id: 4,
+      alias: '专案',
+    },
+    {
+      id: 4,
+      alias: '專案',
+    },
+    {
+      id: 5,
+      alias: '专案讨论',
+    },
+    {
+      id: 5,
+      alias: '專案討論',
+    },
+    {
+      id: 5,
+      alias: '萌娘百科对话',
+    },
+    {
+      id: 5,
+      alias: '萌娘百科對話',
+    },
+    {
+      id: 5,
+      alias: '萌娘百科討論',
+    },
+    {
+      id: 5,
+      alias: '萌娘百科讨论',
+    },
+    {
+      id: 6,
+      alias: 'Image',
+    },
+    {
+      id: 6,
+      alias: '图像',
+    },
+    {
+      id: 6,
+      alias: '图片',
+    },
+    {
+      id: 6,
+      alias: '圖像',
+    },
+    {
+      id: 6,
+      alias: '圖片',
+    },
+    {
+      id: 6,
+      alias: '文件',
+    },
+    {
+      id: 6,
+      alias: '档案',
+    },
+    {
+      id: 6,
+      alias: '檔案',
+    },
+    {
+      id: 7,
+      alias: 'Image talk',
+    },
+    {
+      id: 7,
+      alias: '图像对话',
+    },
+    {
+      id: 7,
+      alias: '图像讨论',
+    },
+    {
+      id: 7,
+      alias: '图片讨论',
+    },
+    {
+      id: 7,
+      alias: '圖像對話',
+    },
+    {
+      id: 7,
+      alias: '圖像討論',
+    },
+    {
+      id: 7,
+      alias: '圖片討論',
+    },
+    {
+      id: 7,
+      alias: '文件对话',
+    },
+    {
+      id: 7,
+      alias: '文件對話',
+    },
+    {
+      id: 7,
+      alias: '文件討論',
+    },
+    {
+      id: 7,
+      alias: '文件讨论',
+    },
+    {
+      id: 7,
+      alias: '档案对话',
+    },
+    {
+      id: 7,
+      alias: '档案讨论',
+    },
+    {
+      id: 7,
+      alias: '檔案對話',
+    },
+    {
+      id: 7,
+      alias: '檔案討論',
+    },
+    {
+      id: 9,
+      alias: 'MediaWiki討論',
+    },
+    {
+      id: 9,
+      alias: 'MediaWiki讨论',
+    },
+    {
+      id: 10,
+      alias: '样板',
+    },
+    {
+      id: 10,
+      alias: '模板',
+    },
+    {
+      id: 10,
+      alias: '樣板',
+    },
+    {
+      id: 11,
+      alias: '样板对话',
+    },
+    {
+      id: 11,
+      alias: '样板讨论',
+    },
+    {
+      id: 11,
+      alias: '模板对话',
+    },
+    {
+      id: 11,
+      alias: '模板對話',
+    },
+    {
+      id: 11,
+      alias: '模板討論',
+    },
+    {
+      id: 11,
+      alias: '模板讨论',
+    },
+    {
+      id: 11,
+      alias: '樣板對話',
+    },
+    {
+      id: 11,
+      alias: '樣板討論',
+    },
+    {
+      id: 12,
+      alias: '使用說明',
+    },
+    {
+      id: 12,
+      alias: '使用说明',
+    },
+    {
+      id: 12,
+      alias: '帮助',
+    },
+    {
+      id: 12,
+      alias: '幫助',
+    },
+    {
+      id: 12,
+      alias: '說明',
+    },
+    {
+      id: 12,
+      alias: '说明',
+    },
+    {
+      id: 13,
+      alias: '使用說明討論',
+    },
+    {
+      id: 13,
+      alias: '使用说明讨论',
+    },
+    {
+      id: 13,
+      alias: '帮助对话',
+    },
+    {
+      id: 13,
+      alias: '帮助讨论',
+    },
+    {
+      id: 13,
+      alias: '幫助對話',
+    },
+    {
+      id: 13,
+      alias: '幫助討論',
+    },
+    {
+      id: 13,
+      alias: '說明討論',
+    },
+    {
+      id: 13,
+      alias: '说明讨论',
+    },
+    {
+      id: 14,
+      alias: '分类',
+    },
+    {
+      id: 14,
+      alias: '分類',
+    },
+    {
+      id: 15,
+      alias: '分类对话',
+    },
+    {
+      id: 15,
+      alias: '分类讨论',
+    },
+    {
+      id: 15,
+      alias: '分類對話',
+    },
+    {
+      id: 15,
+      alias: '分類討論',
+    },
+    {
+      id: 274,
+      alias: '小元件',
+    },
+    {
+      id: 274,
+      alias: '小組件',
+    },
+    {
+      id: 274,
+      alias: '小组件',
+    },
+    {
+      id: 274,
+      alias: '小部件',
+    },
+    {
+      id: 274,
+      alias: '微件',
+    },
+    {
+      id: 275,
+      alias: '小元件討論',
+    },
+    {
+      id: 275,
+      alias: '小元件讨论',
+    },
+    {
+      id: 275,
+      alias: '小組件討論',
+    },
+    {
+      id: 275,
+      alias: '小组件讨论',
+    },
+    {
+      id: 275,
+      alias: '小部件討論',
+    },
+    {
+      id: 275,
+      alias: '小部件讨论',
+    },
+    {
+      id: 275,
+      alias: '微件討論',
+    },
+    {
+      id: 275,
+      alias: '微件讨论',
+    },
+    {
+      id: 711,
+      alias: 'TimedText talk',
+    },
+    {
+      id: 828,
+      alias: '模块',
+    },
+    {
+      id: 828,
+      alias: '模塊',
+    },
+    {
+      id: 828,
+      alias: '模組',
+    },
+    {
+      id: 828,
+      alias: '模组',
+    },
+    {
+      id: 829,
+      alias: '模块对话',
+    },
+    {
+      id: 829,
+      alias: '模块讨论',
+    },
+    {
+      id: 829,
+      alias: '模塊對話',
+    },
+    {
+      id: 829,
+      alias: '模塊討論',
+    },
+    {
+      id: 829,
+      alias: '模組對話',
+    },
+    {
+      id: 829,
+      alias: '模組討論',
+    },
+    {
+      id: 829,
+      alias: '模组对话',
+    },
+    {
+      id: 829,
+      alias: '模组讨论',
+    },
+  ],
+  namespaces: {
+    '0': {
+      id: 0,
+      case: 'first-letter',
+      name: '',
+      subpages: true,
+      canonical: '',
+      content: true,
+      nonincludable: false,
+    },
+    '1': {
+      id: 1,
+      case: 'first-letter',
+      name: 'Talk',
+      subpages: true,
+      canonical: 'Talk',
+      content: false,
+      nonincludable: false,
+    },
+    '2': {
+      id: 2,
+      case: 'first-letter',
+      name: 'User',
+      subpages: true,
+      canonical: 'User',
+      content: false,
+      nonincludable: false,
+    },
+    '3': {
+      id: 3,
+      case: 'first-letter',
+      name: 'User talk',
+      subpages: true,
+      canonical: 'User talk',
+      content: false,
+      nonincludable: false,
+    },
+    '4': {
+      id: 4,
+      case: 'first-letter',
+      name: '萌娘百科',
+      subpages: true,
+      canonical: 'Project',
+      content: false,
+      nonincludable: false,
+    },
+    '5': {
+      id: 5,
+      case: 'first-letter',
+      name: '萌娘百科 talk',
+      subpages: true,
+      canonical: 'Project talk',
+      content: false,
+      nonincludable: false,
+    },
+    '6': {
+      id: 6,
+      case: 'first-letter',
+      name: 'File',
+      subpages: false,
+      canonical: 'File',
+      content: false,
+      nonincludable: false,
+    },
+    '7': {
+      id: 7,
+      case: 'first-letter',
+      name: 'File talk',
+      subpages: true,
+      canonical: 'File talk',
+      content: false,
+      nonincludable: false,
+    },
+    '8': {
+      id: 8,
+      case: 'first-letter',
+      name: 'MediaWiki',
+      subpages: true,
+      canonical: 'MediaWiki',
+      content: false,
+      nonincludable: false,
+      namespaceprotection: 'editinterface',
+    },
+    '9': {
+      id: 9,
+      case: 'first-letter',
+      name: 'MediaWiki talk',
+      subpages: true,
+      canonical: 'MediaWiki talk',
+      content: false,
+      nonincludable: false,
+    },
+    '10': {
+      id: 10,
+      case: 'first-letter',
+      name: 'Template',
+      subpages: true,
+      canonical: 'Template',
+      content: false,
+      nonincludable: false,
+    },
+    '11': {
+      id: 11,
+      case: 'first-letter',
+      name: 'Template talk',
+      subpages: true,
+      canonical: 'Template talk',
+      content: false,
+      nonincludable: false,
+    },
+    '12': {
+      id: 12,
+      case: 'first-letter',
+      name: 'Help',
+      subpages: true,
+      canonical: 'Help',
+      content: false,
+      nonincludable: false,
+    },
+    '13': {
+      id: 13,
+      case: 'first-letter',
+      name: 'Help talk',
+      subpages: true,
+      canonical: 'Help talk',
+      content: false,
+      nonincludable: false,
+    },
+    '14': {
+      id: 14,
+      case: 'first-letter',
+      name: 'Category',
+      subpages: false,
+      canonical: 'Category',
+      content: false,
+      nonincludable: false,
+    },
+    '15': {
+      id: 15,
+      case: 'first-letter',
+      name: 'Category talk',
+      subpages: true,
+      canonical: 'Category talk',
+      content: false,
+      nonincludable: false,
+    },
+    '274': {
+      id: 274,
+      case: 'first-letter',
+      name: 'Widget',
+      subpages: false,
+      canonical: 'Widget',
+      content: false,
+      nonincludable: false,
+      namespaceprotection: 'editwidgets',
+    },
+    '275': {
+      id: 275,
+      case: 'first-letter',
+      name: 'Widget talk',
+      subpages: true,
+      canonical: 'Widget talk',
+      content: false,
+      nonincludable: false,
+    },
+    '710': {
+      id: 710,
+      case: 'first-letter',
+      name: 'TimedText',
+      subpages: false,
+      canonical: 'TimedText',
+      content: false,
+      nonincludable: false,
+    },
+    '711': {
+      id: 711,
+      case: 'first-letter',
+      name: 'TimedText talk',
+      subpages: false,
+      canonical: 'TimedText talk',
+      content: false,
+      nonincludable: false,
+    },
+    '828': {
+      id: 828,
+      case: 'first-letter',
+      name: 'Module',
+      subpages: true,
+      canonical: 'Module',
+      content: false,
+      nonincludable: false,
+    },
+    '829': {
+      id: 829,
+      case: 'first-letter',
+      name: 'Module talk',
+      subpages: true,
+      canonical: 'Module talk',
+      content: false,
+      nonincludable: false,
+    },
+    '-2': {
+      id: -2,
+      case: 'first-letter',
+      name: 'Media',
+      subpages: false,
+      canonical: 'Media',
+      content: false,
+      nonincludable: false,
+    },
+    '-1': {
+      id: -1,
+      case: 'first-letter',
+      name: 'Special',
+      subpages: false,
+      canonical: 'Special',
+      content: false,
+      nonincludable: false,
+    },
+  },
+  magicwords: [
+    {
+      name: 'expr',
+      aliases: ['计算式', '表达式', '表達式', 'expr'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'if',
+      aliases: ['非空式', '若', '如果', 'if'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'ifeq',
+      aliases: ['相同式', '匹配式', '若相等', '如果相等', 'ifeq'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'iferror',
+      aliases: ['错误式', '如果错误', '如果錯誤', 'iferror'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'switch',
+      aliases: ['多选式', '多条件式', '双射式', '开关', '转换', '轉換', 'switch'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'default',
+      aliases: ['#默认', '#默認', '#default'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'ifexist',
+      aliases: ['存在式', '若有', '如有', 'ifexist'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'len',
+      aliases: ['长度', '長度', 'len'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'pos',
+      aliases: ['位置', '终端', 'pos'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'rpos',
+      aliases: ['最近位置', '反终端', 'rpos'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'sub',
+      aliases: ['截取', 'PF子', 'sub'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'count',
+      aliases: ['计数', '計算', 'count'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'replace',
+      aliases: ['替换', '取代', 'replace'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'explode',
+      aliases: ['爆炸', '炸开', '粉碎', 'explode'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'widget',
+      aliases: ['widget', '微件', '小部件', '小组件', '小元件', '小組件'],
+      'case-sensitive': false,
+    },
+    {
+      name: '!',
+      aliases: ['!'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'anchorencode',
+      aliases: ['ANCHORENCODE', '锚编码'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'articlepath',
+      aliases: ['ARTICLEPATH', '条目路径'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'basepagename',
+      aliases: ['BASEPAGENAME', '基础页面名称'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'basepagenamee',
+      aliases: ['BASEPAGENAMEE', '基础页面名称等同'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'bidi',
+      aliases: ['BIDI:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'canonicalurl',
+      aliases: ['CANONICALURL:', '规范URL:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'canonicalurle',
+      aliases: ['CANONICALURLE:', '规范URL等同:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'cascadingsources',
+      aliases: ['CASCADINGSOURCES', '级联来源'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'contentlanguage',
+      aliases: ['CONTENTLANGUAGE', 'CONTENTLANG', '内容语言', '內容語言'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentday',
+      aliases: ['CURRENTDAY', '今天'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentday2',
+      aliases: ['CURRENTDAY2', '今天2'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentdayname',
+      aliases: ['CURRENTDAYNAME', '星期', '今天名', '今天名称'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentdow',
+      aliases: ['CURRENTDOW', '当前DOW'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currenthour',
+      aliases: ['CURRENTHOUR', '当前小时'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentmonth',
+      aliases: ['CURRENTMONTH', 'CURRENTMONTH2', '本月', '本月2'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentmonth1',
+      aliases: ['CURRENTMONTH1', '本月1'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentmonthabbrev',
+      aliases: ['CURRENTMONTHABBREV', '本月简称', '本月縮寫'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentmonthname',
+      aliases: ['CURRENTMONTHNAME', '本月名', '本月名称'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentmonthnamegen',
+      aliases: ['CURRENTMONTHNAMEGEN', '本月名属格', '本月名称属格'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currenttime',
+      aliases: ['CURRENTTIME', '当前时间', '此时', '目前時間'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currenttimestamp',
+      aliases: ['CURRENTTIMESTAMP', '当前时间戳'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentversion',
+      aliases: ['CURRENTVERSION', '当前版本', '目前版本'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentweek',
+      aliases: ['CURRENTWEEK', '本周'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'currentyear',
+      aliases: ['CURRENTYEAR', '今年'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'defaultsort',
+      aliases: [
+        'DEFAULTSORT:',
+        'DEFAULTSORTKEY:',
+        'DEFAULTCATEGORYSORT:',
+        '默认排序:',
+        '默认排序关键字:',
+        '默认分类排序:',
+      ],
+      'case-sensitive': true,
+    },
+    {
+      name: 'defaultsort_noerror',
+      aliases: ['noerror', '不报错'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'defaultsort_noreplace',
+      aliases: ['noreplace', '不替换'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'directionmark',
+      aliases: ['DIRECTIONMARK', 'DIRMARK', '方向标记'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'displaytitle',
+      aliases: ['DISPLAYTITLE', '显示标题', '顯示標題'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'displaytitle_noerror',
+      aliases: ['noerror', '无错误'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'displaytitle_noreplace',
+      aliases: ['noreplace', '无代替'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'expectunusedcategory',
+      aliases: ['__EXPECTUNUSEDCATEGORY__'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'filepath',
+      aliases: ['FILEPATH:', '文件路径:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'forcetoc',
+      aliases: ['__FORCETOC__', '__强显目录__', '__強制目錄__'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'formatdate',
+      aliases: ['formatdate', 'dateformat', '格式化日期', '日期格式化'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'formatnum',
+      aliases: ['FORMATNUM', '格式化数字'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'fullpagename',
+      aliases: ['FULLPAGENAME', '页面全称', '完整页面名称'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'fullpagenamee',
+      aliases: ['FULLPAGENAMEE', '完整页面名称等同'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'fullurl',
+      aliases: ['FULLURL:', '完整URL:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'fullurle',
+      aliases: ['FULLURLE:', '完整URL等同:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'gender',
+      aliases: ['GENDER:', '性别:', '性別:', '性:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'grammar',
+      aliases: ['GRAMMAR:', '语法:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'hiddencat',
+      aliases: ['__HIDDENCAT__', '__隐藏分类__', '__隱藏分類__'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_alt',
+      aliases: ['alt=$1', '替代=$1', '替代文本=$1', '替代文字'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_baseline',
+      aliases: ['baseline', '基线'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_border',
+      aliases: ['border', '边框', '邊框'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_bottom',
+      aliases: ['bottom', '底部', '垂直置底'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_center',
+      aliases: ['center', 'centre', '居中', '置中'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_class',
+      aliases: ['class=$1', '类=$1', '類別=$1'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_framed',
+      aliases: ['frame', 'framed', 'enframed', '有框'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_frameless',
+      aliases: ['frameless', '无框', '無框'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_lang',
+      aliases: ['lang=$1', '语言=$1', '語言=$1'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_left',
+      aliases: ['left', '左'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_link',
+      aliases: ['link=$1', '链接=$1', '連結=$1'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_manualthumb',
+      aliases: ['thumbnail=$1', 'thumb=$1', '缩略图=$1', '縮圖=$1'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_middle',
+      aliases: ['middle', '中间', '垂直置中'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_none',
+      aliases: ['none', '无', '無'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_page',
+      aliases: ['page=$1', 'page $1', '页数=$1', '$1页', '頁=$1', '$1頁'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_right',
+      aliases: ['right', '右'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_sub',
+      aliases: ['sub', '子', '下標'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_super',
+      aliases: ['super', 'sup', '超', '上標'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_text_bottom',
+      aliases: ['text-bottom', '文字底部', '文字置底'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_text_top',
+      aliases: ['text-top', '文字顶部', '文字置頂'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_thumbnail',
+      aliases: ['thumb', 'thumbnail', '缩略图', '縮圖'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_top',
+      aliases: ['top', '顶部', '垂直置頂'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_upright',
+      aliases: ['upright', 'upright=$1', 'upright $1', '右上', '右上=$1', '右上$1'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'img_width',
+      aliases: ['$1px', '$1像素'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'index',
+      aliases: ['__INDEX__', '__索引__'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'int',
+      aliases: ['INT:', '界面:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'language',
+      aliases: ['#LANGUAGE', '#语言', '#語言'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'lc',
+      aliases: ['LC:', '小写:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'lcfirst',
+      aliases: ['LCFIRST:', '小写首字:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'localday',
+      aliases: ['LOCALDAY', '本地日'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localday2',
+      aliases: ['LOCALDAY2', '本地日2'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localdayname',
+      aliases: ['LOCALDAYNAME', '本地日名'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localdow',
+      aliases: ['LOCALDOW', '本地DOW'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localhour',
+      aliases: ['LOCALHOUR', '本地小时'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localmonth',
+      aliases: ['LOCALMONTH', 'LOCALMONTH2', '本地月', '本地月2'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localmonth1',
+      aliases: ['LOCALMONTH1', '本地月1'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localmonthabbrev',
+      aliases: ['LOCALMONTHABBREV', '本地月缩写'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localmonthname',
+      aliases: ['LOCALMONTHNAME', '本地月份名'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localmonthnamegen',
+      aliases: ['LOCALMONTHNAMEGEN', '本地月历'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localtime',
+      aliases: ['LOCALTIME', '本地时间'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localtimestamp',
+      aliases: ['LOCALTIMESTAMP', '本地时间戳'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localurl',
+      aliases: ['LOCALURL:', '本地URL:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'localurle',
+      aliases: ['LOCALURLE:', '本地URLE:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'localweek',
+      aliases: ['LOCALWEEK', '本地周'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'localyear',
+      aliases: ['LOCALYEAR', '本地年'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'msg',
+      aliases: ['MSG:', '訊息:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'msgnw',
+      aliases: ['MSGNW:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'namespace',
+      aliases: ['NAMESPACE', '名字空间', '命名空間'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'namespacee',
+      aliases: ['NAMESPACEE', '名字空间等同'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'namespacenumber',
+      aliases: ['NAMESPACENUMBER', '名字空间编号', '命名空間數'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'newsectionlink',
+      aliases: ['__NEWSECTIONLINK__', '__新段落链接__'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'nocommafysuffix',
+      aliases: ['NOSEP'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'nocontentconvert',
+      aliases: ['__NOCONTENTCONVERT__', '__NOCC__', '__不转换内容__', '__不轉換內容__'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'noeditsection',
+      aliases: ['__NOEDITSECTION__', '__无编辑段落__', '__无段落编辑__', '__無段落編輯__'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'nogallery',
+      aliases: ['__NOGALLERY__', '__无图库__', '__無圖庫__'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'noindex',
+      aliases: ['__NOINDEX__', '__无索引__'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'nonewsectionlink',
+      aliases: ['__NONEWSECTIONLINK__', '__无新段落链接__'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'notitleconvert',
+      aliases: ['__NOTITLECONVERT__', '__NOTC__', '__不转换标题__', '__不轉換標題__'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'notoc',
+      aliases: ['__NOTOC__', '__无目录__', '__無目錄__'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'ns',
+      aliases: ['NS:', '名称空间:', '命名空間:', '名字空间:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'nse',
+      aliases: ['NSE:', '名称空间E:', '命名空間E:', '名字空间E:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'numberingroup',
+      aliases: ['NUMBERINGROUP', 'NUMINGROUP', '组中用户数'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'numberofactiveusers',
+      aliases: ['NUMBEROFACTIVEUSERS', '活跃用户数', '活躍使用者人數'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'numberofadmins',
+      aliases: ['NUMBEROFADMINS', '管理员数', '管理員數'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'numberofarticles',
+      aliases: ['NUMBEROFARTICLES', '条目数', '文章數'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'numberofedits',
+      aliases: ['NUMBEROFEDITS', '编辑数'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'numberoffiles',
+      aliases: ['NUMBEROFFILES', '文件数', '檔案數'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'numberofpages',
+      aliases: ['NUMBEROFPAGES', '页面数', '頁面數'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'numberofusers',
+      aliases: ['NUMBEROFUSERS', '用户数', '使用者人數量'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'padleft',
+      aliases: ['PADLEFT', '左填充'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'padright',
+      aliases: ['PADRIGHT', '右填充'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'pageid',
+      aliases: ['PAGEID', '页面ID', '頁面ID'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'pagelanguage',
+      aliases: ['PAGELANGUAGE'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'pagename',
+      aliases: ['PAGENAME', '页名', '页面名', '页面名称', '頁面名稱'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'pagenamee',
+      aliases: ['PAGENAMEE', '页面名等同', '页面名称等同'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'pagesincategory',
+      aliases: ['PAGESINCATEGORY', 'PAGESINCAT', '分类中页面数'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'pagesincategory_all',
+      aliases: ['all', '所有'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'pagesincategory_files',
+      aliases: ['files', '文件', '檔案'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'pagesincategory_pages',
+      aliases: ['pages', '页面', '頁面'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'pagesincategory_subcats',
+      aliases: ['subcats', '子分类'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'pagesinnamespace',
+      aliases: ['PAGESINNAMESPACE:', 'PAGESINNS:', '名字空间中页面数:'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'pagesize',
+      aliases: ['PAGESIZE', '页面大小'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'plural',
+      aliases: ['PLURAL:', '复数:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'protectionexpiry',
+      aliases: ['PROTECTIONEXPIRY'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'protectionlevel',
+      aliases: ['PROTECTIONLEVEL', '保护级别'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'raw',
+      aliases: ['RAW:', '原始:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'rawsuffix',
+      aliases: ['R'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'redirect',
+      aliases: ['#REDIRECT', '#重定向', '#重新導向'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'revisionday',
+      aliases: ['REVISIONDAY', '修订日'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'revisionday2',
+      aliases: ['REVISIONDAY2', '修订日2'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'revisionid',
+      aliases: ['REVISIONID', '修订ID'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'revisionmonth',
+      aliases: ['REVISIONMONTH', '修订月'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'revisionmonth1',
+      aliases: ['REVISIONMONTH1', '修订月1'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'revisionsize',
+      aliases: ['REVISIONSIZE', '修订大小'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'revisiontimestamp',
+      aliases: ['REVISIONTIMESTAMP', '修订时间戳'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'revisionuser',
+      aliases: ['REVISIONUSER', '修订用户', '修訂使用者'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'revisionyear',
+      aliases: ['REVISIONYEAR', '修订年'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'rootpagename',
+      aliases: ['ROOTPAGENAME', '根页面名称', '根頁面名稱'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'rootpagenamee',
+      aliases: ['ROOTPAGENAMEE', '根页面名称等同', '根頁面名稱E'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'safesubst',
+      aliases: ['SAFESUBST:', '安全替代:', '安全替換:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'scriptpath',
+      aliases: ['SCRIPTPATH', '脚本路径'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'server',
+      aliases: ['SERVER', '服务器', '伺服器'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'servername',
+      aliases: ['SERVERNAME', '服务器名', '伺服器名稱'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'sitename',
+      aliases: ['SITENAME', '站点名称', '網站名稱'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'special',
+      aliases: ['special', '特殊'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'speciale',
+      aliases: ['speciale', '特殊等同'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'staticredirect',
+      aliases: ['__STATICREDIRECT__', '__静态重定向__', '__靜態重新導向__'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'stylepath',
+      aliases: ['STYLEPATH', '样式路径'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'subjectpagename',
+      aliases: ['SUBJECTPAGENAME', 'ARTICLEPAGENAME', '主名字空间页面名称', '条目页面名称'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'subjectpagenamee',
+      aliases: [
+        'SUBJECTPAGENAMEE',
+        'ARTICLEPAGENAMEE',
+        '主名字空间页面名称等同',
+        '条目页面名称等同',
+      ],
+      'case-sensitive': true,
+    },
+    {
+      name: 'subjectspace',
+      aliases: ['SUBJECTSPACE', 'ARTICLESPACE', '主名字空间', '条目名字空间'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'subjectspacee',
+      aliases: ['SUBJECTSPACEE', 'ARTICLESPACEE', '主名字空间等同', '条目名字空间等同'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'subpagename',
+      aliases: ['SUBPAGENAME', '子页面名称'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'subpagenamee',
+      aliases: ['SUBPAGENAMEE', '子页面名称等同'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'subst',
+      aliases: ['SUBST:', '替代:', '替換:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'tag',
+      aliases: ['tag', '标记'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'talkpagename',
+      aliases: ['TALKPAGENAME', '讨论页面名称', '对话页面名称'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'talkpagenamee',
+      aliases: ['TALKPAGENAMEE', '讨论页面名称等同', '对话页面名称等同'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'talkspace',
+      aliases: ['TALKSPACE', '讨论空间', '讨论名字空间', '對話空間'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'talkspacee',
+      aliases: ['TALKSPACEE', '讨论空间等同', '讨论名字空间等同'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'toc',
+      aliases: ['__TOC__', '__目录__', '__目錄__'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'uc',
+      aliases: ['UC:', '大写:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'ucfirst',
+      aliases: ['UCFIRST:', '大写首字:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'urlencode',
+      aliases: ['URLENCODE:', 'URL编码:'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'url_path',
+      aliases: ['PATH', '路径'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'url_query',
+      aliases: ['QUERY', '查询', '查詢'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'url_wiki',
+      aliases: ['WIKI'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'categorytree',
+      aliases: ['分类树', '分類樹', 'categorytree'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'archivedtalk',
+      aliases: ['__已存档讨论__', '__ARCHIVEDTALK__'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'notalk',
+      aliases: ['__禁用讨论__', '__NOTALK__'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'disambiguation',
+      aliases: ['__消除歧义__', '__DISAMBIG__'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'ifexpr',
+      aliases: ['若表达式', '若表達式', 'ifexpr'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'time',
+      aliases: ['时间', '時間', 'time'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'timel',
+      aliases: ['时间l', '時間L', 'timel'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'titleparts',
+      aliases: ['标题组成部分', 'titleparts'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'urldecode',
+      aliases: ['url解码', 'URI解碼', 'urldecode'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'invoke',
+      aliases: ['调用', '調動', 'invoke'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'img',
+      aliases: ['img'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'timef',
+      aliases: ['timef'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'timefl',
+      aliases: ['timefl'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'timef-time',
+      aliases: ['time'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'timef-date',
+      aliases: ['date'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'timef-both',
+      aliases: ['both'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'timef-pretty',
+      aliases: ['pretty'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'rel2abs',
+      aliases: ['rel2abs'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'choose',
+      aliases: ['choose'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'related',
+      aliases: ['related'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'timedmedia_thumbtime',
+      aliases: ['thumbtime=$1'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'timedmedia_starttime',
+      aliases: ['start=$1'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'timedmedia_endtime',
+      aliases: ['end=$1'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'timedmedia_disablecontrols',
+      aliases: ['disablecontrols=$1'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'timedmedia_loop',
+      aliases: ['loop'],
+      'case-sensitive': false,
+    },
+    {
+      name: 'timedmedia_muted',
+      aliases: ['muted'],
+      'case-sensitive': false,
+    },
+    {
+      name: '=',
+      aliases: ['='],
+      'case-sensitive': true,
+    },
+    {
+      name: 'bcp47',
+      aliases: ['#bcp47'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'dir',
+      aliases: ['#dir'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'expectunusedtemplate',
+      aliases: ['__EXPECTUNUSEDTEMPLATE__'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'formal',
+      aliases: ['#FORMAL:'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'language_option_bcp47',
+      aliases: ['bcp47'],
+      'case-sensitive': true,
+    },
+    {
+      name: 'userlanguage',
+      aliases: ['USERLANGUAGE'],
+      'case-sensitive': true,
+    },
+  ],
+  userinfo: MOCK_MW_USER_INFO,
+}
+export const MOCK_MW_PAGEINFO = {
+  pages: [
+    {
+      pageid: 1,
+      ns: 0,
+      title: 'Example',
+      contentmodel: 'wikitext',
+      pagelanguage: 'zh',
+      pagelanguagehtmlcode: 'zh',
+      pagelanguagedir: 'ltr',
+      touched: '2025-10-05T08:00:00Z',
+      lastrevid: 233,
+      length: 10296,
+      protection: [],
+      restrictiontypes: ['edit', 'move'],
+      fullurl: 'http://localhost:8000/Example',
+      editurl: 'http://localhost:8000/index.php?title=Example&action=edit',
+      canonicalurl: 'http://localhost:8000/Example',
+      varianttitles: {
+        zh: 'Example',
+        'zh-hans': 'Example',
+        'zh-hant': 'Example',
+        'zh-cn': 'Example',
+        'zh-hk': 'Example',
+        'zh-tw': 'Example',
+      },
+      actions: {
+        edit: true,
+        move: true,
+        delete: false,
+      },
+      templates: [
+        {
+          ns: 10,
+          title: 'Template:Example',
+        },
+      ],
+      images: [
+        {
+          ns: 6,
+          title: 'File:Example.jpg',
+        },
+      ],
+      revisions: [
+        {
+          revid: 233,
+          parentid: 232,
+          user: '机智的小鱼君',
+          userid: 316917,
+          timestamp: '2025-10-05T08:00:00Z',
+          contentformat: 'text/x-wiki',
+          contentmodel: 'wikitext',
+          content: '{{Example|你好，世界}}\n\n[[File:Example.jpg|thumb]]\n\n快来编辑这个条目吧！',
+        },
+      ],
+    },
+  ],
+}
+
+export const mockToken = () => `${crypto.randomUUID()}+\\`
+export const MOCK_MW_TOKENS = {
+  csrf: mockToken(),
+  login: mockToken(),
+  patrol: mockToken(),
+  rollback: mockToken(),
+  userrights: mockToken(),
+  watch: mockToken(),
+}
+
+// Mock session storage
+const mockSessions: Record<string, { authenticated: boolean; created: number }> = {}
+const createSessionId = () => `session_${crypto.randomUUID()}`
+
+const defineMwResponse = <T = any>(data: MwApiResponse<T>): MwApiResponse<T> => {
+  return data
+}
+
+const mockApi = new Hono()
+mockApi.all('/api.php', async (c) => {
+  const query = c.req.query()
+  const body = await c.req.parseBody()
+  const data = {
+    ...query,
+    ...body,
+  }
+
+  console.info('[mockFetch]', c.req.method, c.req.path, data)
+
+  const action = data.action
+  switch (action) {
+    case 'query':
+      return handleQuery(data, c)
+    case 'parse':
+      return handleParse(data)
+    case 'edit':
+      return handleEdit(data, c)
+    default:
+      return c.json(
+        defineMwResponse({ error: { code: 'not_implemented', info: 'Not implemented' } }),
+        404
+      )
+  }
+})
+
+// Mock storage for pages and revisions
+const mockPages: Record<string, { pageid: number; title: string; revisions: any[] }> = {}
+let nextPageId = 1000
+let nextRevId = 2000
+
+const handleQuery = (data: Record<string, any>, c: Context) => {
+  const response = defineMwResponse({
+    query: {} as Record<string, any>,
+  })
+
+  if (data.meta?.includes('siteinfo') || data.meta?.includes('userinfo')) {
+    response.query = { ...MOCK_MW_METADATA }
+  }
+
+  if (data.prop?.includes('info')) {
+    response.query = { ...MOCK_MW_PAGEINFO }
+  }
+
+  return Response.json(response)
+}
+
+const handleParse = (data: Record<string, any>) => {
+  return Response.json(
+    defineMwResponse({
+      error: {
+        code: 'unknown_error',
+        info: 'Unknown error',
+      },
+    })
+  )
+}
+
+const handleEdit = (data: Record<string, any>, c: Context) => {
+  const { title, text, summary } = data
+
+  // Get or create page
+  let page = mockPages[title]
+  if (!page) {
+    page = {
+      pageid: nextPageId++,
+      title: title,
+      revisions: [],
+    }
+    mockPages[title] = page
+  }
+
+  // Create new revision
+  const newRevId = nextRevId++
+  const revision = {
+    revid: newRevId,
+    userid: MOCK_MW_USER_INFO.id,
+    content: text,
+    summary: summary || '',
+    timestamp: new Date().toISOString(),
+  }
+  page.revisions.push(revision)
+
+  return Response.json({
+    edit: {
+      result: 'Success',
+      pageid: page.pageid,
+      title: page.title,
+      newrevid: newRevId,
+      oldrevid: page.revisions.length > 1 ? page.revisions[page.revisions.length - 2].revid : 0,
+    },
+  })
+}
+
+export const mockFetch = async (
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> => {
+  const req = new Request(input, init)
+  const res = await mockApi.fetch(req)
+  return res
+}

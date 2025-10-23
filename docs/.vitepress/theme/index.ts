@@ -37,7 +37,7 @@ export default {
       // https://vitepress.dev/guide/extending-default-theme#layout-slots
     })
   },
-  enhanceApp({ app, router, siteData }) {
+  async enhanceApp({ app, router, siteData }) {
     app.component('IpeVersion', IpeVersion)
     app.component('DateFormat', DateFormat)
 
@@ -106,6 +106,13 @@ export default {
         defer: true,
       })
       container.appendChild(script)
+    }
+
+    // Mock InPageEdit
+    if (typeof window !== 'undefined') {
+      import('./__mock__/mockInPageEdit.js').then(({ useMockInPageEdit }) => {
+        window.ipe = useMockInPageEdit()
+      })
     }
   },
 } satisfies Theme
