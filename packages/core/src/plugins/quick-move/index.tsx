@@ -62,7 +62,7 @@ export class PluginQuickMove extends BasePlugin {
         </svg>
       ),
       tooltip: 'Quick Move',
-      group: 'group2',
+      group: 'group1',
       onClick: () => {
         this.quickMove(
           canEdit

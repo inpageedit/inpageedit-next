@@ -42,7 +42,7 @@ export class WikiPage {
   }
 
   // Utils
-  async getPageInfo(payload: MwApiParams) {
+  async fetchPageInfo(payload: MwApiParams) {
     const {
       data: {
         query: {
@@ -182,8 +182,8 @@ export class WikiPage {
   userCanEdit() {
     return this.userCan('edit')
   }
-  async refetch() {
-    const pageInfo = await this.getPageInfo({
+  async reloadSelfInfo() {
+    const pageInfo = await this.fetchPageInfo({
       pageids: this.pageInfo.pageid,
       titles: this.pageInfo.title,
     })

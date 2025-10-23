@@ -228,7 +228,9 @@ export class PluginQuickEdit extends BasePlugin {
     if (wikiPage.pageInfo.pageid && wikiPage.pageInfo.lastrevid !== wikiPage.revisions[0]?.revid) {
       editNotices.push(
         <MBox title="Attention" type="warning">
-          <p>You are editing a revision that is not the latest.</p>
+          <p>
+            You are editing a <em>historical version</em>; the content is not the latest!
+          </p>
         </MBox>
       )
     }
@@ -466,6 +468,8 @@ export class PluginQuickEdit extends BasePlugin {
       tooltip: 'Edit this page quickly',
       onClick: () =>
         this.showModal({
+          title: this.ctx.sitemeta.mwConfig.get('wgPageName'),
+          pageId: this.ctx.sitemeta.mwConfig.get('wgArticleId'),
           revision: this.ctx.sitemeta.mwConfig.get('wgRevisionId'),
         }),
     })

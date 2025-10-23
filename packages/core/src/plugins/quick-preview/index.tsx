@@ -4,10 +4,16 @@ import { WikiPage } from '@/models/WikiPage'
 import { MwApiParams } from 'wiki-saikou'
 import { PageParseData } from '@/models/WikiPage/types/PageParseData'
 import { IPEModal } from '@/services/ModalService/IPEModal.js'
+import { QuickDeleteInitPayload } from '../quick-delete/index.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickPreview: PluginQuickPreview['quickPreview']
+    quickPreview: PluginQuickPreview & {
+      // for backward compatibility
+      (
+        ...args: Parameters<PluginQuickPreview['previewWikitext']>
+      ): ReturnType<PluginQuickPreview['previewWikitext']>
+    }
   }
   interface Events {
     'quick-preview/show-modal'(payload: {
@@ -30,39 +36,20 @@ declare module '@/InPageEdit' {
 export class PluginQuickPreview extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quickPreview')
+    this.ctx.set('quickPreview', makeCallable(this, 'previewWikitext'))
   }
 
   protected start(): Promise<void> | void {
-    this.ctx.set('quickPreview', this.quickPreview.bind(this))
     this.ctx.on('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
+    this.ctx.on('quick-delete/wiki-page', this.injectQuickDelete.bind(this))
   }
 
   protected stop(): Promise<void> | void {
     this.ctx.off('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
+    this.ctx.off('quick-delete/wiki-page', this.injectQuickDelete.bind(this))
   }
 
-  private injectQuickEdit({ ctx, modal, wikiPage }: QuickEditInitPayload) {
-    let latestPreviewModal: IPEModal | undefined = undefined
-    modal.addButton(
-      {
-        label: 'Preview',
-        side: 'left',
-        className: 'btn btn-secondary',
-        method: () => {
-          latestPreviewModal = this.quickPreview(
-            (modal.get$content().querySelector<HTMLTextAreaElement>('textarea[name="text"]')
-              ?.value as string) || '',
-            undefined,
-            wikiPage,
-            latestPreviewModal
-          )
-        },
-      },
-      2
-    )
-  }
-
-  quickPreview(text: string, params?: MwApiParams, wikiPage?: WikiPage, modal?: IPEModal) {
+  previewWikitext(text: string, params?: MwApiParams, wikiPage?: WikiPage, modal?: IPEModal) {
     wikiPage ||= this.ctx.wikiPage.newBlankPage({
       title: 'API',
     })
@@ -128,5 +115,40 @@ export class PluginQuickPreview extends BasePlugin {
       })
 
     return modal
+  }
+
+  private injectQuickEdit({ ctx, modal, wikiPage }: QuickEditInitPayload) {
+    let latestPreviewModal: IPEModal | undefined = undefined
+    modal.addButton(
+      {
+        label: 'Preview',
+        side: 'left',
+        className: 'btn btn-secondary',
+        method: () => {
+          latestPreviewModal = this.previewWikitext(
+            (modal.get$content().querySelector<HTMLTextAreaElement>('textarea[name="text"]')
+              ?.value as string) || '',
+            undefined,
+            wikiPage,
+            latestPreviewModal
+          )
+        },
+      },
+      2
+    )
+  }
+
+  private injectQuickDelete({ ctx, modal, wikiPage }: QuickDeleteInitPayload) {
+    modal.addButton(
+      {
+        label: 'Preview',
+        side: 'left',
+        className: 'btn btn-secondary',
+        method: () => {
+          this.logger.warn('To be implemented: preview wikitext for quick delete')
+        },
+      },
+      2
+    )
   }
 }
