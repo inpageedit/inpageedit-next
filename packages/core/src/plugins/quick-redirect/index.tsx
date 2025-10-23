@@ -54,6 +54,7 @@ export class PluginQuickRedirect extends BasePlugin {
         ) as HTMLElement,
         tooltip: 'Quick Redirect',
         group: 'group1',
+        index: 2,
         onClick: () => {
           this.quickRedirect(
             canEdit
