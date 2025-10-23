@@ -11,6 +11,13 @@ import { WikiTitleService } from '@/services/WikiTitleService.js'
 import '@/styles/index.scss'
 import { FexiosConfigs } from 'fexios'
 
+export interface InPageEditCoreConfig {
+  apiConfigs: Partial<FexiosConfigs>
+  legacyPreferences: Record<string, any>
+  logLevel: number
+  autoloadStyles: boolean
+}
+
 /**
  * ✏️ InPageEdit NEXT
  *
@@ -29,6 +36,7 @@ export class InPageEdit extends Context {
     apiConfigs: {},
     legacyPreferences: {},
     logLevel: import.meta.env.DEV ? LoggerLevel.debug : LoggerLevel.info,
+    autoloadStyles: true,
   }
   Endpoints = Endpoints
   readonly schema = Schema
@@ -118,10 +126,13 @@ export class InPageEdit extends Context {
   // TODO: 应该抽象到 PluginTheme 中去，暂时先硬编码
   async #initCoreAssets() {
     this.inject(['resourceLoader'], (ctx) => {
-      if (import.meta.env.PROD && import.meta.env.VITE_BUILD_FORMAT === 'import') {
+      if (
+        import.meta.env.PROD &&
+        import.meta.env.VITE_BUILD_FORMAT === 'import' &&
+        this.config.autoloadStyles
+      ) {
         ctx.resourceLoader.loadStyle(import.meta.resolve('./style.css'))
       }
-      // ctx.resourceLoader.loadStyle(`${Endpoints.PLUGIN_CDN_BASE}/skins/ipe-default.css`)
     })
   }
 
@@ -132,12 +143,6 @@ export class InPageEdit extends Context {
     })
     return promise
   }
-}
-
-export interface InPageEditCoreConfig {
-  apiConfigs: Partial<FexiosConfigs>
-  legacyPreferences: Record<string, any>
-  logLevel: number
 }
 
 // 导出依赖包以便用户使用

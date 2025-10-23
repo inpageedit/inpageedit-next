@@ -13,10 +13,6 @@
   ],
   "exports": {
     "./package.json": "./package.json",
-    "./src/*": {
-      "source": "./src/*",
-      "types": "./src/*"
-    },
     ".": {
       "source": "./src/index.ts",
       "types": "./dist/index.d.ts",
@@ -26,6 +22,7 @@
       "source": "./src/InPageEdit.ts",
       "types": "./dist/InPageEdit.d.ts"
     },
+    "./style.css": "./dist/style.css",
     "./components": {
       "types": "./dist/components/index.d.ts",
       "import": "./dist/components/index.js"
@@ -41,6 +38,14 @@
     },
     "./types/*": {
       "types": "./dist/services/*.d.ts"
+    },
+    "./src/*": {
+      "source": "./src/*",
+      "types": "./src/*"
+    },
+    "./dist/*": {
+      "source": "./dist/*",
+      "types": "./dist/*"
     }
   },
   "scripts": {

@@ -1,4 +1,5 @@
 import { InPageEdit } from '@inpageedit/core'
+import '@inpageedit/core/style.css'
 import { MOCK_API_ENDPOINT_URL, mockFetch } from './mockMwApi.ts'
 import { useMockMwConfig } from './mockMwConfig.ts'
 import { MockMwHook } from './mockMwGlobal.ts'
@@ -17,6 +18,7 @@ export const useMockInPageEdit = () => {
   }
 
   const ipe = new InPageEdit({
+    autoloadStyles: false,
     apiConfigs: {
       baseURL: MOCK_API_ENDPOINT_URL.toString(),
       fetch: mockFetch,
