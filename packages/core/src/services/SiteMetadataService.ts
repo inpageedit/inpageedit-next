@@ -1,4 +1,4 @@
-import { Inject, InPageEdit, Service } from '@/InPageEdit'
+import { Inject, InPageEdit, Logger, Service } from '@/InPageEdit'
 import { SiteMetadata, SiteUserBlockInfo } from '@/types/SiteMetadata'
 import { IPEStorageManager } from './StorageService'
 
@@ -14,6 +14,7 @@ export class SiteMetadataService extends Service {
   private readonly CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
   private readonly VERSION = 2
   private db: IPEStorageManager<SiteMetadata>
+  private logger: Logger
   private queryData = {
     meta: 'siteinfo|userinfo',
     siprop: 'general|specialpagealiases|namespacealiases|namespaces|magicwords',
@@ -23,9 +24,8 @@ export class SiteMetadataService extends Service {
   constructor(public ctx: InPageEdit) {
     super(ctx, 'sitemeta', false)
     this.db = ctx.storage.createDatabse<SiteMetadata>('sitemeta', this.CACHE_TTL, this.VERSION)
+    this.logger = ctx.logger('SiteMetadataService')
   }
-
-  logger = this.ctx.logger('SiteMetadataService')
 
   get api() {
     return this.ctx.api
