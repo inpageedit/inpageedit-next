@@ -167,7 +167,7 @@ export class PluginQuickDiffCore extends BasePlugin {
           return latestDiffModal
         },
       },
-      1
+      2
     )
   }
 

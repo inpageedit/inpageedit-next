@@ -134,7 +134,7 @@ export class PluginQuickPreview extends BasePlugin {
           )
         },
       },
-      2
+      1
     )
   }
 
