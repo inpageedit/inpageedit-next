@@ -125,6 +125,7 @@
   gap: 0.5em;
   list-style: none;
   margin: 0;
+  pointer-events: none;
 }
 
 #ipe-edit-toolbox .btn-group.group1 {
@@ -141,6 +142,7 @@
 #ipe-edit-toolbox.is-persistent .btn-group,
 #ipe-edit-toolbox.is-hovered .btn-group {
   visibility: visible;
+  pointer-events: auto;
 }
 
 #ipe-edit-toolbox .btn-tip-group .btn-tip {

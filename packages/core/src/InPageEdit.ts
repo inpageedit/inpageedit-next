@@ -9,6 +9,7 @@ import { StorageService } from '@/services/StorageService.js'
 import { WikiPageService } from '@/services/WikiPageService.js'
 import { WikiTitleService } from '@/services/WikiTitleService.js'
 import '@/styles/index.scss'
+import { FexiosConfigs } from 'fexios'
 
 /**
  * ✏️ InPageEdit NEXT
@@ -25,7 +26,7 @@ export class InPageEdit extends Context {
 
   public config: InPageEditCoreConfig
   static DEFAULT_CONFIG: InPageEditCoreConfig = {
-    baseURL: '',
+    apiConfigs: {},
     legacyPreferences: {},
     logLevel: import.meta.env.DEV ? LoggerLevel.debug : LoggerLevel.info,
   }
@@ -52,7 +53,7 @@ export class InPageEdit extends Context {
   }
 
   async #initCoreServices() {
-    this.plugin(ApiService, { baseURL: this.config.baseURL })
+    this.plugin(ApiService, this.config.apiConfigs)
     this.plugin(ResourceLoaderService)
     this.plugin(ModalService)
     this.plugin(StorageService)
@@ -134,7 +135,7 @@ export class InPageEdit extends Context {
 }
 
 export interface InPageEditCoreConfig {
-  baseURL: string | URL
+  apiConfigs: Partial<FexiosConfigs>
   legacyPreferences: Record<string, any>
   logLevel: number
 }

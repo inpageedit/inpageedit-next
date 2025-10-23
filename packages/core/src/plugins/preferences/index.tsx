@@ -22,7 +22,7 @@ export interface InPageEditPreferenceUIRegistryItem {
   category: string
 }
 
-@Inject(['sitemeta', 'storage'])
+@Inject(['storage'])
 export class PluginPreferences extends BasePlugin {
   private db: IPEStorageManager<any>
   public customRegistries: InPageEditPreferenceUIRegistryItem[] = []

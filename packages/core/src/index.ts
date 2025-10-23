@@ -21,7 +21,9 @@ async function autoload() {
 
   const oldGlobalVar: any = window.InPageEdit || {}
   const ipe = new IPECore({
-    baseURL: window.mw?.util.wikiScript('api'),
+    apiConfigs: {
+      baseURL: window.mw?.util.wikiScript('api'),
+    },
     legacyPreferences: oldGlobalVar?.myPreferences || {},
   })
 
@@ -29,11 +31,13 @@ async function autoload() {
   window.InPageEdit = IPECore
   window.ipe = ipe
 
-  // Trigger the mw.hook
-  window.mw.hook('InPageEdit.ready').fire(ipe)
-
   // Start the App
   await ipe.start()
+
+  // Trigger the mw.hook
+  if (typeof window?.mw?.hook === 'function') {
+    window.mw.hook('InPageEdit.ready').fire(ipe)
+  }
 
   // Initialize global modules
   if (Array.isArray(window.__IPE_MODULES__)) {

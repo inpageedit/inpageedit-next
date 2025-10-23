@@ -66,6 +66,7 @@
   // textarea
   --textarea-height: 50vh;
   --textarea-min-height: 20em;
+  --textarea-background: var(--color-bg-lighter);
 
   // 行高
   --line-height-input: 1.5em;
@@ -100,6 +101,7 @@
     width: 100%;
     height: var(--textarea-height);
     min-height: var(--textarea-min-height);
+    background: var(--textarea-background);
     resize: vertical;
     border: var(--border-width) solid var(--color-border-input);
     border-radius: var(--border-radius-input);
