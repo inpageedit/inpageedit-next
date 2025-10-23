@@ -177,14 +177,17 @@ const specialPageUtils = {
    * 查找特殊页面的真实名称
    */
   findSpecialPageRealName: (name: string, index: SpecialPageIndex): string | null => {
+    // 提取主部分（忽略子页面）
+    const mainPart = name.split('/')[0]
+
     // 首先尝试原始输入（精确匹配）
-    let result = index.byRealName.get(name) ?? index.byAlias.get(name)
+    let result = index.byRealName.get(mainPart) ?? index.byAlias.get(mainPart)
     if (result !== undefined) {
       return result
     }
 
     // 标准化输入并查找
-    const normalized = specialPageUtils.normalizeSpecialPageName(name)
+    const normalized = specialPageUtils.normalizeSpecialPageName(mainPart)
     return index.byNormalized.get(normalized) ?? null
   },
 }
@@ -282,7 +285,7 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
     private _ns: number
 
     constructor(title: string, namespace?: number) {
-      this._title = title
+      this._title = title || ''
       this._ns = namespace ?? 0
 
       // 只有在没有显式命名空间参数时才解析标题中的命名空间前缀
@@ -326,14 +329,19 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
     getMainDBKey(): string {
       const nsInfo = this.getNamespaceInfo()
 
-      // 如果是特殊页面，返回真实名称的 dbkey
+      // 如果是特殊页面，将主部分替换为真实名称，保留子页面部分
       if (this._ns === -1) {
         const realName = specialPageUtils.findSpecialPageRealName(
           this._title,
           WikiTitle._specialPageIndex
         )
         if (realName) {
-          return titleUtils.ensureCase(titleUtils.toDBKey(realName), nsInfo.case)
+          // 构建包含子页面的完整标题
+          const subPage = this._title.includes('/')
+            ? this._title.substring(this._title.indexOf('/'))
+            : ''
+          const fullTitle = realName + subPage
+          return titleUtils.ensureCase(titleUtils.toDBKey(fullTitle), nsInfo.case)
         }
       }
 
@@ -343,18 +351,27 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
     getMainText(): string {
       const nsInfo = this.getNamespaceInfo()
 
-      // 如果是特殊页面，返回真实名称
+      // 如果是特殊页面，将主部分替换为真实名称，保留子页面部分
       if (this._ns === -1) {
         const realName = specialPageUtils.findSpecialPageRealName(
           this._title,
           WikiTitle._specialPageIndex
         )
         if (realName) {
-          return titleUtils.ensureCase(titleUtils.toNormalText(realName), nsInfo.case)
+          // 构建包含子页面的完整标题
+          const subPage = this._title.includes('/')
+            ? this._title.substring(this._title.indexOf('/'))
+            : ''
+          const fullTitle = realName + subPage
+          return titleUtils.ensureCase(titleUtils.toNormalText(fullTitle), nsInfo.case)
         }
       }
 
       return titleUtils.ensureCase(titleUtils.toNormalText(this._title), nsInfo.case)
+    }
+
+    private getMainRootText(): string {
+      return this.getMainText().split('/')[0]
     }
 
     getPrefixedDBKey(): string {
@@ -476,7 +493,7 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
         return false
       }
       const targetTitle = new WikiTitle(alia, -1)
-      return this.equals(targetTitle)
+      return this.getMainRootText() === targetTitle.getMainRootText()
     }
   }
 

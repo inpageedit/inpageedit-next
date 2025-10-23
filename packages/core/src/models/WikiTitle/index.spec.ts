@@ -346,6 +346,28 @@ describe('WikiTitle', () => {
       expect(title.getPrefixedDBKey()).toBe('Special:Userlogin')
     })
 
+    it('应该正确处理特殊页面别名和子页面', () => {
+      // 使用测试数据中的特殊页面别名：编辑 -> EditPage
+      const title = new WikiTitle('Special:编辑/页面')
+
+      // 应该返回真实名称 + 子页面
+      expect(title.getMainText()).toBe('EditPage/页面')
+      expect(title.getMainDBKey()).toBe('EditPage/页面')
+      expect(title.getPrefixedText()).toBe('Special:EditPage/页面')
+      expect(title.getPrefixedDBKey()).toBe('Special:EditPage/页面')
+    })
+
+    it('应该正确处理特殊页面别名和复杂子页面路径', () => {
+      // 使用测试数据中的特殊页面别名：编辑 -> EditPage
+      const title = new WikiTitle('Special:编辑/foo/bar/baz')
+
+      // 应该返回真实名称 + 完整子页面路径
+      expect(title.getMainText()).toBe('EditPage/foo/bar/baz')
+      expect(title.getMainDBKey()).toBe('EditPage/foo/bar/baz')
+      expect(title.getPrefixedText()).toBe('Special:EditPage/foo/bar/baz')
+      expect(title.getPrefixedDBKey()).toBe('Special:EditPage/foo/bar/baz')
+    })
+
     it('应该正确处理特殊页面的大小写不敏感', () => {
       const title1 = new WikiTitle('Special:UsErLoGiN')
       const title2 = new WikiTitle('Special:userlogin')
@@ -370,6 +392,30 @@ describe('WikiTitle', () => {
       // 不应该识别其他特殊页面
       expect(title.isSpecial('diff')).toBe(false)
       expect(title.isSpecial('edit')).toBe(false)
+    })
+
+    it('isSpecial 方法应该正确处理特殊页面子页面', () => {
+      const title = new WikiTitle('Special:Edit/foo')
+
+      // 应该识别主特殊页面
+      expect(title.isSpecial('edit')).toBe(true)
+      expect(title.isSpecial('Edit')).toBe(true)
+      expect(title.isSpecial('EDIT')).toBe(true)
+
+      // 不应该识别其他特殊页面
+      expect(title.isSpecial('login')).toBe(false)
+      expect(title.isSpecial('diff')).toBe(false)
+    })
+
+    it('isSpecial 方法应该处理复杂的子页面路径', () => {
+      const title = new WikiTitle('Special:Edit/foo/bar/baz')
+
+      // 应该识别主特殊页面
+      expect(title.isSpecial('edit')).toBe(true)
+      expect(title.isSpecial('Edit')).toBe(true)
+
+      // 不应该识别其他特殊页面
+      expect(title.isSpecial('login')).toBe(false)
     })
 
     it('isSpecial 方法应该处理非特殊页面', () => {
