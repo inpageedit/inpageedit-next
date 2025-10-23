@@ -48,7 +48,9 @@ export interface QuickDeleteSubmitPayload {
     deleteReason: Schema.string()
       .description('Default delete reason for quick delete')
       .default('[IPE-NEXT] Quick delete'),
-  }).description('Quick delete options')
+  })
+    .description('Quick delete options')
+    .extra('category', 'delete')
 )
 export class PluginQuickDelete extends BasePlugin {
   private readonly DEFAULT_OPTIONS: QuickDeleteOptions = {
@@ -70,6 +72,12 @@ export class PluginQuickDelete extends BasePlugin {
       ctx.on('dispose', () => {
         this.removeToolbox(ctx)
       })
+    })
+    this.ctx.preferences.defineCategory({
+      label: 'Delete',
+      name: 'delete',
+      description: 'Settings related to deleting pages',
+      index: 3,
     })
   }
 
