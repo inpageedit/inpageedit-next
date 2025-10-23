@@ -89,6 +89,9 @@ export class InPageEdit extends Context {
   // TODO: 这里不应该硬编码，暂时先这样
   async #initCorePlugins() {
     const plugins = [
+      import('@/plugins/in-article-links/index.js').then(
+        ({ PluginInArticleLinks }) => PluginInArticleLinks
+      ),
       import('@/plugins/preferences/index.js').then(({ PluginPreferences }) => PluginPreferences),
       import('@/plugins/quick-edit/index.js').then(({ PluginQuickEdit }) => PluginQuickEdit),
       import('@/plugins/quick-move/index.js').then(({ PluginQuickMove }) => PluginQuickMove),

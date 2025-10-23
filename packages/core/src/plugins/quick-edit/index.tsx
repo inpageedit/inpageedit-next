@@ -1,7 +1,6 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { WikiPage } from '@/models/WikiPage'
 import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
-import { PluginQuickEditInArticleLinks } from './PluginQuickEditInArticleLinks'
 import { IPEModal } from '@/services/ModalService/IPEModal'
 import { ReactNode } from 'jsx-dom'
 import { makeCallable } from '@/utils/makeCallable.js'
@@ -97,8 +96,6 @@ export class PluginQuickEdit extends BasePlugin {
         this.removeToolbox(ctx)
       })
     })
-
-    this.ctx.plugin(PluginQuickEditInArticleLinks)
   }
 
   async showModal(payload?: string | Partial<QuickEditOptions>) {

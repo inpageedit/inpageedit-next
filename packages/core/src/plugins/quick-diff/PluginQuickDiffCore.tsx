@@ -5,7 +5,7 @@ import { JsDiffDiffType } from './JsDiffService'
 import styles from './styles.module.sass'
 import { ChangeObject } from 'diff'
 import { DiffTable } from './components/DiffTable'
-import { IPEModal } from '@/services/ModalService/IPEModal.js'
+import { IPEModal, IPEModalOptions } from '@/services/ModalService/IPEModal.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -305,7 +305,11 @@ export class PluginQuickDiffCore extends BasePlugin {
     difftype: 'table',
   }
 
-  comparePages(options: Partial<CompareApiRequestOptions>, modal?: IPEModal) {
+  comparePages(
+    options: Partial<CompareApiRequestOptions>,
+    modal?: IPEModal,
+    modalOptions?: Partial<IPEModalOptions>
+  ) {
     if (!modal || modal.isDestroyed) {
       modal = this.ctx.modal
         .createObject({
@@ -314,6 +318,7 @@ export class PluginQuickDiffCore extends BasePlugin {
           className: 'quick-diff',
           backdrop: false,
           draggable: true,
+          ...modalOptions,
         })
         .init()
     }
