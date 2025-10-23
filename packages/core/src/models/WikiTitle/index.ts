@@ -116,6 +116,8 @@ export interface IWikiTitle {
    * e.g. "Special:Diff" is "差异" or "diff" -> true
    */
   isSpecial(alia: string): boolean
+
+  newTitle(title: string, namespace?: number): IWikiTitle
 }
 
 export interface WikiTitleConstructor {
@@ -293,6 +295,11 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
         this.fixNSByTitle()
       }
     }
+
+    static create(title: string, namespace?: number): WikiTitle {
+      return new WikiTitle(title, namespace)
+    }
+    newTitle = WikiTitle.create.bind(WikiTitle)
 
     private fixNSByTitle(): void {
       const colonIndex = this._title.indexOf(':')

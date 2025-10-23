@@ -144,10 +144,35 @@ export class PluginInArticleLinks extends BasePlugin<{
           }
           $el.dataset.ipeEditMounted = '1'
 
-          const titleText =
-            title.getNamespaceId() === -1
-              ? title.getMainDBKey().split('/').slice(1).join('/')
-              : title.getPrefixedDBKey()
+          const notCompatible = params.has('preload') || params.has('redo')
+          if (notCompatible) {
+            return this.ctx.logger.debug($el, `Not compatible with quick edit`)
+          }
+
+          let titleText: string
+          if (title.getNamespaceId() === -1) {
+            const sub = title.getMainDBKey().split('/').slice(1).join('/') || ''
+            if (title.isSpecial('edit')) {
+              titleText = sub
+            } else if (title.isSpecial('talkpage')) {
+              const talkPage = title.newTitle(sub).getTalkPage()
+              if (!talkPage) {
+                return this.ctx.logger.debug($el, `Talk page not found.`)
+              }
+              titleText = talkPage.getPrefixedDBKey()
+            } else if (title.isSpecial('mypage')) {
+              const userPage = title.newTitle(this.ctx.sitemeta.userInfo.name, 2)
+              titleText = userPage.getPrefixedDBKey() + (sub ? `/${sub}` : '')
+            } else if (title.isSpecial('mytalk')) {
+              const userTalkPage = title.newTitle(this.ctx.sitemeta.userInfo.name, 3)
+              titleText = userTalkPage.getPrefixedDBKey() + (sub ? `/${sub}` : '')
+            } else {
+              return this.ctx.logger.debug($el, `Special page cannot be edited`)
+            }
+          } else {
+            titleText = title.getPrefixedDBKey()
+          }
+
           const sectionRaw = params.get('section')?.replace(/^T-/, '') || undefined
           const revisionRaw = params.get('oldid')
           const createOnly = params.has('redlink')
@@ -167,10 +192,14 @@ export class PluginInArticleLinks extends BasePlugin<{
             revision,
             createOnly,
           }
+          const debugParamString = Object.entries(payload)
+            .filter(([key, value]) => value !== undefined)
+            .map(([key, value]) => `${key}=${encodeURIComponent(value as string)}`)
+            .join('&')
 
           const link = (
             <a
-              href={`#ipe://quick-edit?${new URLSearchParams(payload as Record<string, string>).toString()}`}
+              href={`#ipe://quick-edit?${debugParamString}`}
               className={`${this.config.linkClassName} ipe-quick-edit ${createOnly ? 'ipe-quick-edit--create-only' : ''}`}
               style={{
                 userSelect: 'none',
