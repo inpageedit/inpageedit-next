@@ -23,6 +23,17 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.6.0'>
+
+- feat: add quick delete plugin
+  - 我们添加了快速删除插件，现在你可以快速删除页面了！
+- refactor: in-article-links
+  - 我们重构了wiki链接解析逻辑，现在可以更轻松地获取并解析文章内的wiki链接
+- feat: + WikiTitle
+  - 添加了 `WikiTitle` 模型，它的用法类似 `mw.Title`，但不依赖 MediaWiki 环境，且更加强大
+
+</ChangeLog>
+
 <ChangeLog version='0.5.4'>
 
 - 更新了依赖，修复了一些小问题，提升了项目的整体质量。
