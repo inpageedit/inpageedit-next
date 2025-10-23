@@ -283,7 +283,7 @@ describe('WikiTitle', () => {
         { input: '  Template  ', expectedNs: 10 },
         { input: 'Template   ', expectedNs: 10 },
         { input: '   template', expectedNs: 10 },
-        
+
         // Template talk 命名空间的各种格式
         { input: 'Template talk', expectedNs: 11 },
         { input: 'template talk', expectedNs: 11 },
@@ -293,14 +293,14 @@ describe('WikiTitle', () => {
         { input: 'template  talk', expectedNs: 11 },
         { input: 'TEMPLATE   TALK', expectedNs: 11 },
         { input: 'tEmPlAtE   tAlK', expectedNs: 11 },
-        
+
         // User 命名空间
         { input: 'User', expectedNs: 2 },
         { input: 'user', expectedNs: 2 },
         { input: 'USER', expectedNs: 2 },
         { input: '  User  ', expectedNs: 2 },
         { input: 'User   ', expectedNs: 2 },
-        
+
         // User talk 命名空间
         { input: 'User talk', expectedNs: 3 },
         { input: 'user talk', expectedNs: 3 },
@@ -331,6 +331,63 @@ describe('WikiTitle', () => {
         title.setNamespaceText(input)
         expect(title.getNamespaceId()).toBe(expectedNs)
       })
+    })
+  })
+
+  describe('特殊页面别名测试', () => {
+    it('应该正确处理特殊页面别名', () => {
+      // 假设有特殊页面别名：登录 -> Userlogin
+      const title = new WikiTitle('Special:登录')
+
+      // 应该返回真实名称
+      expect(title.getMainText()).toBe('Userlogin')
+      expect(title.getMainDBKey()).toBe('Userlogin')
+      expect(title.getPrefixedText()).toBe('Special:Userlogin')
+      expect(title.getPrefixedDBKey()).toBe('Special:Userlogin')
+    })
+
+    it('应该正确处理特殊页面的大小写不敏感', () => {
+      const title1 = new WikiTitle('Special:UsErLoGiN')
+      const title2 = new WikiTitle('Special:userlogin')
+
+      expect(title1.getMainText()).toBe('Userlogin')
+      expect(title2.getMainText()).toBe('Userlogin')
+      expect(title1.getPrefixedText()).toBe('Special:Userlogin')
+      expect(title2.getPrefixedText()).toBe('Special:Userlogin')
+    })
+
+    it('isSpecial 方法应该正确识别特殊页面', () => {
+      const title = new WikiTitle('Special:登录')
+
+      // 应该识别各种别名
+      expect(title.isSpecial('登录')).toBe(true)
+      expect(title.isSpecial('login')).toBe(true)
+      expect(title.isSpecial('Login')).toBe(true)
+      expect(title.isSpecial('LOGIN')).toBe(true)
+      expect(title.isSpecial('Userlogin')).toBe(true)
+      expect(title.isSpecial('userlogin')).toBe(true)
+
+      // 不应该识别其他特殊页面
+      expect(title.isSpecial('diff')).toBe(false)
+      expect(title.isSpecial('edit')).toBe(false)
+    })
+
+    it('isSpecial 方法应该处理非特殊页面', () => {
+      const title = new WikiTitle('Template:Hello World')
+
+      // 非特殊页面应该返回 false
+      expect(title.isSpecial('login')).toBe(false)
+      expect(title.isSpecial('diff')).toBe(false)
+    })
+
+    it('应该处理不存在的特殊页面别名', () => {
+      const title = new WikiTitle('Special:Nonexistent')
+
+      // 不存在的别名应该保持原样
+      expect(title.getMainText()).toBe('Nonexistent')
+      expect(title.getMainDBKey()).toBe('Nonexistent')
+      expect(title.getPrefixedText()).toBe('Special:Nonexistent')
+      expect(title.getPrefixedDBKey()).toBe('Special:Nonexistent')
     })
   })
 

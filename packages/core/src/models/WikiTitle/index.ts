@@ -11,6 +11,13 @@ interface NamespaceIndex {
   byNormalized: Map<string, number> // 标准化索引：全小写+下划线格式
 }
 
+// 特殊页面别名索引
+interface SpecialPageIndex {
+  byRealName: Map<string, string> // realname -> realname
+  byAlias: Map<string, string> // alias -> realname
+  byNormalized: Map<string, string> // normalized -> realname
+}
+
 export interface IWikiTitle {
   /**
    * Get db key without namespace prefix
@@ -41,7 +48,7 @@ export interface IWikiTitle {
   toString: () => string
 
   /**
-   * Get namespace id
+   * Get namespace ID
    * e.g. "template:hello world" -> 10
    */
   getNamespaceId(): number
@@ -74,13 +81,13 @@ export interface IWikiTitle {
   getTalkPage(): IWikiTitle | null
 
   /**
-   * Get URL
+   * Get URL of the page
    * e.g. "template:hello world" -> "https://example.com/wiki/Template:Hello_world"
    */
   getURL(params?: Record<string, string> | URLSearchParams): URL
 
   /**
-   * Set title, reset dbkey and ns
+   * Reset current title with given title string
    */
   setTitle(title: string): IWikiTitle
 
@@ -90,16 +97,25 @@ export interface IWikiTitle {
   setMainText(mainTitle: string): IWikiTitle
 
   /**
-   * Set namespace text
+   * Set namespace by text
    */
   setNamespaceText(namespaceText: string): IWikiTitle
 
   /**
-   * Set namespace ID
+   * Set namespace by ID
    */
   setNamespaceId(namespaceId: number): IWikiTitle
 
+  /**
+   * Check if the title is equal to another title
+   */
   equals(other: IWikiTitle | string): boolean
+
+  /**
+   * Check if the title is specific special page
+   * e.g. "Special:Diff" is "差异" or "diff" -> true
+   */
+  isSpecial(alia: string): boolean
 }
 
 export interface WikiTitleConstructor {
@@ -116,6 +132,60 @@ const titleUtils = {
     } else {
       return text
     }
+  },
+}
+
+// 特殊页面工具函数
+const specialPageUtils = {
+  /**
+   * 标准化特殊页面名称：转换为全小写
+   */
+  normalizeSpecialPageName: (name: string): string => {
+    return name.toLowerCase()
+  },
+
+  /**
+   * 构建特殊页面别名索引
+   */
+  buildSpecialPageIndex: (metadata: SiteMetadata): SpecialPageIndex => {
+    const byRealName = new Map<string, string>()
+    const byAlias = new Map<string, string>()
+    const byNormalized = new Map<string, string>()
+
+    for (const specialPage of metadata.specialpagealiases) {
+      const realName = specialPage.realname
+      byRealName.set(realName, realName)
+
+      // 添加标准化索引
+      const normalizedRealName = specialPageUtils.normalizeSpecialPageName(realName)
+      byNormalized.set(normalizedRealName, realName)
+
+      // 处理别名
+      for (const alias of specialPage.aliases) {
+        byAlias.set(alias, realName)
+
+        // 添加标准化的别名索引
+        const normalizedAlias = specialPageUtils.normalizeSpecialPageName(alias)
+        byNormalized.set(normalizedAlias, realName)
+      }
+    }
+
+    return { byRealName, byAlias, byNormalized }
+  },
+
+  /**
+   * 查找特殊页面的真实名称
+   */
+  findSpecialPageRealName: (name: string, index: SpecialPageIndex): string | null => {
+    // 首先尝试原始输入（精确匹配）
+    let result = index.byRealName.get(name) ?? index.byAlias.get(name)
+    if (result !== undefined) {
+      return result
+    }
+
+    // 标准化输入并查找
+    const normalized = specialPageUtils.normalizeSpecialPageName(name)
+    return index.byNormalized.get(normalized) ?? null
   },
 }
 
@@ -198,10 +268,13 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
 
   // 预建命名空间索引
   const namespaceIndex = namespaceUtils.buildIndex(metadata)
+  // 预建特殊页面索引
+  const specialPageIndex = specialPageUtils.buildSpecialPageIndex(metadata)
 
   class WikiTitle implements IWikiTitle {
     static readonly _meta = metadata
     static readonly _namespaceIndex = namespaceIndex
+    static readonly _specialPageIndex = specialPageIndex
 
     /** 缓存的 main title，不包含命名空间前缀，大小写和空格状态不确定 */
     private _title: string
@@ -252,11 +325,35 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
 
     getMainDBKey(): string {
       const nsInfo = this.getNamespaceInfo()
+
+      // 如果是特殊页面，返回真实名称的 dbkey
+      if (this._ns === -1) {
+        const realName = specialPageUtils.findSpecialPageRealName(
+          this._title,
+          WikiTitle._specialPageIndex
+        )
+        if (realName) {
+          return titleUtils.ensureCase(titleUtils.toDBKey(realName), nsInfo.case)
+        }
+      }
+
       return titleUtils.ensureCase(titleUtils.toDBKey(this._title), nsInfo.case)
     }
 
     getMainText(): string {
       const nsInfo = this.getNamespaceInfo()
+
+      // 如果是特殊页面，返回真实名称
+      if (this._ns === -1) {
+        const realName = specialPageUtils.findSpecialPageRealName(
+          this._title,
+          WikiTitle._specialPageIndex
+        )
+        if (realName) {
+          return titleUtils.ensureCase(titleUtils.toNormalText(realName), nsInfo.case)
+        }
+      }
+
       return titleUtils.ensureCase(titleUtils.toNormalText(this._title), nsInfo.case)
     }
 
@@ -348,19 +445,11 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
       return this
     }
 
-    /**
-     * 设置主要标题，保持当前的 ns，更新 dbkey
-     * @param text 新的主要标题
-     */
     setMainText(text: string): this {
       this._title = text
       return this
     }
 
-    /**
-     * 设置命名空间文本
-     * @param namespaceText 命名空间文本
-     */
     setNamespaceText(namespaceText: string): this {
       const namespaceId = namespaceUtils.findNamespaceId(namespaceText, WikiTitle._namespaceIndex)
       if (namespaceId !== null) {
@@ -369,10 +458,6 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
       return this
     }
 
-    /**
-     * 设置命名空间 ID
-     * @param namespaceId 命名空间 ID
-     */
     setNamespaceId(namespaceId: number): this {
       this._ns = namespaceId
       return this
@@ -383,6 +468,15 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
         other = new WikiTitle(other)
       }
       return this.getPrefixedDBKey() === other.getPrefixedDBKey()
+    }
+
+    isSpecial(alia: string): boolean {
+      // 如果不是特殊页面命名空间，直接返回 false
+      if (this._ns !== -1) {
+        return false
+      }
+      const targetTitle = new WikiTitle(alia, -1)
+      return this.equals(targetTitle)
     }
   }
 
