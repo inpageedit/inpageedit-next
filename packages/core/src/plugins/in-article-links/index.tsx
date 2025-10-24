@@ -26,23 +26,35 @@ export interface InArticleWikiAnchorInfo extends InArticleWikiLinkInfo {
 
 @Inject(['sitemeta', 'wikiTitle'])
 export class PluginInArticleLinks extends BasePlugin<{
+  /**
+   * @example "https://example.com"
+   */
   wikiBaseUrl: string
+  /**
+   * Article path, with trailing slash
+   * @example "/wiki/" (if wgArticlePath is "/wiki/$1")
+   */
   wikiArticlePath: string
+  /**
+   * Article base URL, with trailing slash
+   * @example "https://example.com/wiki/" (if wgArticlePath is "/wiki/$1")
+   */
   wikiArticleBaseUrl: string
+  /**
+   * Script base URL, **without** trailing slash
+   * @example "https://example.com/w" (if wgScriptPath is "/w")
+   */
   wikiScriptBaseUrl: string
   linkClassName: string
 }> {
   constructor(ctx: InPageEdit) {
-    const mwConfig = ctx.sitemeta.mwConfig
-    const wikiArticlePath = mwConfig.get('wgArticlePath', '').replace('$1', '')
-    const wikiBaseUrl = `${location.protocol}//${mwConfig.get('wgServer', '').split('//')[1]}`
     super(
       ctx,
       {
-        wikiBaseUrl,
-        wikiArticlePath,
-        wikiArticleBaseUrl: `${wikiBaseUrl}${wikiArticlePath}`,
-        wikiScriptBaseUrl: `${wikiBaseUrl}${mwConfig.get('wgScriptPath', '')}`,
+        wikiBaseUrl: ctx.sitemeta.baseUrl,
+        wikiArticlePath: ctx.sitemeta.articlePath.replace('$1', ''),
+        wikiArticleBaseUrl: ctx.sitemeta.articleBaseUrl.replace('$1', ''),
+        wikiScriptBaseUrl: ctx.sitemeta.scriptBaseUrl,
         linkClassName: 'ipe__in-article-link',
       },
       'InArticleLinks'
@@ -58,8 +70,15 @@ export class PluginInArticleLinks extends BasePlugin<{
 
   protected async stop() {}
 
+  isWikiLink(url: string): boolean {
+    return (
+      url.startsWith(this.config.wikiArticleBaseUrl) ||
+      url.startsWith(this.config.wikiScriptBaseUrl + '/index.php')
+    )
+  }
+
   static readonly REG_SKIPPED_HREF = /^(#|javascript:|vbscript:|file:)/i
-  private validateHref(href: string | null): boolean {
+  private validateHrefAttr(href: string | null): boolean {
     if (typeof href !== 'string') {
       return false
     }
@@ -79,7 +98,7 @@ export class PluginInArticleLinks extends BasePlugin<{
     }
 
     const attrHref = anchor.getAttribute('href') || ''
-    if (!this.validateHref(attrHref)) {
+    if (!this.validateHrefAttr(attrHref)) {
       return null
     }
     const href = anchor.href || ''
@@ -104,11 +123,15 @@ export class PluginInArticleLinks extends BasePlugin<{
       return null
     }
 
-    if (typeof link === 'string' && !this.validateHref(link)) {
+    if (typeof link === 'string' && !this.validateHrefAttr(link)) {
       return null
     }
 
-    const url = typeof link === 'string' ? new URL(link, location.origin) : link
+    const url = makeURL(link)
+    if (!this.isWikiLink(url.toString())) {
+      return null
+    }
+
     const params = url.searchParams
     const hash = url.hash.replace('#', '')
     const action = params.get('action') || 'view'

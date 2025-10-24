@@ -32,6 +32,8 @@ declare global {
   const injectIPE: typeof import('./utils/vueHooks')['injectIPE']
   const interpolate: typeof import('./utils/interpolate')['interpolate']
   const makeCallable: typeof import('./utils/makeCallable')['makeCallable']
+  const makeSearchParams: typeof import('./utils/url')['makeSearchParams']
+  const makeURL: typeof import('./utils/url')['makeURL']
   const noop: typeof import('./utils/noop')['noop']
   const paramCase: typeof import('./utils/string')['paramCase']
   const promiseWithResolvers: typeof import('./polyfills/Promise.withResolvers')['promiseWithResolvers']

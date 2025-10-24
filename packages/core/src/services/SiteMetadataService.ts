@@ -116,7 +116,7 @@ export class SiteMetadataService extends Service {
   get _raw() {
     return this._data
   }
-  get siteInfo() {
+  get general() {
     return this._data.general
   }
   get specialPageAliases() {
@@ -168,8 +168,67 @@ export class SiteMetadataService extends Service {
   get userRights() {
     return this.userInfo.rights
   }
+  /**
+   * Base URL, without trailing slash
+   * @example "https://example.com"
+   */
+  get baseUrl() {
+    return `${window?.location?.protocol || 'https:'}//${this.general.servername}`
+  }
+  /**
+   * Article path, with the $1 placeholder
+   * @example "/wiki/$1"
+   */
+  get articlePath() {
+    return this.general.articlepath
+  }
+  /**
+   * Script path, without trailing slash
+   * @example "/w"
+   */
+  get scriptPath() {
+    return this.general.scriptpath
+  }
+  /**
+   * Article base URL, with the $1 placeholder
+   * @example "https://example.com/wiki/$1"
+   */
+  get articleBaseUrl() {
+    return `${this.baseUrl}${this.articlePath}`
+  }
+  /**
+   * Script base URL, without trailing slash
+   * @example "https://example.com/w"
+   */
+  get scriptBaseUrl() {
+    return `${this.baseUrl}${this.scriptPath}`
+  }
 
   // utils
+  getSciprtUrl(name = 'index') {
+    return `${this.scriptBaseUrl}/${name.replace(/\.php$/, '')}.php`
+  }
+
+  /** Get mainpage URL */
+  getMainpageUrl(params?: Record<string, string>): string {
+    return makeURL(this._data.general.base, params).toString()
+  }
+  /** Get page URL by title */
+  getUrl(title: string, params?: Record<string, string>): string
+  /** Get page URL by page ID */
+  getUrl(pageId: number, params?: Record<string, string>): string
+  getUrl(titleOrPageId: string | number, params?: Record<string, string>): string {
+    const searchParams = makeSearchParams(params)
+    let url: URL
+    if (typeof titleOrPageId === 'string') {
+      url = new URL(`${this.articleBaseUrl.replace('$1', titleOrPageId)}`)
+    } else {
+      searchParams.set('curid', titleOrPageId.toString())
+      url = new URL(this.getSciprtUrl('index'))
+    }
+    url.search = searchParams.toString()
+    return url.toString()
+  }
 
   hasRight(right: string) {
     return this.userRights.includes(right)
