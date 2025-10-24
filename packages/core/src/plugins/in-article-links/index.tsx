@@ -58,6 +58,14 @@ export class PluginInArticleLinks extends BasePlugin<{
 
   protected async stop() {}
 
+  static readonly REG_SKIPPED_HREF = /^(#|javascript:|vbscript:|file:)/i
+  private validateHref(href: string | null): boolean {
+    if (typeof href !== 'string') {
+      return false
+    }
+    return !PluginInArticleLinks.REG_SKIPPED_HREF.test(href)
+  }
+
   private _cachedAnchorInfo = new WeakMap<HTMLAnchorElement, InArticleWikiAnchorInfo>()
   parseAnchor(anchor: HTMLAnchorElement): InArticleWikiAnchorInfo | null {
     // 不是链接元素
@@ -70,6 +78,10 @@ export class PluginInArticleLinks extends BasePlugin<{
       return cached
     }
 
+    const attrHref = anchor.getAttribute('href') || ''
+    if (!this.validateHref(attrHref)) {
+      return null
+    }
     const href = anchor.href || ''
     const linkInfo = this.parseLink(href)
     if (!linkInfo) {
@@ -79,8 +91,7 @@ export class PluginInArticleLinks extends BasePlugin<{
     const info: InArticleWikiAnchorInfo = {
       $el: anchor,
       kind: anchor.closest('[typeof^="mw:File"]') ? 'mw:File' : 'normal',
-      external:
-        anchor.classList.contains('external') || !!anchor.getAttribute('href')?.startsWith('http'),
+      external: anchor.classList.contains('external') || !!attrHref.startsWith('http'),
       redlink: anchor.classList.contains('new') || linkInfo.params.has('redlink'),
       ...linkInfo,
     }
@@ -90,6 +101,10 @@ export class PluginInArticleLinks extends BasePlugin<{
 
   parseLink(link: string | URL): InArticleWikiLinkInfo | null {
     if (!link) {
+      return null
+    }
+
+    if (typeof link === 'string' && !this.validateHref(link)) {
       return null
     }
 
@@ -192,14 +207,11 @@ export class PluginInArticleLinks extends BasePlugin<{
             revision,
             createOnly,
           }
-          const debugParamString = Object.entries(payload)
-            .filter(([key, value]) => value !== undefined)
-            .map(([key, value]) => `${key}=${encodeURIComponent(value as string)}`)
-            .join('&')
 
           const link = (
             <a
-              href={`#ipe://quick-edit?${debugParamString}`}
+              href={`#ipe://quick-edit/`}
+              dataset={payload as any}
               className={`${this.config.linkClassName} ipe-quick-edit ${createOnly ? 'ipe-quick-edit--create-only' : ''}`}
               style={{
                 userSelect: 'none',
@@ -208,7 +220,7 @@ export class PluginInArticleLinks extends BasePlugin<{
               }}
               onClick={(e) => {
                 e.preventDefault()
-                this.ctx.quickEdit.showModal(payload)
+                ctx.quickEdit.showModal(payload)
               }}
             >
               <svg
