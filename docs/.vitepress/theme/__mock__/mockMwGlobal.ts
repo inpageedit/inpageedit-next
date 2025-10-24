@@ -25,11 +25,15 @@ export class MockMwHook<T extends any[] = any[]> {
   }
 
   private _handlers: Array<(...data: T) => any> = []
+  private _lastFiredContext: T | undefined = undefined
 
   constructor(public name: string) {}
   add(...handler: Array<(...data: T) => any>): this {
     console.info('hook:', this.name, 'add', handler)
     this._handlers.push(...handler)
+    if (this._lastFiredContext) {
+      handler.forEach((h) => h(...(this._lastFiredContext as unknown as T)))
+    }
     return this
   }
   deprecate(msg: string): this {
@@ -39,6 +43,7 @@ export class MockMwHook<T extends any[] = any[]> {
   fire(...data: T): this {
     console.info('hook:', this.name, 'fire', data)
     this._handlers.forEach((handler) => handler(...data))
+    this._lastFiredContext = data
     return this
   }
   remove(...handler: Array<(...data: T) => any>): this {
