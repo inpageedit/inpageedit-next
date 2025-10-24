@@ -173,7 +173,12 @@ export class SiteMetadataService extends Service {
    * @example "https://example.com"
    */
   get baseUrl() {
-    return `${window?.location?.protocol || 'https:'}//${this.general.servername}`
+    const server = this.general.server
+    if (server.startsWith('//')) {
+      return `${window?.location?.protocol || 'https:'}//${server.slice(2)}`
+    } else {
+      return server
+    }
   }
   /**
    * Article path, with the $1 placeholder

@@ -135,12 +135,18 @@ export class PluginInArticleLinks extends BasePlugin<{
     const params = url.searchParams
     const hash = url.hash.replace('#', '')
     const action = params.get('action') || 'view'
-    const titleText =
-      params.get('title') ||
-      decodeURI(url.pathname.substring(this.config.wikiArticlePath.length)) ||
-      ''
+    const titleText = url.pathname.endsWith('.php')
+      ? params.get('title')
+      : (() => {
+          try {
+            return decodeURI(url.pathname.substring(this.config.wikiArticlePath.length))
+          } catch (e) {
+            this.logger.error('parseLink', url, e)
+            return null
+          }
+        })()
 
-    if (!titleText || titleText.endsWith('.php')) {
+    if (!titleText) {
       return null
     }
 
