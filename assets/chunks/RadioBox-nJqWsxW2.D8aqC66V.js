@@ -1,0 +1,1 @@
+import{A as e}from"./mockInPageEdit.DKpMQkUc.js";const d=a=>{const{id:i,name:l,value:n,label:o,inputProps:p,labelProps:r,children:s,...t}=a;return e("label",{className:"theme-ipe ipe-radio-box",...t,children:[e("input",{type:"radio",id:i,name:l,value:n,...p}),e("span",{className:"ipe-checkbox-box"}),e("span",{...r,children:o||s})]})};export{d};
