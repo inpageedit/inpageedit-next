@@ -1,9 +1,8 @@
-export const MwUserLinks = (props: { user: string; target?: string }) => {
-  let { user, target } = props
-  const articlePath = window.mw?.config?.get('wgArticlePath') || '/$1'
-  const getUrl = (title: string) => {
-    return articlePath.replace('$1', title)
-  }
+import { InPageEdit } from '@/InPageEdit'
+
+export const MwUserLinks = (props: { user: string; target?: string; ctx: InPageEdit }) => {
+  let { user, target, ctx } = props
+  const getUrl = ctx.getUrl.bind(ctx)
   return (
     <span className="mw-userlinks">
       <a href={getUrl(`User:${user}`)} className="mw-userlink" target={target}>

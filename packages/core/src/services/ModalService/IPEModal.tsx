@@ -842,12 +842,20 @@ export class IPEModal {
   }
 
   /** Remove button by element / id / global index (left first, then right). */
-  removeButton(target: number | string | HTMLElement): this {
+  removeButton(target: number | string | HTMLElement | '*'): this {
     const left = this.buttonElsLeft
     const right = this.buttonElsRight
     const combined = [...left, ...right]
 
     let el: HTMLElement | null = null
+    if (target === '*') {
+      combined.forEach((e) => {
+        this.keyMap.delete(e.id)
+        e.parentElement?.removeChild(e)
+      })
+      this.$footer && (this.$footer.style.display = 'none')
+      return this
+    }
     if (typeof target === 'number') el = combined[target] ?? null
     else if (typeof target === 'string') el = combined.find((e) => e.id === target) ?? null
     else if (target instanceof HTMLElement) el = combined.find((e) => e === target) ?? null

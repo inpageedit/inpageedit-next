@@ -13,6 +13,8 @@ declare global {
   const CheckBox: typeof import('./components/CheckBox')['CheckBox']
   const Endpoints: typeof import('./constants/endpoints')['Endpoints']
   const IPEInjectKey: typeof import('./utils/vueHooks')['IPEInjectKey']
+  const IconEdit: typeof import('./components/Icon/IconEdit')['IconEdit']
+  const IconQuickEdit: typeof import('./components/Icon/IconQuickEdit')['IconQuickEdit']
   const InputBox: typeof import('./components/InputBox')['InputBox']
   const MBox: typeof import('./components/MBox/index')['MBox']
   const MwUserLinks: typeof import('./components/MwUserLinks')['MwUserLinks']

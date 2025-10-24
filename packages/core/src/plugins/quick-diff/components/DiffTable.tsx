@@ -1,9 +1,30 @@
+import './style.scss'
 import { JSX } from 'jsx-dom/jsx-runtime'
 import { CompareApiResponse } from '../PluginQuickDiffCore'
+import { InPageEdit } from '@/InPageEdit'
 
 export type DiffTableProps = {
   data: Partial<CompareApiResponse['compare']>
+  ctx: InPageEdit
 } & JSX.IntrinsicElements['table']
+
+export enum DiffTableEvent {
+  update = 'ipe:diff-table/update',
+  edit = 'ipe:diff-table/edit',
+}
+
+// DOM 事件类型定义
+declare global {
+  interface HTMLElementEventMap {
+    [DiffTableEvent.update]: CustomEvent<{
+      fromrev: number
+      torev: number
+    }>
+    [DiffTableEvent.edit]: CustomEvent<{
+      revid: number
+    }>
+  }
+}
 
 const formatDate = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',
@@ -11,6 +32,7 @@ const formatDate = new Intl.DateTimeFormat(undefined, {
 }).format
 
 const DiffTableHeader = (props: {
+  ctx: InPageEdit
   type?: 'from' | 'to'
   pageid?: number
   pagetitle?: string
@@ -37,11 +59,32 @@ const DiffTableHeader = (props: {
       </td>
     )
   }
+  const handleEditClick = (e: Event) => {
+    e.preventDefault()
+    e.target!.dispatchEvent(
+      new CustomEvent(DiffTableEvent.edit, {
+        detail: { revid: props.revid! },
+        bubbles: true,
+      })
+    )
+  }
   return (
     <td colSpan={2} className={classList}>
-      <div className="mw-diff-title--title">{props.pagetitle || props.timestamp}</div>
+      <div className="mw-diff-title--title">
+        {props.pagetitle || props.timestamp}
+        {props.revid ? ` (rev#${props.revid})` : ''}
+      </div>
+      <div className="mw-diff-title--actions">
+        <a
+          href={props.ctx.getUrl('', { action: 'edit', oldid: props.revid! })}
+          onClick={handleEditClick}
+        >
+          <IconQuickEdit style="width: 1em; height: 1em" />
+          Quick edit
+        </a>
+      </div>
       <div className="mw-diff-title--user">
-        {props.username && <MwUserLinks user={props.username} target="_blank" />}
+        {props.username && <MwUserLinks ctx={props.ctx} user={props.username} target="_blank" />}
       </div>
       <div className="mw-diff-title--timestamp">
         {props.timestamp && formatDate(new Date(props.timestamp))}
@@ -53,8 +96,54 @@ const DiffTableHeader = (props: {
           </>
         )}
       </div>
-      <div className="mw-diff-title--navigation"></div>
     </td>
+  )
+}
+
+const DiffTableNavigation = (props: { data: DiffTableProps['data']; ctx: InPageEdit }) => {
+  const data = props.data
+  if (!data.prev && !data.next) {
+    return null
+  }
+
+  // 统一的事件处理器
+  const handleNavigationClick = (e: Event, fromrev: number, torev: number) => {
+    e.preventDefault()
+    e.target!.dispatchEvent(
+      new CustomEvent(DiffTableEvent.update, {
+        detail: { fromrev, torev },
+        bubbles: true,
+      })
+    )
+  }
+
+  return (
+    <tr className="mw-diff-title--navigation">
+      <td colSpan={2}>
+        {data.prev ? (
+          <a
+            href={props.ctx.getUrl('', { diff: data.prev!, oldid: data.fromrevid! })}
+            onClick={(e) => handleNavigationClick(e, data.prev!, data.fromrevid!)}
+          >
+            ← Previous
+          </a>
+        ) : (
+          <i>Oldest version</i>
+        )}
+      </td>
+      <td colSpan={2}>
+        {data.next ? (
+          <a
+            href={props.ctx.getUrl('', { diff: data.next!, oldid: data.torevid! })}
+            onClick={(e) => handleNavigationClick(e, data.torevid!, data.next!)}
+          >
+            Next →
+          </a>
+        ) : (
+          <i>Latest version</i>
+        )}
+      </td>
+    </tr>
   )
 }
 
@@ -71,6 +160,7 @@ export const DiffTable = (props: DiffTableProps) => {
       <tbody>
         <tr>
           <DiffTableHeader
+            ctx={props.ctx}
             type="from"
             pageid={data.fromid}
             pagetitle={data.fromtitle}
@@ -83,6 +173,7 @@ export const DiffTable = (props: DiffTableProps) => {
             parsedcomment={data.fromparsedcomment}
           />
           <DiffTableHeader
+            ctx={props.ctx}
             type="to"
             pageid={data.toid}
             pagetitle={data.totitle}
@@ -95,6 +186,7 @@ export const DiffTable = (props: DiffTableProps) => {
             parsedcomment={data.toparsedcomment}
           />
         </tr>
+        <DiffTableNavigation data={data} ctx={props.ctx} />
         <div id="diffbody"></div>
         <tr className="diff-size" style={{ textAlign: 'center' }}>
           <td colSpan={2} className="diff-size-old">
