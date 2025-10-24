@@ -1,4 +1,4 @@
-import { Inject, InPageEdit } from '@/InPageEdit'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { IWikiTitle } from '@/models/WikiTitle/index.js'
 import { CompareApiRequestOptions } from '../quick-diff/PluginQuickDiffCore.js'
 import { QuickEditOptions } from '../quick-edit/index.js'
@@ -24,7 +24,25 @@ export interface InArticleWikiAnchorInfo extends InArticleWikiLinkInfo {
   redlink: boolean
 }
 
-@Inject(['sitemeta', 'wikiTitle'])
+@Inject(['sitemeta', 'wikiTitle', 'preferences'])
+@RegisterPreferences(
+  Schema.object({
+    'inArticleLinks.enable': Schema.boolean()
+      .description('Whether to enable in-article links')
+      .default(true),
+    'inArticleLinks.quickDiff.enable': Schema.boolean()
+      .description('Whether to enable in-article links for quick diff')
+      .default(true),
+    'inArticleLinks.quickEdit.enable': Schema.boolean()
+      .description('Whether to enable in-article links for quick edit')
+      .default(true),
+    'inArticleLinks.quickEdit.redlinks': Schema.boolean()
+      .description('Whether to show quick edit button for redlinks')
+      .default(true),
+  })
+    .description('In-article links preferences')
+    .extra('category', 'in-article-links')
+)
 export class PluginInArticleLinks extends BasePlugin<{
   /**
    * @example "https://example.com"
@@ -60,12 +78,23 @@ export class PluginInArticleLinks extends BasePlugin<{
       'InArticleLinks'
     )
     this.ctx.set('inArticleLinks', this)
+
+    this.ctx.preferences.defineCategory({
+      label: 'In Article Links',
+      name: 'in-article-links',
+      description: 'In-article links preferences',
+      index: 1,
+    })
   }
 
   protected async start() {
     // TODO: 这些都不应该硬编码，暂时先这样
-    this.handleQuickEdit()
-    this.handleQuickDiff()
+    if (await this.ctx.preferences.get<boolean>('inArticleLinks.quickEdit.enable')) {
+      this.handleQuickEdit()
+    }
+    if (await this.ctx.preferences.get<boolean>('inArticleLinks.quickDiff.enable')) {
+      this.handleQuickDiff()
+    }
   }
 
   protected async stop() {}
@@ -166,8 +195,11 @@ export class PluginInArticleLinks extends BasePlugin<{
       .filter((anchor) => anchor !== null)
   }
 
-  handleQuickEdit() {
+  async handleQuickEdit() {
     let enable = false
+    const showButtonOnRedlinks = await this.ctx.preferences.get<boolean>(
+      'inArticleLinks.quickEdit.redlinks'
+    )
 
     this.ctx.inject(['quickEdit'], (ctx) => {
       enable = true
@@ -179,8 +211,12 @@ export class PluginInArticleLinks extends BasePlugin<{
         if (!enable) {
           return
         }
-        const anchors = this.scanAnchors($content.get(0)!).filter(({ action, title }) => {
-          return ['edit', 'create'].includes(action) || title.isSpecial('edit')
+        const anchors = this.scanAnchors($content.get(0)!).filter(({ action, title, redlink }) => {
+          return (
+            (['edit', 'create'].includes(action) || title.isSpecial('edit')) &&
+            // 添加对showButtonOnRedlinks的判断
+            (showButtonOnRedlinks || !redlink)
+          )
         })
         anchors.forEach(({ $el, title, params }) => {
           if ($el.dataset.ipeEditMounted) {
