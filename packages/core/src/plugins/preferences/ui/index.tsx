@@ -85,6 +85,10 @@ export class PluginPreferencesUI extends BasePlugin {
             this.logger.error('failed to save preferences', error)
           }
           modal.close()
+          this.ctx.modal.notify('success', {
+            title: 'Preferences Saved',
+            content: <p>Some settings may take effect after reloading the page.</p>,
+          })
         },
       },
     ])
