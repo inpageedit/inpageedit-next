@@ -176,6 +176,10 @@ export class PluginQuickDiffCore extends BasePlugin {
       },
       2
     )
+    modal.on(modal.Event.Close, () => {
+      latestDiffModal?.destroy()
+      latestDiffModal = undefined
+    })
   }
 
   simpleTextDiff(oldText: string, newText: string) {
@@ -376,8 +380,7 @@ export class PluginQuickDiffCore extends BasePlugin {
           (
             <section
               style={{
-                height: '70vh',
-                overflow: 'auto',
+                minHeight: '70vh',
               }}
             >
               <DiffTable ref={(ref) => (diffTable = ref)} data={compare} ctx={this.ctx} />

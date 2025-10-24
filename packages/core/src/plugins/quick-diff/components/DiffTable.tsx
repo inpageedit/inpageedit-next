@@ -140,7 +140,7 @@ const DiffTableNavigation = (props: { data: DiffTableProps['data']; ctx: InPageE
             Next →
           </a>
         ) : (
-          <i>Latest version</i>
+          <i>Newest version</i>
         )}
       </td>
     </tr>
