@@ -4,7 +4,7 @@ import { JsDiffDiffType } from './JsDiffService'
 
 import styles from './styles.module.sass'
 import { ChangeObject } from 'diff'
-import { DiffTable } from './components/DiffTable'
+import { DiffTable, DiffTableEvent } from './components/DiffTable'
 import { IPEModal, IPEModalOptions } from '@/services/ModalService/IPEModal.js'
 
 declare module '@/InPageEdit' {
@@ -57,6 +57,8 @@ export interface CompareApiResponse {
     tocomment: string
     toparsedcomment: string
     diffsize: number
+    prev: number
+    next: number
   }> & {
     body: string
   }
@@ -70,7 +72,7 @@ const VALID_DIFF_TYPES = [
   'createTwoFilesPatch',
 ] as JsDiffDiffType[]
 
-@Inject(['jsdiff'])
+@Inject(['jsdiff', 'sitemeta', 'getUrl'])
 @RegisterPreferences(
   Schema.object({
     'quickDiff.preferredCompareMode': Schema.union([Schema.const('jsDiff'), Schema.const('mwApi')])
@@ -161,8 +163,13 @@ export class PluginQuickDiffCore extends BasePlugin {
               fromtext,
               totitle: pageTitle,
               totext,
+              topst: true,
             },
-            latestDiffModal
+            latestDiffModal,
+            {
+              backdrop: false,
+              draggable: true,
+            }
           )
           return latestDiffModal
         },
@@ -301,6 +308,7 @@ export class PluginQuickDiffCore extends BasePlugin {
       'timestamp',
       'title',
       'user',
+      'rel',
     ].join('|'),
     difftype: 'table',
   }
@@ -316,14 +324,21 @@ export class PluginQuickDiffCore extends BasePlugin {
           title: 'Loading diff...',
           content: '',
           className: 'quick-diff',
-          backdrop: false,
-          draggable: true,
+          center: false,
           ...modalOptions,
         })
         .init()
+    } else {
+      modal.removeButton('*')
     }
 
-    modal.setContent(<ProgressBar />)
+    modal.setContent(
+      <section
+        style={{ height: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+      >
+        <ProgressBar />
+      </section>
+    )
     modal.bringToFront()
 
     if (window.mw && mw.loader.getState('mediawiki.diff.styles') !== 'ready') {
@@ -353,16 +368,63 @@ export class PluginQuickDiffCore extends BasePlugin {
         } = res
         modal.setTitle(
           compare.fromtitle && compare.totitle
-            ? `${compare.fromtitle} ⇔ ${compare.totitle}`
+            ? `${compare.fromtitle}${compare.fromrevid ? ` (${compare.fromrevid})` : ''} ⇔ ${compare.totitle}${compare.torevid ? ` (${compare.torevid})` : ''}`
             : 'Differences'
         )
+        let diffTable!: HTMLElement
         modal.setContent(
           (
-            <section>
-              <DiffTable data={compare} />
+            <section
+              style={{
+                height: '70vh',
+                overflow: 'auto',
+              }}
+            >
+              <DiffTable ref={(ref) => (diffTable = ref)} data={compare} ctx={this.ctx} />
             </section>
           ) as HTMLElement
         )
+        diffTable.addEventListener(
+          DiffTableEvent.update,
+          (e) => {
+            e.stopPropagation()
+            this.comparePages(
+              {
+                fromrev: e.detail.fromrev,
+                torev: e.detail.torev,
+              },
+              modal,
+              modalOptions
+            )
+          },
+          { once: true }
+        )
+
+        // TODO: 不应该硬编码，移动到 in-article-links 插件中
+        this.ctx.inject(['quickEdit'], (ctx) => {
+          const handleQuickEdit = (e: CustomEvent<{ revid: number }>) => {
+            e.stopPropagation()
+            ctx.quickEdit({ revision: e.detail.revid })
+          }
+          diffTable.addEventListener(DiffTableEvent.edit, handleQuickEdit)
+          modal.on(modal.Event.Close, () => {
+            diffTable.removeEventListener(DiffTableEvent.edit, handleQuickEdit)
+          })
+        })
+
+        if (compare.fromrevid && compare.torevid) {
+          modal.addButton({
+            label: 'Original Compare Page',
+            side: 'right',
+            className: 'btn btn-secondary',
+            method: () => {
+              window.location.href = this.ctx.getUrl('', {
+                oldid: compare.fromrevid,
+                diff: compare.torevid,
+              })
+            },
+          })
+        }
       })
       .catch((err) => {
         modal.setContent(

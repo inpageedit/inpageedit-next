@@ -75,9 +75,13 @@ export class InPageEdit extends Context {
       'resourceLoader',
       'modal',
       'storage',
-      // 'sitemeta', // 故意未标记此服务，因为数据是异步加载的
       'wikiPage',
       'wikiTitle',
+      // SiteMetadataService
+      'sitemeta',
+      'getUrl',
+      'getSciprtUrl',
+      'getMainpageUrl',
     ])
   }
 

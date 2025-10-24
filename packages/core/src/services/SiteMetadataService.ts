@@ -5,6 +5,9 @@ import { IPEStorageManager } from './StorageService'
 declare module '@/InPageEdit' {
   interface InPageEdit {
     sitemeta: SiteMetadataService
+    getUrl: SiteMetadataService['getUrl']
+    getSciprtUrl: SiteMetadataService['getSciprtUrl']
+    getMainpageUrl: SiteMetadataService['getMainpageUrl']
   }
 }
 
@@ -48,11 +51,15 @@ export class SiteMetadataService extends Service {
     if (cached) {
       this.logger.info('Using cached metadata', cached)
       this._data = cached
-      return
+    } else {
+      const meta = await this.fetchFromApi()
+      this.saveToCache(meta)
+      this._data = meta
     }
-    const meta = await this.fetchFromApi()
-    this.saveToCache(meta)
-    this._data = meta
+
+    this.ctx.set('getUrl', this.getUrl.bind(this))
+    this.ctx.set('getSciprtUrl', this.getSciprtUrl.bind(this))
+    this.ctx.set('getMainpageUrl', this.getMainpageUrl.bind(this))
   }
 
   computeSiteIdentity() {
@@ -215,17 +222,19 @@ export class SiteMetadataService extends Service {
   }
 
   /** Get mainpage URL */
-  getMainpageUrl(params?: Record<string, string>): string {
+  getMainpageUrl(params?: Record<string, any>): string {
     return makeURL(this._data.general.base, params).toString()
   }
   /** Get page URL by title */
-  getUrl(title: string, params?: Record<string, string>): string
+  getUrl(title: string, params?: Record<string, any>): string
   /** Get page URL by page ID */
-  getUrl(pageId: number, params?: Record<string, string>): string
-  getUrl(titleOrPageId: string | number, params?: Record<string, string>): string {
+  getUrl(pageId: number, params?: Record<string, any>): string
+  getUrl(titleOrPageId: string | number, params?: Record<string, any>): string {
     const searchParams = makeSearchParams(params)
     let url: URL
-    if (typeof titleOrPageId === 'string') {
+    if (titleOrPageId === '') {
+      url = new URL(this.getSciprtUrl('index'))
+    } else if (typeof titleOrPageId === 'string') {
       url = new URL(`${this.articleBaseUrl.replace('$1', titleOrPageId)}`)
     } else {
       searchParams.set('curid', titleOrPageId.toString())
