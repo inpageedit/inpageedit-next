@@ -23,6 +23,30 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.7.0'>
+
+- chore: gc for modals, fix typo
+  - 关闭快速编辑模态框时，自动销毁相关模态框
+  - 修正了偏好设置的拼写错误
+- feat: prev/next/edit buttons for compare table
+  - 快速差异添加了 上一个/下一个/编辑 按钮，方便快速跳转和编辑
+- feat: add preferences for in-article links
+  - 为文章内链接侵入添加了配置项
+  - 例如，你现在可以控制是否为红链添加快速编辑按钮
+- fix: wikiLink should skip none article links
+  - 重构了 wikiLink 的逻辑
+  - 现在 wikiLink 不会再检查非本站链接
+- feat: quickEdit support for special:edit/mypage... and so on
+  - 快速编辑现在支持一些特殊的特殊页面，例如 Special:Edit/MyPage/MyTalk...
+- fix: adjust the button order to match the original mw
+  - 调整了快速编辑中的按钮的顺序，使其与原始 MediaWiki 一致
+- fix: minor css fixes
+  - 修正了一些 CSS 样式
+- chore: housekeeping
+  - 修复了编辑的快速预览，未附带 pst 参数的问题
+
+</ChangeLog>
+
 <ChangeLog version='0.6.0'>
 
 - feat: add quick delete plugin
