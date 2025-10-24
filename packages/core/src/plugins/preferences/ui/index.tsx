@@ -47,7 +47,7 @@ export class PluginPreferencesUI extends BasePlugin {
       sizeClass: 'small',
       outSideClose: false,
       center: true,
-      title: 'InPageEdit Prefrences',
+      title: 'InPageEdit Preferences',
       content: (
         <>
           <ProgressBar />

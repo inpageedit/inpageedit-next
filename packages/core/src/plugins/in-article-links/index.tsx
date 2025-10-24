@@ -83,7 +83,7 @@ export class PluginInArticleLinks extends BasePlugin<{
       label: 'In Article Links',
       name: 'in-article-links',
       description: 'In-article links preferences',
-      index: 1,
+      index: 9,
     })
   }
 

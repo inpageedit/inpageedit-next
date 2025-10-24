@@ -3,7 +3,7 @@ import { type QuickEditInitPayload } from '@/plugins/quick-edit'
 import { WikiPage } from '@/models/WikiPage'
 import { MwApiParams } from 'wiki-saikou'
 import { PageParseData } from '@/models/WikiPage/types/PageParseData'
-import { IPEModal } from '@/services/ModalService/IPEModal.js'
+import { IPEModal, IPEModalOptions } from '@/services/ModalService/IPEModal.js'
 import { QuickDeleteInitPayload } from '../quick-delete/index.js'
 
 declare module '@/InPageEdit' {
@@ -49,7 +49,13 @@ export class PluginQuickPreview extends BasePlugin {
     this.ctx.off('quick-delete/wiki-page', this.injectQuickDelete.bind(this))
   }
 
-  previewWikitext(text: string, params?: MwApiParams, wikiPage?: WikiPage, modal?: IPEModal) {
+  previewWikitext(
+    text: string,
+    params?: MwApiParams,
+    wikiPage?: WikiPage,
+    modal?: IPEModal,
+    modalOptions?: Partial<IPEModalOptions>
+  ) {
     wikiPage ||= this.ctx.wikiPage.newBlankPage({
       title: 'API',
     })
@@ -59,8 +65,8 @@ export class PluginQuickPreview extends BasePlugin {
         .createObject({
           className: 'in-page-edit ipe-quickPreview',
           sizeClass: 'large',
-          backdrop: false,
-          draggable: true,
+          center: false,
+          ...modalOptions,
         })
         .init()
     }
@@ -130,12 +136,20 @@ export class PluginQuickPreview extends BasePlugin {
               ?.value as string) || '',
             undefined,
             wikiPage,
-            latestPreviewModal
+            latestPreviewModal,
+            {
+              backdrop: false,
+              draggable: true,
+            }
           )
         },
       },
       1
     )
+    modal.on(modal.Event.Close, () => {
+      latestPreviewModal?.destroy()
+      latestPreviewModal = undefined
+    })
   }
 
   private injectQuickDelete({ ctx, modal, wikiPage }: QuickDeleteInitPayload) {
