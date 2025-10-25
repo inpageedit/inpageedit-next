@@ -403,7 +403,7 @@ class SchemaFormBoolean extends BaseFieldElement<boolean> {
     $input.name = nameOf(this._path)
     $input.id = idOf(this._path)
     const $txt = document.createElement('span')
-    $txt.textContent = this._label ?? ''
+    $txt.textContent = meta.description ?? this._label ?? ''
     $input.onchange = () => this.emitChange($input.checked)
     const $label = $field.querySelector('label.label') as HTMLLabelElement | null
     if ($label) $label.htmlFor = $input.id
