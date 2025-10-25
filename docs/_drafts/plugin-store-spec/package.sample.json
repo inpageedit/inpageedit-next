@@ -1,0 +1,30 @@
+{
+  "name": "inpageedit-plugin-sample",
+  "version": "1.0.0",
+  "description": "A sample plugin store for InPageEdit",
+  "author": "dragon-fish",
+  "license": "MIT",
+  "@inpageedit": {
+    "category": "edit",
+    "permissions": [
+      "edit",
+      "autoconfirmed"
+    ],
+    "dependencies": [
+      "@core:^1.0.0",
+      "quickEdit",
+      "sitemeta",
+      "wikiTitle",
+      "wikiPage"
+    ],
+    "loader": {
+      "kind": "module",
+      "base": "dist/",
+      "entry": "index.js",
+      "styles": [
+        "index.css"
+      ],
+      "main_export": "PluginSample"
+    }
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InPageEdit Plugin Central Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "registry",
+    "packages"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Registry/package set display name"
+    },
+    "registry": {
+      "type": "string",
+      "format": "uri",
+      "description": "Base URL of the plugin registry"
+    },
+    "homepage": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uri",
+      "description": "Optional homepage URL"
+    },
+    "maintainers": {
+      "type": "array",
+      "description": "List of maintainers",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "email"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "url"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Repository type, e.g. git"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Repository URL"
+        }
+      }
+    },
+    "packages": {
+      "type": "array",
+      "description": "Array of plugin package descriptors",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "version",
+          "loader"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+].*)?$",
+            "description": "Simple semver-like pattern (major.minor.patch)"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "author": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "license": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "loader": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "base"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "autoload",
+                  "module",
+                  "umd",
+                  "styles"
+                ],
+                "description": "Loader kind; allowed values: autoload | module | umd | styles"
+              },
+              "base": {
+                "type": "string",
+                "description": "Base folder for assets relative to registry URL, or full URL, if external"
+              },
+              "entry": {
+                "description": "Entry script path relative to base, or null for style-only packages",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "styles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Array of stylesheet paths relative to base"
+              },
+              "main_export": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Name of the exported symbol for module/UMD loaders or null"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

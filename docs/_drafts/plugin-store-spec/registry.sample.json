@@ -1,0 +1,82 @@
+{
+  "$schema": "plugin-store.schema.json",
+  "name": "InPageEdit Official Plugin Central",
+  "registry": "https://ipe-plugins.js.org/plugins/",
+  "homepage": "https://ipe-plugins.js.org/",
+  "maintainers": [
+    {
+      "name": "dragon-fish",
+      "email": "dragon-fish@qq.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/inpageedit/official-plugins.git"
+  },
+  "packages": [
+    {
+      "name": "Autoload Plugin",
+      "version": "1.0.0",
+      "description": "A sample plugin for InPageEdit",
+      "author": "dragon-fish",
+      "license": "MIT",
+      "loader": {
+        "kind": "autoload",
+        "base": "autoload-sample/",
+        "entry": "dist/index.js",
+        "styles": [
+          "dist/index.css"
+        ],
+        "main_export": null
+      }
+    },
+    {
+      "name": "Module Plugin",
+      "version": "1.0.0",
+      "description": "A sample plugin for InPageEdit",
+      "author": "dragon-fish",
+      "license": "MIT",
+      "loader": {
+        "kind": "module",
+        "base": "module-sample/",
+        "entry": "dist/index.mjs",
+        "styles": [
+          "dist/index.css"
+        ],
+        "main_export": "PluginSample"
+      }
+    },
+    {
+      "name": "Global UMD Plugin",
+      "version": "1.0.0",
+      "description": "A sample plugin for InPageEdit",
+      "author": "dragon-fish",
+      "license": "MIT",
+      "loader": {
+        "kind": "umd",
+        "base": "sample/",
+        "entry": "dist/index.umd.js",
+        "styles": [
+          "dist/index.css"
+        ],
+        "main_export": "InPageEditPluginSample"
+      }
+    },
+    {
+      "name": "Style Only Plugin",
+      "version": "1.0.0",
+      "description": "A sample plugin for InPageEdit",
+      "author": "dragon-fish",
+      "license": "MIT",
+      "loader": {
+        "kind": "styles",
+        "base": "sample/",
+        "entry": null,
+        "styles": [
+          "dist/index.css"
+        ],
+        "main_export": "InPageEditPluginSample"
+      }
+    }
+  ]
+}
