@@ -46,8 +46,8 @@ importers:
         version: 3.5.22(typescript@5.9.3)
     devDependencies:
       '@inpageedit/core':
-        specifier: workspace:^
-        version: link:../packages/core
+        specifier: ^0.8.0
+        version: 0.8.0(fexios@3.2.0)(typescript@5.9.3)
       '@nolebase/vitepress-plugin-git-changelog':
         specifier: ^2.18.2
         version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.6)(typescript@5.9.3))(vue@3.5.22(typescript@5.9.3))
@@ -699,6 +699,11 @@ packages:
 
   '@iconify/utils@3.0.2':
     resolution: {integrity: sha512-EfJS0rLfVuRuJRn4psJHtK2A9TqVnkxPpHY6lYHiB9+8eSuudsxbwMiavocG45ujOo6FJ+CIRlRnlOGinzkaGQ==}
+
+  '@inpageedit/core@0.8.0':
+    resolution: {integrity: sha512-Qnxf09qaGC+J5gjAzRgont2Q6RTNDfHwimaE0CUvS3eEKHBzZpoaA7UzKjVSOA20Q7eDdNmcyjmPaMBCbEk9Bw==}
+    peerDependencies:
+      fexios: ^3.2.0
 
   '@inpageedit/logger@0.1.0':
     resolution: {integrity: sha512-6QwdbtkH/Bwg/P/+s0uVPzxbMpk8GSPzJmafyJKCEtUdgbNXSm22mqltCbN8k2EuSV45Dn+nwouHKTSqFY1A1A==}
@@ -3133,6 +3138,12 @@ packages:
   sax@1.4.1:
     resolution: {integrity: sha512-+aWOz7yVScEGoKNd4PA10LZ8sk0A/z5+nXQG5giUO5rprX9jgYsTdov9qCchZiPIZezbZH+jRut8nPodFAX4Jg==}
 
+  schemastery-form@0.2.1:
+    resolution: {integrity: sha512-waooV7A1MZYrXfE15EAKqwX8HOFw2l8jq6xacVM9pT8HkRG+QfOJkRG4yqSC/Yk3Fd87SqhhBF9s2ACxL1tC1A==}
+    peerDependencies:
+      schemastery: ^3.17.1
+      vue: '>=3.5.0 <4.0.0'
+
   schemastery@3.17.1:
     resolution: {integrity: sha512-gZeS6il++ZOFqDB+IlX9v9jJ7bPx921ut3v3zNqRYqrVIohLc7oIcNqvfgnaJrfpQEYjN4dNewq6Ehp2HVP2lg==}
 
@@ -3967,6 +3978,20 @@ snapshots:
       mlly: 1.8.0
     transitivePeerDependencies:
       - supports-color
+
+  '@inpageedit/core@0.8.0(fexios@3.2.0)(typescript@5.9.3)':
+    dependencies:
+      '@cordisjs/core': 3.18.1
+      '@inpageedit/logger': 0.1.0
+      diff: 8.0.2
+      fexios: 3.2.0
+      localforage: 1.10.0
+      schemastery: 3.17.1
+      schemastery-form: 0.2.1(schemastery@3.17.1)(vue@3.5.22(typescript@5.9.3))
+      vue: 3.5.22(typescript@5.9.3)
+      wiki-saikou: 5.2.0
+    transitivePeerDependencies:
+      - typescript
 
   '@inpageedit/logger@0.1.0': {}
 
@@ -6704,6 +6729,11 @@ snapshots:
 
   sax@1.4.1:
     optional: true
+
+  schemastery-form@0.2.1(schemastery@3.17.1)(vue@3.5.22(typescript@5.9.3)):
+    dependencies:
+      schemastery: 3.17.1
+      vue: 3.5.22(typescript@5.9.3)
 
   schemastery@3.17.1:
     dependencies:

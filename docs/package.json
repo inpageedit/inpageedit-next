@@ -18,7 +18,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@inpageedit/core": "workspace:^",
+    "@inpageedit/core": "^0.8.0",
     "@nolebase/vitepress-plugin-git-changelog": "^2.18.2",
     "@nolebase/vitepress-plugin-inline-link-preview": "^2.18.2",
     "@nolebase/vitepress-plugin-page-properties": "^2.18.2",

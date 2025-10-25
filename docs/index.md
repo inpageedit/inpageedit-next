@@ -47,9 +47,11 @@ import { data } from './version.data.js'
 
 <div style="text-align: center; margin-top: 2rem;">
 
-`@inpageedit/core`：最新版本 <Badge type="tip"><IpeVersion /></Badge> / 开发版本 <Badge type="warning" :title="data.gitTime">{{ data.version }}-{{ data.gitHash }}</Badge>
+`@inpageedit/core`：最新版本 <Badge type="tip"><IpeVersion /></Badge> / 开发版本 <Badge type="warning" :title="data.gitTime">{{ data.localVersion }}-{{ data.gitHash }}</Badge>
 
-此文档更新于：<DateFormat :date='data.gitTime' />
+此文档基于 <Badge type="tip">@inpageedit/core {{ data.installedVersion }}</Badge> 编写
+
+最后更新于：<DateFormat :date='data.gitTime' />
 
 </div>
 
