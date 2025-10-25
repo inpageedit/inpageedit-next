@@ -1,7 +1,7 @@
-import { SiteMetadata } from '@/types/WikiMetadata'
+import { WikiMetadata } from '@/types/WikiMetadata'
 
 // 使用 WeakMap 避免内存泄漏
-const caches = new WeakMap<SiteMetadata, WikiTitleConstructor>()
+const caches = new WeakMap<WikiMetadata, WikiTitleConstructor>()
 
 // 命名空间查找索引
 interface NamespaceIndex {
@@ -149,7 +149,7 @@ const specialPageUtils = {
   /**
    * 构建特殊页面别名索引
    */
-  buildSpecialPageIndex: (metadata: SiteMetadata): SpecialPageIndex => {
+  buildSpecialPageIndex: (metadata: WikiMetadata): SpecialPageIndex => {
     const byRealName = new Map<string, string>()
     const byAlias = new Map<string, string>()
     const byNormalized = new Map<string, string>()
@@ -206,7 +206,7 @@ const namespaceUtils = {
       .replace(/^_+|_+$/g, '') // 移除首尾下划线
   },
 
-  buildIndex: (metadata: SiteMetadata): NamespaceIndex => {
+  buildIndex: (metadata: WikiMetadata): NamespaceIndex => {
     const byName = new Map<string, number>()
     const byCanonical = new Map<string, number>()
     const byAlias = new Map<string, number>()
@@ -265,7 +265,7 @@ const namespaceUtils = {
   }),
 }
 
-export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstructor {
+export function createWikiTitleModel(metadata: WikiMetadata): WikiTitleConstructor {
   const exists = caches.get(metadata)
   if (exists) {
     return exists
