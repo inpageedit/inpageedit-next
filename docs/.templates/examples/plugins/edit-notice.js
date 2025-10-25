@@ -3,7 +3,7 @@ mw.hook('InPageEdit.ready').add((ipe) => {
     name: 'edit-notice',
     inject: [],
     apply(ctx) {
-      ctx.on('quickEdit/wikiPage', ({ modal, wikiPage }) => {
+      ctx.on('quick-edit/wiki-page', ({ modal, wikiPage }) => {
         const content = modal.get$content()
         content.before(
           $('<p>').text(`You are editting ${wikiPage.title}`).css({

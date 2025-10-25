@@ -2,7 +2,7 @@ mw.hook('InPageEdit.ready').add((ipe) => {
   ipe.plugin({
     name: 'wiki-editor',
     apply(ctx) {
-      ctx.on('quickEdit/wikiPage', async (payload) => {
+      ctx.on('quick-edit/wiki-page', async (payload) => {
         const $textarea = payload.modal.get$content().find('textarea[name="text"]')
         const registered = !!mw.loader.getState('ext.wikiEditor')
         if (!$textarea.length || !registered) {
@@ -20,7 +20,7 @@ mw.hook('InPageEdit.ready').add((ipe) => {
     name: 'code-mirror-v6',
     apply(ctx) {
       let cmweInitialized = false
-      ctx.on('quickEdit/wikiPage', async (payload) => {
+      ctx.on('quick-edit/wiki-page', async (payload) => {
         const $textarea = payload.modal.get$content().find('textarea[name="text"]')
         const registered = !!mw.loader.getState('ext.CodeMirror.v6')
         if (!$textarea.length || !registered) {
