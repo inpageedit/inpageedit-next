@@ -48,17 +48,10 @@
 }
 
 /* ------------------------- Lock background scrolling ------------------------ */
-html.ipe-modal-no-scroll,
 body.ipe-modal-no-scroll {
   overflow: hidden !important; /* 防止页面滚动 */
   touch-action: none; /* 防止移动端滚动穿透 */
   -webkit-overflow-scrolling: auto;
-}
-body.ipe-modal-no-scroll {
-  position: fixed;
-  width: 100%;
-  left: 0;
-  right: 0;
 }
 
 /* ------------------------------- Backdrop ---------------------------------- */

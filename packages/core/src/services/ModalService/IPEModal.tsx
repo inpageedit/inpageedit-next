@@ -354,11 +354,11 @@ class ModalStackManager {
   }
 
   lockBodyScroll() {
-    document.documentElement.classList.add('ipe-modal-no-scroll')
+    document.body.classList.add('ipe-modal-no-scroll')
   }
 
   unlockBodyScroll() {
-    document.documentElement.classList.remove('ipe-modal-no-scroll')
+    document.body.classList.remove('ipe-modal-no-scroll')
   }
 }
 const STACK = new ModalStackManager()
