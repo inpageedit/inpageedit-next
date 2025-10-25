@@ -72,7 +72,7 @@ const VALID_DIFF_TYPES = [
   'createTwoFilesPatch',
 ] as JsDiffDiffType[]
 
-@Inject(['jsdiff', 'sitemeta', 'getUrl'])
+@Inject(['jsdiff', 'wiki', 'getUrl'])
 @RegisterPreferences(
   Schema.object({
     'quickDiff.preferredCompareMode': Schema.union([Schema.const('jsDiff'), Schema.const('mwApi')])

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createWikiTitleModel } from './index.js'
-import { SiteMetadata } from '@/types/SiteMetadata.js'
+import { SiteMetadata } from '@/types/WikiMetadata.js'
 import { MOCK_SITE_METADATA } from '@/__test__/utils/constants.js'
 
 // 创建测试用的 SiteMetadata

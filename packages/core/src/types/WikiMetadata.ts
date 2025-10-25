@@ -1,15 +1,15 @@
-export interface SiteMetadata {
-  general: SiteInfo
-  specialpagealiases: SiteSpecialPageAlias[]
-  namespacealiases: SiteNameSpaceAlias[]
-  magicwords: SiteMagicWord[]
-  userinfo: SiteUserInfo & {
-    options: SiteUserOptions
+export interface WikiMetadata {
+  general: WikiSiteInfo
+  specialpagealiases: WikiSpecialPageAlias[]
+  namespacealiases: WikiNameSpaceAlias[]
+  magicwords: WikiMagicWord[]
+  userinfo: WikiUserInfo & {
+    options: WikiUserOptions
   }
-  namespaces: Record<string, SiteNamespace>
+  namespaces: Record<string, WikiNamespace>
 }
 
-export interface SiteInfo {
+export interface WikiSiteInfo {
   mainpage: string
   base: string
   sitename: string
@@ -81,17 +81,17 @@ export interface SiteInfo {
   citeresponsivereferences: boolean
 }
 
-export interface SiteSpecialPageAlias {
+export interface WikiSpecialPageAlias {
   realname: string
   aliases: string[]
 }
 
-export interface SiteNameSpaceAlias {
+export interface WikiNameSpaceAlias {
   id: number
   alias: string
 }
 
-export interface SiteNamespace {
+export interface WikiNamespace {
   canonical?: string
   case: 'first-letter' | string // ?
   content: boolean
@@ -102,20 +102,20 @@ export interface SiteNamespace {
   subpages: boolean
 }
 
-export interface SiteMagicWord {
+export interface WikiMagicWord {
   name: string
   aliases: string[]
   'case-sensitive': boolean
 }
 
-export type SiteUserInfo = {
+export type WikiUserInfo = {
   id: number
   name: string
   groups: string[]
   rights: string[]
-} & Partial<SiteUserBlockInfo>
+} & Partial<WikiUserBlockInfo>
 
-export interface SiteUserBlockInfo {
+export interface WikiUserBlockInfo {
   blockid: number
   blockedby: string
   blockedbyid: string
@@ -125,7 +125,7 @@ export interface SiteUserBlockInfo {
 }
 
 type IntBool = 0 | 1
-export interface SiteUserOptions {
+export interface WikiUserOptions {
   minordefault: IntBool
   watchcreations: IntBool
   watchdefault: IntBool

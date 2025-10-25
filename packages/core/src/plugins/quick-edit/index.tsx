@@ -52,7 +52,7 @@ export interface QuickEditSubmitPayload {
   watchlist?: WatchlistAction
 }
 
-@Inject(['api', 'wikiPage', 'sitemeta', 'modal', 'preferences'])
+@Inject(['api', 'wikiPage', 'wiki', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
     editSummary: Schema.string()
@@ -119,9 +119,9 @@ export class PluginQuickEdit extends BasePlugin {
       this.logger.warn('None of the title, pageId or revision provided. Using defaults.')
       payload = {
         ...payload,
-        title: this.ctx.sitemeta.mwConfig.get('wgPageName'),
-        pageId: this.ctx.sitemeta.mwConfig.get('wgArticleId'),
-        revision: this.ctx.sitemeta.mwConfig.get('wgRevisionId'),
+        title: this.ctx.wiki.mwConfig.get('wgPageName'),
+        pageId: this.ctx.wiki.mwConfig.get('wgArticleId'),
+        revision: this.ctx.wiki.mwConfig.get('wgRevisionId'),
       }
     }
 
@@ -468,9 +468,9 @@ export class PluginQuickEdit extends BasePlugin {
       tooltip: 'Edit this page quickly',
       onClick: () =>
         this.showModal({
-          title: this.ctx.sitemeta.mwConfig.get('wgPageName'),
-          pageId: this.ctx.sitemeta.mwConfig.get('wgArticleId'),
-          revision: this.ctx.sitemeta.mwConfig.get('wgRevisionId'),
+          title: this.ctx.wiki.mwConfig.get('wgPageName'),
+          pageId: this.ctx.wiki.mwConfig.get('wgArticleId'),
+          revision: this.ctx.wiki.mwConfig.get('wgRevisionId'),
         }),
     })
   }

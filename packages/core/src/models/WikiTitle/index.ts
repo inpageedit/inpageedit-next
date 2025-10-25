@@ -1,4 +1,4 @@
-import { SiteMetadata } from '@/types/SiteMetadata'
+import { SiteMetadata } from '@/types/WikiMetadata'
 
 // 使用 WeakMap 避免内存泄漏
 const caches = new WeakMap<SiteMetadata, WikiTitleConstructor>()
@@ -282,13 +282,13 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
     static readonly _specialPageIndex = specialPageIndex
 
     /** 缓存的 main title，不包含命名空间前缀，大小写和空格状态不确定 */
-    private _title: string
+    #title: string
     /** 缓存的 namespace ID */
-    private _ns: number
+    #ns: number
 
     constructor(title: string, namespace?: number) {
-      this._title = title || ''
-      this._ns = namespace ?? 0
+      this.#title = title || ''
+      this.#ns = namespace ?? 0
 
       // 只有在没有显式命名空间参数时才解析标题中的命名空间前缀
       if (namespace === void 0) {
@@ -302,19 +302,19 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
     newTitle = WikiTitle.create.bind(WikiTitle)
 
     private fixNSByTitle(): void {
-      const colonIndex = this._title.indexOf(':')
+      const colonIndex = this.#title.indexOf(':')
       if (colonIndex === -1) {
         return // 没有命名空间前缀
       }
 
       if (colonIndex === 0) {
         // 只有冒号，将冒号后的部分作为标题
-        this._title = this._title.substring(1)
+        this.#title = this.#title.substring(1)
         return
       }
 
-      const potentialNamespace = this._title.substring(0, colonIndex)
-      const mainTitle = this._title.substring(colonIndex + 1)
+      const potentialNamespace = this.#title.substring(0, colonIndex)
+      const mainTitle = this.#title.substring(colonIndex + 1)
 
       // 查找匹配的命名空间
       const namespaceId = namespaceUtils.findNamespaceId(
@@ -322,14 +322,14 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
         WikiTitle._namespaceIndex
       )
       if (namespaceId !== null) {
-        this._title = mainTitle
-        this._ns = namespaceId
+        this.#title = mainTitle
+        this.#ns = namespaceId
       }
     }
 
     private getNamespaceInfo() {
       return (
-        WikiTitle._meta.namespaces[this._ns] ?? namespaceUtils.getDefaultNamespaceInfo(this._ns)
+        WikiTitle._meta.namespaces[this.#ns] ?? namespaceUtils.getDefaultNamespaceInfo(this.#ns)
       )
     }
 
@@ -337,44 +337,44 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
       const nsInfo = this.getNamespaceInfo()
 
       // 如果是特殊页面，将主部分替换为真实名称，保留子页面部分
-      if (this._ns === -1) {
+      if (this.#ns === -1) {
         const realName = specialPageUtils.findSpecialPageRealName(
-          this._title,
+          this.#title,
           WikiTitle._specialPageIndex
         )
         if (realName) {
           // 构建包含子页面的完整标题
-          const subPage = this._title.includes('/')
-            ? this._title.substring(this._title.indexOf('/'))
+          const subPage = this.#title.includes('/')
+            ? this.#title.substring(this.#title.indexOf('/'))
             : ''
           const fullTitle = realName + subPage
           return titleUtils.ensureCase(titleUtils.toDBKey(fullTitle), nsInfo.case)
         }
       }
 
-      return titleUtils.ensureCase(titleUtils.toDBKey(this._title), nsInfo.case)
+      return titleUtils.ensureCase(titleUtils.toDBKey(this.#title), nsInfo.case)
     }
 
     getMainText(): string {
       const nsInfo = this.getNamespaceInfo()
 
       // 如果是特殊页面，将主部分替换为真实名称，保留子页面部分
-      if (this._ns === -1) {
+      if (this.#ns === -1) {
         const realName = specialPageUtils.findSpecialPageRealName(
-          this._title,
+          this.#title,
           WikiTitle._specialPageIndex
         )
         if (realName) {
           // 构建包含子页面的完整标题
-          const subPage = this._title.includes('/')
-            ? this._title.substring(this._title.indexOf('/'))
+          const subPage = this.#title.includes('/')
+            ? this.#title.substring(this.#title.indexOf('/'))
             : ''
           const fullTitle = realName + subPage
           return titleUtils.ensureCase(titleUtils.toNormalText(fullTitle), nsInfo.case)
         }
       }
 
-      return titleUtils.ensureCase(titleUtils.toNormalText(this._title), nsInfo.case)
+      return titleUtils.ensureCase(titleUtils.toNormalText(this.#title), nsInfo.case)
     }
 
     private getMainRootText(): string {
@@ -382,14 +382,14 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
     }
 
     getPrefixedDBKey(): string {
-      if (this._ns === 0) {
+      if (this.#ns === 0) {
         return this.getMainDBKey()
       }
       return `${this.getNamespaceDBKey()}:${this.getMainDBKey()}`
     }
 
     getPrefixedText(): string {
-      if (this._ns === 0) {
+      if (this.#ns === 0) {
         return this.getMainText()
       }
       return `${this.getNamespaceText()}:${this.getMainText()}`
@@ -400,7 +400,7 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
     toString = this.getPrefixedDBKey.bind(this)
 
     getNamespaceId(): number {
-      return this._ns
+      return this.#ns
     }
 
     getNamespaceText(): string {
@@ -412,30 +412,30 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
     }
 
     getSubjectPage(): IWikiTitle {
-      if (namespaceUtils.isTalkPage(this._ns)) {
-        const subjectNs = this._ns - 1
-        return new WikiTitle(this._title, subjectNs)
+      if (namespaceUtils.isTalkPage(this.#ns)) {
+        const subjectNs = this.#ns - 1
+        return new WikiTitle(this.#title, subjectNs)
       }
       return this
     }
 
     getTalkPage(): IWikiTitle | null {
-      if (namespaceUtils.isTalkPage(this._ns)) {
+      if (namespaceUtils.isTalkPage(this.#ns)) {
         return this
       }
 
       // 特殊页面和媒体页面没有讨论页
-      if (this._ns < 0) {
+      if (this.#ns < 0) {
         return null
       }
 
-      const talkNs = this._ns + 1
+      const talkNs = this.#ns + 1
       const talkNsInfo = WikiTitle._meta.namespaces[talkNs.toString()]
       if (!talkNsInfo) {
         return null
       }
 
-      return new WikiTitle(this._title, talkNs)
+      return new WikiTitle(this.#title, talkNs)
     }
 
     getURL(params?: Record<string, string> | URLSearchParams): URL {
@@ -463,27 +463,27 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
      * @param title 新的标题字符串
      */
     setTitle(title: string): this {
-      this._title = title
-      this._ns = 0
+      this.#title = title
+      this.#ns = 0
       this.fixNSByTitle()
       return this
     }
 
     setMainText(text: string): this {
-      this._title = text
+      this.#title = text
       return this
     }
 
     setNamespaceText(namespaceText: string): this {
       const namespaceId = namespaceUtils.findNamespaceId(namespaceText, WikiTitle._namespaceIndex)
       if (namespaceId !== null) {
-        this._ns = namespaceId
+        this.#ns = namespaceId
       }
       return this
     }
 
     setNamespaceId(namespaceId: number): this {
-      this._ns = namespaceId
+      this.#ns = namespaceId
       return this
     }
 
@@ -496,7 +496,7 @@ export function createWikiTitleModel(metadata: SiteMetadata): WikiTitleConstruct
 
     isSpecial(alia: string): boolean {
       // 如果不是特殊页面命名空间，直接返回 false
-      if (this._ns !== -1) {
+      if (this.#ns !== -1) {
         return false
       }
       const targetTitle = new WikiTitle(alia, -1)

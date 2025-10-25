@@ -1,7 +1,7 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import { IWikiTitle } from '@/models/WikiTitle/index.js'
 import { CompareApiRequestOptions } from '../quick-diff/PluginQuickDiffCore.js'
 import { QuickEditOptions } from '../quick-edit/index.js'
+import { WikiLinkMetadata } from '@/services/WikiTitleService.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -9,22 +9,14 @@ declare module '@/InPageEdit' {
   }
 }
 
-export interface InArticleWikiLinkInfo {
-  title: IWikiTitle
-  url: URL
-  params: URLSearchParams
-  hash: string
-  action: 'view' | 'edit' | 'create' | 'diff' | string
-}
-
-export interface InArticleWikiAnchorInfo extends InArticleWikiLinkInfo {
+export interface InArticleWikiAnchorMetadata extends WikiLinkMetadata {
   $el: HTMLAnchorElement
   kind: 'normal' | 'mw:File'
   external: boolean
   redlink: boolean
 }
 
-@Inject(['sitemeta', 'wikiTitle', 'preferences'])
+@Inject(['wiki', 'wikiTitle', 'preferences'])
 @RegisterPreferences(
   Schema.object({
     'inArticleLinks.enable': Schema.boolean()
@@ -44,35 +36,12 @@ export interface InArticleWikiAnchorInfo extends InArticleWikiLinkInfo {
     .extra('category', 'in-article-links')
 )
 export class PluginInArticleLinks extends BasePlugin<{
-  /**
-   * @example "https://example.com"
-   */
-  wikiBaseUrl: string
-  /**
-   * Article path, with trailing slash
-   * @example "/wiki/" (if wgArticlePath is "/wiki/$1")
-   */
-  wikiArticlePath: string
-  /**
-   * Article base URL, with trailing slash
-   * @example "https://example.com/wiki/" (if wgArticlePath is "/wiki/$1")
-   */
-  wikiArticleBaseUrl: string
-  /**
-   * Script base URL, **without** trailing slash
-   * @example "https://example.com/w" (if wgScriptPath is "/w")
-   */
-  wikiScriptBaseUrl: string
   linkClassName: string
 }> {
   constructor(ctx: InPageEdit) {
     super(
       ctx,
       {
-        wikiBaseUrl: ctx.sitemeta.baseUrl,
-        wikiArticlePath: ctx.sitemeta.articlePath.replace('$1', ''),
-        wikiArticleBaseUrl: ctx.sitemeta.articleBaseUrl.replace('$1', ''),
-        wikiScriptBaseUrl: ctx.sitemeta.scriptBaseUrl,
         linkClassName: 'ipe__in-article-link',
       },
       'InArticleLinks'
@@ -99,23 +68,8 @@ export class PluginInArticleLinks extends BasePlugin<{
 
   protected async stop() {}
 
-  isWikiLink(url: string): boolean {
-    return (
-      url.startsWith(this.config.wikiArticleBaseUrl) ||
-      url.startsWith(this.config.wikiScriptBaseUrl + '/index.php')
-    )
-  }
-
-  static readonly REG_SKIPPED_HREF = /^(#|javascript:|vbscript:|file:)/i
-  private validateHrefAttr(href: string | null): boolean {
-    if (typeof href !== 'string') {
-      return false
-    }
-    return !PluginInArticleLinks.REG_SKIPPED_HREF.test(href)
-  }
-
-  private _cachedAnchorInfo = new WeakMap<HTMLAnchorElement, InArticleWikiAnchorInfo>()
-  parseAnchor(anchor: HTMLAnchorElement): InArticleWikiAnchorInfo | null {
+  private _cachedAnchorInfo = new WeakMap<HTMLAnchorElement, InArticleWikiAnchorMetadata>()
+  parseAnchor(anchor: HTMLAnchorElement): InArticleWikiAnchorMetadata | null {
     // 不是链接元素
     if (!(anchor instanceof HTMLAnchorElement)) {
       return null
@@ -127,16 +81,16 @@ export class PluginInArticleLinks extends BasePlugin<{
     }
 
     const attrHref = anchor.getAttribute('href') || ''
-    if (!this.validateHrefAttr(attrHref)) {
+    if (!this.ctx.wikiTitle.validateHrefAttr(attrHref)) {
       return null
     }
     const href = anchor.href || ''
-    const linkInfo = this.parseLink(href)
+    const linkInfo = this.ctx.wikiTitle.parseWikiLink(href)
     if (!linkInfo) {
       return null
     }
 
-    const info: InArticleWikiAnchorInfo = {
+    const info: InArticleWikiAnchorMetadata = {
       $el: anchor,
       kind: anchor.closest('[typeof^="mw:File"]') ? 'mw:File' : 'normal',
       external: anchor.classList.contains('external') || !!attrHref.startsWith('http'),
@@ -147,48 +101,7 @@ export class PluginInArticleLinks extends BasePlugin<{
     return info
   }
 
-  parseLink(link: string | URL): InArticleWikiLinkInfo | null {
-    if (!link) {
-      return null
-    }
-
-    if (typeof link === 'string' && !this.validateHrefAttr(link)) {
-      return null
-    }
-
-    const url = makeURL(link)
-    if (!this.isWikiLink(url.toString())) {
-      return null
-    }
-
-    const params = url.searchParams
-    const hash = url.hash.replace('#', '')
-    const action = params.get('action') || 'view'
-    const titleText = url.pathname.endsWith('.php')
-      ? params.get('title')
-      : (() => {
-          try {
-            return decodeURI(url.pathname.substring(this.config.wikiArticlePath.length))
-          } catch (e) {
-            this.logger.error('parseLink', url, e)
-            return null
-          }
-        })()
-
-    if (!titleText) {
-      return null
-    }
-
-    return {
-      url,
-      params,
-      hash,
-      action,
-      title: this.ctx.wikiTitle.create(titleText),
-    }
-  }
-
-  scanAnchors(parent: HTMLElement): InArticleWikiAnchorInfo[] {
+  scanAnchors(parent: HTMLElement): InArticleWikiAnchorMetadata[] {
     const anchors = parent.querySelectorAll<HTMLAnchorElement>('a[href]')
     return Array.from(anchors)
       .map((anchor) => this.parseAnchor(anchor))
@@ -241,10 +154,10 @@ export class PluginInArticleLinks extends BasePlugin<{
               }
               titleText = talkPage.getPrefixedDBKey()
             } else if (title.isSpecial('mypage')) {
-              const userPage = title.newTitle(this.ctx.sitemeta.userInfo.name, 2)
+              const userPage = title.newTitle(this.ctx.wiki.userInfo.name, 2)
               titleText = userPage.getPrefixedDBKey() + (sub ? `/${sub}` : '')
             } else if (title.isSpecial('mytalk')) {
-              const userTalkPage = title.newTitle(this.ctx.sitemeta.userInfo.name, 3)
+              const userTalkPage = title.newTitle(this.ctx.wiki.userInfo.name, 3)
               titleText = userTalkPage.getPrefixedDBKey() + (sub ? `/${sub}` : '')
             } else {
               return this.ctx.logger.debug($el, `Special page cannot be edited`)

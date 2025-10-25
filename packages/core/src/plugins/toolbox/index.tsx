@@ -45,13 +45,12 @@ export class PluginToolbox extends Service {
     this.container?.remove()
   }
 
+  private get isPersistent() {
+    return this.container.classList.contains('is-persistent')
+  }
+
   private setupHoverLogic() {
     let hoverTimeout: number | null = null
-
-    // 检查是否处于持久化状态的辅助函数
-    const isPersistent = () => {
-      return this.container.classList.contains('is-persistent')
-    }
 
     // 鼠标进入时暂时展开
     this.container.addEventListener('mouseenter', () => {
@@ -61,14 +60,14 @@ export class PluginToolbox extends Service {
       }
 
       // 如果不在持久化状态，则添加hover展开效果
-      if (!isPersistent()) {
+      if (!this.isPersistent) {
         this.container.classList.add('is-hovered')
       }
     })
 
     // 鼠标离开时收起（如果不是持久化状态）
     this.container.addEventListener('mouseleave', () => {
-      if (!isPersistent()) {
+      if (!this.isPersistent) {
         hoverTimeout = window.setTimeout(() => {
           this.container.classList.remove('is-hovered')
         }, 150) // 延迟150ms收起，避免快速移动鼠标时闪烁
@@ -118,10 +117,7 @@ export class PluginToolbox extends Service {
         className="ipe-toolbox-btn"
         id="toolbox-toggler"
         onClick={() => {
-          const isPersistent = this.container.classList.contains('is-persistent')
-          const newPersistent = !isPersistent
-          this.container.classList.toggle('is-persistent', newPersistent)
-          this.ctx.preferences.set('toolboxAlwaysShow', newPersistent)
+          this.toggle()
         }}
       >
         {/* Font Awesome 5 Solid: Plus */}
@@ -222,5 +218,24 @@ export class PluginToolbox extends Service {
 
     // 更新按钮延迟
     this.updateButtonDelays()
+  }
+
+  getContainer() {
+    return this.container
+  }
+
+  get isOpened() {
+    return (
+      this.container.classList.contains('is-persistent') ||
+      this.container.classList.contains('is-hovered')
+    )
+  }
+
+  toggle(force?: boolean) {
+    const isPersistent = this.isPersistent
+    const newPersistent = typeof force === 'boolean' ? force : !isPersistent
+    this.container.classList.toggle('is-persistent', newPersistent)
+    this.container.classList.remove('is-hovered')
+    this.ctx.preferences.set('toolboxAlwaysShow', newPersistent)
   }
 }

@@ -1,22 +1,22 @@
-import { Inject, InPageEdit, Logger, Service } from '@/InPageEdit'
-import { SiteMetadata, SiteUserBlockInfo } from '@/types/SiteMetadata'
+import { Inject, InPageEdit, Logger, Schema, Service } from '@/InPageEdit'
+import { WikiMetadata, WikiUserBlockInfo } from '@/types/WikiMetadata'
 import { IPEStorageManager } from './StorageService'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    sitemeta: SiteMetadataService
-    getUrl: SiteMetadataService['getUrl']
-    getSciprtUrl: SiteMetadataService['getSciprtUrl']
-    getMainpageUrl: SiteMetadataService['getMainpageUrl']
+    wiki: WikiMetadataService
+    getUrl: WikiMetadataService['getUrl']
+    getSciprtUrl: WikiMetadataService['getSciprtUrl']
+    getMainpageUrl: WikiMetadataService['getMainpageUrl']
   }
 }
 
 @Inject(['api', 'storage'])
-export class SiteMetadataService extends Service {
-  private _data!: SiteMetadata
+export class WikiMetadataService extends Service {
+  private _data!: WikiMetadata
   private readonly CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
   private readonly VERSION = 2
-  private db: IPEStorageManager<SiteMetadata>
+  private db: IPEStorageManager<WikiMetadata>
   private logger: Logger
   private queryData = {
     meta: 'siteinfo|userinfo',
@@ -25,9 +25,9 @@ export class SiteMetadataService extends Service {
   }
 
   constructor(public ctx: InPageEdit) {
-    super(ctx, 'sitemeta', false)
-    this.db = ctx.storage.createDatabse<SiteMetadata>('sitemeta', this.CACHE_TTL, this.VERSION)
-    this.logger = ctx.logger('SiteMetadataService')
+    super(ctx, 'wiki', false)
+    this.db = ctx.storage.createDatabse<WikiMetadata>('wiki-metadata', this.CACHE_TTL, this.VERSION)
+    this.logger = ctx.logger('WIKI_METADATA')
   }
 
   get api() {
@@ -49,17 +49,57 @@ export class SiteMetadataService extends Service {
   protected async start(): Promise<void> {
     const cached = await this.fetchFromCache()
     if (cached) {
-      this.logger.info('Using cached metadata', cached)
       this._data = cached
+      this.logger.debug('Using cached')
     } else {
       const meta = await this.fetchFromApi()
       this.saveToCache(meta)
       this._data = meta
+      this.logger.debug('Fetched from API')
     }
+    this.logger.info('loaded', this._data)
 
     this.ctx.set('getUrl', this.getUrl.bind(this))
     this.ctx.set('getSciprtUrl', this.getSciprtUrl.bind(this))
     this.ctx.set('getMainpageUrl', this.getMainpageUrl.bind(this))
+
+    this.ctx.inject(['preferences'], (ctx) => {
+      ctx.preferences.registerCustomConfig(
+        'WikiMetadataService',
+        Schema.object({
+          WikiMetadataService: Schema.const(
+            <div>
+              <h3>Wiki Informations</h3>
+              <ul>
+                <li>
+                  <strong>Site:</strong> {this.general.sitename} ({this.landingPageUrl})
+                </li>
+                <li>
+                  <strong>User</strong>: {this.userInfo.name} (ID: {this.userInfo.id})
+                </li>
+                <li>
+                  <strong>Groups</strong>: {this.userGroups.join(', ') || 'None'}
+                </li>
+              </ul>
+              <p>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    this.invalidateCache().then(() => {
+                      window.location.reload()
+                    })
+                  }}
+                >
+                  Clear caches and reload page
+                </button>
+              </p>
+            </div>
+          ).role('raw-html'),
+        }).description('WikiMetadataService'),
+        'general',
+        {}
+      )
+    })
   }
 
   computeSiteIdentity() {
@@ -93,7 +133,7 @@ export class SiteMetadataService extends Service {
         return data.query
       })
       .catch((e) => {
-        this.ctx.logger.error('[InPageEdit]', 'fetchMetadata error', e)
+        this.logger.error('Failed to fetch metadata', e)
         return Promise.reject(e)
       })
   }
@@ -104,12 +144,13 @@ export class SiteMetadataService extends Service {
     const data = await this.db.get(key)
     if (data && data.userinfo.id === userId) {
       return data
+    } else {
+      this.invalidateCache()
     }
-    this.logger.info('UserID changed, invalidating cache')
-    this.invalidateCache()
+    this.logger.info(data ? 'UserID changed, invalidating cache' : 'Missing cache')
     return null
   }
-  async saveToCache(data: SiteMetadata) {
+  async saveToCache(data: WikiMetadata) {
     const key = this.computeSiteIdentity()
     return this.db.set(key, data)
   }
@@ -177,7 +218,7 @@ export class SiteMetadataService extends Service {
   }
   /**
    * Base URL, without trailing slash
-   * @example "https://example.com"
+   * @example "https://mediawiki.org"
    */
   get baseUrl() {
     const server = this.general.server
@@ -186,6 +227,27 @@ export class SiteMetadataService extends Service {
     } else {
       return server
     }
+  }
+  /**
+   * Home page URL of this wiki
+   * @description Generally same as the Mainpage URL,
+   *              but after MediaWiki 1.34,
+   *              it can be set to the website root directory.
+   * @example "https://mediawiki.org/wiki/Main_Page" (In most cases)
+   * @example "https://mediawiki.org/" ($wgMainPageIsDomainRoot = true)
+   */
+  get landingPageUrl() {
+    return this.general.base
+  }
+  get mainPageName() {
+    return this.general.mainpage
+  }
+  /**
+   * Exact Mainpage URL of this wiki
+   * @example "https://mediawiki.org/wiki/Main_Page"
+   */
+  get mainPageUrl() {
+    return this.getUrl(this.mainPageName)
   }
   /**
    * Article path, with the $1 placeholder
@@ -203,14 +265,14 @@ export class SiteMetadataService extends Service {
   }
   /**
    * Article base URL, with the $1 placeholder
-   * @example "https://example.com/wiki/$1"
+   * @example "https://mediawiki.org/wiki/$1"
    */
   get articleBaseUrl() {
     return `${this.baseUrl}${this.articlePath}`
   }
   /**
    * Script base URL, without trailing slash
-   * @example "https://example.com/w"
+   * @example "https://mediawiki.org/w"
    */
   get scriptBaseUrl() {
     return `${this.baseUrl}${this.scriptPath}`
@@ -232,12 +294,12 @@ export class SiteMetadataService extends Service {
   getUrl(titleOrPageId: string | number, params?: Record<string, any>): string {
     const searchParams = makeSearchParams(params)
     let url: URL
-    if (titleOrPageId === '') {
-      url = new URL(this.getSciprtUrl('index'))
-    } else if (typeof titleOrPageId === 'string') {
+    if (typeof titleOrPageId === 'string' && titleOrPageId !== '') {
       url = new URL(`${this.articleBaseUrl.replace('$1', titleOrPageId)}`)
-    } else {
+    } else if (typeof titleOrPageId === 'number') {
       searchParams.set('curid', titleOrPageId.toString())
+      url = new URL(this.getSciprtUrl('index'))
+    } else {
       url = new URL(this.getSciprtUrl('index'))
     }
     url.search = searchParams.toString()
@@ -268,6 +330,6 @@ export class SiteMetadataService extends Service {
       blockreason: this.userInfo.blockreason!,
       blockedtimestamp: this.userInfo.blockedtimestamp!,
       blockexpiry: this.userInfo.blockexpiry!,
-    } as SiteUserBlockInfo
+    } as WikiUserBlockInfo
   }
 }

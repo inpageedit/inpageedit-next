@@ -20,7 +20,7 @@ export interface QuickMoveOptions extends Partial<MovePageOptions> {
   lockToField?: boolean
 }
 
-@Inject(['modal', 'sitemeta'])
+@Inject(['modal', 'wiki'])
 export class PluginQuickMove extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-move')
@@ -160,7 +160,7 @@ export class PluginQuickMove extends BasePlugin {
               Move subpage(s) (up to 100)
             </CheckBox>
           </div>
-          {this.ctx.sitemeta.hasRight('suppressredirect') && (
+          {this.ctx.wiki.hasRight('suppressredirect') && (
             <div>
               <CheckBox name="noredirect" id="noredirect" checked={options?.noredirect}>
                 Move without leaving a redirect

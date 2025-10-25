@@ -42,7 +42,7 @@ export interface QuickDeleteSubmitPayload {
   reason?: string
 }
 
-@Inject(['api', 'wikiPage', 'sitemeta', 'modal', 'preferences'])
+@Inject(['api', 'wikiPage', 'wiki', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
     deleteReason: Schema.string()
@@ -94,9 +94,9 @@ export class PluginQuickDelete extends BasePlugin {
       this.logger.warn('None of the title, pageId or revision provided. Using defaults.')
       payload = {
         ...payload,
-        title: this.ctx.sitemeta.mwConfig.get('wgPageName'),
-        pageId: this.ctx.sitemeta.mwConfig.get('wgArticleId'),
-        revision: this.ctx.sitemeta.mwConfig.get('wgRevisionId'),
+        title: this.ctx.wiki.mwConfig.get('wgPageName'),
+        pageId: this.ctx.wiki.mwConfig.get('wgArticleId'),
+        revision: this.ctx.wiki.mwConfig.get('wgRevisionId'),
       }
     }
 
@@ -389,12 +389,12 @@ export class PluginQuickDelete extends BasePlugin {
       ) as HTMLElement,
       tooltip: 'Delete this page',
       onClick: () => {
-        const hasPermission = this.ctx.sitemeta.hasAnyRight('delete')
+        const hasPermission = this.ctx.wiki.hasAnyRight('delete')
         if (hasPermission) {
           this.showModal({
-            title: this.ctx.sitemeta.mwConfig.get('wgPageName'),
-            pageId: this.ctx.sitemeta.mwConfig.get('wgArticleId'),
-            revision: this.ctx.sitemeta.mwConfig.get('wgRevisionId'),
+            title: this.ctx.wiki.mwConfig.get('wgPageName'),
+            pageId: this.ctx.wiki.mwConfig.get('wgArticleId'),
+            revision: this.ctx.wiki.mwConfig.get('wgRevisionId'),
           })
         } else {
           this.ctx.modal.notify('error', {

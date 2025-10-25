@@ -4,7 +4,7 @@ import { LoggerLevel, createLogger, type Logger } from '@inpageedit/logger'
 import { ApiService } from '@/services/ApiService.js'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService.js'
 import { ModalService } from '@/services/ModalService/index.js'
-import { SiteMetadataService } from '@/services/SiteMetadataService.js'
+import { WikiMetadataService } from '@/services/WikiMetadataService.js'
 import { StorageService } from '@/services/StorageService.js'
 import { WikiPageService } from '@/services/WikiPageService.js'
 import { WikiTitleService } from '@/services/WikiTitleService.js'
@@ -65,7 +65,7 @@ export class InPageEdit extends Context {
     this.plugin(ResourceLoaderService)
     this.plugin(ModalService)
     this.plugin(StorageService)
-    this.plugin(SiteMetadataService)
+    this.plugin(WikiMetadataService)
     this.plugin(WikiPageService)
     this.plugin(WikiTitleService)
 
@@ -77,8 +77,8 @@ export class InPageEdit extends Context {
       'storage',
       'wikiPage',
       'wikiTitle',
-      // SiteMetadataService
-      'sitemeta',
+      // WikiMetadataService
+      'wiki',
       'getUrl',
       'getSciprtUrl',
       'getMainpageUrl',

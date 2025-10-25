@@ -27,7 +27,7 @@ const schema = new Schema<TestSchema>(
   })
 )
 
-@Inject(['modal', 'toolbox', 'sitemeta'])
+@Inject(['modal', 'toolbox', 'wiki'])
 class PluginDebug extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'debug')
@@ -56,7 +56,7 @@ class PluginDebug extends BasePlugin {
           <div>
             <h2>Site Metadata</h2>
             <pre style={{ maxHeight: '20em', overflow: 'auto' }}>
-              {JSON.stringify(this.ctx.sitemeta._raw, null, 2)}
+              {JSON.stringify(this.ctx.wiki._raw, null, 2)}
             </pre>
             <h2>Schema Playground</h2>
             <h3>web-components</h3>
