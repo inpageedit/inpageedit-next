@@ -42,7 +42,7 @@ export interface QuickDeleteSubmitPayload {
   reason?: string
 }
 
-@Inject(['api', 'wikiPage', 'wiki', 'modal', 'preferences'])
+@Inject(['api', 'wikiPage', 'wikiTitle', 'wiki', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
     deleteReason: Schema.string()
@@ -92,11 +92,12 @@ export class PluginQuickDelete extends BasePlugin {
 
     if (!payload.title && !payload.pageId && !payload.revision) {
       this.logger.warn('None of the title, pageId or revision provided. Using defaults.')
+      const searchParams = new URLSearchParams(window.location.search)
       payload = {
         ...payload,
-        title: this.ctx.wiki.mwConfig.get('wgPageName'),
-        pageId: this.ctx.wiki.mwConfig.get('wgArticleId'),
-        revision: this.ctx.wiki.mwConfig.get('wgRevisionId'),
+        title: this.ctx.wikiTitle.currentTitle.getPrefixedDBKey(),
+        revision: searchParams.has('oldid') ? Number(searchParams.get('oldid')) : undefined,
+        pageId: searchParams.has('curid') ? Number(searchParams.get('curid')) : undefined,
       }
     }
 
@@ -363,6 +364,8 @@ export class PluginQuickDelete extends BasePlugin {
   }
 
   private injectToolbox(ctx: InPageEdit) {
+    const title = this.ctx.wikiTitle.currentTitle
+    const canDelete = this.ctx.wiki.hasRight('delete') && title.getNamespaceId() >= 0
     ctx.toolbox.addButton({
       id: 'quick-delete',
       group: 'group2',
@@ -387,21 +390,14 @@ export class PluginQuickDelete extends BasePlugin {
           <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
         </svg>
       ) as HTMLElement,
-      tooltip: 'Delete this page',
+      buttonProps: {
+        disabled: !canDelete,
+      },
+      tooltip: canDelete ? 'Quick Delete' : 'Not deletable',
       onClick: () => {
-        const hasPermission = this.ctx.wiki.hasAnyRight('delete')
-        if (hasPermission) {
-          this.showModal({
-            title: this.ctx.wiki.mwConfig.get('wgPageName'),
-            pageId: this.ctx.wiki.mwConfig.get('wgArticleId'),
-            revision: this.ctx.wiki.mwConfig.get('wgRevisionId'),
-          })
-        } else {
-          this.ctx.modal.notify('error', {
-            title: 'Permission Denied',
-            content: 'You do not have permission to delete pages.',
-          })
-        }
+        this.showModal({
+          title: title.getPrefixedText(),
+        })
       },
     })
   }

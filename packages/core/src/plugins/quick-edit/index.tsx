@@ -52,7 +52,7 @@ export interface QuickEditSubmitPayload {
   watchlist?: WatchlistAction
 }
 
-@Inject(['api', 'wikiPage', 'wiki', 'modal', 'preferences'])
+@Inject(['api', 'wikiPage', 'wikiTitle', 'wiki', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
     editSummary: Schema.string()
@@ -117,11 +117,12 @@ export class PluginQuickEdit extends BasePlugin {
 
     if (!payload.title && !payload.pageId && !payload.revision) {
       this.logger.warn('None of the title, pageId or revision provided. Using defaults.')
+      const searchParams = new URLSearchParams(window.location.search)
       payload = {
         ...payload,
-        title: this.ctx.wiki.mwConfig.get('wgPageName'),
-        pageId: this.ctx.wiki.mwConfig.get('wgArticleId'),
-        revision: this.ctx.wiki.mwConfig.get('wgRevisionId'),
+        title: this.ctx.wikiTitle.currentTitle.getPrefixedDBKey(),
+        revision: searchParams.has('oldid') ? Number(searchParams.get('oldid')) : undefined,
+        pageId: searchParams.has('curid') ? Number(searchParams.get('curid')) : undefined,
       }
     }
 
@@ -442,6 +443,8 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   private injectToolbox(ctx: InPageEdit) {
+    const title = this.ctx.wikiTitle.currentTitle
+    const canEdit = this.ctx.wiki.hasRight('edit') && title.getNamespaceId() >= 0
     ctx.toolbox.addButton({
       id: 'quick-edit',
       group: 'group1',
@@ -465,13 +468,17 @@ export class PluginQuickEdit extends BasePlugin {
           <path d="M16 5l3 3" />
         </svg>
       ) as HTMLElement,
-      tooltip: 'Edit this page quickly',
-      onClick: () =>
+      buttonProps: {
+        disabled: !canEdit,
+      },
+      tooltip: canEdit ? 'Quick Edit' : 'Not editable',
+      onClick: () => {
+        const revision = new URLSearchParams(window.location.search).get('oldid')
         this.showModal({
-          title: this.ctx.wiki.mwConfig.get('wgPageName'),
-          pageId: this.ctx.wiki.mwConfig.get('wgArticleId'),
-          revision: this.ctx.wiki.mwConfig.get('wgRevisionId'),
-        }),
+          title: title.getPrefixedText(),
+          revision: revision ? Number(revision) : undefined,
+        })
+      },
     })
   }
 

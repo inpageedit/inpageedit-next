@@ -1,5 +1,5 @@
 import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit'
-import { ReactElement } from 'jsx-dom'
+import { JSX, ReactElement } from 'jsx-dom'
 import './styles.scss'
 
 declare module '@/InPageEdit' {
@@ -153,11 +153,12 @@ export class PluginToolbox extends Service {
     group?: 'auto' | 'group1' | 'group2'
     icon: string | HTMLElement | SVGElement | ReactElement
     tooltip?: string | HTMLElement
-    buttonProps?: Record<string, any>
+    itemProps?: JSX.IntrinsicElements['li']
+    buttonProps?: JSX.IntrinsicElements['button']
     onClick?: (event: MouseEvent) => void
     index?: number
   }) {
-    let { id, group, icon, tooltip, buttonProps, onClick, index } = payload
+    let { id, group, icon, tooltip, itemProps, buttonProps, onClick, index } = payload
     id = this.normalizeButtonId(id)
 
     const existingButton = this.container.querySelector(`#${id}`)
@@ -180,7 +181,7 @@ export class PluginToolbox extends Service {
     if (!groupEl) throw new Error(`Button group ${group} not found`)
 
     const button = (
-      <li class="btn-tip-group" id={id} onClick={onClick}>
+      <li class="btn-tip-group" id={id} onClick={onClick} {...itemProps}>
         <div class="btn-tip">{tooltip}</div>
         <button id={`${id}-btn`} class="ipe-toolbox-btn" {...buttonProps}>
           {icon}

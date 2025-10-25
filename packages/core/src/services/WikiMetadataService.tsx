@@ -142,13 +142,13 @@ export class WikiMetadataService extends Service {
     const key = this.computeSiteIdentity()
     const userId = this.mwConfig.get('wgUserId', 0)
     const data = await this.db.get(key)
-    if (data && data.userinfo.id === userId) {
+    if (data && typeof data === 'object' && !!data.general && data.userinfo.id === userId) {
       return data
     } else {
+      this.logger.info(data ? 'Cache mis-match' : 'Missing cache')
       this.invalidateCache()
+      return null
     }
-    this.logger.info(data ? 'UserID changed, invalidating cache' : 'Missing cache')
-    return null
   }
   async saveToCache(data: WikiMetadata) {
     const key = this.computeSiteIdentity()

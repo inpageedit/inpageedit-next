@@ -70,7 +70,7 @@ export class WikiTitleService extends Service {
       })
       return title
     } else {
-      return null
+      return this.newTitle(this.wiki.mainPageName)
     }
   }
   get currentAction() {

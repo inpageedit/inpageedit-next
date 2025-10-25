@@ -38,6 +38,10 @@
     height: 1em;
     vertical-align: middle;
   }
+  &:disabled {
+    cursor: not-allowed;
+    filter: grayscale(50%) opacity(0.75);
+  }
 }
 
 #ipe-edit-toolbox #toolbox-toggler {
