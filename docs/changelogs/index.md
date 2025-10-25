@@ -23,6 +23,34 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.8.0'>
+
+- fix: wrong behavior of .ipe-modal-no-scroll
+  - 锁定滚动时不会再错误修改 documentElement 的样式
+- feat: modal button keyPress supports combos
+  - 模态框按钮现在支持组合键触发（例如 `ctrl + s`）
+  - 快速编辑等功能现已支持配置自定义快捷键
+- refactor: add WikiPage factory, enhance type declarations
+  - 将 `WikiPage` 模型重构为工厂函数，增强了类型声明
+- perf: toolbox buttons check permissions
+  - 工具盒™按钮现在会进行环境检查，避免在不可编辑的页面显示无效按钮
+- refactor!: rename batch types (SiteFoo → WikiFoo)
+  - 将所有 `SiteFoo` 类型重命名为 `WikiFoo`，以更好地反映其用途
+- refactor!: rename service sitemeta → wiki
+  - 将 `sitemeta` 服务重命名为 `wiki`，以更好地反映其用途
+- feat!: add title parser to WikiTitleService
+  - 我们为 `WikiTitleService` 添加了标题解析功能
+  - 现在你可以使用 `wikiTitle.newTitleFromUrl(url)` 来从 URL 创建标题实例，并快速检查 URL 是否为本站链接
+  - 添加了 `wikiTitle.currentTitle` getter，方便获取当前页面标题实例
+- feat: add clear cache button for WikiMetadata
+  - 你现在可以从设置页面清除 WikiMetadata 的缓存了
+- feat: add toggle method for toolbox
+  - 我们为工具盒™添加了切换显示/隐藏的方法 `toolbox.toggle()`，方便插件开发者使用
+- chore: batch improvements
+  - 更新了依赖，修复了一些小问题，提升了项目的整体质量。
+
+</ChangeLog>
+
 <ChangeLog version='0.7.0'>
 
 - chore: gc for modals, fix typo
