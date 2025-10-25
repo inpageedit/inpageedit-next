@@ -9,7 +9,6 @@
   "main": "index.js",
   "scripts": {
     "dev": "vitepress dev",
-    "prebuild": "(pnpm --filter schemastery-form build && pnpm --filter modal build && pnpm --filter core build:import) || true",
     "build": "vitepress build",
     "preview": "vitepress preview"
   },
@@ -58,7 +57,7 @@
   "dependencies": {
     "naive-ui": "^2.43.1",
     "schemastery": "^3.17.1",
-    "schemastery-form": "workspace:^",
+    "schemastery-form": "^0.2.1",
     "vue": "^3.5.22"
   },
   "bugs": {

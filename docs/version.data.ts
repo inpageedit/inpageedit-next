@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { execSync } from 'node:child_process'
-import { version as installedVersion } from '@inpageedit/core/package.json'
+import corePkg from '@inpageedit/core/package.json' with { type: 'json' }
 
 export default {
   load: async () => {
@@ -13,7 +13,7 @@ export default {
     const gitTime = execSync('git log -1 --format=%cd --date=iso').toString().trim()
     return {
       localVersion,
-      installedVersion,
+      installedVersion: corePkg.version,
       gitHash,
       gitTime,
     }

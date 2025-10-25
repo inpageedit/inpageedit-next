@@ -39,8 +39,8 @@ importers:
         specifier: ^3.17.1
         version: 3.17.1
       schemastery-form:
-        specifier: workspace:^
-        version: link:../packages/schemastery-form
+        specifier: ^0.2.1
+        version: 0.2.1(schemastery@3.17.1)(vue@3.5.22(typescript@5.9.3))
       vue:
         specifier: ^3.5.22
         version: 3.5.22(typescript@5.9.3)
