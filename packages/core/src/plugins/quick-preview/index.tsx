@@ -1,10 +1,18 @@
 import { Inject, InPageEdit } from '@/InPageEdit'
-import { type QuickEditInitPayload } from '@/plugins/quick-edit'
-import { WikiPage } from '@/models/WikiPage'
+import { type QuickEditEventPayload } from '@/plugins/quick-edit'
+import { IWikiPage } from '@/models/WikiPage'
 import { MwApiParams } from 'wiki-saikou'
 import { PageParseData } from '@/models/WikiPage/types/PageParseData'
 import { IPEModal, IPEModalOptions } from '@/services/ModalService/IPEModal.js'
 import { QuickDeleteInitPayload } from '../quick-delete/index.js'
+
+interface QuickPreviewEventPayload {
+  ctx: InPageEdit
+  modal: IPEModal
+  wikiPage: IWikiPage
+  text: string
+  parseData: PageParseData
+}
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -16,19 +24,8 @@ declare module '@/InPageEdit' {
     }
   }
   interface Events {
-    'quick-preview/show-modal'(payload: {
-      ctx: InPageEdit
-      text: string
-      modal: IPEModal
-      wikiPage: WikiPage
-    }): void
-    'quick-preview/loaded'(payload: {
-      ctx: InPageEdit
-      modal: IPEModal
-      wikiPage: WikiPage
-      text: string
-      parseData: PageParseData
-    }): void
+    'quick-preview/show-modal'(payload: Omit<QuickPreviewEventPayload, 'parseData'>): void
+    'quick-preview/loaded'(payload: QuickPreviewEventPayload): void
   }
 }
 
@@ -52,7 +49,7 @@ export class PluginQuickPreview extends BasePlugin {
   previewWikitext(
     text: string,
     params?: MwApiParams,
-    wikiPage?: WikiPage,
+    wikiPage?: IWikiPage,
     modal?: IPEModal,
     modalOptions?: Partial<IPEModalOptions>
   ) {
@@ -123,7 +120,7 @@ export class PluginQuickPreview extends BasePlugin {
     return modal
   }
 
-  private injectQuickEdit({ ctx, modal, wikiPage }: QuickEditInitPayload) {
+  private injectQuickEdit({ ctx, modal, wikiPage }: QuickEditEventPayload) {
     let latestPreviewModal: IPEModal | undefined = undefined
     modal.addButton(
       {

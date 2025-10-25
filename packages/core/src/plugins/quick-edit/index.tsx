@@ -1,5 +1,5 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import { WikiPage } from '@/models/WikiPage'
+import { IWikiPage } from '@/models/WikiPage'
 import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
 import { IPEModal } from '@/services/ModalService/IPEModal'
 import { ReactNode } from 'jsx-dom'
@@ -12,10 +12,10 @@ declare module '@/InPageEdit' {
     }
   }
   interface Events {
-    'quick-edit/init-options'(payload: Omit<QuickEditInitPayload, 'modal' | 'wikiPage'>): void
-    'quick-edit/show-modal'(payload: Omit<QuickEditInitPayload, 'wikiPage'>): void
-    'quick-edit/wiki-page'(payload: QuickEditInitPayload): void
-    'quick-edit/edit-notice'(payload: QuickEditInitPayload & { editNotices: ReactNode[] }): void
+    'quick-edit/init-options'(payload: Omit<QuickEditEventPayload, 'modal' | 'wikiPage'>): void
+    'quick-edit/show-modal'(payload: Omit<QuickEditEventPayload, 'wikiPage'>): void
+    'quick-edit/wiki-page'(payload: QuickEditEventPayload): void
+    'quick-edit/edit-notice'(payload: QuickEditEventPayload & { editNotices: ReactNode[] }): void
   }
 }
 
@@ -35,15 +35,15 @@ export interface QuickEditOptions {
   reloadAfterSave: boolean
 }
 
-export interface QuickEditInitPayload {
+export interface QuickEditEventPayload {
   ctx: InPageEdit
   options: QuickEditOptions
   modal: IPEModal
-  wikiPage: WikiPage
+  wikiPage: IWikiPage
 }
 
 export interface QuickEditSubmitPayload {
-  wikiPage: WikiPage
+  wikiPage: IWikiPage
   text?: string
   summary?: string
   section?: number | 'new' | undefined
@@ -193,7 +193,7 @@ export class PluginQuickEdit extends BasePlugin {
     modal.show()
     this.ctx.emit('quick-edit/show-modal', { ctx: this.ctx, modal, options })
 
-    let wikiPage: WikiPage
+    let wikiPage: IWikiPage
     try {
       wikiPage = await this.getWikiPageFromPayload(options)
       if (wikiPage.pageInfo.special) {

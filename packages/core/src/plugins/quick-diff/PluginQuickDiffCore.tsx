@@ -1,5 +1,5 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import { type QuickEditInitPayload } from '@/plugins/quick-edit'
+import { type QuickEditEventPayload } from '@/plugins/quick-edit'
 import { JsDiffDiffType } from './JsDiffService'
 
 import styles from './styles.module.sass'
@@ -135,7 +135,7 @@ export class PluginQuickDiffCore extends BasePlugin {
     })
   }
 
-  private injectQuickEdit({ modal, wikiPage }: QuickEditInitPayload) {
+  private injectQuickEdit({ modal, wikiPage }: QuickEditEventPayload) {
     if (wikiPage.pageid === 0) {
       // User is creating a new page, no need to show diff button
       return

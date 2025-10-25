@@ -1,5 +1,5 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import { WikiPage } from '@/models/WikiPage'
+import { IWikiPage } from '@/models/WikiPage'
 import { IPEModal } from '@/services/ModalService/IPEModal'
 import { ReactNode } from 'jsx-dom'
 import { makeCallable } from '@/utils/makeCallable.js'
@@ -34,11 +34,11 @@ export interface QuickDeleteInitPayload {
   ctx: InPageEdit
   options: QuickDeleteOptions
   modal: IPEModal
-  wikiPage: WikiPage
+  wikiPage: IWikiPage
 }
 
 export interface QuickDeleteSubmitPayload {
-  wikiPage: WikiPage
+  wikiPage: IWikiPage
   reason?: string
 }
 
@@ -143,7 +143,7 @@ export class PluginQuickDelete extends BasePlugin {
     modal.show()
     this.ctx.emit('quick-delete/show-modal', { ctx: this.ctx, modal, options })
 
-    let wikiPage: WikiPage
+    let wikiPage: IWikiPage
     try {
       wikiPage = await this.getWikiPageFromPayload(options)
       if (wikiPage.pageInfo.special) {
