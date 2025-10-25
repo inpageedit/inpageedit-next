@@ -99,6 +99,7 @@
   "dependencies": {
     "@cordisjs/core": "^3.18.1",
     "@inpageedit/logger": "^0.1.0",
+    "@inpageedit/modal": "workspace:^",
     "diff": "^8.0.2",
     "localforage": "^1.10.0",
     "schemastery": "^3.17.1",

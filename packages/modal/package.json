@@ -1,0 +1,70 @@
+{
+  "name": "@inpageedit/modal",
+  "version": "1.0.0",
+  "description": "Yet another lightweight, framework-free modal and toast notification utility",
+  "author": "dragon-fish",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "lib"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./lib/index.cjs"
+    },
+    "./style.css": "./dist/style.css",
+    "./src/*": {
+      "source": "./src/*",
+      "types": "./src/*"
+    },
+    "./dist/*": {
+      "source": "./dist/*",
+      "types": "./dist/*"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "run-p build:*",
+    "build:import": "cross-env VITE_BUILD_FORMAT=import vite build",
+    "build:bundle": "cross-env VITE_BUILD_FORMAT=bundle vite build",
+    "prepublish": "npm run build",
+    "clean": "rimraf dist/* lib/*",
+    "format": "prettier --write ./src",
+    "typecheck": "tsc -b --pretty false --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.53.1",
+    "cross-env": "^10.1.0",
+    "jsx-dom": "^8.1.6",
+    "npm-run-all2": "^8.0.4",
+    "rimraf": "^6.0.1",
+    "sass-embedded": "^1.93.2",
+    "typescript": "^5.9.3",
+    "unplugin-dts": "1.0.0-beta.6",
+    "vite": "^7.1.11"
+  },
+  "keywords": [
+    "logger",
+    "console",
+    "inpageedit"
+  ],
+  "homepage": "https://github.com/inpageedit/inpageedit-next/tree/master/packages/modal",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inpageedit/inpageedit-next.git"
+  },
+  "bugs": {
+    "url": "https://github.com/inpageedit/inpageedit-next/issues"
+  }
+}

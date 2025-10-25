@@ -1,7 +1,8 @@
 import { InPageEdit } from '@/InPageEdit'
-import { IPEModal, IPEModalButtonOptions, IPEModalEvent, IPEModalOptions } from './IPEModal.js'
+import { IPEModal, IPEModalEvent, IPEModalOptions } from '@inpageedit/modal'
+import '@inpageedit/modal/style.css'
 
-export * from './IPEModal.js'
+export * from '@inpageedit/modal'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {

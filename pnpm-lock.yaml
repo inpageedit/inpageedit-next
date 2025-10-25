@@ -162,6 +162,9 @@ importers:
       '@inpageedit/logger':
         specifier: ^0.1.0
         version: 0.1.0
+      '@inpageedit/modal':
+        specifier: workspace:^
+        version: link:../modal
       diff:
         specifier: ^8.0.2
         version: 8.0.2
@@ -277,6 +280,36 @@ importers:
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      unplugin-dts:
+        specifier: 1.0.0-beta.6
+        version: 1.0.0-beta.6(@microsoft/api-extractor@7.53.1(@types/node@22.18.12))(@vue/language-core@3.0.8(typescript@5.9.3))(esbuild@0.25.1)(rollup@4.49.0)(typescript@5.9.3)(vite@7.1.11(@types/node@22.18.12)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.6))
+      vite:
+        specifier: ^7.1.11
+        version: 7.1.11(@types/node@22.18.12)(less@4.4.1)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.6)
+
+  packages/modal:
+    devDependencies:
+      '@microsoft/api-extractor':
+        specifier: ^7.53.1
+        version: 7.53.1(@types/node@22.18.12)
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      jsx-dom:
+        specifier: ^8.1.6
+        version: 8.1.6
+      npm-run-all2:
+        specifier: ^8.0.4
+        version: 8.0.4
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      sass-embedded:
+        specifier: ^1.93.2
+        version: 1.93.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vitepress dev",
-    "prebuild": "(pnpm --filter schemastery-form build && pnpm --filter core build:import) || true",
+    "prebuild": "(pnpm --filter schemastery-form build && pnpm --filter modal build && pnpm --filter core build:import) || true",
     "build": "vitepress build",
     "preview": "vitepress preview"
   },

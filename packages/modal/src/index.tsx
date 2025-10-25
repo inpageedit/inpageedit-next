@@ -1353,7 +1353,7 @@ export class IPEModal {
       buttons: [
         {
           label: 'OK',
-          className: 'is-primary',
+          className: 'is-primary is-ghost',
           method: (e, mm) => {
             method?.(e, mm)
             if (!e.defaultPrevented) m.close()
