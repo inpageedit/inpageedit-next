@@ -4,6 +4,9 @@ import { MOCK_API_ENDPOINT_URL, mockFetch } from './mockMwApi.ts'
 import { useMockMwConfig } from './mockMwConfig.ts'
 import { MockMwHook } from './mockMwGlobal.ts'
 
+import type {} from '@inpageedit/core/plugins/quick-edit/index'
+import type {} from '@inpageedit/core/plugins/toolbox/index'
+
 export const useMockInPageEdit = () => {
   window.mw = window.mw || {}
   ;(window.mw as any).config = useMockMwConfig()

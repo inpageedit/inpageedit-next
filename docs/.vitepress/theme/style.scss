@@ -141,6 +141,7 @@
 
 // GTranslate
 #gtranslate_wrapper {
+  z-index: 11 !important;
   .gt_float_switcher {
     font-size: 18px;
     border-radius: 0.25em;
@@ -168,5 +169,54 @@
     border-bottom: 1px solid var(--vp-c-divider);
     padding-bottom: 0.25em;
     margin-bottom: 0.25em;
+  }
+}
+
+#try-ipe-now-tag {
+  position: fixed;
+  bottom: 82px;
+  right: 82px;
+  z-index: 12;
+  background: #007bff;
+  color: white;
+  padding: 0.5em 1em;
+  border-radius: 1em;
+  border-bottom-right-radius: 0;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  animation: tryItNow 2s infinite;
+  pointer-events: none;
+  user-select: none;
+}
+
+#try-ipe-now-wave {
+  position: fixed;
+  right: 56px;
+  bottom: 56px;
+  z-index: 11;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  &::after {
+    content: '';
+    display: block;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    background-color: #007bff;
+    border-radius: 100%;
+    animation: tryItNowWave 2s infinite;
+  }
+}
+
+@keyframes tryItNowWave {
+  0% {
+    width: 32px;
+    height: 32px;
+    opacity: 1;
+  }
+  100% {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
   }
 }

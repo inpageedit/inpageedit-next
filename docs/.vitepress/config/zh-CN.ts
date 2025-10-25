@@ -61,7 +61,7 @@ export default defineConfig({
         'about',
         'changelogs',
       ],
-      excludeByGlobPattern: ['README.md'],
+      excludeByGlobPattern: ['README.md', '_drafts/**'],
     }),
     socialLinks: [
       {

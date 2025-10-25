@@ -111,7 +111,43 @@ export default {
     // Mock InPageEdit
     if (typeof window !== 'undefined') {
       import('./__mock__/mockInPageEdit.js').then(({ useMockInPageEdit }) => {
-        window.ipe = useMockInPageEdit()
+        const ipe = (window.ipe = useMockInPageEdit())
+
+        ipe.inject(['toolbox'], (ctx) => {
+          const alreadySeen = localStorage.getItem('try-ipe-now-seen')
+          if (alreadySeen) return
+
+          // 自动演示打开工具箱
+          const interval = setInterval(() => {
+            ctx.toolbox.toggle()
+          }, 1500)
+          const stopLoopToggle = () => {
+            clearInterval(interval)
+          }
+
+          const tryTag = Object.assign(document.createElement('div'), {
+            id: 'try-ipe-now-tag',
+            innerText: 'Try IPE Now!',
+          })
+          const tryWave = Object.assign(document.createElement('span'), { id: 'try-ipe-now-wave' })
+          document.body.appendChild(tryTag)
+          document.body.appendChild(tryWave)
+
+          const toggler = ctx.toolbox.getContainer()
+          toggler.addEventListener('mouseenter', () => {
+            localStorage.setItem('try-ipe-now-seen', 'true')
+            stopLoopToggle()
+            ;[tryTag, tryWave].forEach((el) => {
+              el.animate([{ opacity: 1 }, { opacity: 0 }], {
+                duration: 500,
+                fill: 'forwards',
+                easing: 'ease-in',
+              }).addEventListener('finish', () => {
+                el.remove()
+              })
+            })
+          })
+        })
       })
     }
   },

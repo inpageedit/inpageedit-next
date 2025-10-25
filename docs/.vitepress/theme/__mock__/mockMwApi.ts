@@ -1,20 +1,20 @@
 import { Context, Hono } from 'hono'
 import type {
-  SiteInfo,
-  SiteMetadata,
-  SiteUserInfo,
-  SiteUserOptions,
+  WikiSiteInfo,
+  WikiMetadata,
+  WikiUserInfo,
+  WikiUserOptions,
 } from '@inpageedit/core/src/types/SiteMetadata.js'
 import { MwApiResponse } from 'wiki-saikou/browser'
 
-export const MOCK_API_ENDPOINT_URL = new URL('https://test.ipe.wiki/api.php')
-export const MOCK_MW_SITE_NAME = 'InPageEdit Test'
-export const MOCK_MW_GENERAL: SiteInfo = {
-  mainpage: 'Mainpage',
-  base: 'https://example.com/',
-  sitename: 'Example Wiki',
+export const MOCK_API_ENDPOINT_URL = new URL('https://fake.ipe.wiki/api.php')
+export const MOCK_MW_SITE_NAME = 'InPageEdit Test Wiki'
+export const MOCK_MW_GENERAL: WikiSiteInfo = {
+  mainpage: 'Main_Page',
+  base: 'https://fake.ipe.wiki/',
+  sitename: MOCK_MW_SITE_NAME,
   mainpageisdomainroot: true,
-  logo: 'https://example.com/logo.png',
+  logo: 'https://ipe.wiki/logo.png',
   generator: 'MediaWiki 1.43.3',
   phpversion: '8.3.22',
   phpsapi: 'fpm-fcgi',
@@ -90,10 +90,10 @@ export const MOCK_MW_GENERAL: SiteInfo = {
   scriptpath: '',
   script: '/index.php',
   variantarticlepath: '/$2/$1',
-  server: 'https://example.com',
+  server: 'https://fake.ipe.wiki',
   servername: 'localhost',
   wikiid: 'example',
-  time: '2025-01-01T08:00:00Z',
+  time: new Date().toISOString(),
   misermode: false,
   uploadsenabled: true,
   maxuploadsize: 104857600,
@@ -141,7 +141,7 @@ export const MOCK_MW_GENERAL: SiteInfo = {
       height: 2048,
     },
   },
-  favicon: 'https://example.com/favicon.ico',
+  favicon: 'https://ipe.wiki/favicon.ico',
   centralidlookupprovider: 'local',
   allcentralidlookupproviders: ['local'],
   interwikimagic: true,
@@ -153,8 +153,8 @@ export const MOCK_MW_GENERAL: SiteInfo = {
   categorycollation: 'pinyin-noprefix',
   citeresponsivereferences: true,
 }
-export const MOCK_MW_USER_INFO: SiteUserInfo & { options: SiteUserOptions } = {
-  id: 316917,
+export const MOCK_MW_USER_INFO: WikiUserInfo & { options: WikiUserOptions } = {
+  id: 114514,
   name: '机智的小鱼君',
   groups: ['interface-admin', 'sysop', 'widgeteditor', '*', 'user', 'autoconfirmed'],
   rights: [
@@ -234,7 +234,7 @@ export const MOCK_MW_USER_INFO: SiteUserInfo & { options: SiteUserOptions } = {
     language: 'zh',
   },
 }
-export const MOCK_MW_METADATA: SiteMetadata = {
+export const MOCK_MW_METADATA: WikiMetadata = {
   general: MOCK_MW_GENERAL,
   specialpagealiases: [
     {
@@ -3404,6 +3404,10 @@ const handleQuery = (data: Record<string, any>, c: Context) => {
 
   if (data.prop?.includes('info')) {
     response.query = { ...MOCK_MW_PAGEINFO }
+  }
+
+  if (data.prop?.includes('token')) {
+    response.query = { tokens: MOCK_MW_TOKENS }
   }
 
   return Response.json(response)
