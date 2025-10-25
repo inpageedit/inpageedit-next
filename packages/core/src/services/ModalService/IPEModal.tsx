@@ -237,6 +237,86 @@ function createEl<K extends keyof HTMLElementTagNameMap>(
   return el
 }
 
+// Platform helper for 'mod' alias (Command on macOS, Control elsewhere)
+const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test(navigator.platform)
+const MODIFIER_KEYS = ['ctrl', 'alt', 'shift', 'meta']
+
+// Normalize a key-combo string to a canonical form like:
+//  - "ctrl+s"
+//  - "ctrl+alt+s"
+//  - "enter"
+// Input accepts separators '+', '-', or spaces, case-insensitive, and aliases:
+//  ctrl|control, alt|option, shift, meta|cmd|command|super, mod (maps to meta on macOS, ctrl otherwise),
+//  esc|escape, return|enter, space|spacebar.
+function normalizeKeyComboString(combo: string): string | null {
+  if (!combo) return null
+  const parts = String(combo)
+    .trim()
+    .toLowerCase()
+    .split(/[+\-\s]+/g)
+    .filter(Boolean)
+
+  const mods: string[] = []
+  let key: string | null = null
+
+  const pushMod = (m: string) => {
+    if (!mods.includes(m)) mods.push(m)
+  }
+
+  for (const raw of parts) {
+    let t = raw
+    // aliases for modifiers
+    if (t === 'control' || t === 'ctrl') {
+      pushMod('ctrl')
+      continue
+    }
+    if (t === 'alt' || t === 'option') {
+      pushMod('alt')
+      continue
+    }
+    if (t === 'shift') {
+      pushMod('shift')
+      continue
+    }
+    if (t === 'meta' || t === 'cmd' || t === 'command' || t === 'super') {
+      pushMod('meta')
+      continue
+    }
+    if (t === 'mod') {
+      pushMod(IS_MAC ? 'meta' : 'ctrl')
+      continue
+    }
+
+    // aliases for common non-modifier keys
+    if (t === 'esc') t = 'escape'
+    if (t === 'return') t = 'enter'
+    if (t === 'space' || t === 'spacebar') t = 'space'
+
+    key = t
+  }
+
+  // Ensure deterministic modifier order
+  const orderedMods = MODIFIER_KEYS.filter((m) => mods.includes(m))
+  if (!key || key === '') return orderedMods.length ? orderedMods.join('+') : null
+  return orderedMods.length ? `${orderedMods.join('+')}+${key}` : key
+}
+
+// Create normalized combo string from a keyboard event
+function getKeyComboFromEvent(e: KeyboardEvent): string {
+  const mods: string[] = []
+  if (e.ctrlKey) mods.push('ctrl')
+  if (e.altKey) mods.push('alt')
+  if (e.shiftKey) mods.push('shift')
+  if (e.metaKey) mods.push('meta')
+
+  let k = e.key
+  // Normalize printable keys and common aliases
+  if (k === ' ') k = 'space'
+  const key = k.length === 1 ? k.toLowerCase() : k.toLowerCase()
+  const orderedMods = MODIFIER_KEYS.filter((m) => mods.includes(m))
+  return orderedMods.length ? `${orderedMods.join('+')}+${key}` : key
+}
+
 // Simple stack manager（仅管理“模态”窗口，不含 Toast）
 class ModalStackManager {
   zBase = 1000
@@ -819,8 +899,19 @@ export class IPEModal {
       window.setTimeout(unblock, opts.enableAfter)
     }
 
-    // Keyboard shortcut mapping
-    if (opts.keyPress) this.keyMap.set(String(opts.keyPress).toLowerCase(), base)
+    // Keyboard shortcut mapping (supports modifiers like ctrl/alt/shift/meta, with '+', '-' or space separators)
+    if (opts.keyPress) {
+      const raw = String(opts.keyPress)
+      // allow multiple alternatives via comma or pipe
+      const combos = raw
+        .split(/[\,\|]+/g)
+        .map((s) => s.trim())
+        .filter(Boolean)
+      for (const c of combos) {
+        const norm = normalizeKeyComboString(c)
+        if (norm) this.keyMap.set(norm, base)
+      }
+    }
 
     return base
   }
@@ -1022,9 +1113,25 @@ export class IPEModal {
       }
     }
 
-    // button keyPress mapping（O(1) 查表）
-    const hit = this.keyMap.get(e.key.toLowerCase())
-    if (hit) (hit as HTMLElement).click()
+    const hasModifier = e.ctrlKey || e.altKey || e.metaKey // 注意：此处的shift被故意忽略
+    const target = e.target as HTMLElement
+    // 如果正处于输入状态，并且没有任何修饰键被按下，则忽略快捷键处理
+    if (
+      !hasModifier &&
+      ((target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) ||
+        target.contentEditable === 'true')
+    ) {
+      return // skip inputs
+    }
+
+    // button keyPress mapping with modifiers（O(1) 查表）
+    const combo = getKeyComboFromEvent(e)
+    const hit = this.keyMap.get(combo)
+    if (hit) {
+      e.preventDefault()
+      ;(hit as HTMLElement).click()
+      return
+    }
   }
 
   private startCloseTimer = (ms: number) => {

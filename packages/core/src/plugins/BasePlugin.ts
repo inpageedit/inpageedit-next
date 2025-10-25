@@ -33,29 +33,29 @@ export default class BasePlugin<ConfigType extends unknown = any> {
           ;(ret as Promise<unknown>)
             .then(() => resolve())
             .catch((err) => {
-              this.logger.error('Plugin start failed', err)
+              this.logger.error('start() returns a rejected promise', err)
               reject(err)
             })
         } else {
           resolve()
         }
       } catch (err) {
-        this.logger.error('Plugin start threw synchronously', err)
+        this.logger.error('start() threw synchronously', err)
         reject(err)
       }
 
       promise.then(() => {
-        this.logger.debug('Plugin started')
+        this.logger.debug('started')
       })
       promise.catch((e) => {
-        this.logger.error('Plugin start failed', e)
+        this.logger.error('start failed', e)
         this.ctx.scope.dispose()
       })
     })
     this.ctx.once('dispose', () => {
       this.disposeHandlers.forEach((fn) => fn(this.ctx))
       this.stop()
-      this.logger.info('Plugin disposed')
+      this.logger.debug('disposed')
     })
   }
 

@@ -1,4 +1,4 @@
-import { Inject, InPageEdit } from '@/InPageEdit'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { type QuickEditEventPayload } from '@/plugins/quick-edit'
 import { IWikiPage } from '@/models/WikiPage'
 import { MwApiParams } from 'wiki-saikou'
@@ -30,6 +30,15 @@ declare module '@/InPageEdit' {
 }
 
 @Inject(['api', 'wikiPage', 'modal'])
+@RegisterPreferences(
+  Schema.object({
+    'quickPreview.keyshortcut': Schema.string()
+      .default('ctrl-p')
+      .description('Key shortcut to open quick preview in quick edit modal'),
+  })
+    .extra('category', 'edit')
+    .description('Quick preview options')
+)
 export class PluginQuickPreview extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quickPreview')
@@ -120,13 +129,15 @@ export class PluginQuickPreview extends BasePlugin {
     return modal
   }
 
-  private injectQuickEdit({ ctx, modal, wikiPage }: QuickEditEventPayload) {
+  private async injectQuickEdit({ ctx, modal, wikiPage }: QuickEditEventPayload) {
     let latestPreviewModal: IPEModal | undefined = undefined
     modal.addButton(
       {
         label: 'Preview',
         side: 'left',
         className: 'btn btn-secondary',
+        keyPress:
+          (await this.ctx.preferences.get('quickPreview.keyshortcut.quickEdit')) || undefined,
         method: () => {
           latestPreviewModal = this.previewWikitext(
             (modal.get$content().querySelector<HTMLTextAreaElement>('textarea[name="text"]')

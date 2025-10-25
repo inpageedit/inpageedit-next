@@ -55,12 +55,16 @@ export interface QuickEditSubmitPayload {
 @Inject(['api', 'wikiPage', 'wikiTitle', 'wiki', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
-    editSummary: Schema.string()
+    'quickEdit.editSummary': Schema.string()
       .description('Default edit summary for quick edits')
       .default('[IPE-NEXT] Quick edit'),
-    editMinor: Schema.boolean().description('Whether to mark the edit as minor').default(false),
-    outSideClose: Schema.boolean().description('Whether to close the modal outside').default(true),
-    watchList: Schema.union([
+    'quickEdit.editMinor': Schema.boolean()
+      .description('Whether to mark the edit as minor')
+      .default(false),
+    'quickEdit.outSideClose': Schema.boolean()
+      .description('Whether to close the modal outside')
+      .default(true),
+    'quickEdit.watchList': Schema.union([
       Schema.const(WatchlistAction.preferences).description('Follow my preferences'),
       Schema.const(WatchlistAction.nochange).description('Keep the current watchlist status'),
       Schema.const(WatchlistAction.watch).description('Add the page to watchlist'),
@@ -68,6 +72,9 @@ export interface QuickEditSubmitPayload {
     ])
       .description('Watchlist options')
       .default(WatchlistAction.preferences),
+    'quickEdit.keyshortcut.save': Schema.string()
+      .default('ctrl-s')
+      .description('save button key shortcut (blank to disable)'),
   })
     .description('Quick edit options')
     .extra('category', 'edit')
@@ -126,16 +133,16 @@ export class PluginQuickEdit extends BasePlugin {
       }
     }
 
-    const outSideClose = (await this.ctx.preferences.get<boolean>('outSideClose'))!
-    const watchList = (await this.ctx.preferences.get<WatchlistAction>('watchList'))!
+    const outSideClose = (await this.ctx.preferences.get<boolean>('quickEdit.outSideClose'))!
+    const watchList = (await this.ctx.preferences.get<WatchlistAction>('quickEdit.watchList'))!
     const editSummary =
       typeof payload.editSummary === 'string'
         ? payload.editSummary
-        : (await this.ctx.preferences.get<string>('editSummary'))!
+        : (await this.ctx.preferences.get<string>('quickEdit.editSummary'))!
     const editMinor =
       typeof payload.editMinor === 'boolean'
         ? payload.editMinor
-        : (await this.ctx.preferences.get<boolean>('editMinor'))!
+        : (await this.ctx.preferences.get<boolean>('quickEdit.editMinor'))!
 
     const options: QuickEditOptions = {
       ...this.DEFAULT_OPTIONS,
@@ -144,7 +151,7 @@ export class PluginQuickEdit extends BasePlugin {
       ...payload,
     }
     if (!options.editSummary) {
-      options.editSummary = (await this.ctx.preferences.get<string>('editSummary')) || ''
+      options.editSummary = (await this.ctx.preferences.get<string>('quickEdit.editSummary')) || ''
     }
     if (!options) this.ctx.emit('quick-edit/init-options', { ctx: this.ctx, options })
 
@@ -309,6 +316,8 @@ export class PluginQuickEdit extends BasePlugin {
         side: 'left',
         className: 'is-primary submit-btn',
         label: 'Submit',
+        keyPress:
+          (await this.ctx.preferences.get<string>('quickEdit.keyshortcut.save')) || undefined,
         method: () => {
           const formData = new FormData(editForm)
           console.info(wikiPage, editForm, {

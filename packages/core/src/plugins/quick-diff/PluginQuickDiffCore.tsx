@@ -145,6 +145,7 @@ export class PluginQuickDiffCore extends BasePlugin {
       {
         label: 'Diff',
         side: 'left',
+        keyPress: 'ctrl-d',
         className: 'btn btn-secondary',
         method: () => {
           const pageTitle = wikiPage.title
@@ -154,7 +155,7 @@ export class PluginQuickDiffCore extends BasePlugin {
               ?.value as string) || ''
 
           if (fromtext === totext) {
-            return this.ctx.modal.notify('info', { content: 'No chages' })
+            return this.ctx.modal.notify('info', { title: 'Quick Diff', content: 'No changes' })
           }
 
           latestDiffModal = this.comparePages(
