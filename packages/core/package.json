@@ -61,7 +61,7 @@
     "unit-test:watch": "vitest ./src",
     "clean": "rimraf dist/* lib/*",
     "format": "prettier --write ./src",
-    "typecheck": "tsc -b --pretty false --noEmit"
+    "typecheck": "tsc --noEmit --project ./tsconfig.app.json"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

@@ -122,6 +122,7 @@ export interface IWikiTitle {
 
 export interface WikiTitleConstructor {
   new (title: string, namespace?: number): IWikiTitle
+  create(title: string, namespace?: number): IWikiTitle
 }
 
 // 工具函数

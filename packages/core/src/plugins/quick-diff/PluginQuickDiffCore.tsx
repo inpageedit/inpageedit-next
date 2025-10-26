@@ -5,7 +5,7 @@ import { JsDiffDiffType } from './JsDiffService'
 import styles from './styles.module.sass'
 import { ChangeObject } from 'diff'
 import { DiffTable, DiffTableEvent } from './components/DiffTable'
-import { IPEModal, IPEModalOptions } from '@/services/ModalService/IPEModal.js'
+import { IPEModal, IPEModalOptions } from '@inpageedit/modal'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {

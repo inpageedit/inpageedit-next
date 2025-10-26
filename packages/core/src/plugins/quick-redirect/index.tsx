@@ -186,7 +186,7 @@ export class PluginQuickRedirect extends BasePlugin {
       }
     )
     if (res.data?.errors) {
-      throw new Error(res.data.errors[0].text, { cause: res })
+      throw new Error(res.data.errors[0].info, { cause: res })
     }
     return res
   }

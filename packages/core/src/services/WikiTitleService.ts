@@ -8,7 +8,8 @@ declare module '@/InPageEdit' {
 }
 
 export interface WikiLinkMetadata {
-  title: IWikiTitle
+  title: IWikiTitle | null
+  pageId: number | null
   url: URL
   params: URLSearchParams
   hash: string
@@ -28,61 +29,94 @@ export class WikiTitleService extends Service {
   newTitle(title: string, namespace?: number) {
     return new this.Title(title, namespace)
   }
-  newTitleFromUrl(url: string | URL) {
+  async newTitleFromUrl(url: string | URL) {
     const linkInfo = this.parseWikiLink(url)
-    return linkInfo?.title || null
-  }
-  get currentIsMainPage() {
-    let isMainPage = false
-    const fullPath = window?.location?.origin + window?.location?.pathname
-    let paramTitle = new URLSearchParams(window?.location?.search || '').get('title')
-    if (paramTitle) {
-      paramTitle = paramTitle[0].toUpperCase() + paramTitle.slice(1)
-      paramTitle = paramTitle.replace(/_/g, ' ')
-    }
-    if (fullPath === this.wiki.getSciprtUrl('index.php') && paramTitle === this.wiki.mainPageName) {
-    }
-    const mainpageUrls = [this.wiki.mainPageUrl, this.wiki.landingPageUrl]
-    isMainPage = mainpageUrls.includes(fullPath)
-    Reflect.defineProperty(this, 'currentIsMainPage', {
-      value: isMainPage,
-      writable: false,
-      configurable: false,
-      enumerable: true,
-    })
-    return isMainPage
-  }
-  /**
-   * Get the title of the current page by location URL
-   * @returns IWikiTitle or null if cannot be determined
-   */
-  get currentTitle() {
-    const title = this.currentIsMainPage
-      ? this.newTitle(this.wiki.mainPageName)
-      : this.newTitleFromUrl(window?.location?.href)
-    if (title) {
-      Object.freeze(title)
-      Reflect.defineProperty(this, 'currentTitle', {
-        value: title,
-        writable: false,
-        configurable: false,
-        enumerable: true,
-      })
-      return title
+    if (linkInfo?.title) {
+      return linkInfo.title
+    } else if (linkInfo?.pageId) {
+      return this.newTitleFromPageId(linkInfo.pageId)
     } else {
-      return this.newTitle(this.wiki.mainPageName)
+      return null
     }
   }
-  get currentAction() {
-    const params = new URLSearchParams(window?.location?.search || '')
-    const action = params.get('action') || 'view'
-    Reflect.defineProperty(this, 'currentAction', {
-      value: () => action,
-      writable: false,
-      configurable: false,
-      enumerable: true,
+  private _titleByPageId = new Map<number, Promise<IWikiTitle | null>>()
+  async newTitleFromPageId(pageId: number) {
+    pageId = parseInt(pageId as any, 10)
+    if (isNaN(pageId) || pageId <= 0) {
+      return null
+    }
+    if (this._titleByPageId.has(pageId)) {
+      return this._titleByPageId.get(pageId)!
+    }
+    const { promise, resolve, reject } = promiseWithResolvers<IWikiTitle | null>()
+    this._titleByPageId.set(pageId, promise)
+    this.ctx.inject(['wikiPage'], async (ctx) => {
+      try {
+        const page = await ctx.wikiPage.newFromPageId(pageId)
+        resolve(this.newTitle(page.title))
+      } catch (e) {
+        this._titleByPageId.delete(pageId)
+        reject(e)
+      }
     })
-    return action
+    return promise
+  }
+
+  /**
+   * Resolve **special** special pages to it's real target
+   *
+   * If target is self or cannot be resolved, return null
+   * @example
+   * ```
+   * Special:MyPage -> User:<username>
+   * Special:Edit/Page_Title -> Page_Title
+   * Special:NewSection/Page_Title -> Page_Title (section=new)
+   * ```
+   */
+  resolveSpecialPageTarget(input: IWikiTitle | string): {
+    title: IWikiTitle
+    action?: string | undefined
+    section?: number | 'new' | undefined
+  } | null {
+    const title = typeof input === 'string' ? this.newTitle(input) : input
+    if (!title) {
+      return null
+    }
+    if (title.getNamespaceId() !== -1) {
+      return null
+    }
+    let titleText: string | undefined
+    let section: number | 'new' | undefined = undefined
+    let action = 'view'
+    const sub = title.getMainDBKey().split('/').slice(1).join('/') || ''
+    if (title.isSpecial('edit') && sub) {
+      titleText = sub
+      action = 'edit'
+    } else if (title.isSpecial('talkpage') && sub) {
+      const talkPage = title.newTitle(sub).getTalkPage()
+      if (!talkPage) {
+        return null
+      }
+      titleText = talkPage.getPrefixedDBKey()
+    } else if (title.isSpecial('mypage')) {
+      const userPage = title.newTitle(this.ctx.wiki.userInfo.name, 2)
+      titleText = userPage.getPrefixedDBKey() + (sub ? `/${sub}` : '')
+    } else if (title.isSpecial('mytalk')) {
+      const userTalkPage = title.newTitle(this.ctx.wiki.userInfo.name, 3)
+      titleText = userTalkPage.getPrefixedDBKey() + (sub ? `/${sub}` : '')
+    } else if (title.isSpecial('newsection') && sub) {
+      titleText = sub
+      section = 'new'
+      action = 'edit'
+    } else {
+      return null
+    }
+
+    return {
+      title: new this.Title(titleText),
+      section,
+      action,
+    }
   }
 
   // shortcuts
@@ -108,7 +142,12 @@ export class WikiTitleService extends Service {
   private readonly wikiIndexPhpUrl = this.wiki.getSciprtUrl('index.php')
 
   isWikiLink(url: string): boolean {
-    return url.startsWith(this.wikiArticleBaseUrl) || url.startsWith(this.wikiIndexPhpUrl)
+    return (
+      url.startsWith(this.wikiArticleBaseUrl) ||
+      url.startsWith(this.wikiIndexPhpUrl) ||
+      // Some servers allow index.php to be omitted
+      url.startsWith(`${this.wikiBaseUrl}/?`)
+    )
   }
 
   static readonly REG_SKIPPED_HREF = /^(#|javascript:|vbscript:|file:)/i
@@ -132,31 +171,42 @@ export class WikiTitleService extends Service {
     if (!this.isWikiLink(url.toString())) {
       return null
     }
-
     const params = url.searchParams
     const hash = url.hash.replace('#', '')
     const action = params.get('action') || 'view'
-    const titleText = url.pathname.endsWith('.php')
-      ? params.get('title')
-      : (() => {
-          try {
-            return decodeURI(url.pathname.substring(this.wikiArticlePath.length))
-          } catch (e) {
-            this.logger.error('parseLink', url, e)
-            return null
-          }
-        })()
+    const titleParam = params.get('title') || ''
+    const curid = parseInt(params.get('curid') || '0', 10)
+    let titleText =
+      titleParam ||
+      (() => {
+        try {
+          return decodeURI(url.pathname.substring(this.wikiArticlePath.length))
+        } catch (e) {
+          this.logger.error('parseLink', url, e)
+          return ''
+        }
+      })()
+    if (titleText.endsWith('index.php')) {
+      titleText = ''
+    }
 
-    if (!titleText) {
+    let title: IWikiTitle | null = null
+    let pageId: number | null = null
+    if (curid) {
+      pageId = curid
+    } else if (titleText) {
+      title = this.newTitle(titleText)
+    } else {
       return null
     }
 
     return {
+      title,
+      pageId,
       url,
       params,
       hash,
       action,
-      title: this.newTitle(titleText),
     }
   }
 }

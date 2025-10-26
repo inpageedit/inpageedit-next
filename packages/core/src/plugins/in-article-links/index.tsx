@@ -101,11 +101,16 @@ export class PluginInArticleLinks extends BasePlugin<{
     return info
   }
 
-  scanAnchors(parent: HTMLElement): InArticleWikiAnchorMetadata[] {
+  scanAnchors(
+    parent: HTMLElement,
+    filter?: (info: InArticleWikiAnchorMetadata) => boolean
+  ): InArticleWikiAnchorMetadata[] {
     const anchors = parent.querySelectorAll<HTMLAnchorElement>('a[href]')
     return Array.from(anchors)
       .map((anchor) => this.parseAnchor(anchor))
-      .filter((anchor) => anchor !== null)
+      .filter(
+        (anchor) => anchor !== null && (!filter || filter(anchor))
+      ) as InArticleWikiAnchorMetadata[]
   }
 
   async handleQuickEdit() {
@@ -124,14 +129,18 @@ export class PluginInArticleLinks extends BasePlugin<{
         if (!enable) {
           return
         }
-        const anchors = this.scanAnchors($content.get(0)!).filter(({ action, title, redlink }) => {
+        const anchors = this.scanAnchors($content.get(0)!, ({ action, title, redlink }) => {
           return (
-            (['edit', 'create'].includes(action) || title.isSpecial('edit')) &&
+            !!(
+              ['edit', 'create'].includes(action) ||
+              title?.isSpecial('edit') ||
+              title?.isSpecial('newsection')
+            ) &&
             // 添加对showButtonOnRedlinks的判断
             (showButtonOnRedlinks || !redlink)
           )
         })
-        anchors.forEach(({ $el, title, params }) => {
+        anchors.forEach(({ $el, title, pageId, params }) => {
           if ($el.dataset.ipeEditMounted) {
             return
           }
@@ -142,30 +151,7 @@ export class PluginInArticleLinks extends BasePlugin<{
             return this.ctx.logger.debug($el, `Not compatible with quick edit`)
           }
 
-          let titleText: string
-          if (title.getNamespaceId() === -1) {
-            const sub = title.getMainDBKey().split('/').slice(1).join('/') || ''
-            if (title.isSpecial('edit')) {
-              titleText = sub
-            } else if (title.isSpecial('talkpage')) {
-              const talkPage = title.newTitle(sub).getTalkPage()
-              if (!talkPage) {
-                return this.ctx.logger.debug($el, `Talk page not found.`)
-              }
-              titleText = talkPage.getPrefixedDBKey()
-            } else if (title.isSpecial('mypage')) {
-              const userPage = title.newTitle(this.ctx.wiki.userInfo.name, 2)
-              titleText = userPage.getPrefixedDBKey() + (sub ? `/${sub}` : '')
-            } else if (title.isSpecial('mytalk')) {
-              const userTalkPage = title.newTitle(this.ctx.wiki.userInfo.name, 3)
-              titleText = userTalkPage.getPrefixedDBKey() + (sub ? `/${sub}` : '')
-            } else {
-              return this.ctx.logger.debug($el, `Special page cannot be edited`)
-            }
-          } else {
-            titleText = title.getPrefixedDBKey()
-          }
-
+          const titleText = title?.getPrefixedDBKey() || ''
           const sectionRaw = params.get('section')?.replace(/^T-/, '') || undefined
           const revisionRaw = params.get('oldid')
           const createOnly = params.has('redlink')
@@ -181,6 +167,7 @@ export class PluginInArticleLinks extends BasePlugin<{
 
           const payload: Partial<QuickEditOptions> = {
             title: titleText,
+            pageId: pageId || undefined,
             section,
             revision,
             createOnly,
@@ -194,14 +181,13 @@ export class PluginInArticleLinks extends BasePlugin<{
               style={{
                 userSelect: 'none',
                 marginLeft: '0.2em',
-                verticalAlign: 'middle',
               }}
               onClick={(e) => {
                 e.preventDefault()
                 ctx.quickEdit.showModal(payload)
               }}
             >
-              <IconQuickEdit style="width: 1em; height: 1em" />
+              <IconQuickEdit className="ipe-icon" />
             </a>
           )
 
@@ -226,8 +212,8 @@ export class PluginInArticleLinks extends BasePlugin<{
         if (!enable) {
           return
         }
-        const anchors = this.scanAnchors($content.get(0)!).filter(({ params, title }) => {
-          return params.has('diff') || title.isSpecial('diff')
+        const anchors = this.scanAnchors($content.get(0)!, ({ params, title }) => {
+          return !!(params.has('diff') || title?.isSpecial('diff'))
         })
         anchors.forEach(({ $el, title, params }) => {
           if ($el.dataset.ipeDiffMounted) {
@@ -237,7 +223,7 @@ export class PluginInArticleLinks extends BasePlugin<{
 
           let diff: string | null
           let oldid: string | null
-          if (title.getNamespaceId() === -1) {
+          if (title?.getNamespaceId() === -1) {
             // prettier-ignore
             ;[/** special page name */, diff, oldid] = title.getMainDBKey().split('/')
           } else {
@@ -257,10 +243,43 @@ export class PluginInArticleLinks extends BasePlugin<{
             compare.torev = parseInt(diff)
           }
 
-          $el.addEventListener('click', (e) => {
-            e.preventDefault()
-            ctx.quickDiff.comparePages(compare)
-          })
+          const link = (
+            <a
+              href={`#ipe://quick-diff/`}
+              dataset={compare as any}
+              className={`${this.config.linkClassName} ipe-quick-diff`}
+              style={{
+                userSelect: 'none',
+                marginLeft: '0.2em',
+              }}
+              onClick={(e) => {
+                e.preventDefault()
+                ctx.quickDiff.comparePages(compare)
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-file-diff ipe-icon"
+              >
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                <path d="M12 10l0 4" />
+                <path d="M10 12l4 0" />
+                <path d="M10 17l4 0" />
+              </svg>
+            </a>
+          )
+
+          $el.insertAdjacentElement('afterend', link)
         })
       })
     })

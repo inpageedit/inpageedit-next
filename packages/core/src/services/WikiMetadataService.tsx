@@ -112,10 +112,7 @@ export class WikiMetadataService extends Service {
     }
     // magic caching
     Reflect.defineProperty(this, 'computeSiteIdentity', {
-      value: () => path,
-      writable: false,
-      configurable: false,
-      enumerable: true,
+      get: () => path,
     })
     return path
   }
@@ -187,10 +184,7 @@ export class WikiMetadataService extends Service {
       }))
       .sort((a, b) => a.id - b.id)
     Reflect.defineProperty(this, 'namespaceMap', {
-      value: map,
-      writable: false,
-      configurable: false,
-      enumerable: true,
+      get: () => map,
     })
     return map
   }

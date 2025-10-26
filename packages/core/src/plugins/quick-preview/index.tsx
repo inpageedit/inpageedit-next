@@ -3,7 +3,7 @@ import { type QuickEditEventPayload } from '@/plugins/quick-edit'
 import { IWikiPage } from '@/models/WikiPage'
 import { MwApiParams } from 'wiki-saikou'
 import { PageParseData } from '@/models/WikiPage/types/PageParseData'
-import { IPEModal, IPEModalOptions } from '@/services/ModalService/IPEModal.js'
+import { IPEModal, IPEModalOptions } from '@inpageedit/modal'
 import { QuickDeleteInitPayload } from '../quick-delete/index.js'
 
 interface QuickPreviewEventPayload {
@@ -29,7 +29,7 @@ declare module '@/InPageEdit' {
   }
 }
 
-@Inject(['api', 'wikiPage', 'modal'])
+@Inject(['api', 'wikiPage', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
     'quickPreview.keyshortcut': Schema.string()

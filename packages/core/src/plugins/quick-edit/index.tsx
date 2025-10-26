@@ -1,7 +1,7 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { IWikiPage } from '@/models/WikiPage'
 import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
-import { IPEModal } from '@/services/ModalService/IPEModal'
+import { IPEModal } from '@inpageedit/modal'
 import { ReactNode } from 'jsx-dom'
 import { makeCallable } from '@/utils/makeCallable.js'
 
@@ -52,7 +52,7 @@ export interface QuickEditSubmitPayload {
   watchlist?: WatchlistAction
 }
 
-@Inject(['api', 'wikiPage', 'wikiTitle', 'wiki', 'modal', 'preferences'])
+@Inject(['api', 'wikiPage', 'currentPage', 'wiki', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
     'quickEdit.editSummary': Schema.string()
@@ -125,11 +125,20 @@ export class PluginQuickEdit extends BasePlugin {
     if (!payload.title && !payload.pageId && !payload.revision) {
       this.logger.warn('None of the title, pageId or revision provided. Using defaults.')
       const searchParams = new URLSearchParams(window.location.search)
+      const title = this.ctx.currentPage.wikiTitle
       payload = {
         ...payload,
-        title: this.ctx.wikiTitle.currentTitle.getPrefixedDBKey(),
+        title: title?.getPrefixedDBKey(),
         revision: searchParams.has('oldid') ? Number(searchParams.get('oldid')) : undefined,
         pageId: searchParams.has('curid') ? Number(searchParams.get('curid')) : undefined,
+      }
+    }
+
+    if (!payload.revision && !payload.pageId && payload.title) {
+      const realTarget = this.ctx.wikiTitle.resolveSpecialPageTarget(payload.title)
+      if (realTarget && realTarget.title.getNamespaceId() >= 0) {
+        payload.title = realTarget.title.getPrefixedDBKey()
+        payload.section ??= realTarget.section
       }
     }
 
@@ -451,9 +460,9 @@ export class PluginQuickEdit extends BasePlugin {
     throw new Error('Invalid payload')
   }
 
-  private injectToolbox(ctx: InPageEdit) {
-    const title = this.ctx.wikiTitle.currentTitle
-    const canEdit = this.ctx.wiki.hasRight('edit') && title.getNamespaceId() >= 0
+  private async injectToolbox(ctx: InPageEdit) {
+    const title = this.ctx.currentPage.wikiTitle
+    const canEdit = this.ctx.wiki.hasRight('edit') && title && title.getNamespaceId() >= 0
     ctx.toolbox.addButton({
       id: 'quick-edit',
       group: 'group1',
@@ -484,7 +493,7 @@ export class PluginQuickEdit extends BasePlugin {
       onClick: () => {
         const revision = new URLSearchParams(window.location.search).get('oldid')
         this.showModal({
-          title: title.getPrefixedText(),
+          title: title?.getPrefixedText(),
           revision: revision ? Number(revision) : undefined,
         })
       },

@@ -2,6 +2,7 @@ import { Context, Inject, Events as CordisEvents } from '@cordisjs/core'
 import Schema from 'schemastery'
 import { LoggerLevel, createLogger, type Logger } from '@inpageedit/logger'
 import { ApiService } from '@/services/ApiService.js'
+import { CurrentPageService } from '@/services/CurrentPageService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService.js'
 import { ModalService } from '@/services/ModalService.js'
 import { WikiMetadataService } from '@/services/WikiMetadataService.js'
@@ -62,6 +63,7 @@ export class InPageEdit extends Context {
 
   async #initCoreServices() {
     this.plugin(ApiService, this.config.apiConfigs)
+    this.plugin(CurrentPageService)
     this.plugin(ResourceLoaderService)
     this.plugin(ModalService)
     this.plugin(StorageService)
@@ -72,6 +74,7 @@ export class InPageEdit extends Context {
     // 标记内置服务，所以用户即使忘记 inject 也能使用
     this.#markServiceAsBuiltIn([
       'api',
+      'currentPage',
       'resourceLoader',
       'modal',
       'storage',

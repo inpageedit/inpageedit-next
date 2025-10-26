@@ -1,6 +1,6 @@
-import type { SiteMetadata } from '@/types/WikiMetadata.js'
+import type { WikiMetadata } from '@/types/WikiMetadata.js'
 
-export const MOCK_SITE_METADATA: SiteMetadata = {
+export const MOCK_SITE_METADATA: WikiMetadata = {
   general: {
     mainpage: 'Mainpage',
     base: 'https://example.com/',
