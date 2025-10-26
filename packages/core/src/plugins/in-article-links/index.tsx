@@ -130,15 +130,19 @@ export class PluginInArticleLinks extends BasePlugin<{
           return
         }
         const anchors = this.scanAnchors($content.get(0)!, ({ action, title, redlink }) => {
-          return (
-            !!(
-              ['edit', 'create'].includes(action) ||
-              title?.isSpecial('edit') ||
-              title?.isSpecial('newsection')
-            ) &&
-            // 添加对showButtonOnRedlinks的判断
-            (showButtonOnRedlinks || !redlink)
-          )
+          const enabled = showButtonOnRedlinks || !redlink
+          if (!enabled) {
+            return false
+          }
+          const isActionEdit = ['edit', 'create'].includes(action)
+          if (isActionEdit) {
+            return true
+          }
+          const isSpecialEdit = title?.isSpecial('edit') || title?.isSpecial('newsection')
+          if (isSpecialEdit) {
+            return title!.getMainText().split('/').length >= 2
+          }
+          return false
         })
         anchors.forEach(({ $el, title, pageId, params }) => {
           if ($el.dataset.ipeEditMounted) {
@@ -157,7 +161,7 @@ export class PluginInArticleLinks extends BasePlugin<{
           const createOnly = params.has('redlink')
 
           let section: 'new' | number | undefined = undefined
-          if (sectionRaw === 'new') {
+          if (sectionRaw === 'new' || title?.isSpecial('newsection')) {
             section = 'new'
           } else if (sectionRaw && /^\d+$/.test(sectionRaw)) {
             section = parseInt(sectionRaw, 10)
