@@ -6,6 +6,7 @@ import styles from './styles.module.sass'
 import { ChangeObject } from 'diff'
 import { DiffTable, DiffTableEvent } from './components/DiffTable'
 import { IPEModal, IPEModalOptions } from '@inpageedit/modal'
+import { MwApiResponse } from 'wiki-saikou'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -100,9 +101,7 @@ export class PluginQuickDiffCore extends BasePlugin {
     window.RLQ.push(this.injectHistoryPage.bind(this))
   }
 
-  protected stop(): Promise<void> | void {
-    this.ctx.off('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
-  }
+  protected stop(): Promise<void> | void {}
 
   private injectHistoryPage() {
     const mwCompareForm = qs<HTMLFormElement>('#mw-history-compare')
@@ -135,8 +134,8 @@ export class PluginQuickDiffCore extends BasePlugin {
     })
   }
 
-  private injectQuickEdit({ modal, wikiPage }: QuickEditEventPayload) {
-    if (wikiPage.pageid === 0) {
+  private injectQuickEdit({ modal, wikiPage, options }: QuickEditEventPayload) {
+    if (wikiPage.pageid === 0 || options.section === 'new') {
       // User is creating a new page, no need to show diff button
       return
     }
@@ -359,12 +358,6 @@ export class PluginQuickDiffCore extends BasePlugin {
         formatversion: 2,
       })
       .then((res) => {
-        if (res.data?.error || res.data?.errors) {
-          const errors = [res.data?.error, ...(res.data?.errors || [])].filter(
-            Boolean
-          ) as MwApiError[]
-          throw new Error(errors.map((err) => err.info).join('\n'), { cause: res })
-        }
         if (!res.data.compare) {
           throw new Error('No compare data received', { cause: res })
         }

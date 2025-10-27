@@ -50,10 +50,7 @@ export class PluginQuickPreview extends BasePlugin {
     this.ctx.on('quick-delete/wiki-page', this.injectQuickDelete.bind(this))
   }
 
-  protected stop(): Promise<void> | void {
-    this.ctx.off('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
-    this.ctx.off('quick-delete/wiki-page', this.injectQuickDelete.bind(this))
-  }
+  protected stop(): Promise<void> | void {}
 
   previewWikitext(
     text: string,
@@ -129,7 +126,7 @@ export class PluginQuickPreview extends BasePlugin {
     return modal
   }
 
-  private async injectQuickEdit({ ctx, modal, wikiPage }: QuickEditEventPayload) {
+  private async injectQuickEdit({ options, modal, wikiPage }: QuickEditEventPayload) {
     let latestPreviewModal: IPEModal | undefined = undefined
     modal.addButton(
       {
@@ -139,9 +136,20 @@ export class PluginQuickPreview extends BasePlugin {
         keyPress:
           (await this.ctx.preferences.get('quickPreview.keyshortcut.quickEdit')) || undefined,
         method: () => {
-          latestPreviewModal = this.previewWikitext(
+          let wikitext =
             (modal.get$content().querySelector<HTMLTextAreaElement>('textarea[name="text"]')
-              ?.value as string) || '',
+              ?.value as string) || ''
+          if (options.section === 'new') {
+            const title = modal
+              .get$content()
+              .querySelector<HTMLInputElement>('input[name="summary"]')?.value
+            if (title) {
+              wikitext = `==${title}==\n${wikitext}`
+            }
+          }
+
+          latestPreviewModal = this.previewWikitext(
+            wikitext,
             undefined,
             wikiPage,
             latestPreviewModal,

@@ -52,7 +52,7 @@ export interface QuickEditSubmitPayload {
   watchlist?: WatchlistAction
 }
 
-@Inject(['api', 'wikiPage', 'currentPage', 'wiki', 'modal', 'preferences'])
+@Inject(['api', 'wikiPage', 'wikiTitle', 'currentPage', 'wiki', 'modal', 'preferences'])
 @RegisterPreferences(
   Schema.object({
     'quickEdit.editSummary': Schema.string()
@@ -162,7 +162,7 @@ export class PluginQuickEdit extends BasePlugin {
     if (!options.editSummary) {
       options.editSummary = (await this.ctx.preferences.get<string>('quickEdit.editSummary')) || ''
     }
-    if (!options) this.ctx.emit('quick-edit/init-options', { ctx: this.ctx, options })
+    this.ctx.emit('quick-edit/init-options', { ctx: this.ctx, options })
 
     const modal = this.ctx.modal
       .createObject({
@@ -262,9 +262,23 @@ export class PluginQuickEdit extends BasePlugin {
     const editForm = (
       <form className="ipe-quickEdit__form">
         <div className="ipe-quickEdit__notices">{editNotices}</div>
-        <div className="ipe-quickEdit__content">
+        <div
+          className="ipe-quickEdit__content"
+          style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+        >
+          {options.section === 'new' && (
+            <>
+              <InputBox
+                label="Section title"
+                id="summary"
+                name="summary"
+                value={''}
+                inputProps={{ placeholder: 'Topic for new section, this will be the h2 heading' }}
+              />
+            </>
+          )}
           <textarea className="ipe-quickEdit__textarea" name="text" id="wpTextbox1">
-            {wikiPage.revisions[0]?.content || ''}
+            {options.section === 'new' ? '' : wikiPage.revisions[0]?.content || ''}
           </textarea>
         </div>
         <div
@@ -276,7 +290,9 @@ export class PluginQuickEdit extends BasePlugin {
             marginTop: '1rem',
           }}
         >
-          <InputBox label="Summary" id="summary" name="summary" value={options.editSummary} />
+          {options.section !== 'new' && (
+            <InputBox label="Summary" id="summary" name="summary" value={options.editSummary} />
+          )}
           <div className="ipe-input-box">
             <label htmlFor="watchlist" style={{ display: 'block' }}>
               Watchlist

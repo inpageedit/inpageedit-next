@@ -66,7 +66,16 @@ export class PluginInArticleLinks extends BasePlugin<{
     }
   }
 
-  protected async stop() {}
+  protected async stop() {
+    Array.from(
+      document.getElementsByClassName(this.config.linkClassName) as HTMLCollectionOf<HTMLElement>
+    ).forEach((el) => {
+      el.remove()
+    })
+    document.querySelectorAll<HTMLElement>('[data-ipe-edit-mounted]').forEach((el) => {
+      el.dataset.ipeEditMounted = undefined
+    })
+  }
 
   private _cachedAnchorInfo = new WeakMap<HTMLAnchorElement, InArticleWikiAnchorMetadata>()
   parseAnchor(anchor: HTMLAnchorElement): InArticleWikiAnchorMetadata | null {
