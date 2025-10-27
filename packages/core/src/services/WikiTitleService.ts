@@ -180,7 +180,7 @@ export class WikiTitleService extends Service {
       titleParam ||
       (() => {
         try {
-          return decodeURI(url.pathname.substring(this.wikiArticlePath.length))
+          return decodeURIComponent(url.pathname.substring(this.wikiArticlePath.length))
         } catch (e) {
           this.logger.error('parseLink', url, e)
           return ''
