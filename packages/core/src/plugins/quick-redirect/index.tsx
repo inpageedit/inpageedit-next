@@ -176,7 +176,7 @@ export class PluginQuickRedirect extends BasePlugin {
       title: from,
     })
     const content = `#REDIRECT [[:${to}]]`
-    const res = await wikiPage.edit(
+    return wikiPage.edit(
       {
         text: content,
         summary: reason,
@@ -185,9 +185,5 @@ export class PluginQuickRedirect extends BasePlugin {
         createonly: !overwrite,
       }
     )
-    if (res.data?.errors) {
-      throw new Error(res.data.errors[0].info, { cause: res })
-    }
-    return res
   }
 }

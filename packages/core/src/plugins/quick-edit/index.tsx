@@ -223,18 +223,26 @@ export class PluginQuickEdit extends BasePlugin {
       })
       return
     }
+
+    const editContent = options.section === 'new' ? '' : wikiPage.revisions[0]?.content || ''
+    const editRevId = wikiPage.revisions[0]?.revid
+    const isEdittingOld = editRevId && editRevId !== wikiPage.lastrevid
+    const isCreatingNewSection = options.section === 'new'
+    const isCreatingNewPage = wikiPage.pageid === 0
+
     modal.setTitle(
       (
         <>
-          Quick {wikiPage.pageInfo.pageid === 0 ? 'Create' : 'Edit'}:{' '}
+          {isCreatingNewSection ? 'New section' : `Quick ${isCreatingNewPage ? 'Create' : 'Edit'}`}:{' '}
           <u>{wikiPage.pageInfo.title}</u>
+          {isEdittingOld ? ` (Revision ${editRevId})` : ''}
         </>
       ) as HTMLElement
     )
 
     const editNotices = [] as ReactNode[]
     // Page not exists
-    if (wikiPage.pageInfo.pageid === 0) {
+    if (isCreatingNewPage) {
       editNotices.push(
         <MBox title="Attention" type="important">
           <p>This page does not exist.</p>
@@ -242,7 +250,7 @@ export class PluginQuickEdit extends BasePlugin {
       )
     }
     // Edit based on old revision
-    if (wikiPage.pageInfo.pageid && wikiPage.pageInfo.lastrevid !== wikiPage.revisions[0]?.revid) {
+    if (isEdittingOld) {
       editNotices.push(
         <MBox title="Attention" type="warning">
           <p>
@@ -278,7 +286,7 @@ export class PluginQuickEdit extends BasePlugin {
             </>
           )}
           <textarea className="ipe-quickEdit__textarea" name="text" id="wpTextbox1">
-            {options.section === 'new' ? '' : wikiPage.revisions[0]?.content || ''}
+            {editContent}
           </textarea>
         </div>
         <div
@@ -290,7 +298,7 @@ export class PluginQuickEdit extends BasePlugin {
             marginTop: '1rem',
           }}
         >
-          {options.section !== 'new' && (
+          {!isCreatingNewSection && (
             <InputBox label="Summary" id="summary" name="summary" value={options.editSummary} />
           )}
           <div className="ipe-input-box">
