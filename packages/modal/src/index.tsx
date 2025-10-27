@@ -414,24 +414,35 @@ export class IPEModal {
   // public helpers
   Event = IPEModalEvent
 
-  DEFAULT_OPTIONS: IPEModalOptions = {
+  static DEFAULT_OPTIONS: IPEModalOptions = {
     className: '',
     sizeClass: 'auto',
     center: true,
     fitScreen: false,
     closeIcon: true,
-    bodyScroll: false, // lock body scroll by default
+    bodyScroll: false,
     outSideClose: true,
     backdrop: true,
-    animation: false, // no transitions by default
+    animation: {
+      show: 'ipe-modal-fade-in',
+      hide: 'ipe-modal-fade-out',
+    },
     animationSpeed: 200,
   }
 
   constructor(options: Partial<IPEModalOptions> = {}) {
-    this.options = { ...this.DEFAULT_OPTIONS, ...options }
+    this.options = { ...IPEModal.DEFAULT_OPTIONS, ...options }
     // If there's no backdrop, allow page scroll unless user explicitly overrides
     if (this.options.backdrop === false && options.bodyScroll === undefined) {
       this.options.bodyScroll = true
+    }
+  }
+
+  static extends(defaultOptions: Partial<IPEModalOptions> = {}): typeof IPEModal {
+    return class extends this {
+      constructor(options: Partial<IPEModalOptions> = {}) {
+        super({ ...defaultOptions, ...options })
+      }
     }
   }
 
@@ -1347,7 +1358,10 @@ export class IPEModal {
     ;[...TOASTS].forEach((t) => t.destroy())
   }
 
-  static dialog(options: Partial<IPEModalOptions>, method: (e: MouseEvent, m: IPEModal) => void) {
+  static dialog(
+    options: Partial<IPEModalOptions>,
+    callback?: (e: MouseEvent, m: IPEModal) => void
+  ) {
     const m = new this({
       sizeClass: 'dialog',
       buttons: [
@@ -1355,7 +1369,7 @@ export class IPEModal {
           label: 'OK',
           className: 'is-primary is-ghost',
           method: (e, mm) => {
-            method?.(e, mm)
+            callback?.(e, mm)
             if (!e.defaultPrevented) m.close()
           },
           keyPress: 'Enter',
@@ -1369,10 +1383,10 @@ export class IPEModal {
   static confirm(
     options: Partial<IPEModalOptions> &
       Partial<{
-        okBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
-        cancelBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
+        okBtn: Partial<Pick<IPEModalButtonOptions, 'label' | 'className'>>
+        cancelBtn: Partial<Pick<IPEModalButtonOptions, 'label' | 'className'>>
       }>,
-    method: (e: MouseEvent, m: IPEModal) => void
+    callback: (result: boolean, m: IPEModal, ev?: MouseEvent) => void
   ) {
     options.title ??= 'Confirm'
     options.content ??= 'Are you sure you want to perform this action?'
@@ -1386,14 +1400,17 @@ export class IPEModal {
           label: cancel.label,
           className: cancel.className,
           keyPress: 'n',
-          method: () => m.close(),
+          method: (e, m) => {
+            callback?.(false, m, e)
+            m.close()
+          },
         },
         {
           label: ok.label,
           className: ok.className,
           keyPress: 'y',
-          method: (e) => {
-            method?.(e, m)
+          method: (e, m) => {
+            callback?.(true, m, e)
             if (!e.defaultPrevented) m.close()
           },
         },
@@ -1504,12 +1521,12 @@ export class IPEModal {
     options: Partial<IPEModalOptions> &
       Partial<{
         icon: string | Element
-        okBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
-        cancelBtn: Pick<IPEModalButtonOptions, 'label' | 'className'>
+        okBtn: Partial<Pick<IPEModalButtonOptions, 'label' | 'className'>>
+        cancelBtn: Partial<Pick<IPEModalButtonOptions, 'label' | 'className'>>
         overrideOther: boolean
         position: IPEModalNotifyPosition
       }>,
-    callback?: (result: boolean) => void
+    callback?: (result: boolean, modal: IPEModal, ev?: MouseEvent) => void
   ) {
     if (options?.overrideOther) {
       ;[...TOASTS].forEach((t) => t.close())
@@ -1532,19 +1549,37 @@ export class IPEModal {
       )
     }
 
+    // If it's a confirm toast
+    if (type === 'confirm') {
+      // do NOT auto close by default
+      if (typeof options.closeAfter === 'undefined') {
+        options.closeAfter = 0
+      }
+      // ensure ok button exists
+      if (!options.okBtn) {
+        options.okBtn = { label: 'OK' }
+      }
+    }
+
     if (options.okBtn) {
+      if (typeof options.okBtn !== 'object') {
+        options.okBtn = { label: 'OK' }
+      }
       options.okBtn.label ??= 'OK'
-      options.okBtn.className ??= 'is-primary is-ghost ok-btn'
-      ;(options.okBtn as Partial<IPEModalButtonOptions>).method = () => {
-        callback?.(true)
+      options.okBtn.className ??= 'is-primary is-text ok-btn'
+      ;(options.okBtn as Partial<IPEModalButtonOptions>).method = (e, m) => {
+        callback?.(true, m, e)
         m.close()
       }
     }
     if (options.cancelBtn) {
+      if (typeof options.cancelBtn !== 'object') {
+        options.cancelBtn = { label: 'Cancel' }
+      }
       options.cancelBtn.label ??= 'Cancel'
-      options.cancelBtn.className ??= 'is-danger is-ghost cancel-btn'
-      ;(options.cancelBtn as Partial<IPEModalButtonOptions>).method = () => {
-        callback?.(false)
+      options.cancelBtn.className ??= 'is-danger is-text cancel-btn'
+      ;(options.cancelBtn as Partial<IPEModalButtonOptions>).method = (e, m) => {
+        callback?.(false, m, e)
         m.close()
       }
     }
@@ -1562,10 +1597,6 @@ export class IPEModal {
       closeIcon: true,
       outSideClose: false,
       bodyScroll: true,
-      animation: options.animation ?? {
-        show: 'fadeIn',
-        hide: 'fadeOut',
-      },
       buttons: options.buttons ?? [],
     })
     m.setPluginName('toast')

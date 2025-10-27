@@ -20,7 +20,7 @@
   --ipe-modal-border-color: #eaecf0;
   --ipe-modal-divider-color: #e5e7eb;
   --ipe-modal-radius: 8px;
-  --ipe-modal-button-radius: 10px;
+  --ipe-modal-button-radius: 6px;
   --ipe-modal-shadow: 0 0 40px rgba(127, 127, 127, 0.5);
   --ipe-modal-spacing: 12px;
   --ipe-modal-viewport-gap-y: 20px; /* 窗口上下留白 */
@@ -402,14 +402,17 @@ body.ipe-modal-no-scroll {
 .ipe-modal-btn.is-text {
   background: transparent;
 }
-.ipe-modal-btn.is-ghost.is-primary {
-  color: var(--ipe-modal-accent);
-}
-.ipe-modal-btn.is-ghost.is-danger {
-  color: var(--ipe-modal-danger);
-}
 .ipe-modal-btn.is-text {
   border: 0;
+  color: var(--ipe-modal-text);
+}
+.ipe-modal-btn.is-ghost.is-primary,
+.ipe-modal-btn.is-text.is-primary {
+  color: var(--ipe-modal-accent);
+}
+.ipe-modal-btn.is-ghost.is-danger,
+.ipe-modal-btn.is-text.is-danger {
+  color: var(--ipe-modal-danger);
 }
 
 /* 紧凑按钮布局（dialog/notify） */
