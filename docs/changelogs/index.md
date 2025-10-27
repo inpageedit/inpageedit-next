@@ -23,6 +23,17 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.9.0'>
+
+- fix: invalid WikiMetadata cache key
+  - 修正了一个导致 WikiMetadata 缓存失效的问题
+- perf!: get endpoint by meta and link
+  - 我们使用了一些魔法手段获取 MediaWiki 元信息，从而减少了对 `mw.config` 的依赖：
+  - 通过 `<meta name="generator">` 判断是否为 MediaWiki 站点 + `<link rel="EditURI">` 获取 API endpoint
+  - 通过 `<link rel="canonical">` 获取当前条目的永久链接，从而解析当前条目标题
+
+</ChangeLog>
+
 <ChangeLog version='0.8.1'>
 
 - feat(modal)!: decouple and make it a standalone package
