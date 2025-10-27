@@ -1,5 +1,6 @@
 import '@/polyfills'
 import { InPageEdit as IPECore } from '@/InPageEdit'
+import { Endpoints } from './constants/endpoints.js'
 
 export * from '@/InPageEdit'
 export { default as BasePlugin } from '@/plugins/BasePlugin'
@@ -70,14 +71,19 @@ async function autoload(baseURL: string) {
   }
 
   // 花里胡哨的加载提示
-  ipe
-    .logger('AUTOLOAD')
-    .info(
-      `${Endpoints.HOME_URL}` +
-        '\n' +
-        '    ____      ____                   ______    ___ __ \n   /  _/___  / __ \\____ _____ ____  / ____/___/ (_) /_\n   / // __ \\/ /_/ / __ `/ __ `/ _ \\/ __/ / __  / / __/\n _/ // / / / ____/ /_/ / /_/ /  __/ /___/ /_/ / / /_  \n/___/_/ /_/_/    \\__,_/\\__, /\\___/_____/\\__,_/_/\\__/  \n                      /____/                v' +
-        ipe.version
-    )
+  ipe.logger('AUTOLOAD').info(
+    '\n' +
+      '    ____      ____                   ______    ___ __ \n   /  _/___  / __ \\____ _____ ____  / ____/___/ (_) /_\n   / // __ \\/ /_/ / __ `/ __ `/ _ \\/ __/ / __  / / __/\n _/ // / / / ____/ /_/ / /_/ /  __/ /___/ /_/ / / /_  \n/___/_/ /_/_/    \\__,_/\\__, /\\___/_____/\\__,_/_/\\__/  \n                      /____/                v' +
+      ipe.version +
+      '\n' +
+      Object.entries({
+        'Wiki API Base': baseURL,
+        'Document Site': Endpoints.HOME_URL,
+        'Bug reporting': Endpoints.GITHUB_URL,
+      })
+        .map(([key, value]) => `- ${key}: ${value}`)
+        .join('\n')
+  )
 }
 
 function runOnce(key: string, fn: Function) {
