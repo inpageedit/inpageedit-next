@@ -102,7 +102,7 @@ export class WikiMetadataService extends Service {
     })
   }
 
-  get computeSiteIdentity() {
+  get metadataCacheId() {
     return this.ctx.api.config.baseURL
   }
 
@@ -125,7 +125,7 @@ export class WikiMetadataService extends Service {
   }
 
   async fetchFromCache() {
-    const key = this.computeSiteIdentity
+    const key = this.metadataCacheId
     const userId = this.mwConfig.get('wgUserId', 0)
     const data = await this.db.get(key)
     if (data && typeof data === 'object' && !!data.general && data.userinfo.id === userId) {
@@ -137,11 +137,11 @@ export class WikiMetadataService extends Service {
     }
   }
   async saveToCache(data: WikiMetadata) {
-    const key = this.computeSiteIdentity
+    const key = this.metadataCacheId
     return this.db.set(key, data)
   }
   async invalidateCache() {
-    const key = this.computeSiteIdentity
+    const key = this.metadataCacheId
     return this.db.delete(key)
   }
 
