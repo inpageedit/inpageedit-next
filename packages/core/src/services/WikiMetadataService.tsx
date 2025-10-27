@@ -102,19 +102,8 @@ export class WikiMetadataService extends Service {
     })
   }
 
-  computeSiteIdentity() {
-    let path: string
-    if (!window.mw?.config) {
-      path = new URL(location.href).origin
-    } else {
-      const { wgServer, wgArticlePath } = window.mw.config.get()
-      path = `${wgServer}${wgArticlePath}`
-    }
-    // magic caching
-    Reflect.defineProperty(this, 'computeSiteIdentity', {
-      get: () => path,
-    })
-    return path
+  get computeSiteIdentity() {
+    return this.ctx.api.config.baseURL
   }
 
   async fetchFromApi() {
@@ -136,7 +125,7 @@ export class WikiMetadataService extends Service {
   }
 
   async fetchFromCache() {
-    const key = this.computeSiteIdentity()
+    const key = this.computeSiteIdentity
     const userId = this.mwConfig.get('wgUserId', 0)
     const data = await this.db.get(key)
     if (data && typeof data === 'object' && !!data.general && data.userinfo.id === userId) {
@@ -148,11 +137,11 @@ export class WikiMetadataService extends Service {
     }
   }
   async saveToCache(data: WikiMetadata) {
-    const key = this.computeSiteIdentity()
+    const key = this.computeSiteIdentity
     return this.db.set(key, data)
   }
   async invalidateCache() {
-    const key = this.computeSiteIdentity()
+    const key = this.computeSiteIdentity
     return this.db.delete(key)
   }
 

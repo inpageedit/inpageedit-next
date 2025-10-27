@@ -31,9 +31,9 @@ export class CurrentPageService extends Service {
   }
 
   async #init() {
-    await this.#initIsMainPage()
     await this.#initCurrentTitle()
     await this.#initCurrentAction()
+    await this.#initIsMainPage()
   }
 
   #injectHistoryPopState() {
@@ -73,28 +73,22 @@ export class CurrentPageService extends Service {
   get params() {
     return this.url.searchParams
   }
+  get canonicalUrl() {
+    const href = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
+    let url: URL | null = null
+    if (href) {
+      url = new URL(href, location.origin)
+    }
+    Reflect.defineProperty(this, 'canonicalUrl', {
+      get: () => url,
+    })
+    return url
+  }
 
   readonly isMainPage!: boolean
   async #initIsMainPage() {
-    let isMainPage = false
-    const fullPath = this.url.origin + this.url.pathname
-    let paramTitle = this.params.get('title') || ''
-    const paramCurid = parseInt(this.params.get('curid') || '0', 10)
-    if (paramCurid) {
-      const page = await this.ctx.wikiPage.newFromPageId(paramCurid)
-      paramTitle = page?.title || ''
-    } else if (paramTitle) {
-      paramTitle = paramTitle[0].toUpperCase() + paramTitle.slice(1)
-      paramTitle = paramTitle.replace(/_/g, ' ')
-    }
-    if (
-      fullPath === this.ctx.wiki.getSciprtUrl('index.php') &&
-      paramTitle === this.ctx.wiki.mainPageName
-    ) {
-      isMainPage = true
-    }
-    const mainpageUrls = [this.ctx.wiki.mainPageUrl, this.ctx.wiki.landingPageUrl]
-    isMainPage = mainpageUrls.includes(fullPath) && !paramTitle
+    const title = this.wikiTitle
+    const isMainPage = title?.getMainDBKey() === this.ctx.wiki.mainPageName
     Reflect.defineProperty(this, 'isMainPage', {
       get: () => isMainPage,
     })
@@ -108,9 +102,8 @@ export class CurrentPageService extends Service {
   wikiTitle!: IWikiTitle | null
   async #initCurrentTitle(): Promise<IWikiTitle | null> {
     let title: IWikiTitle | null = null
-    const isMainPage = this.isMainPage
-    if (isMainPage) {
-      title = this.ctx.wikiTitle.newTitle(this.ctx.wiki.mainPageName)
+    if (this.canonicalUrl) {
+      title = await this.ctx.wikiTitle.newTitleFromUrl(this.canonicalUrl)
     } else {
       title = await this.ctx.wikiTitle.newTitleFromUrl(this.url)
     }

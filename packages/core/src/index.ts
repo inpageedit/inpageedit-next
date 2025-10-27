@@ -10,9 +10,16 @@ window.__IPE_MODULES__ ||= []
 
 // Auto load if the site is MediaWiki
 runOnce('InPageEdit#autoload', () => {
-  window.RLQ.push(autoload)
+  const isMediaWiki =
+    document.querySelector('meta[name="generator"][content^="MediaWiki"]') !== null
+  const apiBase = document
+    .querySelector<HTMLLinkElement>('link[rel="EditURI"]')
+    ?.href?.split('?')[0]
+  if (isMediaWiki && apiBase) {
+    autoload(apiBase)
+  }
 })
-async function autoload() {
+async function autoload(baseURL: string) {
   // 防止多次运行
   if (typeof window?.ipe?.stop === 'function') {
     console.warn('[InPageEdit] Plugin already loaded, disposing...')
@@ -22,7 +29,7 @@ async function autoload() {
   const oldGlobalVar: any = window.InPageEdit || {}
   const ipe = new IPECore({
     apiConfigs: {
-      baseURL: window.mw?.util.wikiScript('api'),
+      baseURL,
     },
     legacyPreferences: oldGlobalVar?.myPreferences || {},
   })
@@ -35,9 +42,9 @@ async function autoload() {
   await ipe.start()
 
   // Trigger the mw.hook
-  if (typeof window?.mw?.hook === 'function') {
-    window.mw.hook('InPageEdit.ready').fire(ipe)
-  }
+  window.RLQ.push(() => {
+    mw.hook('InPageEdit.ready').fire(ipe)
+  })
 
   // Initialize global modules
   if (Array.isArray(window.__IPE_MODULES__)) {

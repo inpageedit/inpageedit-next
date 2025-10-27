@@ -503,6 +503,16 @@ export function createWikiTitleModel(metadata: WikiMetadata): WikiTitleConstruct
       const targetTitle = new WikiTitle(alia, -1)
       return this.getMainRootText() === targetTitle.getMainRootText()
     }
+
+    toJSON(): Record<string, any> {
+      return {
+        ns: this.#ns,
+        text: this.getMainText(),
+        title: this.getPrefixedText(),
+        url: this.getURL().toString(),
+        isSpecial: this.#ns < 0,
+      }
+    }
   }
 
   caches.set(metadata, WikiTitle)
