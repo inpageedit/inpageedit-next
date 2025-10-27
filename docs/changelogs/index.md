@@ -23,6 +23,27 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.8.1'>
+
+- feat(modal)!: decouple and make it a standalone package
+  - 我们解耦并发布了我们的轻量级模态框库：[@inpageedit/modal](https://www.npmjs.com/package/@inpageedit/modal)
+  - `ctx.modal` 的用法与此前没有区别
+- refactor!: +CurrentPageService
+  - 我们完全抛弃了对于 `mw.config.get('wgPageName')`、`mw.config.get('wgArticleId')`、`mw.config.get('wgCurrentRevisionId')` 的依赖，完全使用当前的 URL + WikiMetadata 解析当前的页面基本信息
+  - `currentPage.url` {URL} 当前页面 URL
+  - `currentPage.params` {URLSearchParams} 当前页面 URL 参数
+  - `currentPage.wikiAction` {string} 当前页面 Wiki 动作
+  - `currentPage.wikiTitle` {WikiTitle} 当前页面标题实例
+  - `currentPage.isMainPage` {boolean} 是否为 wiki 首页
+- fix: specia:edit/newsection requires sub
+  - 仅当 [[Special:Edit]] / [[Special:NewSection]] 链接拥有子页面部分时，才创建快速编辑按钮
+- fix: parsing title includes special chars (?/&/...)
+  - 修复了 wikiTitle.newTitleFromUrl 对包含特殊字符（`?`、`&`、`=`、...）的条目的错误解析
+- chore: housekeeping
+  - 更新了依赖，修复了一些小问题，提升了项目的整体质量。
+
+</ChangeLog>
+
 <ChangeLog version='0.8.0'>
 
 - fix: wrong behavior of .ipe-modal-no-scroll
