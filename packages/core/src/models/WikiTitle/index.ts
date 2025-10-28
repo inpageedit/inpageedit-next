@@ -295,6 +295,10 @@ export function createWikiTitleModel(metadata: WikiMetadata): WikiTitleConstruct
       if (namespace === void 0) {
         this.fixNSByTitle()
       }
+
+      if (this.getMainText() === '') {
+        throw new Error('Invalid title')
+      }
     }
 
     static create(title: string, namespace?: number): WikiTitle {

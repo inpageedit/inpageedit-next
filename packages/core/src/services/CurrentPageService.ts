@@ -32,7 +32,6 @@ export class CurrentPageService extends Service {
 
   async #init() {
     await this.#initCurrentTitle()
-    await this.#initCurrentAction()
     await this.#initIsMainPage()
   }
 
@@ -114,12 +113,7 @@ export class CurrentPageService extends Service {
     return title
   }
 
-  readonly wikiAction!: string
-  async #initCurrentAction() {
-    const action = this.params.get('action') || 'view'
-    Reflect.defineProperty(this, 'wikiAction', {
-      get: () => action,
-    })
-    return this.wikiAction
+  get wikiAction() {
+    return this.params.get('action') || 'view'
   }
 }

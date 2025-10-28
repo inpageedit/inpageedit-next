@@ -1,6 +1,7 @@
 import { Inject, InPageEdit, Service } from '@/InPageEdit'
 import { createWikiPageModel, IWikiPage, WikiPageConstructor } from '@/models/WikiPage'
 import { PageInfo } from '@/models/WikiPage/types/PageInfo'
+import { IWikiTitle } from '@/models/WikiTitle/index.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -23,12 +24,12 @@ export class WikiPageService extends Service {
     return page
   }
   async newFromTitle(
-    title: string,
+    title: string | IWikiTitle,
     converttitles = false,
     rvsection?: number | string,
     noCache = false
   ) {
-    return this.createInstance({ titles: title, converttitles, rvsection }, noCache)
+    return this.createInstance({ titles: title.toString(), converttitles, rvsection }, noCache)
   }
   async newFromPageId(pageid: number, rvsection?: number | string, noCache = false) {
     return this.createInstance({ pageids: pageid, rvsection }, noCache)

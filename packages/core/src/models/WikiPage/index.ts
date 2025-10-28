@@ -141,7 +141,7 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
         ...payload,
       })
       const info = data?.query?.pages?.[0]
-      if (!info) {
+      if (!info || !info.title) {
         throw new Error('Invalid page info', { cause: data })
       }
       return new WikiPage(info, true)
