@@ -119,26 +119,26 @@ export class IDBKeyValStorageManager<T = unknown> implements IStorageManager<T> 
   }
 
   private async loadFromDB(key: string) {
-    const data = await get<{ time: number; value: T; version?: number } | null>(key, this.store)
+    const data = await get<IStorageItem<T>>(key, this.store)
     // Not exist
     if (!data) {
       return null
     }
     // Bad data
-    if (typeof (data as any).time !== 'number' || typeof (data as any).value === 'undefined') {
+    if (typeof data.time !== 'number' || typeof data.value === 'undefined') {
       try {
         await this.delete(key)
       } catch (_) {}
       return null
     }
     // Version mismatch
-    if (typeof this.version === 'number' && (data as any).version !== this.version) {
+    if (typeof this.version === 'number' && data.version !== this.version) {
       try {
         await this.delete(key)
       } catch (_) {}
       return null
     }
-    return data as IStorageItem<T>
+    return data
   }
 
   private checkIfExpired(data: IStorageItem<T> | null, ttl = this.ttl) {

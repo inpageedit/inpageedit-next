@@ -15,18 +15,19 @@ export default class BasePlugin<ConfigType extends unknown = any> {
   static reusable = false
   /** 插件的偏好设置模式 */
   static PreferencesSchema?: Schema
-  /** 插件的偏好设置默认值 */
-  static PreferencesDefaults?: Record<string, any>
 
   constructor(
     public ctx: InPageEdit,
     config: ConfigType = undefined as unknown as ConfigType,
     name?: string
   ) {
-    this.name = name || this.constructor.name
+    this.name = name || ''
     this.config = config || ({} as ConfigType)
     const { promise, resolve, reject } = Promise.withResolvers<void>()
     queueMicrotask(() => {
+      if (!this.name) {
+        this.name = this.constructor.name
+      }
       try {
         const ret = this.start()
         if (ret && typeof (ret as Promise<unknown>).then === 'function') {
