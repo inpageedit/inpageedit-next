@@ -23,6 +23,21 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.9.1'>
+
+- refactor!: make preferences as a built-in service
+  - `ctx.preferences` 从插件变成了内置服务
+- chore!: drop diff.js
+  - 移除了不再使用的 `diff`
+- perf!: replace localforage with idb-keyval
+  - 使用了 `idb-keyval` 替代 `localforage`，打包体积降低 ~40kb
+- chore: housekeeping
+  - 更新了依赖，修复了一些小问题，提升了项目的整体质量
+  - `wiki-saikou@7.1.2`
+  - `@inpageedit/modal@1.0.1`
+
+</ChangeLog>
+
 <ChangeLog version='0.9.0'>
 
 - fix: invalid WikiMetadata cache key
