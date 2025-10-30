@@ -1,7 +1,7 @@
 import './style.scss'
 import { JSX } from 'jsx-dom/jsx-runtime'
-import { CompareApiResponse } from '../PluginQuickDiffCore'
-import { InPageEdit } from '@/InPageEdit'
+import { CompareApiResponse } from '../index.js'
+import { InPageEdit } from '@/InPageEdit.js'
 
 export type DiffTableProps = {
   data: Partial<CompareApiResponse['compare']>

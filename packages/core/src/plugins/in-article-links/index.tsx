@@ -1,5 +1,5 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import { CompareApiRequestOptions } from '../quick-diff/PluginQuickDiffCore.js'
+import { CompareApiRequestOptions } from '../quick-diff/index.js'
 import { QuickEditOptions } from '../quick-edit/index.js'
 import { WikiLinkMetadata } from '@/services/WikiTitleService.js'
 
