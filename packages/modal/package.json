@@ -1,6 +1,6 @@
 {
   "name": "@inpageedit/modal",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Yet another lightweight, framework-free modal and toast notification utility",
   "author": "dragon-fish",
   "license": "MIT",
