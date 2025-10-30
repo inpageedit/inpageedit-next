@@ -70,10 +70,10 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.38.0",
-    "@microsoft/api-extractor": "^7.53.1",
+    "@microsoft/api-extractor": "^7.53.3",
     "@prettier/plugin-pug": "^3.4.2",
     "@tabler/icons-vue": "^3.35.0",
-    "@types/node": "^22.18.12",
+    "@types/node": "^22.18.13",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
     "@vitejs/plugin-vue": "^6.0.1",
@@ -85,7 +85,7 @@
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.6.2",
     "pug": "^3.0.3",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.0",
     "sass-embedded": "^1.93.2",
     "tsx": "^4.20.6",
     "types-mediawiki": "^2.0.0",
@@ -93,8 +93,7 @@
     "unplugin-auto-import": "^20.2.0",
     "unplugin-dts": "1.0.0-beta.6",
     "vite": "^7.1.12",
-    "vitest": "^4.0.3",
-    "wiki-saikou": "^7.1.2"
+    "vitest": "^4.0.5"
   },
   "dependencies": {
     "@cordisjs/core": "^3.18.1",
@@ -104,7 +103,8 @@
     "localforage": "^1.10.0",
     "schemastery": "^3.17.1",
     "schemastery-form": "workspace:^",
-    "vue": "^3.5.22"
+    "vue": "^3.5.22",
+    "wiki-saikou": "^7.1.2"
   },
   "keywords": [
     "mediawiki",
