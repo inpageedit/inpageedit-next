@@ -75,9 +75,11 @@ export class PreferencesService extends Service {
 
   async getAll() {
     const data = this.loadDefaultConfigs()
-    await this.db.iterate((value: IPEStorageRecord, key: string) => {
-      data[key] = value
-    })
+    for await (const [key, record] of this.db.entries()) {
+      // 旧版本埋的坑
+      if (key === '_touched') continue
+      data[key] = record.value
+    }
     return data
   }
 

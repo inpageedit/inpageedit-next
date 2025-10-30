@@ -1,5 +1,5 @@
 import { InPageEdit, Service } from '@/InPageEdit.js'
-import { IDBStoreDefinition, IDBHelper } from './IDBStorage.js'
+import { IDBStoreHandle, IDBHelper, IDBStorage } from './IDBStorage.js'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -32,38 +32,28 @@ export interface AbstactIPEStorageManager<T = unknown> {
   set(key: string, value: T): Promise<IPEStorageRecord<T>>
   has(key: string, ttl?: number): Promise<boolean>
   delete(key: string): Promise<void>
-  iterate(callback: (value: T, key: string) => void): Promise<void>
-  keys(): Promise<string[]>
+  keys(): AsyncIterable<string>
+  values(): AsyncIterable<IPEStorageRecord<T>>
+  entries(): AsyncIterable<[string, IPEStorageRecord<T>]>
   clear(): Promise<this>
 }
 
 export class IDBStorageManager<T = unknown> implements AbstactIPEStorageManager<T> {
-  readonly store: IDBStoreDefinition
+  readonly db: IDBStorage<string, IPEStorageRecord<T>>
+  keys: () => AsyncIterable<string>
+  values: () => AsyncIterable<IPEStorageRecord<T>>
+  entries: () => AsyncIterable<[string, IPEStorageRecord<T>]>
+
   constructor(
     readonly dbName: string,
     readonly storeName: string,
     public ttl: number = Infinity,
     public version?: number
   ) {
-    this.store = IDBStorageManager.createStore(dbName, storeName)
-    IDBHelper.set(this.store, '_touched', Date.now())
-  }
-
-  private static _cached_stores: Map<string, IDBStoreDefinition> = new Map()
-  private static createStore(dbName: string, storeName: string) {
-    const key = `${dbName}:${storeName}`
-    if (this._cached_stores.has(key)) {
-      return this._cached_stores.get(key)!
-    }
-    const dbPromise = IDBHelper.createStore(dbName, storeName)
-    const store: IDBStoreDefinition = { dbName, storeName, dbPromise }
-    this._cached_stores.set(key, store)
-    return store
-  }
-
-  async keys(): Promise<string[]> {
-    const ks = await IDBHelper.keys(this.store)
-    return ks.map((k) => String(k))
+    this.db = new IDBStorage<string, IPEStorageRecord<T>>(dbName, storeName)
+    this.keys = this.db.keys.bind(this.db)
+    this.values = this.db.values.bind(this.db)
+    this.entries = this.db.entries.bind(this.db)
   }
 
   async get(key: string, ttl = this.ttl, setter?: () => Promise<T> | T): Promise<T | null> {
@@ -91,7 +81,7 @@ export class IDBStorageManager<T = unknown> implements AbstactIPEStorageManager<
       value,
       version: this.version,
     }
-    await IDBHelper.set(this.store, key, record)
+    await this.db.set(key, record)
     return record
   }
 
@@ -102,24 +92,13 @@ export class IDBStorageManager<T = unknown> implements AbstactIPEStorageManager<
   }
 
   async delete(key: string): Promise<void> {
-    await IDBHelper.del(this.store, key)
-  }
-
-  async iterate(callback: (value: T, key: string) => void): Promise<void> {
-    const all = await IDBHelper.entries(this.store)
-    for (const [k, v] of all) {
-      const key = String(k)
-      const data = v as IPEStorageRecord<T> | null
-      if (data && typeof (data as any).value !== 'undefined') {
-        callback((data as IPEStorageRecord<T>).value, key)
-      }
-    }
+    await this.db.delete(key)
   }
 
   private async loadFromDB(key: string) {
-    const data = await IDBHelper.get<IPEStorageRecord<T>>(this.store, key)
+    const data = await this.db.get(key)
     // Not exist
-    if (!data) {
+    if (data === void 0) {
       return null
     }
     // Bad data
@@ -149,7 +128,7 @@ export class IDBStorageManager<T = unknown> implements AbstactIPEStorageManager<
    * Delete all data from the database.
    */
   async clear() {
-    await IDBHelper.clear(this.store)
+    await this.db.clear()
     return this
   }
 }
