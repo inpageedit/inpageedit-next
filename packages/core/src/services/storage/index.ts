@@ -1,5 +1,5 @@
-import { InPageEdit, Service } from '@/InPageEdit'
-import { createStore, get, set, del, clear, keys, entries, type UseStore } from 'idb-keyval'
+import { InPageEdit, Service } from '@/InPageEdit.js'
+import { IDBStoreDefinition, IDBHelper } from './IDBStorage.js'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -13,11 +13,11 @@ export class StorageService extends Service {
   }
 
   createDatabse<T = any>(storeName: string, ttl?: number, version?: number) {
-    return new IDBKeyValStorageManager<T>('InPageEdit', storeName, ttl, version)
+    return new IDBStorageManager<T>('InPageEdit', storeName, ttl, version)
   }
 }
 
-export interface IStorageItem<T = any> {
+export interface IPEStorageRecord<T = any> {
   /** last update time */
   time: number
   /** stored value */
@@ -26,10 +26,10 @@ export interface IStorageItem<T = any> {
   version?: number
 }
 
-export interface IStorageManager<T = unknown> {
+export interface AbstactIPEStorageManager<T = unknown> {
   get(key: string, ttl?: number, setter?: () => Promise<any> | any): Promise<T | null>
   set(key: string, value: null | undefined): Promise<void>
-  set(key: string, value: T): Promise<IStorageItem<T>>
+  set(key: string, value: T): Promise<IPEStorageRecord<T>>
   has(key: string, ttl?: number): Promise<boolean>
   delete(key: string): Promise<void>
   iterate(callback: (value: T, key: string) => void): Promise<void>
@@ -37,34 +37,32 @@ export interface IStorageManager<T = unknown> {
   clear(): Promise<this>
 }
 
-export interface IStorageManagerConstructor {
-  new (dbName: string, storeName: string, ttl?: number, version?: number): IStorageManager<any>
-}
-
-export class IDBKeyValStorageManager<T = unknown> implements IStorageManager<T> {
-  readonly store: UseStore
+export class IDBStorageManager<T = unknown> implements AbstactIPEStorageManager<T> {
+  readonly store: IDBStoreDefinition
   constructor(
     readonly dbName: string,
     readonly storeName: string,
     public ttl: number = Infinity,
     public version?: number
   ) {
-    this.store = IDBKeyValStorageManager.createStore(dbName, storeName)
+    this.store = IDBStorageManager.createStore(dbName, storeName)
+    IDBHelper.set(this.store, '_touched', Date.now())
   }
 
-  private static _cached_stores: Map<string, UseStore> = new Map()
+  private static _cached_stores: Map<string, IDBStoreDefinition> = new Map()
   private static createStore(dbName: string, storeName: string) {
     const key = `${dbName}:${storeName}`
     if (this._cached_stores.has(key)) {
       return this._cached_stores.get(key)!
     }
-    const store = createStore(dbName, storeName)
+    const dbPromise = IDBHelper.createStore(dbName, storeName)
+    const store: IDBStoreDefinition = { dbName, storeName, dbPromise }
     this._cached_stores.set(key, store)
     return store
   }
 
   async keys(): Promise<string[]> {
-    const ks = await keys(this.store)
+    const ks = await IDBHelper.keys(this.store)
     return ks.map((k) => String(k))
   }
 
@@ -83,17 +81,17 @@ export class IDBKeyValStorageManager<T = unknown> implements IStorageManager<T> 
   }
 
   set(key: string, value: null | undefined): Promise<void>
-  set(key: string, value: T): Promise<IStorageItem<T>>
-  async set(key: string, value: T | null | undefined): Promise<IStorageItem<T> | void> {
+  set(key: string, value: T): Promise<IPEStorageRecord<T>>
+  async set(key: string, value: T | null | undefined): Promise<IPEStorageRecord<T> | void> {
     if (value === null || typeof value === 'undefined') {
       return this.delete(key)
     }
-    const record: IStorageItem<T> = {
+    const record: IPEStorageRecord<T> = {
       time: Date.now(),
       value,
       version: this.version,
     }
-    await set(key, record, this.store)
+    await IDBHelper.set(this.store, key, record)
     return record
   }
 
@@ -104,22 +102,22 @@ export class IDBKeyValStorageManager<T = unknown> implements IStorageManager<T> 
   }
 
   async delete(key: string): Promise<void> {
-    await del(key, this.store)
+    await IDBHelper.del(this.store, key)
   }
 
   async iterate(callback: (value: T, key: string) => void): Promise<void> {
-    const all = await entries(this.store)
+    const all = await IDBHelper.entries(this.store)
     for (const [k, v] of all) {
       const key = String(k)
-      const data = v as IStorageItem<T> | null
+      const data = v as IPEStorageRecord<T> | null
       if (data && typeof (data as any).value !== 'undefined') {
-        callback((data as IStorageItem<T>).value, key)
+        callback((data as IPEStorageRecord<T>).value, key)
       }
     }
   }
 
   private async loadFromDB(key: string) {
-    const data = await get<IStorageItem<T>>(key, this.store)
+    const data = await IDBHelper.get<IPEStorageRecord<T>>(this.store, key)
     // Not exist
     if (!data) {
       return null
@@ -141,7 +139,7 @@ export class IDBKeyValStorageManager<T = unknown> implements IStorageManager<T> 
     return data
   }
 
-  private checkIfExpired(data: IStorageItem<T> | null, ttl = this.ttl) {
+  private checkIfExpired(data: IPEStorageRecord<T> | null, ttl = this.ttl) {
     if (!data) return false
     return Date.now() - data.time > ttl
   }
@@ -151,7 +149,7 @@ export class IDBKeyValStorageManager<T = unknown> implements IStorageManager<T> 
    * Delete all data from the database.
    */
   async clear() {
-    await clear(this.store)
+    await IDBHelper.clear(this.store)
     return this
   }
 }

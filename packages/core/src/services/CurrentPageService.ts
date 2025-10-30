@@ -15,7 +15,9 @@ export class CurrentPageService extends Service {
   constructor(readonly ctx: InPageEdit) {
     super(ctx, 'currentPage', false)
   }
-  private readonly logger = this.ctx.logger('CURRENT_PAGE')
+  private get logger() {
+    return this.ctx.logger('CURRENT_PAGE')
+  }
 
   protected async start() {
     await this.#init()

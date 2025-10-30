@@ -1,5 +1,5 @@
 import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit.js'
-import { IStorageItem, IStorageManager } from '@/services/StorageService.js'
+import { IPEStorageRecord, AbstactIPEStorageManager } from '@/services/storage/index.js'
 import { computeFallback, ComputeAble } from '@/utils/computeable.js'
 
 declare module '@/InPageEdit' {
@@ -23,7 +23,7 @@ export interface InPageEditPreferenceUIRegistryItem {
 
 @Inject(['storage'])
 export class PreferencesService extends Service {
-  private db: IStorageManager<any>
+  private db: AbstactIPEStorageManager<any>
   public customRegistries: InPageEditPreferenceUIRegistryItem[] = []
   public categoryDefinitions: InPageEditPreferenceUICategory[] = []
   private _defaultPreferences: Record<string, any> = {}
@@ -64,7 +64,7 @@ export class PreferencesService extends Service {
     return (this._defaultPreferences[key] ??= this.loadDefaultConfigs()[key])
   }
 
-  set<T = any>(key: string, value: T): Promise<IStorageItem<T> | void> {
+  set<T = any>(key: string, value: T): Promise<IPEStorageRecord<T> | void> {
     const defaultValue = this.getDefaultValue(key)
     if (value === defaultValue) {
       return this.db.delete(key)
@@ -75,7 +75,7 @@ export class PreferencesService extends Service {
 
   async getAll() {
     const data = this.loadDefaultConfigs()
-    await this.db.iterate((value: IStorageItem, key: string) => {
+    await this.db.iterate((value: IPEStorageRecord, key: string) => {
       data[key] = value
     })
     return data

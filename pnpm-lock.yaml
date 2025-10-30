@@ -47,7 +47,7 @@ importers:
     devDependencies:
       '@inpageedit/core':
         specifier: ^0.8.0
-        version: 0.8.0(fexios@3.2.0)(typescript@5.9.3)
+        version: 0.8.1(fexios@3.2.0)(typescript@5.9.3)
       '@nolebase/vitepress-plugin-git-changelog':
         specifier: ^2.18.2
         version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(less@4.4.1)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.93.2)(tsx@4.20.6)(typescript@5.9.3))(vue@3.5.22(typescript@5.9.3))
@@ -165,12 +165,6 @@ importers:
       '@inpageedit/modal':
         specifier: workspace:^
         version: link:../modal
-      idb-keyval:
-        specifier: ^6.2.2
-        version: 6.2.2
-      localforage:
-        specifier: ^1.10.0
-        version: 1.10.0
       schemastery:
         specifier: ^3.17.1
         version: 3.17.1
@@ -697,13 +691,16 @@ packages:
   '@iconify/utils@3.0.2':
     resolution: {integrity: sha512-EfJS0rLfVuRuJRn4psJHtK2A9TqVnkxPpHY6lYHiB9+8eSuudsxbwMiavocG45ujOo6FJ+CIRlRnlOGinzkaGQ==}
 
-  '@inpageedit/core@0.8.0':
-    resolution: {integrity: sha512-Qnxf09qaGC+J5gjAzRgont2Q6RTNDfHwimaE0CUvS3eEKHBzZpoaA7UzKjVSOA20Q7eDdNmcyjmPaMBCbEk9Bw==}
+  '@inpageedit/core@0.8.1':
+    resolution: {integrity: sha512-4eBFqcbCl1ZOMHKpyZTwzkxqzv+QFa4b+754eYA2W2so4kGZPcl/hlgosfkZXnGjGz0zqk0PZaADBLKHIUH/xQ==}
     peerDependencies:
       fexios: ^3.2.0
 
   '@inpageedit/logger@0.1.0':
     resolution: {integrity: sha512-6QwdbtkH/Bwg/P/+s0uVPzxbMpk8GSPzJmafyJKCEtUdgbNXSm22mqltCbN8k2EuSV45Dn+nwouHKTSqFY1A1A==}
+
+  '@inpageedit/modal@1.0.1':
+    resolution: {integrity: sha512-+aQ1Enja+TELDf3alTFqyfW8vcpo2O2x3/xV6lK215hodEVh/BYFAnxl47AuGBEgXEUtqXNH/P1QwbXt6U1Esw==}
 
   '@isaacs/balanced-match@4.0.1':
     resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
@@ -3764,6 +3761,9 @@ packages:
   wiki-saikou@5.2.0:
     resolution: {integrity: sha512-79LaJB60bja5gguN+d4AsVJY9IZPEW+q8viXTlkc7TzIzkYcSbzDgbmlGUNubtbLC22wM+CTw1Df6TpBYopmfQ==}
 
+  wiki-saikou@6.1.1:
+    resolution: {integrity: sha512-NCW3nu/GWvv9EDq9Np7n1qPTsl8M8pRo+IxMWvZsxKhvOo6ZLfNsDgPvCxPj/HkjieyiezIVVLAn4OoZWjFs0w==}
+
   wiki-saikou@7.1.2:
     resolution: {integrity: sha512-fbjDI5xUNxnpsxJxAY1KB9KDjHmx2D1NVfMAEti79Y1HhigmR/8Kx40qI00Y3qgNCy+gVLZVZcU64AXjh+Ec3g==}
 
@@ -4058,21 +4058,24 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@inpageedit/core@0.8.0(fexios@3.2.0)(typescript@5.9.3)':
+  '@inpageedit/core@0.8.1(fexios@3.2.0)(typescript@5.9.3)':
     dependencies:
       '@cordisjs/core': 3.18.1
       '@inpageedit/logger': 0.1.0
+      '@inpageedit/modal': 1.0.1
       diff: 8.0.2
       fexios: 3.2.0
       localforage: 1.10.0
       schemastery: 3.17.1
       schemastery-form: 0.2.1(schemastery@3.17.1)(vue@3.5.22(typescript@5.9.3))
       vue: 3.5.22(typescript@5.9.3)
-      wiki-saikou: 5.2.0
+      wiki-saikou: 6.1.1
     transitivePeerDependencies:
       - typescript
 
   '@inpageedit/logger@0.1.0': {}
+
+  '@inpageedit/modal@1.0.1': {}
 
   '@isaacs/balanced-match@4.0.1': {}
 
@@ -5947,7 +5950,8 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
-  idb-keyval@6.2.2: {}
+  idb-keyval@6.2.2:
+    optional: true
 
   ignore@5.3.0: {}
 
@@ -7568,6 +7572,11 @@ snapshots:
       stackback: 0.0.2
 
   wiki-saikou@5.2.0:
+    dependencies:
+      fexios: 3.2.0
+      tslib: 2.8.1
+
+  wiki-saikou@6.1.1:
     dependencies:
       fexios: 3.2.0
       tslib: 2.8.1

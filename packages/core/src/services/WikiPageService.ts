@@ -17,7 +17,6 @@ export class WikiPageService extends Service {
     super(ctx, 'wikiPage', true)
     this.WikiPage = createWikiPageModel(this.ctx.api)
   }
-  readonly logger = this.ctx.logger('WIKI_PAGE')
 
   async createInstance(payload: Record<string, any>, noCache = false) {
     const page = await this.WikiPage.newFromApi(payload)
