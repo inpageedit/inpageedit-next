@@ -1,10 +1,10 @@
-import { Inject, InPageEdit, Schema } from '@/InPageEdit.js'
+import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit.js'
 import { IPEStorageItem, IPEStorageManager } from '@/services/StorageService.js'
 import { computeFallback, ComputeAble } from '@/utils/computeable.js'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
-    preferences: PluginPreferences
+    preferences: PreferencesService
   }
 }
 
@@ -18,21 +18,23 @@ export interface InPageEditPreferenceUICategory {
 export interface InPageEditPreferenceUIRegistryItem {
   name: string
   schema: Schema
-  defaults: Record<string, any>
   category: string
 }
 
 @Inject(['storage'])
-export class PluginPreferences extends BasePlugin {
+export class PreferencesService extends Service {
   private db: IPEStorageManager<any>
   public customRegistries: InPageEditPreferenceUIRegistryItem[] = []
   public categoryDefinitions: InPageEditPreferenceUICategory[] = []
   private _defaultPreferences: Record<string, any> = {}
 
   constructor(public ctx: InPageEdit) {
-    super(ctx, {}, 'preferences')
+    super(ctx, 'preferences', true)
     this.db = ctx.storage.createDatabse<any>('preferences', Infinity)
-    this.ctx.set('preferences', this)
+  }
+
+  get logger() {
+    return this.ctx.logger('PREFERENCES')
   }
 
   async start() {
@@ -45,64 +47,6 @@ export class PluginPreferences extends BasePlugin {
       name: 'edit',
       label: 'Editing',
       description: 'Settings related to editing content',
-    })
-    this.defineCategory({
-      name: 'about',
-      label: 'About',
-      description: 'About InPageEdit',
-      index: 99,
-    })
-
-    this.registerCustomConfig(
-      'about',
-      Schema.object({
-        about: Schema.const(
-          <div className="prose">
-            <h2>✏️ InPageEdit NEXT</h2>
-            <i>v{this.ctx.version}</i>
-            <h2>Portals</h2>
-            <div style="display: flex; flex-direction: column; gap: 1rem">
-              <a
-                href={this.ctx.Endpoints.HOME_URL}
-                target="_blank"
-                style={{ display: 'block', width: '100%' }}
-              >
-                Official Website & Help Center
-              </a>
-              <ActionButton
-                href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version}`}
-                style={{ display: 'block', width: '100%' }}
-              >
-                Update Logs
-              </ActionButton>
-            </div>
-            <h2>Join us</h2>
-            <ul>
-              <li>
-                <strong>GitHub</strong>:{' '}
-                <a href={this.ctx.Endpoints.GITHUB_URL} target="_blank">
-                  inpageedit/inpageedit-next
-                </a>
-              </li>
-              <li>
-                <strong>QQ Group</strong>: 1026023666
-              </li>
-            </ul>
-            <hr />
-            <p>🚀 Modular, Extensible Supercharged Plugin for MediaWiki.</p>
-            <p>InPageEdit-NEXT Copyright © 2025-present dragon-fish</p>
-          </div>
-        ).role('raw-html'),
-      }).description(''),
-      'about',
-      {}
-    )
-
-    import('./ui/index').then((module) => {
-      const fork = this.ctx.plugin(module.PluginPreferencesUI)
-      this.addDisposeHandler(() => {
-        fork.dispose()
-      })
     })
   }
 
@@ -147,12 +91,6 @@ export class PluginPreferences extends BasePlugin {
           data[key] = val
         })
       } catch {}
-
-      // 然后读取注册时定义的默认值
-      item.defaults &&
-        Object.entries(item.defaults).forEach(([key, val]) => {
-          data[key] = val
-        })
     })
 
     Object.entries(data).forEach(([key, val]) => {
@@ -162,17 +100,11 @@ export class PluginPreferences extends BasePlugin {
     return data
   }
 
-  registerCustomConfig(
-    name: string,
-    schema: Schema,
-    category: string,
-    defaults: Record<string, any>
-  ) {
+  registerCustomConfig(name: string, schema: Schema, category: string) {
     this.customRegistries.push({
       name,
       schema,
       category,
-      defaults,
     })
     return this
   }
@@ -182,19 +114,16 @@ export class PluginPreferences extends BasePlugin {
       .map<{
         name: string
         schema: Schema
-        defaults: Record<string, any>
-      }>(([plugin, fork]) => {
+      }>(([plugin]) => {
         if (plugin === null) {
           return {
             name: '@root',
             schema: (InPageEdit as any)?.PreferencesSchema || null,
-            defaults: (InPageEdit as any)?.PreferencesDefaults || {},
           }
         } else {
           return {
             name: plugin.name,
             schema: (plugin as any)?.PreferencesSchema || null,
-            defaults: (plugin as any)?.PreferencesDefaults || {},
           }
         }
       })

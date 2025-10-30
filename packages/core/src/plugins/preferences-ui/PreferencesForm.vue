@@ -19,17 +19,21 @@
     :i18n='{ rootLabel: "" }'
   )
 
-  details
+  details(v-if='DEV')
     pre(style='max-height: 20em; overflow: auto') {{ lazyValue }}
 </template>
 
 <script setup lang="ts" vapor>
 import { computed, onMounted, ref, watch, shallowRef } from 'vue'
 import { useIPE } from '@/utils/vueHooks'
-import type { InPageEditPreferenceUIRegistryItem, InPageEditPreferenceUICategory } from '../index'
+import type {
+  InPageEditPreferenceUIRegistryItem,
+  InPageEditPreferenceUICategory,
+} from '../../services/PreferencesService'
 import SchemaFormVue from 'schemastery-form/vue'
 
 const ctx = useIPE()!
+const DEV = import.meta.env.DEV
 
 const tabs = ref<InPageEditPreferenceUICategory[]>([])
 const activeCategoryName = ref('')

@@ -11,6 +11,7 @@ import { StorageService } from '@/services/StorageService.js'
 import { WikiPageService } from '@/services/WikiPageService.js'
 import { WikiTitleService } from '@/services/WikiTitleService.js'
 import '@/styles/index.scss'
+import { PreferencesService } from './services/PreferencesService'
 
 export interface InPageEditCoreConfig {
   apiConfigs: Partial<FexiosConfigs>
@@ -63,6 +64,7 @@ export class InPageEdit extends Context {
     this.plugin(CurrentPageService)
     this.plugin(ResourceLoaderService)
     this.plugin(ModalService)
+    this.plugin(PreferencesService)
     this.plugin(StorageService)
     this.plugin(WikiMetadataService)
     this.plugin(WikiPageService)
@@ -74,6 +76,7 @@ export class InPageEdit extends Context {
       'currentPage',
       'resourceLoader',
       'modal',
+      'preferences',
       'storage',
       'wikiPage',
       'wikiTitle',
@@ -105,7 +108,9 @@ export class InPageEdit extends Context {
       import('@/plugins/in-article-links/index.js').then(
         ({ PluginInArticleLinks }) => PluginInArticleLinks
       ),
-      import('@/plugins/preferences/index.js').then(({ PluginPreferences }) => PluginPreferences),
+      import('@/plugins/preferences-ui/index.js').then(
+        ({ PluginPreferencesUI }) => PluginPreferencesUI
+      ),
       import('@/plugins/quick-edit/index.js').then(({ PluginQuickEdit }) => PluginQuickEdit),
       import('@/plugins/quick-delete/index.js').then(({ PluginQuickDelete }) => PluginQuickDelete),
       import('@/plugins/quick-move/index.js').then(({ PluginQuickMove }) => PluginQuickMove),

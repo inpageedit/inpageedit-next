@@ -1,7 +1,5 @@
-import { Inject, InPageEdit } from '@/InPageEdit'
-import { createApp } from 'vue'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import PreferencesForm from './PreferencesForm.vue'
-import { injectIPE } from '@/utils/vueHooks'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -14,6 +12,58 @@ export class PluginPreferencesUI extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'preferences-ui')
     ctx.set('preferencesUI', this)
+
+    ctx.preferences.defineCategory({
+      name: 'about',
+      label: 'About',
+      description: 'About InPageEdit',
+      index: 99,
+    })
+
+    ctx.preferences.registerCustomConfig(
+      'about',
+      Schema.object({
+        about: Schema.const(
+          <div className="prose">
+            <h2>✏️ InPageEdit NEXT</h2>
+            <i>v{this.ctx.version}</i>
+            <h2>Portals</h2>
+            <div style="display: flex; flex-direction: column; gap: 1rem">
+              <a
+                href={this.ctx.Endpoints.HOME_URL}
+                target="_blank"
+                style={{ display: 'block', width: '100%' }}
+              >
+                Official Website & Help Center
+              </a>
+              <ActionButton
+                href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version}`}
+                style={{ display: 'block', width: '100%' }}
+              >
+                Update Logs
+              </ActionButton>
+            </div>
+            <h2>Join us</h2>
+            <ul>
+              <li>
+                <strong>GitHub</strong>:{' '}
+                <a href={this.ctx.Endpoints.GITHUB_URL} target="_blank">
+                  inpageedit/inpageedit-next
+                </a>
+              </li>
+              <li>
+                <strong>QQ Group</strong>: 1026023666
+              </li>
+            </ul>
+            <hr />
+            <p>🚀 Modular, Extensible Supercharged Plugin for MediaWiki.</p>
+            <p>InPageEdit-NEXT Copyright © 2025-present dragon-fish</p>
+          </div>
+        ).role('raw-html'),
+      }).description(''),
+      'about'
+    )
+
     ctx.inject(['toolbox'], (ctx) => {
       ctx.toolbox.addButton({
         id: 'preferences',
@@ -30,16 +80,19 @@ export class PluginPreferencesUI extends BasePlugin {
             <path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6z" />
           </svg>
         ) as HTMLElement,
-        tooltip: 'Open preferences',
+        tooltip: 'Configure Preferences',
         group: 'group2',
         index: Infinity,
         onClick: () => this.showModal(),
       })
-      this.addDisposeHandler(() => {
+
+      this.addDisposeHandler((ctx) => {
         ctx.toolbox.removeButton('preferences')
       })
     })
   }
+
+  protected stop(): Promise<void> | void {}
 
   showModal() {
     const modal = this.ctx.modal.show({
@@ -47,7 +100,7 @@ export class PluginPreferencesUI extends BasePlugin {
       sizeClass: 'small',
       outSideClose: false,
       center: true,
-      title: 'InPageEdit Preferences',
+      title: `InPageEdit Preferences (${this.ctx.version})`,
       content: (
         <>
           <ProgressBar />
@@ -60,7 +113,7 @@ export class PluginPreferencesUI extends BasePlugin {
     const root = <div id="ipe-preferences-app" style={{ minHeight: '65vh' }}></div>
     modal.setContent(root as HTMLElement)
 
-    const app = this.createFormApp()
+    const app = this.createForm()
     const form = app.mount(root) as InstanceType<typeof PreferencesForm>
 
     modal.setButtons([
@@ -99,9 +152,7 @@ export class PluginPreferencesUI extends BasePlugin {
     })
   }
 
-  createFormApp() {
-    const app = createApp(PreferencesForm)
-    injectIPE(this.ctx, app)
-    return app
+  createForm() {
+    return createVueAppWithIPE(this.ctx, PreferencesForm)
   }
 }

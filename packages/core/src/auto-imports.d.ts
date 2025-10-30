@@ -28,6 +28,7 @@ declare global {
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
   const computeFallback: typeof import('./utils/computeable')['computeFallback']
+  const createVueAppWithIPE: typeof import('./utils/vueHooks')['createVueAppWithIPE']
   const deepToRaw: typeof import('./utils/vueReactivity')['deepToRaw']
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
   const ensureSlash: typeof import('./utils/string')['ensureSlash']

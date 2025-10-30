@@ -82,11 +82,7 @@ const VALID_DIFF_TYPES = [
     'quickDiff.jsDiff.defaultType': Schema.union(VALID_DIFF_TYPES.map((type) => Schema.const(type)))
       .description('The default diff type for JsDiff')
       .default('diffSentences'),
-  }).description('Quick Diff Preferences'),
-  {
-    'quickDiff.preferredCompareMode': 'mwApi',
-    'quickDiff.jsDiff.defaultType': 'diffSentences',
-  }
+  }).description('Quick Diff Preferences')
 )
 export class PluginQuickDiffCore extends BasePlugin {
   VALID_DIFF_TYPES = VALID_DIFF_TYPES

@@ -1,5 +1,5 @@
 import { InPageEdit } from '@/InPageEdit'
-import { App, inject, provide } from 'vue'
+import { App, createApp, inject, provide } from 'vue'
 
 export const IPEInjectKey = Symbol('IPEInjectKey')
 
@@ -18,4 +18,10 @@ export const useIPE = () => {
     throw new Error('InPageEdit instance is not provided')
   }
   return ipe
+}
+
+export const createVueAppWithIPE = (ipe: InPageEdit, ...args: Parameters<typeof createApp>) => {
+  const app = createApp(...args)
+  injectIPE(ipe, app)
+  return app
 }
