@@ -1,28 +1,23 @@
 import { InPageEdit, Service } from '@/InPageEdit'
-import localforage from 'localforage'
+import { createStore, get, set, del, clear, keys, entries, type UseStore } from 'idb-keyval'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
     storage: StorageService
-    localforage: typeof localforage
   }
 }
 
 export class StorageService extends Service {
   constructor(ctx: InPageEdit) {
     super(ctx, 'storage', false)
-    ctx.set('localforage', localforage)
-  }
-  get StorageManager() {
-    return IPEStorageManager
   }
 
   createDatabse<T = any>(storeName: string, ttl?: number, version?: number) {
-    return new IPEStorageManager<T>('InPageEdit', storeName, ttl, version)
+    return new IDBKeyValStorageManager<T>('InPageEdit', storeName, ttl, version)
   }
 }
 
-export interface IPEStorageItem<T = any> {
+export interface IStorageItem<T = any> {
   /** last update time */
   time: number
   /** stored value */
@@ -31,40 +26,46 @@ export interface IPEStorageItem<T = any> {
   version?: number
 }
 
-export class IPEStorageManager<T = any> {
-  static DEFAULT_TTL = Infinity
-  static readonly _cached_db_instances: Map<string, LocalForage> = new Map()
+export interface IStorageManager<T = unknown> {
+  get(key: string, ttl?: number, setter?: () => Promise<any> | any): Promise<T | null>
+  set(key: string, value: null | undefined): Promise<void>
+  set(key: string, value: T): Promise<IStorageItem<T>>
+  has(key: string, ttl?: number): Promise<boolean>
+  delete(key: string): Promise<void>
+  iterate(callback: (value: T, key: string) => void): Promise<void>
+  keys(): Promise<string[]>
+  clear(): Promise<this>
+}
 
-  readonly db: LocalForage
-  keys: (typeof localforage)['keys']
+export interface IStorageManagerConstructor {
+  new (dbName: string, storeName: string, ttl?: number, version?: number): IStorageManager<any>
+}
 
-  /**
-   *
-   * @param dbName
-   * @param storeName
-   * @param ttl
-   */
+export class IDBKeyValStorageManager<T = unknown> implements IStorageManager<T> {
+  readonly store: UseStore
   constructor(
     readonly dbName: string,
     readonly storeName: string,
-    public ttl: number = IPEStorageManager.DEFAULT_TTL,
+    public ttl: number = Infinity,
     public version?: number
   ) {
-    this.db = IPEStorageManager.createDatabase(dbName, storeName)
-    this.keys = this.db.keys.bind(this.db)
+    this.store = IDBKeyValStorageManager.createStore(dbName, storeName)
   }
 
-  static createDatabase(dbName: string, storeName: string) {
+  private static _cached_stores: Map<string, UseStore> = new Map()
+  private static createStore(dbName: string, storeName: string) {
     const key = `${dbName}:${storeName}`
-    if (this._cached_db_instances.has(key)) {
-      return this._cached_db_instances.get(key)!
+    if (this._cached_stores.has(key)) {
+      return this._cached_stores.get(key)!
     }
-    const db = localforage.createInstance({
-      name: dbName,
-      storeName,
-    })
-    this._cached_db_instances.set(key, db)
-    return db
+    const store = createStore(dbName, storeName)
+    this._cached_stores.set(key, store)
+    return store
+  }
+
+  async keys(): Promise<string[]> {
+    const ks = await keys(this.store)
+    return ks.map((k) => String(k))
   }
 
   async get(key: string, ttl = this.ttl, setter?: () => Promise<T> | T): Promise<T | null> {
@@ -73,9 +74,8 @@ export class IPEStorageManager<T = any> {
     if (!data || isExpired) {
       if (typeof setter === 'function') {
         const newData = await setter()
-        return this.set(key, newData).then(() => {
-          return newData
-        })
+        await this.set(key, newData as T)
+        return newData as T
       }
       return null
     }
@@ -83,16 +83,18 @@ export class IPEStorageManager<T = any> {
   }
 
   set(key: string, value: null | undefined): Promise<void>
-  set(key: string, value: T): Promise<IPEStorageItem<T>>
-  async set(key: string, value: T | null | undefined): Promise<IPEStorageItem<T> | void> {
+  set(key: string, value: T): Promise<IStorageItem<T>>
+  async set(key: string, value: T | null | undefined): Promise<IStorageItem<T> | void> {
     if (value === null || typeof value === 'undefined') {
       return this.delete(key)
     }
-    return this.db.setItem(key, {
+    const record: IStorageItem<T> = {
       time: Date.now(),
       value,
       version: this.version,
-    })
+    }
+    await set(key, record, this.store)
+    return record
   }
 
   async has(key: string, ttl = this.ttl): Promise<boolean> {
@@ -102,42 +104,45 @@ export class IPEStorageManager<T = any> {
   }
 
   async delete(key: string): Promise<void> {
-    return this.db.removeItem(key)
+    await del(key, this.store)
   }
 
-  async iterate(callback: (value: T, key: string) => void) {
-    return await this.db.iterate<IPEStorageItem<T>, void>((value, key) => {
-      callback(value.value, key)
-    })
+  async iterate(callback: (value: T, key: string) => void): Promise<void> {
+    const all = await entries(this.store)
+    for (const [k, v] of all) {
+      const key = String(k)
+      const data = v as IStorageItem<T> | null
+      if (data && typeof (data as any).value !== 'undefined') {
+        callback((data as IStorageItem<T>).value, key)
+      }
+    }
   }
 
-  async loadFromDB(key: string) {
-    const data = await this.db.getItem<{ time: number; value: T; version?: number }>(key)
+  private async loadFromDB(key: string) {
+    const data = await get<{ time: number; value: T; version?: number } | null>(key, this.store)
     // Not exist
     if (!data) {
       return null
     }
     // Bad data
-    if (typeof data.time !== 'number' || typeof data.value === 'undefined') {
+    if (typeof (data as any).time !== 'number' || typeof (data as any).value === 'undefined') {
       try {
-        this.delete(key)
-      } catch (e) {}
+        await this.delete(key)
+      } catch (_) {}
       return null
     }
     // Version mismatch
-    if (typeof this.version === 'number' && data.version !== this.version) {
+    if (typeof this.version === 'number' && (data as any).version !== this.version) {
       try {
-        this.delete(key)
-      } catch (e) {}
+        await this.delete(key)
+      } catch (_) {}
       return null
     }
-    return data
+    return data as IStorageItem<T>
   }
 
-  checkIfExpired(data: IPEStorageItem<T> | null, ttl = this.ttl) {
-    if (!data) {
-      return false
-    }
+  private checkIfExpired(data: IStorageItem<T> | null, ttl = this.ttl) {
+    if (!data) return false
     return Date.now() - data.time > ttl
   }
 
@@ -146,7 +151,7 @@ export class IPEStorageManager<T = any> {
    * Delete all data from the database.
    */
   async clear() {
-    await this.db.clear()
+    await clear(this.store)
     return this
   }
 }

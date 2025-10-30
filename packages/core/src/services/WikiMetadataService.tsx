@@ -1,6 +1,6 @@
 import { Inject, InPageEdit, Logger, Schema, Service } from '@/InPageEdit'
 import { WikiMetadata, WikiUserBlockInfo } from '@/types/WikiMetadata'
-import { IPEStorageManager } from './StorageService'
+import { IStorageManager } from './StorageService'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -16,7 +16,7 @@ export class WikiMetadataService extends Service {
   private _data!: WikiMetadata
   private readonly CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
   private readonly VERSION = 2
-  private db: IPEStorageManager<WikiMetadata>
+  private db: IStorageManager<WikiMetadata>
   private logger: Logger
   private queryData = {
     meta: 'siteinfo|userinfo',
