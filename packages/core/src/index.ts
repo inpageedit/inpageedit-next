@@ -11,24 +11,30 @@ window.__IPE_MODULES__ ||= []
 
 // Auto load if the site is MediaWiki
 runOnce('InPageEdit#autoload', () => {
-  const isMediaWiki =
-    document.querySelector('meta[name="generator"][content^="MediaWiki"]') !== null
-  const apiBase = document
-    .querySelector<HTMLLinkElement>('link[rel="EditURI"]')
-    ?.href?.split('?')[0]
-  if (isMediaWiki && apiBase) {
-    autoload(apiBase)
+  const baseURL = detectMediaWikiApiEndpoint()
+  if (baseURL) {
+    autoload({
+      baseURL,
+      CoreClass: IPECore,
+    })
   }
 })
-async function autoload(baseURL: string) {
+async function autoload(
+  _overload: {
+    baseURL?: string
+    CoreClass: typeof IPECore
+  } = { baseURL: detectMediaWikiApiEndpoint(), CoreClass: IPECore }
+) {
+  const { baseURL, CoreClass: IPE } = _overload
+
   // 防止多次运行
   if (typeof window?.ipe?.stop === 'function') {
-    console.warn('[InPageEdit] Plugin already loaded, disposing...')
+    console.warn('[InPageEdit] Already loaded, disposing...')
     await window.ipe.stop()
   }
 
   const oldGlobalVar: any = window.InPageEdit || {}
-  const ipe = new IPECore({
+  const ipe = new IPE({
     apiConfigs: {
       baseURL,
     },
@@ -36,7 +42,7 @@ async function autoload(baseURL: string) {
   })
 
   // Merge into global variables
-  window.InPageEdit = IPECore
+  window.InPageEdit = IPE
   window.ipe = ipe
 
   // Start the App
@@ -75,15 +81,20 @@ async function autoload(baseURL: string) {
     '\n' +
       '    ____      ____                   ______    ___ __ \n   /  _/___  / __ \\____ _____ ____  / ____/___/ (_) /_\n   / // __ \\/ /_/ / __ `/ __ `/ _ \\/ __/ / __  / / __/\n _/ // / / / ____/ /_/ / /_/ /  __/ /___/ /_/ / / /_  \n/___/_/ /_/_/    \\__,_/\\__, /\\___/_____/\\__,_/_/\\__/  \n                      /____/                v' +
       ipe.version +
-      '\n' +
-      Object.entries({
-        'Wiki API Base': baseURL,
-        'Document Site': Endpoints.HOME_URL,
-        'Bug reporting': Endpoints.GITHUB_URL,
-      })
-        .map(([key, value]) => `- ${key}: ${value}`)
-        .join('\n')
+      `
+- Wiki API Endpoint: ${baseURL}
+- Documentation:     ${Endpoints.HOME_URL}
+- Bug Reports:       ${Endpoints.GITHUB_URL}`
   )
+}
+
+function detectMediaWikiApiEndpoint(): string | undefined {
+  const isMediaWiki =
+    document.querySelector('meta[name="generator"][content^="MediaWiki"]') !== null
+  const apiBase = document
+    .querySelector<HTMLLinkElement>('link[rel="EditURI"]')
+    ?.href?.split('?')[0]
+  return isMediaWiki && apiBase ? apiBase : undefined
 }
 
 function runOnce(key: string, fn: Function) {
@@ -135,4 +146,27 @@ declare global {
     }
     function hook(name: 'InPageEdit.ready'): Hook<[IPECore]>
   }
+}
+
+// HMR
+if (import.meta.hot) {
+  const SEPARATOR = `\n${'='.repeat(20)} [InPageEdit] HMR ${'='.repeat(20)}\n`
+  import.meta.hot.accept(async (modules) => {
+    const apiBase = detectMediaWikiApiEndpoint()!
+    const IPE = modules?.InPageEdit as unknown as typeof IPECore
+    if (!apiBase || !IPE) {
+      console.warn(SEPARATOR.trimStart(), 'missing modules', SEPARATOR.trimEnd())
+      location.reload()
+      return
+    }
+
+    console.info(SEPARATOR.trimStart(), "I'm so hot!", modules, SEPARATOR.trimEnd())
+    await window?.ipe?.stop()
+    window.ipe = undefined as any
+    window.InPageEdit = undefined as any
+    autoload({
+      baseURL: apiBase,
+      CoreClass: IPE,
+    })
+  })
 }
