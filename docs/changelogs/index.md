@@ -23,7 +23,20 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
-<ChangeLog version='0.9.1'>
+<ChangeLog version='0.9.2'>
+
+- refactor!: drop idb-keyval, using indexedDB native API
+  - 我们完全抛弃了对 `idb-keyval` 以及 `localforage` 的依赖，直接使用原生 IndexedDB API 来实现 Storage 服务。
+  - 这使得打包体积进一步减小了 ~2kb。
+  - 我们决定在之后解耦并发布一个轻量级的 IndexedDB 封装库，以便其他项目使用。
+
+</ChangeLog>
+
+<ChangeLog version='0.9.1' style="text-decoration: line-through; opacity: 0.5;" info='UNPUBLISHED'>
+
+> [!INFO]
+>
+> 由于 `idb-keyval` 上游问题，在同一数据库无法开启多个事务，导致 storage 服务异常，此版本完全无法使用，已撤销发布。
 
 - refactor!: make preferences as a built-in service
   - `ctx.preferences` 从插件变成了内置服务
