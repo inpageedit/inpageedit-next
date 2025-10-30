@@ -69,6 +69,9 @@ export class CustomIPEModal extends IPEModal {
 export class ModalService {
   constructor(public ctx: InPageEdit) {
     ctx.set('modal', this)
+    ctx.on('dispose', () => {
+      CustomIPEModal.closeAll()
+    })
   }
   IPEModal = CustomIPEModal
   IPEModalEvent = IPEModalEvent
