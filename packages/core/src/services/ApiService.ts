@@ -1,5 +1,5 @@
 import { InPageEdit } from '@/InPageEdit'
-import { FexiosConfigs } from 'fexios'
+import { FexiosConfigs } from 'wiki-saikou'
 import { MwApi } from 'wiki-saikou/browser'
 
 declare module '@/InPageEdit' {
@@ -15,11 +15,11 @@ export class ApiService {
     public ctx: InPageEdit,
     options: Partial<ApiServiceOptions> = {}
   ) {
-    if (options?.baseURL?.startsWith('/')) {
-      options.baseURL = new URL(options.baseURL, location.origin).href
+    if (location?.href && options?.baseURL?.toString()?.startsWith('/')) {
+      options.baseURL = new URL(options.baseURL, location.origin)
     }
     const api = new MwApi({
-      baseURL: options.baseURL!,
+      baseURL: options.baseURL!.toString(),
       fexiosConfigs: {
         headers: {
           'x-api-user-agent': `InPageEdit-NEXT ${ctx.version}`,

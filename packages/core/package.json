@@ -80,7 +80,6 @@
     "@vue/language-plugin-pug": "^3.1.2",
     "cross-env": "^10.1.0",
     "eslint": "^9.38.0",
-    "fexios": "^3.2.0",
     "globals": "^16.4.0",
     "jsx-dom": "^8.1.6",
     "npm-run-all2": "^8.0.4",
@@ -94,7 +93,8 @@
     "unplugin-auto-import": "^20.2.0",
     "unplugin-dts": "1.0.0-beta.6",
     "vite": "^7.1.12",
-    "vitest": "^4.0.3"
+    "vitest": "^4.0.3",
+    "wiki-saikou": "^7.1.2"
   },
   "dependencies": {
     "@cordisjs/core": "^3.18.1",
@@ -104,8 +104,7 @@
     "localforage": "^1.10.0",
     "schemastery": "^3.17.1",
     "schemastery-form": "workspace:^",
-    "vue": "^3.5.22",
-    "wiki-saikou": "^6.1.1"
+    "vue": "^3.5.22"
   },
   "keywords": [
     "mediawiki",
@@ -119,8 +118,5 @@
   },
   "bugs": {
     "url": "https://github.com/inpageedit/inpageedit-next/issues"
-  },
-  "peerDependencies": {
-    "fexios": "^3.2.0"
   }
 }

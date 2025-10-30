@@ -1,8 +1,7 @@
-import { FexiosFinalContext } from 'fexios'
 import type { PageInfo } from './types/PageInfo'
 import { PageParseData } from './types/PageParseData'
 import { WatchlistAction } from './types/WatchlistAction'
-import { MediaWikiApi, MwApiParams, MwApiResponse } from 'wiki-saikou/browser'
+import { MediaWikiApi, MwApiParams, MwApiResponse, FexiosFinalContext } from 'wiki-saikou/browser'
 
 export interface WikiPageEditPayload {
   text?: string

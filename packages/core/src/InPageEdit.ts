@@ -1,6 +1,7 @@
 import { Context, Inject, Events as CordisEvents } from '@cordisjs/core'
 import Schema from 'schemastery'
 import { LoggerLevel, createLogger, type Logger } from '@inpageedit/logger'
+import { deepMerge, FexiosConfigs } from 'wiki-saikou'
 import { ApiService } from '@/services/ApiService.js'
 import { CurrentPageService } from '@/services/CurrentPageService'
 import { ResourceLoaderService } from '@/services/ResourceLoaderService.js'
@@ -10,7 +11,6 @@ import { StorageService } from '@/services/StorageService.js'
 import { WikiPageService } from '@/services/WikiPageService.js'
 import { WikiTitleService } from '@/services/WikiTitleService.js'
 import '@/styles/index.scss'
-import { FexiosConfigs } from 'fexios'
 
 export interface InPageEditCoreConfig {
   apiConfigs: Partial<FexiosConfigs>
@@ -47,10 +47,7 @@ export class InPageEdit extends Context {
     super({
       name: 'InPageEdit',
     })
-    this.config = {
-      ...InPageEdit.DEFAULT_CONFIG,
-      ...config,
-    }
+    this.config = deepMerge(InPageEdit.DEFAULT_CONFIG, config)
     this.logger = createLogger({
       name: 'IPE',
       color: '#33aaff',
