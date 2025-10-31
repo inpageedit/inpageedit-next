@@ -294,6 +294,9 @@ export function createWikiTitleModel(metadata: WikiMetadata): WikiTitleConstruct
       // 只有在没有显式命名空间参数时才解析标题中的命名空间前缀
       if (namespace === void 0) {
         this.fixNSByTitle()
+      } else {
+        // 如果显式传入了命名空间，移除标题中的命名空间前缀
+        this.stripNamespaceFromTitle()
       }
 
       if (this.getMainText() === '') {
@@ -329,6 +332,32 @@ export function createWikiTitleModel(metadata: WikiMetadata): WikiTitleConstruct
       if (namespaceId !== null) {
         this.#title = mainTitle
         this.#ns = namespaceId
+      }
+    }
+
+    private stripNamespaceFromTitle(): void {
+      const colonIndex = this.#title.indexOf(':')
+      if (colonIndex === -1) {
+        return // 没有命名空间前缀，不需要处理
+      }
+
+      if (colonIndex === 0) {
+        // 只有冒号，将冒号后的部分作为标题
+        this.#title = this.#title.substring(1)
+        return
+      }
+
+      const potentialNamespace = this.#title.substring(0, colonIndex)
+      const mainTitle = this.#title.substring(colonIndex + 1)
+
+      // 查找匹配的命名空间，如果找到则移除前缀
+      const namespaceId = namespaceUtils.findNamespaceId(
+        potentialNamespace,
+        WikiTitle._namespaceIndex
+      )
+      if (namespaceId !== null) {
+        // 移除命名空间前缀，只保留主标题
+        this.#title = mainTitle
       }
     }
 
@@ -444,12 +473,12 @@ export function createWikiTitleModel(metadata: WikiMetadata): WikiTitleConstruct
     }
 
     getURL(params?: Record<string, string> | URLSearchParams): URL {
-      const baseUrl = WikiTitle._meta.general.articlepath
+      const articlePath = WikiTitle._meta.general.articlepath
       const prefixedDbKey = this.getPrefixedDBKey()
 
       // 替换 $1 占位符为页面标题，冒号不进行编码
-      const path = baseUrl.replace('$1', prefixedDbKey)
-      const url = new URL(path, WikiTitle._meta.general.base)
+      const path = articlePath.replace('$1', prefixedDbKey)
+      const url = new URL(path, location.origin)
 
       if (params) {
         const searchParams =
