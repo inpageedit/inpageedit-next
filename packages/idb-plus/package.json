@@ -1,6 +1,6 @@
 {
   "name": "idb-plus",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "🗄️ Minimal Promise based IndexedDB Wrapper with Map-like API",
   "author": "dragon-fish",
   "license": "MIT",
