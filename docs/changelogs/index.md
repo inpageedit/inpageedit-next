@@ -23,6 +23,27 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.10.0'>
+
+- feat: introduce idb-plus
+  - 我们解耦并发布了我们的轻量级 IndexedDB 封装库：[idb-plus](https://www.npmjs.com/package/idb-plus)
+  - `ctx.storage` 的用法与此前没有区别
+- fix: prevent double namespaces
+  - 修复了构造 WikiTitle 时 title 包含命名空间前缀时，重复添加命名空间前缀的问题
+- fix: Special:Diff behavior (#4 by @AlPha5130)
+  - 修正 `PluginInArticleLinks` 中针对特殊页面的 `diff` 和 `oldid` 提取逻辑，并在 `diff` 缺失时将其默认为 `prev`
+- feat: + PluginPrefSync
+  - 添加了偏好设置手动导入、导出功能
+  - 我们将在未来提供真正的跨设备同步功能
+
+</ChangeLog>
+
+<ChangeLog version='0.9.3'>
+
+- 修复了一些小问题，提升了项目的整体质量。
+
+</ChangeLog>
+
 <ChangeLog version='0.9.2'>
 
 - refactor!: drop idb-keyval, using indexedDB native API
