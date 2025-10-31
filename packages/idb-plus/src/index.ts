@@ -1,5 +1,7 @@
 import { EnsureStoreOptions, IDBPlusHelper } from './helper.js'
 
+export * from './helper.js'
+
 export interface IDBPlusOptions {
   /**
    * Batch size for async iteration

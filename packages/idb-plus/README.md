@@ -7,11 +7,11 @@
 - Promise API with tiny, focused surface
 - Map-like methods: `get`, `set`, `has`, `delete`, `clear`, `count`
 - Easy async iteration: `for await...of store`, `keys()`, `values()`, `entries()`
-- Bulk ops: `setMany`, `deleteMany`
+- Bulk ops: `getMany`, `setMany`, `deleteMany`
 - Auto-create object store and indexes on demand
 - Built-in retry/backoff for transient IndexedDB errors
 - Type-safe generics for key and value
-- Tiny bundle size: `dist/index.js  10.32 kB │ gzip: 2.76 kB │ map: 31.17 kB`
+- Tiny bundle size: `5.28 kB │ gzip: 2.06 kB`
 
 ## Install
 
