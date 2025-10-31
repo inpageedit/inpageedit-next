@@ -238,7 +238,10 @@ export class PluginInArticleLinks extends BasePlugin<{
           let oldid: string | null
           if (title?.getNamespaceId() === -1) {
             // prettier-ignore
-            ;[/** special page name */, diff, oldid] = title.getMainDBKey().split('/')
+            ;[/** special page name */, oldid, diff] = title.getMainDBKey().split('/')
+            if (!diff) {
+              diff = 'prev'
+            }
           } else {
             diff = params.get('diff')
             oldid = params.get('oldid')
