@@ -75,6 +75,9 @@ export interface QuickEditSubmitPayload {
     'quickEdit.keyshortcut.save': Schema.string()
       .default('ctrl-s')
       .description('save button key shortcut (blank to disable)'),
+    'quickEdit.monospace': Schema.boolean()
+      .description('Use monospace font in the edit textarea')
+      .default(false),
   })
     .description('Quick edit options')
     .extra('category', 'edit')
@@ -152,6 +155,7 @@ export class PluginQuickEdit extends BasePlugin {
       typeof payload.editMinor === 'boolean'
         ? payload.editMinor
         : (await this.ctx.preferences.get<boolean>('quickEdit.editMinor'))!
+    const monospace = (await this.ctx.preferences.get<boolean>('quickEdit.monospace'))!
 
     const options: QuickEditOptions = {
       ...this.DEFAULT_OPTIONS,
@@ -285,7 +289,12 @@ export class PluginQuickEdit extends BasePlugin {
               />
             </>
           )}
-          <textarea className="ipe-quickEdit__textarea" name="text" id="wpTextbox1">
+          <textarea
+            className="ipe-quickEdit__textarea"
+            name="text"
+            id="wpTextbox1"
+            style={{ fontFamily: monospace ? 'monospace' : undefined }}
+          >
             {editContent}
           </textarea>
         </div>
