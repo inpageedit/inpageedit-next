@@ -32,29 +32,36 @@ export class PluginPrefSync extends BasePlugin {
               <button
                 onClick={(e) => {
                   e.preventDefault()
-                  this.importFromUserPage().then((record) => {
-                    const count = Object.keys(record ?? {}).length
-                    this.ctx.modal.notify('success', {
-                      title: 'Preferences Imported',
-                      content: (
-                        <div>
-                          <p>
-                            {count} {count > 1 ? 'settings' : 'setting'} imported:
-                          </p>
-                          <ul>
-                            {Object.entries(record ?? {}).map(([key, value]) => (
-                              <li key={key}>
-                                {key}: {value?.toString()}
-                              </li>
-                            ))}
-                          </ul>
-                          <p>Some settings may take effect after reloading the page.</p>
-                        </div>
-                      ),
+                  const modal = ctx.preferencesUI.getExistingModal()
+                  const btn = e.target as HTMLButtonElement
+                  btn.disabled = true
+                  modal?.setLoadingState(true)
+                  this.importFromUserPage()
+                    .then((record) => {
+                      const count = Object.keys(record ?? {}).length
+                      this.ctx.modal.notify('success', {
+                        title: 'Preferences Imported',
+                        content: (
+                          <div>
+                            <div>
+                              Successfully imported {count} {count > 1 ? 'settings' : 'setting'}:
+                            </div>
+                            <ol style={{ listStyle: 'auto', paddingLeft: '1em' }}>
+                              {Object.entries(record ?? {}).map(([key, value]) => (
+                                <li key={key}>
+                                  {key}: {value?.toString()}
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                        ),
+                      })
+                      modal?.close?.()
                     })
-                    const modal = ctx.preferencesUI.getExistingModal()
-                    modal?.close?.()
-                  })
+                    .finally(() => {
+                      btn.disabled = false
+                      modal?.setLoadingState(false)
+                    })
                 }}
               >
                 Import
@@ -62,22 +69,30 @@ export class PluginPrefSync extends BasePlugin {
               <button
                 onClick={(e) => {
                   e.preventDefault()
-                  this.exportToUserPage().then((title) => {
-                    this.ctx.modal.notify('success', {
-                      title: 'Preferences Exported',
-                      content: (
-                        <p>
-                          Your preferences have been exported to{' '}
-                          <a href={title.getURL().toString()} target="_blank">
-                            {title.getPrefixedText()}
-                          </a>
-                          .
-                        </p>
-                      ),
+                  const btn = e.target as HTMLButtonElement
+                  btn.disabled = true
+                  const modal = ctx.preferencesUI.getExistingModal()
+                  modal?.setLoadingState(true)
+                  this.exportToUserPage()
+                    .then((title) => {
+                      this.ctx.modal.notify('success', {
+                        title: 'Preferences Exported',
+                        content: (
+                          <p>
+                            Your preferences have been exported to{' '}
+                            <a href={title.getURL().toString()} target="_blank">
+                              {title.getPrefixedText()}
+                            </a>
+                            .
+                          </p>
+                        ),
+                      })
+                      modal?.close?.()
                     })
-                    const modal = ctx.preferencesUI.getExistingModal()
-                    modal?.close?.()
-                  })
+                    .finally(() => {
+                      btn.disabled = false
+                      modal?.setLoadingState(false)
+                    })
                 }}
               >
                 Export

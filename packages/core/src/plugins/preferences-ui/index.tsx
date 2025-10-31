@@ -1,6 +1,6 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import PreferencesForm from './PreferencesForm.vue'
-import { IPEModal } from '@inpageedit/modal'
+import { CustomIPEModal } from '@/services/ModalService.js'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -103,7 +103,7 @@ export class PluginPreferencesUI extends BasePlugin {
 
   protected stop(): Promise<void> | void {}
 
-  _latestModal: IPEModal | null = null
+  _latestModal: CustomIPEModal | null = null
   getExistingModal() {
     return this._latestModal
   }
