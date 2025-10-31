@@ -1,0 +1,66 @@
+{
+  "name": "idb-plus",
+  "version": "0.1.0",
+  "description": "🗄️ Minimal Promise based IndexedDB Wrapper with Map-like API",
+  "author": "dragon-fish",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "lib"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./lib/index.cjs"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "run-p build:*",
+    "build:import": "cross-env VITE_BUILD_FORMAT=import vite build",
+    "build:bundle": "cross-env VITE_BUILD_FORMAT=bundle vite build",
+    "prepublish": "npm run build",
+    "clean": "rimraf dist/* lib/*",
+    "format": "prettier --write ./src",
+    "typecheck": "tsc -b --pretty false --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.53.1",
+    "cross-env": "^10.1.0",
+    "npm-run-all2": "^8.0.4",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.3",
+    "unplugin-dts": "1.0.0-beta.6",
+    "vite": "^7.1.11"
+  },
+  "keywords": [
+    "indexeddb",
+    "idb",
+    "database",
+    "db",
+    "localstorage",
+    "storage",
+    "wrapper",
+    "async-iterable",
+    "kv",
+    "map"
+  ],
+  "homepage": "https://github.com/inpageedit/inpageedit-next/tree/master/packages/idb-plus",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inpageedit/inpageedit-next.git"
+  },
+  "bugs": {
+    "url": "https://github.com/inpageedit/inpageedit-next/issues"
+  }
+}
