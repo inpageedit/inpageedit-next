@@ -1,4 +1,4 @@
-import { h, JSX, ReactNode } from 'jsx-dom'
+import { h, JSX } from 'jsx-dom'
 
 export interface ActionButtonProps {
   type?: 'primary' | 'secondary' | 'danger' | 'default'
