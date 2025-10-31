@@ -99,6 +99,7 @@
     "@cordisjs/core": "^3.18.1",
     "@inpageedit/logger": "^0.1.0",
     "@inpageedit/modal": "workspace:^",
+    "idb-plus": "^0.1.0",
     "schemastery": "^3.17.1",
     "schemastery-form": "workspace:^",
     "vue": "^3.5.22",

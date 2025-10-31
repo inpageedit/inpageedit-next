@@ -165,6 +165,9 @@ importers:
       '@inpageedit/modal':
         specifier: workspace:^
         version: link:../modal
+      idb-plus:
+        specifier: ^0.1.0
+        version: 0.1.0
       schemastery:
         specifier: ^3.17.1
         version: 3.17.1
@@ -2351,6 +2354,9 @@ packages:
 
   idb-keyval@6.2.2:
     resolution: {integrity: sha512-yjD9nARJ/jb1g+CvD0tlhUHOrJ9Sy0P8T9MF3YaLlHnSRpwPfpTX0XIvpmw3gAJUmEu3FiICLBDPXVwyEvrleg==}
+
+  idb-plus@0.1.0:
+    resolution: {integrity: sha512-dzzCdzyZxrgSCqeRldKLZp0JJY67xzEyNcXcDUjYyNZFTHi6bJ9nw31r+mWA2uQO/roqMpExqJY+kChi+3fMFw==}
 
   ignore@5.3.0:
     resolution: {integrity: sha512-g7dmpshy+gD7mh88OC9NwSGTKoc3kyLAZQRU1mt53Aw/vnvfXnbC+F/7F7QoYVKbV+KNvJx8wArewKy1vXMtlg==}
@@ -5976,6 +5982,8 @@ snapshots:
 
   idb-keyval@6.2.2:
     optional: true
+
+  idb-plus@0.1.0: {}
 
   ignore@5.3.0: {}
 
