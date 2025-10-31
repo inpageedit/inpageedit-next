@@ -1,4 +1,4 @@
-import { JSX, ReactNode } from 'jsx-dom'
+import { JSX } from 'jsx-dom'
 
 export type CheckBoxProps = {
   id?: string
