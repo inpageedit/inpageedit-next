@@ -40,6 +40,7 @@ const users = new IDBPlus<string, User>('my-app-db', 'users')
 
 await users.set('u1', { id: 'u1', name: 'Ada', age: 30 })
 console.log(await users.get('u1')) // -> { id: 'u1', name: 'Ada', age: 30 }
+console.log(await users.get('not-found')) // -> undefined
 console.log(await users.has('u1')) // -> true
 console.log(await users.count()) // -> 1
 
@@ -54,7 +55,14 @@ await users.setMany([
   ['u3', { id: 'u3', name: 'Linus', age: 35 }],
 ])
 
-await users.deleteMany(['u2', 'u3'])
+// Batch read multiple keys
+const results = await users.getMany(['u1', 'u2', 'u3', 'not-found'])
+console.log(results.get('u1')) // -> User object
+console.log(results.get('not-found')) // -> undefined
+
+// Delete multiple keys, returns count of deleted items
+const deletedCount = await users.deleteMany(['u2', 'u3'])
+console.log(deletedCount) // -> 2
 ```
 
 ### Using inline keys (keyPath)
@@ -78,15 +86,8 @@ const users = new IDBPlus<string, User>('my-app-db', 'users', {
 // but the provided `key` parameter is ignored and the object is put by value.
 await users.set('ignored', { id: 'u1', name: 'Ada', age: 30 })
 
-// Custom transaction to query by index
-const found = await users.tx('readonly', async (os) => {
-  const idx = os.index('by_name')
-  return await new Promise<User | undefined>((resolve, reject) => {
-    const req = idx.get('Ada')
-    req.onsuccess = () => resolve(req.result as User | undefined)
-    req.onerror = () => reject(req.error)
-  })
-})
+// Note: For advanced index queries, you'll need to access the underlying
+// IndexedDB API directly through the helper or implement your own transaction logic.
 ```
 
 ## API
@@ -101,16 +102,16 @@ new IDBPlus<K, V>(dbName: string, storeName: string, options?: IDBPlusOptions)
 
 - `dbName`: Database name
 - `storeName`: Object store name
-- `options.iterBatch?`: Batch size for async iteration (default: `100`)
-- `options.ensure?`: Creation options (see EnsureStoreOptions)
-- `options.retry?`: `{ attempts?: number; baseDelayMs?: number }` transient retry config (default: `2` attempts, base `16ms`)
+- `options.iterBatch?`: Batch size for async iteration (default: `100`). Controls how many items are fetched per transaction during iteration.
+- `options.ensure?`: Creation options (see `EnsureStoreOptions` below)
+- `options.retry?`: `{ attempts?: number; baseDelayMs?: number }` transient retry config (default: `{ attempts: 3, baseDelayMs: 16 }`)
 
 Methods
 
-- `get(key: K): Promise<V | undefined>`
-- `set(key: K, value: V): Promise<void>`
+- `get(key: K): Promise<V | undefined>` — Returns `undefined` if key not found (consistent with Map behavior)
+- `set(key: K, value: V): Promise<this>` — Returns `this` for chaining
   - With `ensure.keyPath` configured (inline key), the `key` parameter is ignored and the object is stored by its internal key.
-- `delete(key: K): Promise<void>`
+- `delete(key: K): Promise<boolean>` — Returns `true` if key existed, `false` otherwise
 - `clear(): Promise<void>`
 - `has(key: K): Promise<boolean>`
 - `count(): Promise<number>`
@@ -120,12 +121,13 @@ Methods
   - `values(): AsyncIterable<V>`
   - `[Symbol.asyncIterator]()` — same as `entries()`
 - Bulk ops
-  - `setMany(entries: Iterable<[K, V]> | AsyncIterable<[K, V]>)`
-  - `deleteMany(keys: Iterable<K> | AsyncIterable<K>)`
-- Transactions
-  - `tx<T>(mode: IDBTransactionMode, fn: (os: IDBObjectStore) => Promise<T> | T): Promise<T>`
-    - Runs `fn` within a single-store transaction; auto-retries transient IDB errors.
-- `close(): Promise<void>` — closes the database connection used by this instance
+  - `getMany(keys: Iterable<K> | AsyncIterable<K>): Promise<Map<K, V | undefined>>`
+    - Batch reads multiple keys; returns a Map with `undefined` for missing keys (consistent with Map behavior)
+  - `setMany(entries: Iterable<[K, V]> | AsyncIterable<[K, V]>): Promise<this>`
+  - `deleteMany(keys: Iterable<K> | AsyncIterable<K>): Promise<number>`
+    - Returns the number of keys that were actually deleted
+- `forEach(cb: (value: V, key: K, store: IDBPlus<K, V>) => void | Promise<void>): Promise<void>`
+- `disconnect(): Promise<void>` — closes the database connection used by this instance
 
 ### Options & helpers
 
@@ -143,19 +145,21 @@ export interface EnsureStoreOptions {
 }
 ```
 
-Low-level utilities are also exported as `IDBHelper` for advanced use:
+Low-level utilities are available as `IDBPlusHelper` from the internal helper module (note: not exported from main entry, may require direct import from `idb-plus/src/helper` in some builds):
 
-- `IDBHelper.ensureStore(dbName, storeName, opts)`
-- `IDBHelper.createStore(dbName, storeName, opts)` → `IDBStoreHandle`
-- `IDBHelper.openDatabase(dbName)` / `closeDatabase(dbName)` / `closeAllDatabases()` / `deleteDatabase(dbName)`
-- Transaction helper: `IDBHelper.withObjectStore(handle, mode, fn, retry?)`
-- KV helpers: `get`, `set`, `del`, `clear`, `entries`, `keys`
+- `IDBPlusHelper.getDB(dbName, storeName, ensure?)` — Get or create database and store
+- `IDBPlusHelper.closeConnection(dbName)` — Close a cached database connection
+- `IDBPlusHelper.asyncRequest<T>(req: IDBRequest<T>): Promise<T>` — Convert IDBRequest to Promise
+- `IDBPlusHelper.waitTx(tx: IDBTransaction): Promise<void>` — Wait for transaction completion
+- `IDBPlusHelper.withRetry<T>(cfg, run, onFail?): Promise<T>` — Retry logic with exponential backoff
+- `IDBPlusHelper.shouldReconnect(err): boolean` — Check if error requires reconnection
+- `IDBPlusHelper.defaults` — Default configuration values (frozen object with `iterBatch: 100`, `retry: { attempts: 3, baseDelayMs: 16 }`)
 
 ## Error handling & retries
 
-IndexedDB can throw transient errors (e.g., `InvalidStateError`, version change races). `IDBPlus` and `IDBHelper.withObjectStore` include a small retry mechanism with exponential backoff. Tune via `options.retry` on `IDBPlus` or `retry` in `withObjectStore`.
+IndexedDB can throw transient errors (e.g., `InvalidStateError`, `AbortError`, `TransactionInactiveError`, version change races). `IDBPlus` includes a built-in retry mechanism with exponential backoff for all operations. Tune via `options.retry` (default: 3 attempts, 16ms base delay).
 
-If multiple tabs upgrade the database, an automatic `versionchange` handler will close stale connections and refresh on next use.
+If multiple tabs upgrade the database, an automatic `versionchange` handler will close stale connections and refresh on next use. The retry mechanism will automatically reconnect on transient errors.
 
 ## Usage patterns
 
@@ -169,8 +173,21 @@ for await (const [k, v] of users) allUsers.push({ key: k, value: v })
 ### Stream-like processing
 
 ```ts
-await users.forEach(async (user, id) => {
+await users.forEach(async (user, id, store) => {
   // do something async per record
+  // callback receives: (value, key, store)
+})
+```
+
+### Batch read multiple keys
+
+```ts
+// Get multiple keys at once
+const results = await users.getMany(['u1', 'u2', 'u3'])
+results.forEach((value, key) => {
+  if (value !== undefined) {
+    console.log(`${key}:`, value)
+  }
 })
 ```
 
@@ -204,11 +221,14 @@ Any modern browser with IndexedDB support (Chromium, Firefox, Safari, Edge). Pri
 
 ## FAQ
 
-- “Why does `set(key, value)` ignore `key` when I use `keyPath`?”  
-  When `ensure.keyPath` is set, the underlying object store uses inline keys. For simplicity the method signature stays the same, but the value’s internal key is used. Keep the value’s key field in sync.
+- "Why does `set(key, value)` ignore `key` when I use `keyPath`?"  
+  When `ensure.keyPath` is set, the underlying object store uses inline keys. For simplicity the method signature stays the same, but the value's internal key is used. Keep the value's key field in sync.
 
-- “How do I create indexes?”  
-  Provide `ensure.indexes` at construction time. Missing indexes are created during the next upgrade.
+- "How do I create indexes?"  
+  Provide `ensure.indexes` at construction time. Missing indexes are created during the next upgrade. The schema is checked and updated automatically when needed.
+
+- "Does `delete` return a boolean?"  
+  Yes, `delete` returns `true` if the key existed and was deleted, `false` if the key didn't exist. `deleteMany` returns the count of keys that were actually deleted.
 
 ## Contributing
 

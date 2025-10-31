@@ -1,6 +1,4 @@
-import { EnsureStoreOptions, IDBHelper, IDBStoreHandle } from './helper.js'
-
-export * from './helper.js'
+import { EnsureStoreOptions, IDBPlusHelper } from './helper.js'
 
 export interface IDBPlusOptions {
   /**
@@ -12,7 +10,7 @@ export interface IDBPlusOptions {
   ensure?: EnsureStoreOptions
   /**
    * Retry config
-   * @default { attempts: 2, baseDelayMs: 16 }
+   * @default { attempts: 3, baseDelayMs: 16 }
    */
   retry?: { attempts?: number; baseDelayMs?: number }
 }
@@ -28,133 +26,140 @@ export interface IDBPlusOptions {
 export class IDBPlus<K extends IDBValidKey = IDBValidKey, V = any>
   implements AsyncIterable<[K, V]>
 {
-  private readonly iterBatch: number
-  private readonly retry?: { attempts?: number; baseDelayMs?: number }
-  private readonly inlineKey: boolean
-  private readonly idbStoreHandle: Promise<IDBStoreHandle>
-
   constructor(
     readonly dbName: string,
     readonly storeName: string,
-    options: IDBPlusOptions = {}
-  ) {
-    this.iterBatch = (options.iterBatch ?? 100) | 0
-    this.retry = options.retry
-    this.inlineKey = !!options.ensure?.keyPath
-    this.idbStoreHandle = IDBHelper.createStore(dbName, storeName, options.ensure ?? {})
+    readonly options: IDBPlusOptions = {}
+  ) {}
+
+  private get _iterBatch() {
+    return this.options.iterBatch ?? IDBPlusHelper.defaults.iterBatch
+  }
+  private get _retryCfg() {
+    const r = this.options.retry ?? IDBPlusHelper.defaults.retry
+    return { attempts: r.attempts ?? 3, baseDelayMs: r.baseDelayMs ?? 16 }
+  }
+
+  private async _withStore<T>(
+    mode: IDBTransactionMode,
+    fn: (store: IDBObjectStore) => Promise<T>
+  ): Promise<T> {
+    const cfg = this._retryCfg
+    return IDBPlusHelper.withRetry<T>(
+      cfg,
+      async () => {
+        const db = await IDBPlusHelper.getDB(this.dbName, this.storeName, this.options.ensure)
+        try {
+          const tx = db.transaction(this.storeName, mode)
+          const store = tx.objectStore(this.storeName)
+          const out = await fn(store)
+          await IDBPlusHelper.waitTx(tx)
+          return out
+        } catch (e) {
+          // Re-throw to let withRetry decide; tx errors often mean disconnect
+          throw e
+        }
+      },
+      async (err) => {
+        if (IDBPlusHelper.shouldReconnect(err)) {
+          await IDBPlusHelper.closeConnection(this.dbName) // lazy reconnect on next attempt
+        }
+      }
+    )
   }
 
   async get(key: K): Promise<V | undefined> {
-    const h = await this.idbStoreHandle
-    return IDBHelper.get<V>(h, key)
+    return this._withStore('readonly', async (s) => {
+      const res = await IDBPlusHelper.asyncRequest<any>(s.get(key as IDBValidKey))
+      return res === undefined ? undefined : (res as V)
+    })
   }
 
-  async set(key: K, value: V): Promise<void> {
-    const h = await this.idbStoreHandle
-    if (this.inlineKey) {
-      return IDBHelper.withObjectStore<void>(
-        h,
-        'readwrite',
-        async (os) => {
-          const req = os.put(value as any)
-          await IDBHelper.promisifyRequest(req)
-        },
-        this.retry
-      )
-    } else {
-      return IDBHelper.set(h, key, value)
-    }
+  async set(key: K, value: V): Promise<this> {
+    await this._withStore('readwrite', async (s) => {
+      const hasKeyPath = this.options.ensure?.keyPath != null
+      const req = hasKeyPath ? s.put(value as any) : s.put(value as any, key as IDBValidKey)
+      await IDBPlusHelper.asyncRequest(req)
+      return
+    })
+    return this
   }
 
-  async delete(key: K): Promise<void> {
-    const h = await this.idbStoreHandle
-    return IDBHelper.del(h, key)
+  async delete(key: K): Promise<boolean> {
+    return this._withStore('readwrite', async (s) => {
+      // Check existence to return a truthful boolean
+      const existed =
+        (await IDBPlusHelper.asyncRequest<any>(s.get(key as IDBValidKey))) !== undefined
+      await IDBPlusHelper.asyncRequest(s.delete(key as IDBValidKey))
+      return existed
+    })
   }
 
   async clear(): Promise<void> {
-    const h = await this.idbStoreHandle
-    return IDBHelper.clear(h)
+    await this._withStore('readwrite', async (s) => {
+      await IDBPlusHelper.asyncRequest(s.clear())
+    })
   }
 
   async has(key: K): Promise<boolean> {
-    const h = await this.idbStoreHandle
-    return IDBHelper.withObjectStore<boolean>(
-      h,
-      'readonly',
-      async (os) => {
-        const req = os.count(key as any)
-        const n = await IDBHelper.promisifyRequest<number>(req)
-        return n > 0
-      },
-      this.retry
-    )
+    const v = await this.get(key)
+    return v !== undefined
   }
 
   async count(): Promise<number> {
-    const h = await this.idbStoreHandle
-    return IDBHelper.withObjectStore<number>(
-      h,
-      'readonly',
-      async (os) => {
-        const req = os.count()
-        return IDBHelper.promisifyRequest<number>(req)
-      },
-      this.retry
-    )
+    return this._withStore('readonly', async (s) => {
+      const n = await IDBPlusHelper.asyncRequest<number>(s.count())
+      return n ?? 0
+    })
+  }
+
+  private async *_iterateEntries(): AsyncIterable<[K, V]> {
+    // Restart transaction every N items to avoid long-lived cursors
+    let lastKey: IDBValidKey | null = null
+    let done = false
+    const batch = Math.max(1, this._iterBatch)
+
+    while (!done) {
+      const chunk: Array<[K, V]> = await this._withStore('readonly', async (s) => {
+        const out: Array<[K, V]> = []
+        const range = lastKey === null ? undefined : IDBKeyRange.lowerBound(lastKey, true)
+        await new Promise<void>((resolve, reject) => {
+          const req = s.openCursor(range)
+          req.onerror = () => reject(req.error)
+          req.onsuccess = () => {
+            const cur = req.result as IDBCursorWithValue | null
+            if (!cur) {
+              done = true
+              resolve()
+              return
+            }
+            out.push([cur.key as K, cur.value as V])
+            lastKey = cur.key as IDBValidKey
+            if (out.length >= batch) {
+              resolve()
+            } else {
+              cur.continue()
+            }
+          }
+        })
+        return out
+      })
+
+      for (const item of chunk) yield item
+      if (chunk.length === 0) break
+    }
   }
 
   entries(): AsyncIterable<[K, V]> {
-    const self = this
-    return {
-      [Symbol.asyncIterator]() {
-        let it: AsyncIterator<[IDBValidKey, any]> | null = null
-        return {
-          async next(): Promise<IteratorResult<[K, V]>> {
-            if (!it) {
-              const h = await self.idbStoreHandle
-              it = IDBHelper.entries(h, self.iterBatch)[Symbol.asyncIterator]()
-            }
-            const r = await it.next()
-            return r as any
-          },
-        }
-      },
-    }
+    return this._iterateEntries()
   }
 
-  keys(): AsyncIterable<K> {
-    const self = this
-    return {
-      [Symbol.asyncIterator]() {
-        let it: AsyncIterator<IDBValidKey> | null = null
-        return {
-          async next(): Promise<IteratorResult<K>> {
-            if (!it) {
-              const h = await self.idbStoreHandle
-              it = IDBHelper.keys(h, self.iterBatch)[Symbol.asyncIterator]()
-            }
-            const r = await it.next()
-            return r as any
-          },
-        }
-      },
-    }
+  async *keys(): AsyncIterable<K> {
+    for await (const [k] of this.entries()) yield k
   }
 
-  values(): AsyncIterable<V> {
-    const self = this
-    return {
-      [Symbol.asyncIterator]() {
-        const eIt = self.entries()[Symbol.asyncIterator]()
-        return {
-          async next(): Promise<IteratorResult<V>> {
-            const r = await eIt.next()
-            if (r.done) return { value: undefined as any, done: true }
-            return { value: (r.value as [K, V])[1], done: false }
-          },
-        }
-      },
-    }
+  async *values(): AsyncIterable<V> {
+    for await (const [, v] of this.entries()) yield v
   }
 
   [Symbol.asyncIterator](): AsyncIterator<[K, V]> {
@@ -169,51 +174,45 @@ export class IDBPlus<K extends IDBValidKey = IDBValidKey, V = any>
     }
   }
 
-  async setMany(entries: Iterable<[K, V]> | AsyncIterable<[K, V]>): Promise<void> {
-    const h = await this.idbStoreHandle
-    await IDBHelper.withObjectStore(
-      h,
-      'readwrite',
-      async (os) => {
-        for await (const [k, v] of toAsync(entries)) {
-          const req = this.inlineKey ? os.put(v as any) : os.put(v as any, k as any)
-          await IDBHelper.promisifyRequest(req)
-        }
-      },
-      this.retry
-    )
+  async getMany(keys: Iterable<K> | AsyncIterable<K>): Promise<Map<K, V | undefined>> {
+    const out = new Map<K, V | undefined>()
+    for await (const k of keys) out.set(k, undefined)
+    await this._withStore('readonly', async (s) => {
+      await Promise.all(
+        out.keys().map(async (k) => {
+          const v = await IDBPlusHelper.asyncRequest<any>(s.get(k))
+          out.set(k, v === undefined ? undefined : (v as V))
+        })
+      )
+    })
+    return out
   }
 
-  async deleteMany(keys: Iterable<K> | AsyncIterable<K>): Promise<void> {
-    const h = await this.idbStoreHandle
-    await IDBHelper.withObjectStore(
-      h,
-      'readwrite',
-      async (os) => {
-        for await (const k of toAsync(keys)) {
-          const req = os.delete(k as any)
-          await IDBHelper.promisifyRequest(req)
-        }
-      },
-      this.retry
-    )
+  async setMany(entries: Iterable<[K, V]> | AsyncIterable<[K, V]>): Promise<this> {
+    const hasKeyPath = this.options.ensure?.keyPath != null
+    await this._withStore('readwrite', async (s) => {
+      for await (const [k, v] of entries as any) {
+        const req = hasKeyPath ? s.put(v as any) : s.put(v as any, k as IDBValidKey)
+        await IDBPlusHelper.asyncRequest(req)
+      }
+    })
+    return this
   }
 
-  async tx<T>(mode: IDBTransactionMode, fn: (os: IDBObjectStore) => Promise<T> | T): Promise<T> {
-    const h = await this.idbStoreHandle
-    return IDBHelper.withObjectStore<T>(h, mode, fn, this.retry)
+  async deleteMany(keys: Iterable<K> | AsyncIterable<K>): Promise<number> {
+    let deleted = 0
+    await this._withStore('readwrite', async (s) => {
+      for await (const k of keys as any) {
+        const existed =
+          (await IDBPlusHelper.asyncRequest<any>(s.get(k as IDBValidKey))) !== undefined
+        if (existed) deleted++
+        await IDBPlusHelper.asyncRequest(s.delete(k as IDBValidKey))
+      }
+    })
+    return deleted
   }
 
-  async close(): Promise<void> {
-    await IDBHelper.closeDatabase(this.dbName)
-  }
-}
-
-function toAsync<T>(src: Iterable<T> | AsyncIterable<T>): AsyncIterable<T> {
-  if ((src as any)[Symbol.asyncIterator]) return src as AsyncIterable<T>
-  return {
-    async *[Symbol.asyncIterator]() {
-      for (const v of src as Iterable<T>) yield v
-    },
+  async disconnect(): Promise<void> {
+    await IDBPlusHelper.closeConnection(this.dbName)
   }
 }
