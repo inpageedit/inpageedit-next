@@ -269,3 +269,8 @@ svg.ipe-icon {
     }
   }
 }
+
+// Shameful fix for Fandom
+body.skin-fandomdesktop #ipe-edit-toolbox {
+  bottom: 3em;
+}
