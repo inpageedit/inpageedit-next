@@ -101,6 +101,12 @@ export class PreferencesService extends Service {
         out[key] = pref
       }
     })
+    // 统一排序，确保导出顺序一致
+    Object.keys(out)
+      .sort((a, b) => a.localeCompare(b))
+      .forEach((key) => {
+        out[key] = out[key]
+      })
 
     return out
   }
