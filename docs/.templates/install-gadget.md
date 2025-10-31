@@ -13,7 +13,7 @@
 ```js [MediaWiki:Gadget-IPE-NEXT.js]
 document.body.append(
   Object.assign(document.createElement('script'), {
-    src: 'https://unpkg.com/@inpageedit/core',
+    src: 'https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js/+esm',
     type: 'module',
   })
 )
@@ -35,7 +35,7 @@ document.body.append(
 >
 > <summary>替代方案，供参考：</summary>
 >
-> 1. 下载 IPE 的[捆绑包](https://unpkg.com/@inpageedit/core/lib/)版本，并将 css/js 文件分别创建为 `MediaWiki:Gadget-IPE-NEXT.css` 和 `MediaWiki:Gadget-IPE-NEXT.js`
+> 1. 下载 IPE 的[捆绑包](https://www.jsdelivr.com/package/npm/@inpageedit/core?tab=files&path=lib)版本，并将 css/js 文件分别创建为 `MediaWiki:Gadget-IPE-NEXT.css` 和 `MediaWiki:Gadget-IPE-NEXT.js`
 > 2. `MediaWiki:Gadgets-definition` 中相关的行修改为 `* IPE-NEXT[ResourceLoader|rights=edit,skipcaptcha]|IPE-NEXT.js|IPE-NEXT.css`
 >
 > </details>

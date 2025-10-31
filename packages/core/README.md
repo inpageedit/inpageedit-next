@@ -1,12 +1,14 @@
 <div align="center">
 
-[<img src="/docs/.vitepress/public/images/logo/ipe-next-uwu.png" width="280" alt="InPageEdit Logo">](https://www.ipe.wiki)
+[<img src="https://www.ipe.wiki/images/logo/ipe-next-uwu.png" width="280" alt="InPageEdit Logo">](https://www.ipe.wiki)
 
 # InPageEdit NEXT
 
 🚀 MediaWiki 的模块化、可扩展超级增强插件
 
 **InPageEdit NEXT**是由机智的小鱼君开发的一款 MediaWiki 多功能插件。主要功能旨在使许多 MediaWiki 的功能在不打开新标签页的情况下完成(包括但不限于编辑)，极大加快维护 wiki 的速度。模块化设计、类型定义清晰完整，插件可自由热插拔。
+
+→ <https://www.ipe.wiki> ←
 
 </div>
 
@@ -19,7 +21,12 @@
 <!-- prettier-ignore -->
 ```javascript
 // InPageEdit NEXT
-$('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
+document.body.append(
+  Object.assign(document.createElement('script'), {
+    src: 'https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js/+esm',
+    type: 'module',
+  })
+)
 ```
 
 ## 特色功能 / Features

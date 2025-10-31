@@ -1,6 +1,6 @@
 <div align="center">
 
-[<img src="/docs/.vitepress/public/images/logo/ipe-next-uwu.png" width="280" alt="InPageEdit Logo">](https://www.ipe.wiki)
+[<img src="https://www.ipe.wiki/images/logo/ipe-next-uwu.png" width="280" alt="InPageEdit Logo">](https://www.ipe.wiki)
 
 # InPageEdit NEXT
 
@@ -23,7 +23,7 @@
 // InPageEdit NEXT
 document.body.append(
   Object.assign(document.createElement('script'), {
-    src: 'https://unpkg.com/@inpageedit/core',
+    src: 'https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js/+esm',
     type: 'module',
   })
 )
@@ -37,6 +37,8 @@ This is a monorepo:
 | ------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | @inpageedit/core   | 🚀 Modular, Extensible Supercharged Plugin for MediaWiki                         | [packages/core](packages/core)                         |
 | @inpageedit/logger | Flexible, Extensible Console Logger with Colored Labels and Hierarchical Loggers | [packages/logger](packages/logger)                     |
+| @inpageedit/modal  | Yet another lightweight, framework-free modal and toast notification utility     | [packages/modal](packages/modal)                       |
+| idb-plus           | 🗄️ Minimal Promise based IndexedDB Wrapper with Map-like API                     | [packages/idb-plus](packages/idb-plus)                 |
 | schemastery-form   | 🧩 WebComponent for Schemastery Form Generation                                  | [packages/schemastery-form](packages/schemastery-form) |
 | docs               | InPageEdit Documentation                                                         | [docs](docs)                                           |
 | plugins            | Official Plugins                                                                 | [plugins](plugins)                                     |

@@ -8,7 +8,7 @@
 // InPageEdit NEXT
 document.body.append(
   Object.assign(document.createElement('script'), {
-    src: 'https://unpkg.com/@inpageedit/core',
+    src: 'https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js/+esm',
     type: 'module',
   })
 )
@@ -22,7 +22,9 @@ document.body.append(
 
 ```js [Special:MyPage/common.js]
 // InPageEdit NEXT
-$('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').appendTo('body')
+$(
+  '<script src="https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js/+esm" type="module"></script>'
+).appendTo('body')
 ```
 
 ### 浏览器插件
@@ -43,7 +45,7 @@ $('<script src="https://unpkg.com/@inpageedit/core" type="module"></script>').ap
 window.RLQ = window.RLQ || []
 window.RLQ.push(() => {
   gm.addElement('script', {
-    src: 'https://unpkg.com/@inpageedit/core',
+    src: 'https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js/+esm',
     type: 'module',
   })
 })
@@ -51,7 +53,7 @@ window.RLQ.push(() => {
 
 ### 下载捆绑包
 
-我们同时提供了 bundled 版本，以便那些有特殊需求的用户使用：[下载地址](https://unpkg.com/@inpageedit/core/lib/)
+我们同时提供了 bundled 版本，以便那些有特殊需求的用户使用：[下载地址](https://www.jsdelivr.com/package/npm/@inpageedit/core?tab=files&path=lib)
 
 捆绑包采用传统 UMD 格式打包，没有动态导入，因此加载速度可能略慢。另外，此版本不会尝试自动导入 CSS，因此你需要手动加载 CSS 文件。
 
