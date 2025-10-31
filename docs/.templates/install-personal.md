@@ -8,7 +8,7 @@
 // InPageEdit NEXT
 document.body.append(
   Object.assign(document.createElement('script'), {
-    src: 'https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js/+esm',
+    src: 'https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js',
     type: 'module',
   })
 )
@@ -23,7 +23,7 @@ document.body.append(
 ```js [Special:MyPage/common.js]
 // InPageEdit NEXT
 $(
-  '<script src="https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js/+esm" type="module"></script>'
+  '<script src="https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js" type="module"></script>'
 ).appendTo('body')
 ```
 
@@ -45,7 +45,7 @@ $(
 window.RLQ = window.RLQ || []
 window.RLQ.push(() => {
   gm.addElement('script', {
-    src: 'https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js/+esm',
+    src: 'https://cdn.jsdelivr.net/npm/@inpageedit/core/dist/index.js',
     type: 'module',
   })
 })
