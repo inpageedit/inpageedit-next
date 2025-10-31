@@ -194,11 +194,11 @@ export class PreferencesService extends Service {
   /**
    * 从用户页加载配置
    */
-  async importFromUserPage(): Promise<Record<string, unknown> | undefined> {
+  async importFromUserPage(): Promise<Record<string, unknown>> {
     const title = this.getUserPrefsPageTitle()
     if (!title) {
       this.logger.debug('Cannot get user page title, skipping load')
-      return
+      return {}
     }
 
     try {
@@ -211,14 +211,14 @@ export class PreferencesService extends Service {
         if (!response.ok) {
           if (response.status === 404) {
             this.logger.debug('User preferences page does not exist')
-            return
+            return {}
           }
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
       } catch (error) {
         if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
           this.logger.debug('User preferences page does not exist or network error')
-          return
+          return {}
         }
         throw error
       }
@@ -229,7 +229,7 @@ export class PreferencesService extends Service {
         preferences = await response.json()
       } catch (error) {
         this.logger.warn('Failed to parse user preferences JSON:', error)
-        return
+        return {}
       }
 
       for (const [key, value] of Object.entries(preferences)) {
@@ -240,7 +240,7 @@ export class PreferencesService extends Service {
       return preferences
     } catch (error) {
       this.logger.error('Failed to load preferences from user page:', error)
-      return undefined
+      return {}
     }
   }
 

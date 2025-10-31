@@ -1,5 +1,6 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import PreferencesForm from './PreferencesForm.vue'
+import { IPEModal } from '@inpageedit/modal'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -90,9 +91,85 @@ export class PluginPreferencesUI extends BasePlugin {
         ctx.toolbox.removeButton('preferences')
       })
     })
+
+    ctx.preferences.defineCategory({
+      name: 'import-export',
+      label: 'Import/Export',
+      description: 'Import and export preferences',
+      index: 98,
+    })
+    ctx.preferences.registerCustomConfig(
+      'import-export',
+      Schema.object({
+        'preferences-ui-import-export': Schema.const(
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                this.ctx.preferences.importFromUserPage().then((record) => {
+                  const count = Object.keys(record ?? {}).length
+                  this.ctx.modal.notify('success', {
+                    title: 'Preferences Imported',
+                    content: (
+                      <div>
+                        <p>
+                          {count} {count > 1 ? 'settings' : 'setting'} imported:
+                        </p>
+                        <ul>
+                          {Object.entries(record ?? {}).map(([key, value]) => (
+                            <li key={key}>
+                              {key}: {value?.toString()}
+                            </li>
+                          ))}
+                        </ul>
+                        <p>Some settings may take effect after reloading the page.</p>
+                      </div>
+                    ),
+                  })
+                  const modal = this.getExistingModal()
+                  modal?.close?.()
+                })
+              }}
+            >
+              Import
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                this.ctx.preferences.exportToUserPage().then((title) => {
+                  this.ctx.modal.notify('success', {
+                    title: 'Preferences Exported',
+                    content: (
+                      <p>
+                        Your preferences have been exported to{' '}
+                        <a href={title.getURL().toString()} target="_blank">
+                          {title.getPrefixedText()}
+                        </a>
+                        .
+                      </p>
+                    ),
+                  })
+                  const modal = this.getExistingModal()
+                  modal?.close?.()
+                })
+              }}
+            >
+              Export
+            </button>
+          </div>
+        )
+          .description('Backup your preferences to user page')
+          .role('raw-html'),
+      }).description('Backup your preferences to user page'),
+      'import-export'
+    )
   }
 
   protected stop(): Promise<void> | void {}
+
+  getExistingModal() {
+    return document.querySelector<Element & { modal: IPEModal }>('.ipe-preference')?.modal
+  }
 
   showModal() {
     const modal = this.ctx.modal.show({

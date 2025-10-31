@@ -88,6 +88,8 @@ onMounted(async () => {
   gap: 0.5em
   border-bottom: 1px solid #efefef
   margin-bottom: 1em
+  white-space: nowrap
+  overflow-x: auto
   .tab
     padding: 0.5em 1em
     cursor: pointer
