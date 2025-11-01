@@ -75,9 +75,14 @@ export interface QuickEditSubmitPayload {
     'quickEdit.keyshortcut.save': Schema.string()
       .default('ctrl-s')
       .description('save button key shortcut (blank to disable)'),
-    'quickEdit.monospace': Schema.boolean()
-      .description('Use monospace font in the edit textarea')
-      .default(false),
+    'quickEdit.editFont': Schema.union([
+      Schema.const('preferences').description('Follow my preferences'),
+      Schema.const('monospace').description('Monospace'),
+      Schema.const('sans-serif').description('Sans-serif'),
+      Schema.const('serif').description('Serif'),
+    ])
+      .description('Font to use in quick edit\'s textarea')
+      .default('preferences'),
   })
     .description('Quick edit options')
     .extra('category', 'edit')
@@ -155,7 +160,10 @@ export class PluginQuickEdit extends BasePlugin {
       typeof payload.editMinor === 'boolean'
         ? payload.editMinor
         : (await this.ctx.preferences.get<boolean>('quickEdit.editMinor'))!
-    const monospace = (await this.ctx.preferences.get<boolean>('quickEdit.monospace'))!
+
+    const editFontPref = (await this.ctx.preferences.get<string>('quickEdit.editFont'))!
+    const mwEditFont = this.ctx.wiki.userOptions?.editfont
+    const editFont = editFontPref === 'preferences' ? (mwEditFont || 'sans-serif') : editFontPref
 
     const options: QuickEditOptions = {
       ...this.DEFAULT_OPTIONS,
@@ -290,10 +298,9 @@ export class PluginQuickEdit extends BasePlugin {
             </>
           )}
           <textarea
-            className="ipe-quickEdit__textarea"
+            className={`ipe-quickEdit__textarea${editFont !== 'preferences' && editFont !== 'sans-serif' ? ` ipe-quickEdit__textarea--${editFont}` : ''}`}
             name="text"
             id="wpTextbox1"
-            style={{ fontFamily: monospace ? 'monospace' : undefined }}
           >
             {editContent}
           </textarea>
