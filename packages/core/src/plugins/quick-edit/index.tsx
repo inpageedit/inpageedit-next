@@ -236,9 +236,9 @@ export class PluginQuickEdit extends BasePlugin {
       return
     }
 
-    const editContent = options.section === 'new' ? '' : wikiPage.revisions[0]?.content || ''
-    const editRevId = wikiPage.revisions[0]?.revid
-    const isEdittingOld = editRevId && editRevId !== wikiPage.lastrevid
+    const edittingContent = options.section === 'new' ? '' : wikiPage.revisions[0]?.content || ''
+    const edittingRevId = wikiPage.revisions[0]?.revid
+    const isEdittingOld = edittingRevId && edittingRevId !== wikiPage.lastrevid
     const isCreatingNewSection = options.section === 'new'
     const isCreatingNewPage = wikiPage.pageid === 0
 
@@ -247,7 +247,7 @@ export class PluginQuickEdit extends BasePlugin {
         <>
           {isCreatingNewSection ? 'New section' : `Quick ${isCreatingNewPage ? 'Create' : 'Edit'}`}:{' '}
           <u>{wikiPage.pageInfo.title}</u>
-          {isEdittingOld ? ` (Revision ${editRevId})` : ''}
+          {isEdittingOld ? ` (Revision ${edittingRevId})` : ''}
         </>
       ) as HTMLElement
     )
@@ -302,7 +302,7 @@ export class PluginQuickEdit extends BasePlugin {
             name="text"
             id="wpTextbox1"
           >
-            {editContent}
+            {edittingContent}
           </textarea>
         </div>
         <div
@@ -454,7 +454,7 @@ export class PluginQuickEdit extends BasePlugin {
     })
 
     const beforeUnload = (e: BeforeUnloadEvent) => {
-      if (editForm.querySelector('textarea')?.value === wikiPage.revisions[0]?.content) {
+      if (editForm.querySelector('textarea')?.value === edittingContent) {
         return true
       }
       e.preventDefault()
