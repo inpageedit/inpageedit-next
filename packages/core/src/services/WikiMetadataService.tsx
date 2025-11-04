@@ -93,9 +93,9 @@ export class WikiMetadataService extends Service {
                 </li>
               </ul>
               <div>
-                <p>
-                  If the information shown above is incorrect (for example, the username is not
-                  yours), click the button below.
+                <p style={{ fontStyle: 'italic' }}>
+                  If the information shown above is incorrect (for example, the user is not you),
+                  click the button below.
                 </p>
                 <button
                   onClick={(e) => {
@@ -109,7 +109,7 @@ export class WikiMetadataService extends Service {
                     })
                   }}
                 >
-                  Refresh cache and reload
+                  🧹 Clear caches & Reload
                 </button>
               </div>
             </div>
