@@ -1,6 +1,4 @@
-import { install, SchemaForm } from '@/index'
-import { h } from 'jsx-dom'
-import Schema from 'schemastery'
+import { install } from '@/index'
 import { createApp } from 'vue'
 import App from './App.vue'
 

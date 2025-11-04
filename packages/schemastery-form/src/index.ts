@@ -633,7 +633,7 @@ class SchemaFormUnion extends BaseFieldElement<any> {
       ;(list as any[]).forEach((s: any, i: number) => {
         const opt = document.createElement('option')
         opt.value = String(i)
-        opt.textContent = s.type
+        opt.textContent = s.meta?.description || s.value || s.type
         $select.appendChild(opt)
       })
       $select.onchange = () => {
@@ -654,6 +654,9 @@ class SchemaFormUnion extends BaseFieldElement<any> {
         $box.innerHTML = ''
         const current = list[active]
         const child = createFieldForSchema(current, this._path, this._value, this._label)
+        if (child instanceof SchemaFormConst) {
+          return // 不用渲染常量
+        }
         child.addEventListener('change', (e: any) => {
           e.stopPropagation() // ✅ 不让子项事件继续冒泡
           this.emitChange(e.detail.value)

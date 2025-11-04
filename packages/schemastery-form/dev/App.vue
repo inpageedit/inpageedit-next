@@ -25,6 +25,7 @@ interface TestSchema {
   deep: {
     nested: Pick<TestSchema, 'string' | 'number' | 'array'>
   }
+  selectOrOther: 'option1' | 'option2' | string
 }
 
 const schema = ref(
@@ -49,6 +50,13 @@ const schema = ref(
           array: Schema.array(String).default(['nested', 'array']),
         }).description('Nested Object'),
       }),
+      selectOrOther: Schema.union([
+        Schema.const('option1').description('Option 1 description'),
+        Schema.const('option2'),
+        Schema.string().description('Others'),
+      ])
+        .description('Test Select or Other')
+        .default('option1'),
     }).description('Root Object')
   )
 )
@@ -59,6 +67,7 @@ const value = ref<TestSchema>({
   boolean: false,
   date: new Date('2000-10-05T00:00:00+08:00'),
   enum: 'option2',
+  selectOrOther: 'option2',
   tuple: ['initial', 1, true],
   array: ['initial', 'array'],
   dict: { key1: 'value1', key2: 'value2' },
