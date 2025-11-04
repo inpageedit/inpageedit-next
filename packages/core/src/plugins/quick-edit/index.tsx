@@ -59,13 +59,13 @@ export interface QuickEditSubmitPayload {
       .description('Default edit summary for quick edits')
       .default('[IPE-NEXT] Quick edit'),
     'quickEdit.editMinor': Schema.boolean()
-      .description('Whether to mark the edit as minor')
+      .description('Default to checking "minor edit" option')
       .default(false),
     'quickEdit.outSideClose': Schema.boolean()
-      .description('Whether to close the modal outside')
+      .description('Close editor modal by clicking outside')
       .default(true),
     'quickEdit.watchList': Schema.union([
-      Schema.const(WatchlistAction.preferences).description('Follow my preferences'),
+      Schema.const(WatchlistAction.preferences).description('Follow MW preferences'),
       Schema.const(WatchlistAction.nochange).description('Keep the current watchlist status'),
       Schema.const(WatchlistAction.watch).description('Add the page to watchlist'),
       Schema.const(WatchlistAction.unwatch).description('Remove the page from watchlist'),
@@ -76,13 +76,14 @@ export interface QuickEditSubmitPayload {
       .default('ctrl-s')
       .description('save button key shortcut (blank to disable)'),
     'quickEdit.editFont': Schema.union([
-      Schema.const('preferences').description('Follow my preferences'),
-      Schema.const('monospace').description('Monospace'),
-      Schema.const('sans-serif').description('Sans-serif'),
-      Schema.const('serif').description('Serif'),
+      Schema.const('$preferences').description('Follow MW preferences'),
+      Schema.const('$monospace').description('Monospace'),
+      Schema.const('$sans-serif').description('Sans-serif'),
+      Schema.const('$serif').description('Serif'),
+      Schema.string().description('Custom font (same as CSS `font-family` property)').default(''),
     ])
-      .description('Font to use in quick edit\'s textarea')
-      .default('preferences'),
+      .description("Font to use in quick edit's textarea")
+      .default('$preferences'),
   })
     .description('Quick edit options')
     .extra('category', 'edit')
@@ -160,10 +161,7 @@ export class PluginQuickEdit extends BasePlugin {
       typeof payload.editMinor === 'boolean'
         ? payload.editMinor
         : (await this.ctx.preferences.get<boolean>('quickEdit.editMinor'))!
-
-    const editFontPref = (await this.ctx.preferences.get<string>('quickEdit.editFont'))!
-    const mwEditFont = this.ctx.wiki.userOptions?.editfont
-    const editFont = editFontPref === 'preferences' ? (mwEditFont || 'sans-serif') : editFontPref
+    const fontOptions = await this.getEditFontOptions()
 
     const options: QuickEditOptions = {
       ...this.DEFAULT_OPTIONS,
@@ -298,7 +296,8 @@ export class PluginQuickEdit extends BasePlugin {
             </>
           )}
           <textarea
-            className={`ipe-quickEdit__textarea${editFont !== 'preferences' && editFont !== 'sans-serif' ? ` ipe-quickEdit__textarea--${editFont}` : ''}`}
+            className={`ipe-quickEdit__textarea ${fontOptions.className}`}
+            style={{ fontFamily: fontOptions.fontFamily }}
             name="text"
             id="wpTextbox1"
           >
@@ -487,6 +486,25 @@ export class PluginQuickEdit extends BasePlugin {
         createonly,
       }
     )
+  }
+
+  async getEditFontOptions() {
+    const prefEditFont = (await this.ctx.preferences.get<string>('quickEdit.editFont'))!
+    if (prefEditFont.startsWith('$')) {
+      const editfont =
+        prefEditFont === '$preferences'
+          ? this.ctx.wiki.userOptions?.editfont || 'monospace'
+          : prefEditFont.slice(1)
+      return {
+        className: `mw-editfont-${editfont}`,
+        fontFamily: '',
+      }
+    } else {
+      return {
+        className: 'mw-editfont-custom',
+        fontFamily: prefEditFont,
+      }
+    }
   }
 
   async getWikiPageFromPayload(payload: Partial<QuickEditOptions>) {
