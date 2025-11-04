@@ -614,7 +614,7 @@ class SchemaFormUnion extends BaseFieldElement<any> {
       list.forEach((s: any) => {
         const opt = document.createElement('option')
         opt.value = String(s.value)
-        opt.textContent = String(s.value)
+        opt.textContent = String(s.meta?.description || s.value || s.type)
         if (this._value === s.value) opt.selected = true
         $select.appendChild(opt)
       })
@@ -633,7 +633,7 @@ class SchemaFormUnion extends BaseFieldElement<any> {
       ;(list as any[]).forEach((s: any, i: number) => {
         const opt = document.createElement('option')
         opt.value = String(i)
-        opt.textContent = s.meta?.description || s.value || s.type
+        opt.textContent = String(s.meta?.description || s.value || s.type)
         $select.appendChild(opt)
       })
       $select.onchange = () => {
