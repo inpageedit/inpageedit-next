@@ -1,26 +1,28 @@
 <template lang="pug">
 .preferences-ui-app
-  .tabs
-    a.tab(
-      v-for='tab in tabs',
-      :key='tab.name',
-      :class='{ active: activeCategoryName === tab.name }',
-      @click='activeCategoryName = tab.name',
-      :data-value='tab.name'
-    ) {{ tab.label }}
+  .tabbar
+    .tabbar-tabs
+      a.tab(
+        v-for='tab in tabs',
+        :key='tab.name',
+        :class='{ active: activeCategoryName === tab.name }',
+        @click='activeCategoryName = tab.name',
+        :data-value='tab.name'
+      ) {{ tab.label }}
 
-  SchemaFormVue(
-    v-for='(schema, index) in activeSchemas',
-    :key='`${activeCategoryName}-${index}`',
-    :schema='schema',
-    :value='formData',
-    @update:value='lazyValue = $event',
-    :validate-on-change='false',
-    :i18n='{ rootLabel: "" }'
-  )
+    .tabbar-content
+      SchemaFormVue(
+        v-for='(schema, index) in activeSchemas',
+        :key='`${activeCategoryName}-${index}`',
+        :schema='schema',
+        :value='initialValue',
+        @update:value='value = $event',
+        :validate-on-change='false',
+        :i18n='{ rootLabel: "" }'
+      )
 
   details(v-if='DEV')
-    pre(style='max-height: 20em; overflow: auto') {{ lazyValue }}
+    pre(style='max-height: 20em; overflow: auto') {{ value }}
 </template>
 
 <script setup lang="ts" vapor>
@@ -44,17 +46,16 @@ const activeSchemas = computed(() => activeRegistries.value.map((reg) => reg.sch
  * 为什么要维护两个 value：
  * 存在多个 SchemaForm 共享一个 value 的竞态问题
  * 为了避免这种情况，我们维护两个 value：
- * 1. formData：用于表单的 value
- * 2. lazyValue：用于保存原始值，每次表单更新时，我们都会先更新 lazyValue
- * 3. 切换标签页时，我们会懒更新 formData，这样既能同步表单值，又能避免竞态问题
- * 在 getValue 时，我们返回 lazyValue
+ * 1. initialValue - 用于初始化表单
+ * 2. value - 用于保存原始值，表单更新时，我们先更新 value
+ * 3. 在切换标签页等 UI 整体重新渲染的时候，我们再同步 initialValue 的值
  */
-const formData = shallowRef<any>({})
-const lazyValue = shallowRef<any>({})
+const initialValue = shallowRef<any>({})
+const value = shallowRef<any>({})
 
 defineExpose({
   getValue() {
-    return deepToRaw(lazyValue)
+    return deepToRaw(value)
   },
 })
 
@@ -62,7 +63,7 @@ watch(
   activeCategoryName,
   (newCategory) => {
     if (newCategory) {
-      formData.value = lazyValue.value
+      initialValue.value = value.value
       activeRegistries.value = ctx.preferences.getConfigRegistries(newCategory)
     }
   },
@@ -72,32 +73,52 @@ watch(
 onMounted(async () => {
   ctx.inject(['preferences'], async (ctx) => {
     const all = await ctx.preferences.getAll()
-    formData.value = lazyValue.value = all
+    initialValue.value = value.value = all
     tabs.value = ctx.preferences.getConfigCategories()
     activeCategoryName.value = tabs.value[0].name
   })
 })
 </script>
 
-<style scoped lang="sass">
-.tabs
-  --border-color: #efefef
-  --tab-color: #666
-  --active-color: #3366bb
-  display: flex
-  gap: 0.5em
-  border-bottom: 1px solid #efefef
-  margin-bottom: 1em
-  white-space: nowrap
-  overflow-x: auto
-  .tab
-    padding: 0.5em 1em
-    cursor: pointer
-    user-select: none
-    color: var(--tab-color)
-    display: inline-block
-    transition: color 0.3s ease, box-shadow 0.3s ease
-    &.active
-      color: var(--active-color)
-      box-shadow: inset 0 -0.15em 0 0 var(--active-color)
+<style scoped lang="scss">
+.tabbar {
+  .tabbar-tabs {
+    --border-color: #efefef;
+    --tab-color: #666;
+    --active-color: #3366bb;
+    display: flex;
+    gap: 0.5em;
+    border-bottom: 1px solid #efefef;
+    margin-bottom: 1em;
+    white-space: nowrap;
+    overflow-x: auto;
+    .tab {
+      padding: 0.5em 1em;
+      cursor: pointer;
+      user-select: none;
+      color: var(--tab-color);
+      display: inline-block;
+      transition:
+        color 0.3s ease,
+        box-shadow 0.3s ease;
+      &.active {
+        color: var(--active-color);
+        box-shadow: inset 0 -0.15em 0 0 var(--active-color);
+      }
+    }
+  }
+}
+
+schema-form {
+  margin-bottom: 0.5em;
+  --schema-radius: 6px;
+}
+</style>
+
+<style lang="scss">
+.preferences-ui-app {
+  .schema-form-item.field {
+    border: 0;
+  }
+}
 </style>
