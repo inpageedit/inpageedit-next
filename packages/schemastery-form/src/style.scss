@@ -1,19 +1,13 @@
 :host {
-  all: initial;
+  display: block;
   font-family: var(--schema-font-family, ui-sans-serif, system-ui, -apple-system);
+  color: var(--schema-color-fg, #111827);
 }
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
-:host {
-  color: var(--schema-color-fg, #111827);
-}
-:host {
-  --schema-radius: var(--schema-radius, 10px);
-}
-
 .wrapper {
   display: block;
   background: var(--schema-color-bg, #ffffff);
@@ -27,7 +21,7 @@
   gap: 6px;
   padding: 8px 10px;
   border: 1px solid var(--schema-color-muted, #e5e7eb);
-  border-radius: var(--schema-radius);
+  border-radius: var(--schema-radius, 10px);
   background: var(--schema-surface, #fff);
 }
 .label {
@@ -113,7 +107,11 @@ textarea {
 // array/dict 过渡动画
 .schema-collection-row {
   position: relative;
-  transition: transform var(--schema-collection-transition-duration, 0.25s) var(--schema-collection-transition-ease, ease), opacity var(--schema-collection-transition-duration, 0.25s) var(--schema-collection-transition-ease, ease);
+  transition:
+    transform var(--schema-collection-transition-duration, 0.25s)
+      var(--schema-collection-transition-ease, ease),
+    opacity var(--schema-collection-transition-duration, 0.25s)
+      var(--schema-collection-transition-ease, ease);
 }
 .schema-collection-row.enter {
   opacity: 0;

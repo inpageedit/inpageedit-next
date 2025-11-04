@@ -122,6 +122,51 @@ const sanitizeForId = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, '_')
 const idOf = (path: PathSeg[]) => `schema_${sanitizeForId(dotPath(path) || 'root')}`
 const nameOf = (path: PathSeg[]) => dotPath(path)
 
+const setPartAttr = (element: Element, ...parts: string[]) => {
+  const tokens = new Set<string>(...parts)
+  if (!tokens.size) return
+  element.setAttribute('part', Array.from(tokens).join(' '))
+}
+
+const EXPORTED_PARTS = [
+  'wrapper',
+  'form',
+  'field',
+  'field-string',
+  'field-number',
+  'field-boolean',
+  'field-date',
+  'field-const',
+  'field-array',
+  'field-object',
+  'field-tuple',
+  'field-union',
+  'field-dict',
+  'field-label',
+  'field-helper',
+  'field-group',
+  'field-row',
+  'field-actions',
+  'field-button',
+  'field-button-primary',
+  'field-button-danger',
+  'field-button-secondary',
+  'field-toolbar',
+  'field-badge',
+  'field-input',
+  'field-input-text',
+  'field-input-number',
+  'field-input-date',
+  'field-input-select',
+  'field-input-textarea',
+  'field-input-checkbox',
+  'field-const-value',
+  'collection-row',
+  'field-checkbox',
+  'field-checkbox-text',
+  'field-toolbar-select',
+].join(' ')
+
 // 值转换（input -> 目标类型）
 function castToType(type: string, value: any) {
   if (value == null) return value
@@ -242,16 +287,19 @@ abstract class BaseFieldElement<T = any> extends HTMLElement {
     const $field = document.createElement('div')
     $field.className = `field schema-form-item schema-type-${typeClass}`
     $field.setAttribute('data-path', dotPath(this._path))
+    setPartAttr($field, 'field', `field-${typeClass}`)
     if (this._label) {
       const $label = document.createElement('label')
       $label.className = 'label'
       $label.textContent = this._label
+      setPartAttr($label, 'field-label')
       $field.appendChild($label)
     }
     if (description) {
       const $desc = document.createElement('div')
       $desc.className = 'helper'
       $desc.textContent = description
+      setPartAttr($desc, 'field-helper')
       $field.appendChild($desc)
     }
     return $field
@@ -332,6 +380,7 @@ class SchemaFormString extends BaseFieldElement<string | undefined> {
     const $input = document.createElement('input')
     this.$input = $input
     $input.className = 'input'
+    setPartAttr($input, 'field-input', 'field-input-text')
     $input.type = 'text'
     $input.name = nameOf(this._path)
     $input.id = idOf(this._path)
@@ -367,6 +416,7 @@ class SchemaFormNumber extends BaseFieldElement<number | undefined> {
     const $input = document.createElement('input')
     this.$input = $input
     $input.className = 'input'
+    setPartAttr($input, 'field-input', 'field-input-number')
     $input.name = nameOf(this._path)
     $input.id = idOf(this._path)
     if (meta?.min != null) $input.min = String(meta.min)
@@ -397,13 +447,16 @@ class SchemaFormBoolean extends BaseFieldElement<boolean> {
     const $field = this.makeFieldContainer('boolean', meta.description)
     const $box = document.createElement('label')
     $box.className = 'checkbox'
+    setPartAttr($box, 'field-checkbox')
     const $input = document.createElement('input')
     $input.type = 'checkbox'
     $input.checked = Boolean(this._value)
     $input.name = nameOf(this._path)
     $input.id = idOf(this._path)
+    setPartAttr($input, 'field-input', 'field-input-checkbox')
     const $txt = document.createElement('span')
     $txt.textContent = meta.description ?? this._label ?? ''
+    setPartAttr($txt, 'field-checkbox-text')
     $input.onchange = () => this.emitChange($input.checked)
     const $label = $field.querySelector('label.label') as HTMLLabelElement | null
     if ($label) $label.htmlFor = $input.id
@@ -462,6 +515,7 @@ class SchemaFormDate extends BaseFieldElement<Date | undefined> {
     const $input = document.createElement('input')
     this.$input = $input
     $input.className = 'input'
+    setPartAttr($input, 'field-input', 'field-input-date')
     const role = meta.role || 'date'
     if (role === 'datetime') $input.type = 'datetime-local'
     else if (role === 'time') $input.type = 'time'
@@ -515,6 +569,7 @@ class SchemaFormConst extends BaseFieldElement<any> {
 
       const htmlNode = document.createElement('div')
       htmlNode.innerHTML = String(value)
+      setPartAttr(htmlNode, 'field-const-value')
       this.$root.appendChild(htmlNode)
       return
     }
@@ -524,6 +579,7 @@ class SchemaFormConst extends BaseFieldElement<any> {
     $text.className = 'const content'
     $text.textContent = String(value)
     $text.id = idOf(this._path)
+    setPartAttr($text, 'field-const-value')
     const $label = $field.querySelector('label.label') as HTMLLabelElement | null
     if ($label) $label.htmlFor = $text.id
     $field.appendChild($text)
@@ -596,6 +652,7 @@ function createFieldForSchema<T>(
   el.label = label
   if (i18n) el.i18n = i18n
   el.setValue?.(value)
+  el.setAttribute('exportparts', EXPORTED_PARTS)
   return el
 }
 
@@ -609,6 +666,7 @@ class SchemaFormUnion extends BaseFieldElement<any> {
     if (unionIsEnum(list)) {
       const $select = document.createElement('select')
       $select.className = 'input'
+      setPartAttr($select, 'field-input', 'field-input-select')
       $select.name = nameOf(this._path)
       $select.id = idOf(this._path)
       list.forEach((s: any) => {
@@ -625,8 +683,10 @@ class SchemaFormUnion extends BaseFieldElement<any> {
     } else {
       const $toolbar = document.createElement('div')
       $toolbar.className = 'toolbar'
+      setPartAttr($toolbar, 'field-toolbar')
       const $select = document.createElement('select')
       $select.className = 'input'
+      setPartAttr($select, 'field-input', 'field-input-select', 'field-toolbar-select')
       $select.name = nameOf(this._path) + '.__type'
       $select.id = idOf(this._path) + '__type'
       let active = 0
@@ -650,6 +710,7 @@ class SchemaFormUnion extends BaseFieldElement<any> {
 
       const $box = document.createElement('div')
       $box.className = 'group'
+      setPartAttr($box, 'field-group')
       const renderChild = () => {
         $box.innerHTML = ''
         const current = list[active]
@@ -679,6 +740,7 @@ class SchemaFormTuple extends BaseFieldElement<any[]> {
     const $field = this.makeFieldContainer('tuple', meta.description)
     const $box = document.createElement('div')
     $box.className = 'group'
+    setPartAttr($box, 'field-group')
 
     const arr: any[] = Array.isArray(this._value) ? this._value : []
     ;((this._schema as any).list || []).forEach((sub: any, i: number) => {
@@ -709,6 +771,7 @@ class SchemaFormObject extends BaseFieldElement<Record<string, any>> {
     const $field = this.makeFieldContainer('object', meta.description)
     const $box = document.createElement('div')
     $box.className = 'group'
+    setPartAttr($box, 'field-group')
     const dict = (this._schema as any).dict || {}
 
     Object.keys(dict).forEach((k) => {
@@ -784,6 +847,7 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
     const $field = this.makeFieldContainer('array', meta.description)
     const $box = document.createElement('div')
     $box.className = 'group'
+    setPartAttr($box, 'field-group')
 
     const innerSchema = (this._schema as any).inner!
     const currentList = () => (Array.isArray(this._value) ? this._value : [])
@@ -796,6 +860,7 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
         const rowPath = [...this._path, idx]
         const row = document.createElement('div')
         row.className = 'row schema-collection-row'
+        setPartAttr(row, 'field-row', 'collection-row')
         const stableId = this._itemIds[idx]
         row.dataset.uid = stableId
         row.setAttribute('data-path', dotPath(rowPath))
@@ -817,11 +882,13 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
 
         const toolbar = document.createElement('div')
         toolbar.className = 'actions'
+        setPartAttr(toolbar, 'field-actions')
 
         // 上移
         const up = document.createElement('button')
         up.type = 'button'
         up.className = 'btn'
+        setPartAttr(up, 'field-button', 'field-button-secondary')
         up.textContent = this._i18n.arrayMoveUp ?? '↑'
         up.onclick = () => {
           if (idx <= 0) return
@@ -841,6 +908,7 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
         const down = document.createElement('button')
         down.type = 'button'
         down.className = 'btn'
+        setPartAttr(down, 'field-button', 'field-button-secondary')
         down.textContent = this._i18n.arrayMoveDown ?? '↓'
         down.onclick = () => {
           const now = currentList()
@@ -861,6 +929,7 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
         const del = document.createElement('button')
         del.type = 'button'
         del.className = 'btn danger'
+        setPartAttr(del, 'field-button', 'field-button-danger')
         del.textContent = this._i18n.arrayRemove ?? '×'
         del.onclick = () => {
           // 离场动画：不立即更新 state，先让该行缩放淡出
@@ -911,6 +980,7 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
     const add = document.createElement('button')
     add.type = 'button'
     add.className = 'btn primary'
+    setPartAttr(add, 'field-button', 'field-button-primary')
     add.textContent = this._i18n.arrayAdd ?? '+'
     add.onclick = () => {
       const beforePos = this.capturePositions($box)
@@ -926,6 +996,7 @@ class SchemaFormArray extends BaseFieldElement<any[]> {
 
     const actions = document.createElement('div')
     actions.className = 'actions'
+    setPartAttr(actions, 'field-actions')
     actions.appendChild(add)
 
     $field.appendChild($box)
@@ -942,6 +1013,7 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
     const $field = this.makeFieldContainer('dict', meta.description)
     const $box = document.createElement('div')
     $box.className = 'group'
+    setPartAttr($box, 'field-group')
 
     const innerSchema = (this._schema as any).inner!
     const map: Record<string, any> = this._value ?? {}
@@ -985,10 +1057,12 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
         const rowPath = [...this._path, k]
         const row = document.createElement('div')
         row.className = 'kv schema-collection-row'
+        setPartAttr(row, 'field-row', 'collection-row')
         row.dataset.uid = ensureId(k)
         row.setAttribute('data-path', dotPath(rowPath))
         const $k = document.createElement('input')
         $k.className = 'input'
+        setPartAttr($k, 'field-input', 'field-input-text')
         $k.value = k
         $k.name = nameOf(rowPath) + '.__key'
         $k.id = idOf(rowPath) + '__key'
@@ -997,6 +1071,7 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
         const $del = document.createElement('button')
         $del.type = 'button'
         $del.className = 'btn danger'
+        setPartAttr($del, 'field-button', 'field-button-danger')
         $del.textContent = this._i18n.dictRemove ?? '×'
         $del.onclick = () => {
           const beforePos = capturePositions()
@@ -1047,6 +1122,7 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
     const add = document.createElement('button')
     add.type = 'button'
     add.className = 'btn primary'
+    setPartAttr(add, 'field-button', 'field-button-primary')
     add.textContent = this._i18n.dictAdd ?? '+'
     add.onclick = () => {
       // 生成不冲突的 key
@@ -1062,6 +1138,7 @@ class SchemaFormDict extends BaseFieldElement<Record<string, any>> {
     }
     const actions = document.createElement('div')
     actions.className = 'actions'
+    setPartAttr(actions, 'field-actions')
     actions.appendChild(add)
 
     $field.appendChild($box)
@@ -1087,7 +1164,11 @@ export class SchemaForm<T extends any = unknown> extends HTMLElement {
     this.$root.appendChild(style)
     const wrap = document.createElement('div')
     wrap.className = 'wrapper'
-    wrap.innerHTML = `<form class="form" part="form"></form>`
+    setPartAttr(wrap, 'wrapper')
+    const form = document.createElement('form')
+    form.className = 'form'
+    setPartAttr(form, 'form')
+    wrap.appendChild(form)
     this.$root.appendChild(wrap)
 
     // 冒泡捕获字段变更
