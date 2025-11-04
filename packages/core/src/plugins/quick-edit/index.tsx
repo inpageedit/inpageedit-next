@@ -76,14 +76,14 @@ export interface QuickEditSubmitPayload {
       .default('ctrl-s')
       .description('save button key shortcut (blank to disable)'),
     'quickEdit.editFont': Schema.union([
-      Schema.const('$preferences').description('Follow MW preferences'),
-      Schema.const('$monospace').description('Monospace'),
-      Schema.const('$sans-serif').description('Sans-serif'),
-      Schema.const('$serif').description('Serif'),
+      Schema.const('preferences').description('Follow MW preferences'),
+      Schema.const('monospace').description('Monospace'),
+      Schema.const('sans-serif').description('Sans-serif'),
+      Schema.const('serif').description('Serif'),
       Schema.string().description('Custom font (same as CSS `font-family` property)').default(''),
     ])
       .description("Font to use in quick edit's textarea")
-      .default('$preferences'),
+      .default('preferences'),
   })
     .description('Quick edit options')
     .extra('category', 'edit')
@@ -488,13 +488,14 @@ export class PluginQuickEdit extends BasePlugin {
     )
   }
 
+  static readonly BUILT_IN_FONT_OPTIONS = ['preferences', 'monospace', 'sans-serif', 'serif']
   async getEditFontOptions() {
     const prefEditFont = (await this.ctx.preferences.get<string>('quickEdit.editFont'))!
-    if (prefEditFont.startsWith('$')) {
+    if (PluginQuickEdit.BUILT_IN_FONT_OPTIONS.includes(prefEditFont)) {
       const editfont =
-        prefEditFont === '$preferences'
+        prefEditFont === 'preferences'
           ? this.ctx.wiki.userOptions?.editfont || 'monospace'
-          : prefEditFont.slice(1)
+          : prefEditFont
       return {
         className: `mw-editfont-${editfont}`,
         fontFamily: '',
