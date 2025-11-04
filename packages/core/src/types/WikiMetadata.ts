@@ -1,15 +1,12 @@
-export interface WikiMetadata {
-  general: WikiSiteInfo
+export interface WikiSiteInfo {
+  general: WikiSiteGeneralInfo
   specialpagealiases: WikiSpecialPageAlias[]
   namespacealiases: WikiNameSpaceAlias[]
   magicwords: WikiMagicWord[]
-  userinfo: WikiUserInfo & {
-    options: WikiUserOptions
-  }
   namespaces: Record<string, WikiNamespace>
 }
 
-export interface WikiSiteInfo {
+export interface WikiSiteGeneralInfo {
   mainpage: string
   base: string
   sitename: string
@@ -108,12 +105,13 @@ export interface WikiMagicWord {
   'case-sensitive': boolean
 }
 
-export type WikiUserInfo = {
+export interface WikiUserInfo extends Partial<WikiUserBlockInfo> {
   id: number
   name: string
   groups: string[]
   rights: string[]
-} & Partial<WikiUserBlockInfo>
+  options: WikiUserOptions
+}
 
 export interface WikiUserBlockInfo {
   blockid: number

@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createWikiTitleModel } from './index.js'
-import { WikiMetadata } from '@/types/WikiMetadata.js'
-import { MOCK_SITE_METADATA } from '@/__test__/utils/constants.js'
+import { WikiSiteInfo } from '@/types/WikiMetadata.js'
+import { MOCK_SITE_INFO } from '@/__test__/utils/constants.js'
 
 // 创建测试用的 SiteMetadata
-const getSiteMetadata = (): WikiMetadata => MOCK_SITE_METADATA
+const getSiteMetadata = (): WikiSiteInfo => MOCK_SITE_INFO
 
 describe('WikiTitle', () => {
   let WikiTitle: ReturnType<typeof createWikiTitleModel>
-  let metadata: WikiMetadata
+  let metadata: WikiSiteInfo
 
   beforeEach(() => {
     metadata = getSiteMetadata()

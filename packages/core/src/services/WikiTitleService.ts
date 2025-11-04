@@ -24,7 +24,7 @@ export class WikiTitleService extends Service {
   readonly Title: WikiTitleConstructor
   constructor(public ctx: InPageEdit) {
     super(ctx, 'wikiTitle', true)
-    this.Title = createWikiTitleModel(this.ctx.wiki._raw)
+    this.Title = createWikiTitleModel(this.ctx.wiki.siteInfo)
   }
   private readonly logger = this.ctx.logger('WikiTitleService')
 

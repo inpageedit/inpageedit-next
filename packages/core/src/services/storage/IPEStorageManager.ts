@@ -17,6 +17,12 @@ export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager
     this.keys = this.db.keys.bind(this.db)
     this.values = this.db.values.bind(this.db)
     this.entries = this.db.entries.bind(this.db)
+    if (typeof this.ttl !== 'number') {
+      this.ttl = Number(this.ttl)
+    }
+    if (isNaN(this.ttl) || this.ttl <= 0) {
+      this.ttl = Infinity
+    }
   }
 
   async get(key: string, ttl = this.ttl, setter?: () => Promise<T> | T): Promise<T | null> {

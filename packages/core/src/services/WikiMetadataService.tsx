@@ -1,6 +1,7 @@
-import { Inject, InPageEdit, Logger, Schema, Service } from '@/InPageEdit'
-import { WikiMetadata, WikiUserBlockInfo } from '@/types/WikiMetadata'
+import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit'
+import { WikiSiteInfo, WikiUserBlockInfo, WikiUserInfo } from '@/types/WikiMetadata'
 import { AbstractIPEStorageManager } from './storage'
+import { MwApiParams } from 'wiki-saikou'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -11,30 +12,48 @@ declare module '@/InPageEdit' {
   }
 }
 
+interface WikiMetadataKindMap {
+  siteinfo: WikiSiteInfo
+  userinfo: WikiUserInfo
+}
+
 @Inject(['api', 'storage'])
 export class WikiMetadataService extends Service {
-  private _data!: WikiMetadata
-  private readonly CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
-  private readonly VERSION = 2
-  private db: AbstractIPEStorageManager<WikiMetadata>
-  private logger: Logger
-  private queryData = {
-    meta: 'siteinfo|userinfo',
-    siprop: 'general|specialpagealiases|namespacealiases|namespaces|magicwords',
-    uiprop: 'groups|rights|blockinfo|options',
+  private readonly _data: WikiMetadataKindMap = {} as any
+  private readonly CACHE_VERSION = 3
+  private readonly CACHE_TTL: Readonly<Record<keyof WikiMetadataKindMap, number>> = {
+    siteinfo: 1000 * 60 * 60 * 24 * 3, // 3 days
+    userinfo: 1000 * 60 * 30, // 30 minutes
   }
+  private readonly QUERY_DATA: Readonly<Record<keyof WikiMetadataKindMap, MwApiParams>> = {
+    siteinfo: {
+      meta: 'siteinfo',
+      siprop: 'general|specialpagealiases|namespacealiases|namespaces|magicwords',
+    },
+    userinfo: { meta: 'userinfo', uiprop: 'groups|rights|blockinfo|options' },
+  }
+  private readonly CACHE_DB: AbstractIPEStorageManager<
+    WikiMetadataKindMap[keyof WikiMetadataKindMap]
+  >
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'wiki', false)
-    this.db = ctx.storage.createDatabse<WikiMetadata>('wiki-metadata', this.CACHE_TTL, this.VERSION)
-    this.logger = ctx.logger('WIKI_METADATA')
+    this.CACHE_DB = ctx.storage.createDatabse<WikiMetadataKindMap[keyof WikiMetadataKindMap]>(
+      'wiki-metadata',
+      Infinity,
+      this.CACHE_VERSION
+    )
   }
 
-  get api() {
+  private get logger() {
+    return this.ctx.logger('WIKI_METADATA')
+  }
+
+  private get api() {
     return this.ctx.api
   }
 
-  mwConfig = {
+  readonly mwConfig = {
     get: ((key: string, fallback?: any) => {
       return window?.mw?.config?.get?.(key, fallback) ?? fallback
     }) as typeof mw.config.get,
@@ -47,17 +66,9 @@ export class WikiMetadataService extends Service {
   }
 
   protected async start(): Promise<void> {
-    const cached = await this.fetchFromCache()
-    if (cached) {
-      this._data = cached
-      this.logger.debug('Using cached')
-    } else {
-      const meta = await this.fetchFromApi()
-      this.saveToCache(meta)
-      this._data = meta
-      this.logger.debug('Fetched from API')
-    }
-    this.logger.info('loaded', this._data)
+    await Promise.all(
+      Object.keys(this.QUERY_DATA).map((key) => this.initData(key as keyof WikiMetadataKindMap))
+    )
 
     this.ctx.set('getUrl', this.getUrl.bind(this))
     this.ctx.set('getSciprtUrl', this.getSciprtUrl.bind(this))
@@ -81,85 +92,115 @@ export class WikiMetadataService extends Service {
                   <strong>Groups</strong>: {this.userGroups.join(', ') || 'None'}
                 </li>
               </ul>
-              <p>
+              <div>
+                <p>
+                  If the information shown above is incorrect (for example, the username is not
+                  yours), click the button below.
+                </p>
                 <button
                   onClick={(e) => {
                     e.preventDefault()
-                    this.invalidateCache().then(() => {
+                    Promise.all(
+                      Object.keys(this.QUERY_DATA).map((key) =>
+                        this.invalidateCache(key as keyof WikiMetadataKindMap)
+                      )
+                    ).then(() => {
                       window.location.reload()
                     })
                   }}
                 >
-                  Clear caches and reload page
+                  Refresh cache and reload
                 </button>
-              </p>
+              </div>
             </div>
           ).role('raw-html'),
         }).description('WikiMetadataService'),
         'general'
       )
     })
+
+    this.logger.info('All initialized', this._data)
   }
 
-  get metadataCacheId() {
-    return this.ctx.api.config.baseURL
+  async initData<T extends keyof WikiMetadataKindMap>(kind: T, noCache = false) {
+    const cached = noCache ? null : await this.fetchFromCache(kind)
+    if (cached) {
+      this._data[kind] = cached
+      this.logger.debug('Using cached', kind, cached)
+      return cached
+    } else {
+      const data = await this.fetchFromApi(kind)
+      this.saveToCache(kind, data)
+      this._data[kind] = data
+      this.logger.debug('Fetched from API', kind, data)
+      return data
+    }
   }
 
-  async fetchFromApi() {
+  private getCacheKey<T extends keyof WikiMetadataKindMap>(kind: T): string {
+    return `${kind}:${new URL(this.ctx.api.config.baseURL).pathname.replace(/^\//, '')}`
+  }
+
+  async fetchFromApi<T extends keyof WikiMetadataKindMap>(
+    kind: T
+  ): Promise<WikiMetadataKindMap[T]> {
     return this.api
       .get({
         action: 'query',
-        ...this.queryData,
+        ...this.QUERY_DATA[kind],
       })
       .then(({ data }) => {
-        if (typeof data?.query?.general === 'undefined') {
-          throw new Error('Invalid siteinfo')
+        if (typeof data?.query !== 'object' || data.query === null) {
+          throw new Error('Invalid query data', { cause: data })
         }
-        return data.query
+        if (kind === 'siteinfo') {
+          return data.query as WikiMetadataKindMap[T]
+        } else {
+          return (data.query?.[kind] || data.query) as WikiMetadataKindMap[T]
+        }
       })
       .catch((e) => {
-        this.logger.error('Failed to fetch metadata', e)
+        this.logger.error('Failed to fetch', e)
         return Promise.reject(e)
       })
   }
 
-  async fetchFromCache() {
-    const key = this.metadataCacheId
-    const userId = this.mwConfig.get('wgUserId', 0)
-    const data = await this.db.get(key)
-    if (data && typeof data === 'object' && !!data.general && data.userinfo.id === userId) {
-      return data
-    } else {
-      this.logger.info(data ? 'Cache mis-match' : 'Missing cache')
-      this.invalidateCache()
-      return null
-    }
+  async fetchFromCache<T extends keyof WikiMetadataKindMap>(
+    kind: T
+  ): Promise<WikiMetadataKindMap[T] | null> {
+    const key = this.getCacheKey(kind)
+    const data = await this.CACHE_DB.get(key, this.CACHE_TTL[kind])
+    return data as WikiMetadataKindMap[T] | null
   }
-  async saveToCache(data: WikiMetadata) {
-    const key = this.metadataCacheId
-    return this.db.set(key, data)
+  async saveToCache<T extends keyof WikiMetadataKindMap>(kind: T, data: WikiMetadataKindMap[T]) {
+    const key = this.getCacheKey(kind)
+    return this.CACHE_DB.set(key, data)
   }
-  async invalidateCache() {
-    const key = this.metadataCacheId
-    return this.db.delete(key)
+  async invalidateCache<T extends keyof WikiMetadataKindMap>(kind: T) {
+    const key = this.getCacheKey(kind)
+    return this.CACHE_DB.delete(key)
   }
 
-  // shortcuts
-
+  // ====== shortcuts ======
   get _raw() {
     return this._data
   }
+
+  // siteInfo
+  get siteInfo() {
+    return this._data.siteinfo
+  }
   get general() {
-    return this._data.general
+    return this.siteInfo.general
   }
   get specialPageAliases() {
-    return this._data.specialpagealiases
+    return this.siteInfo.specialpagealiases
   }
   get namespaceAliases() {
-    return this._data.namespacealiases
+    return this.siteInfo.namespacealiases
   }
   get namespaces() {
-    return this._data.namespaces
+    return this.siteInfo.namespaces
   }
   get namespaceMap() {
     const map = Object.values(this.namespaces)
@@ -177,8 +218,10 @@ export class WikiMetadataService extends Service {
     return map
   }
   get magicWords() {
-    return this._data.magicwords
+    return this.siteInfo.magicwords
   }
+
+  // userInfo
   get userInfo() {
     return this._data.userinfo
   }
@@ -267,7 +310,7 @@ export class WikiMetadataService extends Service {
 
   /** Get mainpage URL */
   getMainpageUrl(params?: Record<string, any>): string {
-    return makeURL(this._data.general.base, params).toString()
+    return makeURL(this.siteInfo.general.base, params).toString()
   }
   /** Get page URL by title */
   getUrl(title: string, params?: Record<string, any>): string
