@@ -28,6 +28,8 @@ export interface IDBPlusOptions {
 export class IDBPlus<K extends IDBValidKey = IDBValidKey, V = any>
   implements AsyncIterable<[K, V]>
 {
+  static readonly version = import.meta.env.__VERSION__
+
   constructor(
     readonly dbName: string,
     readonly storeName: string,

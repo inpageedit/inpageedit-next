@@ -5,7 +5,7 @@
   "author": "dragon-fish",
   "license": "MIT",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
@@ -14,17 +14,21 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/index.d.ts",
       "source": "./src/index.ts",
-      "import": "./dist/index.js",
-      "require": "./lib/index.cjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./helper": {
+      "source": "./src/helper.ts",
+      "types": "./dist/helper.d.ts",
+      "import": "./dist/helper.mjs",
+      "require": "./dist/helper.cjs"
     }
   },
   "scripts": {
     "dev": "vite",
-    "build": "run-p build:*",
-    "build:import": "cross-env VITE_BUILD_FORMAT=import vite build",
-    "build:bundle": "cross-env VITE_BUILD_FORMAT=bundle vite build",
+    "build": "unbuild",
     "prepublish": "npm run build",
     "clean": "rimraf dist/* lib/*",
     "format": "prettier --write ./src",
@@ -40,6 +44,7 @@
     "npm-run-all2": "^8.0.4",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.3",
+    "unbuild": "^3.6.1",
     "unplugin-dts": "1.0.0-beta.6",
     "vite": "^7.1.11"
   },
