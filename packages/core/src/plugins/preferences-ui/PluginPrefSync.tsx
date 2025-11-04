@@ -118,6 +118,9 @@ export class PluginPrefSync extends BasePlugin {
                       modal?.setLoadingState(false)
                     }
                   })
+                  input.addEventListener('cancel', () => {
+                    modal?.setLoadingState(false)
+                  })
                   input.click()
                 }}
               >
