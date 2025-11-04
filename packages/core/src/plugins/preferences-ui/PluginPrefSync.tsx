@@ -24,11 +24,11 @@ export class PluginPrefSync extends BasePlugin {
       index: 98,
     })
     ctx.preferences.registerCustomConfig(
-      'pref-sync',
+      'pref-sync-user-page',
       Schema.object({
-        'preferences-ui-pref-sync': Schema.const(
+        'pref-sync-user-page': Schema.const(
           <section>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <button
                 onClick={(e) => {
                   e.preventDefault()
@@ -38,24 +38,7 @@ export class PluginPrefSync extends BasePlugin {
                   modal?.setLoadingState(true)
                   this.importFromUserPage()
                     .then((record) => {
-                      const count = Object.keys(record ?? {}).length
-                      this.ctx.modal.notify('success', {
-                        title: 'Preferences Imported',
-                        content: (
-                          <div>
-                            <div>
-                              Successfully imported {count} {count > 1 ? 'settings' : 'setting'}:
-                            </div>
-                            <ol style={{ listStyle: 'auto', paddingLeft: '1em' }}>
-                              {Object.entries(record ?? {}).map(([key, value]) => (
-                                <li key={key}>
-                                  {key}: {value?.toString()}
-                                </li>
-                              ))}
-                            </ol>
-                          </div>
-                        ),
-                      })
+                      this.notifyImportSuccess(record)
                       modal?.close?.()
                     })
                     .finally(() => {
@@ -75,7 +58,7 @@ export class PluginPrefSync extends BasePlugin {
                   modal?.setLoadingState(true)
                   this.exportToUserPage()
                     .then((title) => {
-                      this.ctx.modal.notify('success', {
+                      ctx.modal.notify('success', {
                         title: 'Preferences Exported',
                         content: (
                           <p>
@@ -99,10 +82,99 @@ export class PluginPrefSync extends BasePlugin {
               </button>
             </div>
           </section>
-        )
-          .description('Backup your preferences to user page')
-          .role('raw-html'),
-      }).description('Backup your preferences to user page'),
+        ).role('raw-html'),
+      }).description('Backup your preferences via user page'),
+      'pref-sync'
+    )
+    ctx.preferences.registerCustomConfig(
+      'pref-sync-manual',
+      Schema.object({
+        'pref-sync-manual': Schema.const(
+          <section>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  const modal = ctx.preferencesUI.getExistingModal()
+                  modal?.setLoadingState(true)
+                  const input = document.createElement('input')
+                  input.type = 'file'
+                  input.accept = 'application/json'
+                  input.addEventListener('change', async (e) => {
+                    try {
+                      const file = (e.target as HTMLInputElement).files?.[0]
+                      if (!file) {
+                        return
+                      }
+                      const record = await this.importFromFile(file)
+                      this.notifyImportSuccess(record)
+                      modal?.close?.()
+                    } catch (e) {
+                      ctx.modal.notify('error', {
+                        title: 'Import failed',
+                        content: e instanceof Error ? e.message : String(e),
+                      })
+                    } finally {
+                      modal?.setLoadingState(false)
+                    }
+                  })
+                  input.click()
+                }}
+              >
+                Import from file
+              </button>
+              <button
+                onClick={async (e) => {
+                  e.preventDefault()
+                  const data = await ctx.preferences.getExportableRecord()
+                  const json = JSON.stringify(data, null, 2)
+                  ctx.modal.dialog(
+                    {
+                      title: 'Save to file',
+                      content: (
+                        <div>
+                          <label htmlFor="data">Your InPageEdit preferences:</label>
+                          <textarea
+                            name="data"
+                            id="data"
+                            rows={10}
+                            value={json}
+                            readOnly
+                            style={{ width: '100%' }}
+                          ></textarea>
+                        </div>
+                      ),
+                      buttons: [
+                        {
+                          label: 'Copy',
+                          method: () => {
+                            navigator.clipboard.writeText(json)
+                            ctx.modal.notify('success', {
+                              content: 'Copied to clipboard',
+                            })
+                          },
+                        },
+                        {
+                          label: 'Download',
+                          method: () => {
+                            const a = document.createElement('a')
+                            a.href = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`
+                            a.download = `ipe-prefs-${new Date().toISOString()}.json`
+                            a.click()
+                          },
+                        },
+                      ],
+                    },
+                    () => {}
+                  )
+                }}
+              >
+                Save to file
+              </button>
+            </div>
+          </section>
+        ).role('raw-html'),
+      }).description('Backup your preferences to file'),
       'pref-sync'
     )
   }
@@ -129,7 +201,6 @@ export class PluginPrefSync extends BasePlugin {
    * 从用户页加载配置
    */
   async importFromUserPage(): Promise<Record<string, unknown>> {
-    const ctx = this.ctx
     const title = this.getUserPrefsPageTitle()
     if (!title) {
       this.logger.debug('Cannot get user page title, skipping load')
@@ -158,21 +229,10 @@ export class PluginPrefSync extends BasePlugin {
         throw error
       }
 
-      // 解析 JSON 内容
-      let preferences: Record<string, any>
-      try {
-        preferences = await response.json()
-      } catch (error) {
-        this.logger.warn('Failed to parse user preferences JSON:', error)
-        return {}
-      }
-
-      for (const [key, value] of Object.entries(preferences)) {
-        await ctx.preferences.set(key, value)
-      }
-
+      const blob = await response.blob()
+      const changed = await this.importFromFile(blob)
       this.logger.info('Loaded preferences from user page:', title)
-      return preferences
+      return changed
     } catch (error) {
       this.logger.error('Failed to load preferences from user page:', error)
       return {}
@@ -189,7 +249,7 @@ export class PluginPrefSync extends BasePlugin {
       throw new Error('Cannot get user page title')
     }
 
-    const json = await ctx.preferences.getExportable()
+    const json = await ctx.preferences.getExportableRecord()
     const text = JSON.stringify(json, null, 2)
 
     try {
@@ -209,5 +269,32 @@ export class PluginPrefSync extends BasePlugin {
       this.logger.error('Failed to export preferences to user page:', error)
       throw error
     }
+  }
+
+  async importFromFile(input: Blob): Promise<Record<string, unknown>> {
+    const text = await input.text()
+    const data = JSON.parse(text)
+    const changed = await this.ctx.preferences.setMany(data)
+    return changed
+  }
+
+  private notifyImportSuccess(configs?: Record<string, unknown>) {
+    const keys = Object.keys(configs ?? {})
+    const count = keys.length
+    return this.ctx.modal.notify('success', {
+      title: 'Preferences Imported',
+      content: (
+        <section>
+          <p>
+            Successfully imported {count || ''} {count !== 1 ? 'settings' : 'setting'}:
+          </p>
+          <ol style={{ listStyle: 'auto', paddingLeft: '1em' }}>
+            {keys.map((key) => (
+              <li key={key}>{key}</li>
+            ))}
+          </ol>
+        </section>
+      ),
+    })
   }
 }

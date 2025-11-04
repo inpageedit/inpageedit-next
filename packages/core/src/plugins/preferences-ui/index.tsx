@@ -5,6 +5,8 @@ import { CustomIPEModal } from '@/services/ModalService.js'
 declare module '@/InPageEdit' {
   export interface InPageEdit {
     preferencesUI: PluginPreferencesUI
+    // Alias
+    prefsModal: PluginPreferencesUI
   }
 }
 
@@ -13,6 +15,7 @@ export class PluginPreferencesUI extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'preferences-ui')
     ctx.set('preferencesUI', this)
+    ctx.set('prefsModal', this)
 
     ctx.preferences.defineCategory({
       name: 'about',
@@ -104,11 +107,10 @@ export class PluginPreferencesUI extends BasePlugin {
   protected stop(): Promise<void> | void {}
 
   _latestModal: CustomIPEModal | null = null
-  getExistingModal() {
-    return this._latestModal
-  }
-
   showModal() {
+    if (this._latestModal && !this._latestModal.isDestroyed) {
+      return this._latestModal
+    }
     const modal = this.ctx.modal.show({
       className: 'ipe-preference compact-buttons',
       sizeClass: 'small',
@@ -167,6 +169,14 @@ export class PluginPreferencesUI extends BasePlugin {
       app.unmount()
       this._latestModal = null
     })
+
+    return modal
+  }
+  closeModal() {
+    this._latestModal?.close()
+  }
+  getExistingModal() {
+    return this._latestModal
   }
 
   createForm() {

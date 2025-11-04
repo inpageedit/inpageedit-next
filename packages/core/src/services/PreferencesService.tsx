@@ -5,6 +5,8 @@ import { computeFallback, ComputeAble } from '@/utils/computeable.js'
 declare module '@/InPageEdit' {
   export interface InPageEdit {
     preferences: PreferencesService
+    // Alias
+    prefs: PreferencesService
   }
 }
 
@@ -30,6 +32,7 @@ export class PreferencesService extends Service {
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'preferences', true)
+    ctx.set('prefs', this)
     this.db = ctx.storage.createDatabse<any>('preferences', Infinity)
   }
 
@@ -73,6 +76,22 @@ export class PreferencesService extends Service {
     }
   }
 
+  async setMany(record: Record<string, unknown>) {
+    const defaults = this.loadDefaultConfigs()
+    const filtered = Object.fromEntries(
+      Object.entries(record).filter(([key, value]) => {
+        const defaultValue = defaults[key]
+        return value !== void 0 && value !== defaultValue
+      })
+    )
+    await Promise.all(
+      Object.entries(filtered).map(([key, value]) => {
+        return this.set(key, value as any)
+      })
+    )
+    return filtered
+  }
+
   /**
    * 获取全部注册的配置项，以及正在生效的值
    */
@@ -87,27 +106,24 @@ export class PreferencesService extends Service {
   }
 
   /**
-   * 获取可导出的配置项，去除了与默认值相同的项
+   * Get exportable configurations
+   * - exclude values that are the same as the default value
+   * - exclude invalid or undefined values
+   * - sort by keys
    */
-  async getExportable() {
-    const all = await this.getAll()
+  async getExportableRecord(configs?: Record<string, unknown>) {
+    configs ??= await this.getAll()
     const defaults = this.loadDefaultConfigs()
 
-    // 移除内部使用的键
     const out: Record<string, any> = {}
-    Object.entries(defaults).forEach(([key, value]) => {
-      const pref = all[key]
-      if (pref !== value) {
-        out[key] = pref
-      }
-    })
-    // 统一排序，确保导出顺序一致
-    Object.keys(out)
-      .sort((a, b) => a.localeCompare(b))
-      .forEach((key) => {
-        out[key] = out[key]
+    Object.entries(defaults)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([key, value]) => {
+        const pref = configs[key]
+        if (pref !== void 0 && pref !== value) {
+          out[key] = pref
+        }
       })
-
     return out
   }
 
