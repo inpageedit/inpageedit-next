@@ -120,6 +120,18 @@
     }
   }
 
+  .ipe-quickEdit__textarea--monospace {
+    font-family: monospace;
+  }
+
+  .ipe-quickEdit__textarea--sans-serif {
+    font-family: sans-serif;
+  }
+
+  .ipe-quickEdit__textarea--serif {
+    font-family: serif;
+  }
+
   .ipe-input-box {
     label {
       display: block;
@@ -268,4 +280,9 @@ svg.ipe-icon {
       bottom: 5rem;
     }
   }
+}
+
+// Shameful fix for Fandom
+body.skin-fandomdesktop #ipe-edit-toolbox {
+  bottom: 3em;
 }
