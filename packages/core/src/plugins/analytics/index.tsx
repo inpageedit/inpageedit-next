@@ -24,15 +24,6 @@ export interface IPEBeaconUsage {
 }
 
 @Inject(['wiki', 'preferences'])
-@RegisterPreferences(
-  Schema.object({
-    'analytics.enabled': Schema.boolean()
-      .description(
-        'Share your usage data with us to help us improve InPageEdit. (Does NOT contain your confidential information)'
-      )
-      .default(false),
-  })
-)
 export class PluginAnalytics extends BasePlugin {
   private _usages: IPEBeaconUsage[] = []
   private _timer: ReturnType<typeof setInterval> | null = null
@@ -46,6 +37,65 @@ export class PluginAnalytics extends BasePlugin {
     this._showConfirmNotify()
     this._initPluginListeners()
     ctx.set('analytics', this)
+  }
+
+  protected start(): Promise<void> | void {
+    const ctx = this.ctx
+    ctx.preferences.registerCustomConfig(
+      'analytics',
+      Schema.object({
+        'analytics._intro': Schema.const(
+          <section>
+            <h3>InPageEdit Analytics</h3>
+            <p>
+              InPageEdit Analytics is the companion analytics platform for the InPageEdit NEXT
+              project. By collecting and displaying usage data from around the world, it helps
+              developers and the community better understand how the tool is used, optimize feature
+              design, and enhance user experience.
+            </p>
+            <h4>What data will be collected?</h4>
+            <ul style={{ listStyle: 'auto', paddingLeft: '1.5em' }}>
+              <li>Usage data: What features you use, what pages you edit, etc.</li>
+              <li>User information: Your username, user ID.</li>
+              <li>Site information: The wiki you are editing.</li>
+            </ul>
+            <p>
+              <strong>NO sensitive data will be collected.</strong>
+            </p>
+            <ul style={{ listStyle: 'auto', paddingLeft: '1.5em' }}>
+              <li>
+                <a href={this.analyticsDashUrl} target="_blank" rel="noopener noreferrer">
+                  Analytics Platform →
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`${this.analyticsDashUrl}/_redirect/user?${new URLSearchParams({
+                    siteApi: this.ctx.wiki.getSciprtUrl('api'),
+                    mwUserId: this.ctx.wiki.userInfo.id.toString(),
+                  }).toString()}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  My Data →
+                </a>
+              </li>
+            </ul>
+          </section>
+        ).role('raw-html'),
+        'analytics.enabled': Schema.boolean()
+          .description('Share my usage data with the community.')
+          .default(false),
+      }).description('Analytics settings'),
+      'general'
+    )
+  }
+
+  private get analyticsDashUrl() {
+    return import.meta.env.PROD ? Endpoints.ANALYTICS_DASH_URL : 'http://localhost:20105'
+  }
+  private get analyticsApiBase() {
+    return import.meta.env.PROD ? Endpoints.ANALYTICS_API_BASE : 'http://localhost:20105/api/v6'
   }
 
   private _setupTimer() {
@@ -188,9 +238,7 @@ export class PluginAnalytics extends BasePlugin {
     }
     const body = JSON.stringify(payload)
 
-    const endpoint = import.meta.env.PROD
-      ? `${Endpoints.ANALYTICS_API_BASE}/submit`
-      : `http://localhost:20105/api/v6/submit`
+    const endpoint = `${this.analyticsApiBase}/submit`
 
     const beaconOK = navigator?.sendBeacon?.(endpoint, body)
     if (beaconOK) {
