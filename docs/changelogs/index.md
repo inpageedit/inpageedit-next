@@ -23,6 +23,26 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.11.0'>
+
+- fix: ensure consistent export order in PreferencesService
+  - 导出配置时，确保键值对的顺序始终一致，以防出现不必要的差异。
+- fix: quick-edit beforeunload
+  - 修复了段落编辑时总是提示是否离开页面的问题。
+- feat: + custom font option (#5 by @t7ru , #6 by @dragon-fish)
+  - 添加了 `quickEdit.editFont` 配置项，现在你可以选择使用系统字体、等宽字体、sans-serif 字体或 serif 字体。
+- feat: export prefs to file
+  - 支持将偏好设置导出为 JSON 文件，方便备份和分享。
+- refactor!: split siteinfo/userinfo caches
+  - 将站点信息和用户信息缓存拆分为两个独立的缓存
+  - 现在 userinfo 采用更短的缓存时间，以便更快地更新用户信息。
+- feat: add event emissions for quick actions and update analytics endpoints
+  - 补充了更多的触发事件
+- feat: + PluginAnalytics
+  - 添加了 Analytics 插件，现在可以选择加入统计数据收集，帮助我们更好地了解用户使用情况，优化产品设计，提升用户体验。
+
+</ChangeLog>
+
 <ChangeLog version='0.10.0'>
 
 - feat: introduce idb-plus
