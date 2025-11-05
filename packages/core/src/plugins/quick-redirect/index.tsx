@@ -1,9 +1,18 @@
 import { InPageEdit } from '@/InPageEdit'
+import { IPEModal } from '@inpageedit/modal'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
     quickRedirect: PluginQuickRedirect['quickRedirect']
     redirectPage: PluginQuickRedirect['redirectPage']
+  }
+  interface Events {
+    'quick-redirect/init-options'(payload: {
+      ctx: InPageEdit
+      options: Partial<QuickRedirectOptions>
+    }): void
+    'quick-redirect/show-modal'(payload: { ctx: InPageEdit; modal: IPEModal }): void
+    'quick-redirect/submit'(payload: { ctx: InPageEdit; payload: RedirectPageOptions }): void
   }
 }
 
@@ -74,6 +83,10 @@ export class PluginQuickRedirect extends BasePlugin {
   protected stop(): Promise<void> | void {}
 
   quickRedirect(options?: Partial<QuickRedirectOptions>) {
+    if (!options) {
+      options = {}
+    }
+    this.ctx.emit('quick-redirect/init-options', { ctx: this.ctx, options })
     const modal = this.ctx.modal
       .createObject({
         title: 'Quick Redirect',
@@ -114,6 +127,7 @@ export class PluginQuickRedirect extends BasePlugin {
               })
               return
             }
+            this.ctx.emit('quick-redirect/submit', { ctx: this.ctx, payload: options })
             modal.setLoadingState(true)
             this.redirectPage(options)
               .then((res) => {
@@ -166,6 +180,8 @@ export class PluginQuickRedirect extends BasePlugin {
         },
       },
     ])
+
+    this.ctx.emit('quick-redirect/show-modal', { ctx: this.ctx, modal })
 
     return modal.show()
   }

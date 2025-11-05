@@ -3,10 +3,27 @@ import { type QuickEditEventPayload } from '@/plugins/quick-edit'
 import { IPEModal, IPEModalOptions } from '@inpageedit/modal'
 import { DiffTable, DiffTableEvent } from './components/DiffTable'
 import { MwApiResponse } from 'wiki-saikou'
+import { IWikiPage } from '@/models/WikiPage/index.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
     quickDiff: PluginQuickDiff
+  }
+  interface Events {
+    'quick-diff/init-options'(payload: {
+      ctx: InPageEdit
+      options: Partial<CompareApiRequestOptions>
+    }): void
+    'quick-diff/loaded'(payload: {
+      ctx: InPageEdit
+      modal: IPEModal
+      compare: CompareApiResponse['compare']
+    }): void
+    'quick-diff/quick-edit-modal'(payload: {
+      ctx: InPageEdit
+      modal: IPEModal
+      wikiPage: IWikiPage
+    }): void
   }
 }
 
@@ -138,6 +155,12 @@ export class PluginQuickDiff extends BasePlugin {
             return this.ctx.modal.notify('info', { title: 'Quick Diff', content: 'No changes' })
           }
 
+          this.ctx.emit('quick-diff/quick-edit-modal', {
+            ctx: this.ctx,
+            modal,
+            wikiPage,
+          })
+
           latestDiffModal = this.comparePages(
             {
               fromtitle: pageTitle,
@@ -197,6 +220,11 @@ export class PluginQuickDiff extends BasePlugin {
     } else {
       modal.removeButton('*')
     }
+
+    this.ctx.emit('quick-diff/init-options', {
+      ctx: this.ctx,
+      options,
+    })
 
     modal.setContent(
       <section
@@ -284,6 +312,12 @@ export class PluginQuickDiff extends BasePlugin {
             },
           })
         }
+
+        this.ctx.emit('quick-diff/loaded', {
+          ctx: this.ctx,
+          modal,
+          compare,
+        })
       })
       .catch((err) => {
         modal.setContent(

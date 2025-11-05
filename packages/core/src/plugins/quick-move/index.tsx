@@ -1,9 +1,22 @@
 import { Inject, InPageEdit } from '@/InPageEdit'
+import { IPEModal } from '@inpageedit/modal'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
     quickMove: PluginQuickMove['quickMove']
     movePage: PluginQuickMove['movePage']
+  }
+  interface Events {
+    'quick-move/init-options'(payload: {
+      ctx: InPageEdit
+      options: Partial<QuickMoveOptions>
+    }): void
+    'quick-move/show-modal'(payload: { ctx: InPageEdit; modal: IPEModal }): void
+    'quick-move/submit'(payload: {
+      ctx: InPageEdit
+      modal: IPEModal
+      payload: MovePageOptions
+    }): void
   }
 }
 
@@ -120,6 +133,7 @@ export class PluginQuickMove extends BasePlugin {
               })
               return
             }
+            this.ctx.emit('quick-move/submit', { ctx: this.ctx, modal, payload: options })
             modal.setLoadingState(true)
             this.movePage(options)
               .then(() => {

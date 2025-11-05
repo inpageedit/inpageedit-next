@@ -9,6 +9,8 @@ declare module '@/InPageEdit' {
   interface Events {
     'toolbox/button-added'(payload: { ctx: InPageEdit; button: HTMLElement }): void
     'toolbox/button-removed'(payload: { ctx: InPageEdit; id: string }): void
+    'toolbox/button-clicked'(payload: { ctx: InPageEdit; button: HTMLElement; id: string }): void
+    'toolbox/toggle'(payload: { ctx: InPageEdit; opened: boolean }): void
   }
 }
 
@@ -183,11 +185,19 @@ export class PluginToolbox extends Service {
     const button = (
       <li class="btn-tip-group" id={id} onClick={onClick} {...itemProps}>
         <div class="btn-tip">{tooltip}</div>
-        <button id={`${id}-btn`} class="ipe-toolbox-btn" {...buttonProps}>
+        <button id={`${id}-btn`} data-id={payload.id} class="ipe-toolbox-btn" {...buttonProps}>
           {icon}
         </button>
       </li>
     )
+
+    button.addEventListener('click', (e) => {
+      this.ctx.emit('toolbox/button-clicked', {
+        ctx: this.ctx,
+        button: e.target as HTMLElement,
+        id: payload.id,
+      })
+    })
 
     if (typeof index === 'number') {
       if (index <= 0) {
@@ -238,5 +248,6 @@ export class PluginToolbox extends Service {
     this.container.classList.toggle('is-persistent', newPersistent)
     this.container.classList.remove('is-hovered')
     this.ctx.preferences.set('toolboxAlwaysShow', newPersistent)
+    this.ctx.emit('toolbox/toggle', { ctx: this.ctx, opened: this.isOpened })
   }
 }

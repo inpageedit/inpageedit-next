@@ -16,6 +16,7 @@ declare module '@/InPageEdit' {
     'quick-edit/show-modal'(payload: Omit<QuickEditEventPayload, 'wikiPage'>): void
     'quick-edit/wiki-page'(payload: QuickEditEventPayload): void
     'quick-edit/edit-notice'(payload: QuickEditEventPayload & { editNotices: ReactNode[] }): void
+    'quick-edit/submit'(payload: QuickEditSubmitPayload & { ctx: InPageEdit }): void
   }
 }
 
@@ -473,6 +474,16 @@ export class PluginQuickEdit extends BasePlugin {
     const createonly = payload.createonly
     const watchlist = payload.watchlist
     const section = payload.section
+
+    this.ctx.emit('quick-edit/submit', {
+      ctx: this.ctx,
+      wikiPage,
+      summary,
+      text,
+      minor,
+      createonly,
+      watchlist,
+    })
 
     return wikiPage.edit(
       {

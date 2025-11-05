@@ -7,6 +7,20 @@ declare module '@/InPageEdit' {
   interface InPageEdit {
     inArticleLinks: PluginInArticleLinks
   }
+  interface Events {
+    'in-article-links/anchor-parsed'(payload: {
+      ctx: InPageEdit
+      anchor: HTMLAnchorElement
+      info: InArticleWikiAnchorMetadata
+    }): void
+    'in-article-links/anchor-clicked'(payload: {
+      ctx: InPageEdit
+      anchor: HTMLAnchorElement
+      info: InArticleWikiAnchorMetadata
+      event: MouseEvent
+      action: 'quickEdit' | 'quickDiff'
+    }): void
+  }
 }
 
 export interface InArticleWikiAnchorMetadata extends WikiLinkMetadata {
@@ -107,6 +121,11 @@ export class PluginInArticleLinks extends BasePlugin<{
       ...linkInfo,
     }
     this._cachedAnchorInfo.set(anchor, info)
+    this.ctx.emit('in-article-links/anchor-parsed', {
+      ctx: this.ctx,
+      anchor,
+      info,
+    })
     return info
   }
 
@@ -153,7 +172,8 @@ export class PluginInArticleLinks extends BasePlugin<{
           }
           return false
         })
-        anchors.forEach(({ $el, title, pageId, params }) => {
+        anchors.forEach((info) => {
+          const { $el, title, pageId, params } = info
           if ($el.dataset.ipeEditMounted) {
             return
           }
@@ -197,6 +217,13 @@ export class PluginInArticleLinks extends BasePlugin<{
               }}
               onClick={(e) => {
                 e.preventDefault()
+                this.ctx.emit('in-article-links/anchor-clicked', {
+                  ctx: this.ctx,
+                  anchor: $el,
+                  info,
+                  event: e,
+                  action: 'quickEdit',
+                })
                 ctx.quickEdit.showModal(payload)
               }}
             >
@@ -228,7 +255,8 @@ export class PluginInArticleLinks extends BasePlugin<{
         const anchors = this.scanAnchors($content.get(0)!, ({ params, title }) => {
           return !!(params.has('diff') || title?.isSpecial('diff'))
         })
-        anchors.forEach(({ $el, title, params }) => {
+        anchors.forEach((info) => {
+          const { $el, title, params } = info
           if ($el.dataset.ipeDiffMounted) {
             return
           }
@@ -270,6 +298,13 @@ export class PluginInArticleLinks extends BasePlugin<{
               }}
               onClick={(e) => {
                 e.preventDefault()
+                this.ctx.emit('in-article-links/anchor-clicked', {
+                  ctx: this.ctx,
+                  anchor: $el,
+                  info,
+                  event: e,
+                  action: 'quickDiff',
+                })
                 ctx.quickDiff.comparePages(compare)
               }}
             >

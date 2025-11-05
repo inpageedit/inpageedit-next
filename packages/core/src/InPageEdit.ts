@@ -105,6 +105,7 @@ export class InPageEdit extends Context {
   // TODO: 这里不应该硬编码，暂时先这样
   async #initCorePlugins() {
     const plugins = [
+      import('@/plugins/analytics/index.js').then(({ PluginAnalytics }) => PluginAnalytics),
       import('@/plugins/in-article-links/index.js').then(
         ({ PluginInArticleLinks }) => PluginInArticleLinks
       ),

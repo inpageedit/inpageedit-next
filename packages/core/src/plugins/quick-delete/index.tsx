@@ -19,6 +19,7 @@ declare module '@/InPageEdit' {
     'quick-delete/delete-notice'(
       payload: QuickDeleteInitPayload & { deleteNotices: ReactNode[] }
     ): void
+    'quick-delete/submit'(payload: QuickDeleteSubmitPayload & { ctx: InPageEdit }): void
   }
 }
 
@@ -320,6 +321,11 @@ export class PluginQuickDelete extends BasePlugin {
                     this.ctx.modal.notify('success', {
                       title: 'Deletion Successful',
                       content: `The page "${wikiPage.pageInfo.title}" has been deleted.`,
+                    })
+                    this.ctx.emit('quick-delete/submit', {
+                      ctx: this.ctx,
+                      wikiPage,
+                      reason,
                     })
                   })
                   .catch((error) => {
