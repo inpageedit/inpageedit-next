@@ -66,6 +66,11 @@ export default withMermaid(
       },
     },
 
+    head: [
+      // Algolia site verification
+      ['meta', { name: 'algolia-site-verification', content: '17034004E7860468' }],
+    ],
+
     markdown: {
       config: (md) => {
         md.use(timeline)
