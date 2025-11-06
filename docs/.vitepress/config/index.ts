@@ -57,7 +57,12 @@ export default withMermaid(
         copyright: `Copyright © 2025-present <a href="https://github.com/dragon-fish" target="_blank">Dragon Fish</a>`,
       },
       search: {
-        provider: 'local',
+        provider: 'algolia',
+        options: {
+          appId: 'KRIUP3MXAF',
+          indexName: 'IPE NEXT Docs',
+          apiKey: '93a6f9f7845826528098263676ea95ed',
+        },
       },
     },
 
