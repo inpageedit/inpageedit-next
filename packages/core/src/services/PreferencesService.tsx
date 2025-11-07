@@ -23,7 +23,7 @@ export interface InPageEditPreferenceUIRegistryItem {
   category: string
 }
 
-@Inject(['storage'])
+@Inject(['storage', 'wiki'])
 export class PreferencesService extends Service {
   private db: AbstractIPEStorageManager<any>
   public customRegistries: InPageEditPreferenceUIRegistryItem[] = []
@@ -33,7 +33,10 @@ export class PreferencesService extends Service {
   constructor(public ctx: InPageEdit) {
     super(ctx, 'preferences', true)
     ctx.set('prefs', this)
-    this.db = ctx.storage.createDatabse<any>('preferences', Infinity)
+    this.db = ctx.storage.createDatabse<any>(`preferences:${ctx.wiki.userInfo.id}`, Infinity)
+    try {
+      this._migrageFromLegacyMasterDB()
+    } catch (e) {}
   }
 
   get logger() {
@@ -199,5 +202,19 @@ export class PreferencesService extends Service {
 
   getConfigCategories() {
     return this.categoryDefinitions
+  }
+
+  private async _migrageFromLegacyMasterDB() {
+    const masterDB = this.ctx.storage.createDatabse<any>('preferences', Infinity)
+    let count = 0
+    for await (const [key, record] of masterDB.entries()) {
+      if (key === '_touched') continue
+      await this.db.set(key, record.value)
+      count++
+    }
+    count && this.logger.info(`Migrated ${count} preferences from master DB`)
+    await masterDB.clear()
+    await masterDB.db.close()
+    return count
   }
 }
