@@ -65,36 +65,41 @@ export class PreferencesService extends Service {
     })
   }
 
-  async get<T extends keyof PreferencesMap>(
-    key: T,
-    fallback?: ComputeAble<PreferencesMap[T]>
-  ): Promise<PreferencesMap[T] | null> {
+  // 重载魔术：一些类型体操……
+  get<K extends keyof PreferencesMap>(
+    key: K,
+    fallback?: ComputeAble<PreferencesMap[K]>
+  ): Promise<PreferencesMap[K] | null>
+  get<U = unknown>(key: string, fallback?: ComputeAble<U>): Promise<U | null>
+  async get(key: string, fallback?: ComputeAble<unknown>): Promise<unknown | null> {
     fallback ??= () => {
-      const defaultValue = this.getDefaultValue(key)
+      const defaultValue = this.defaultOf(key as keyof PreferencesMap)
       this.logger.debug(key, `(fallback value: ${defaultValue})`)
-      return defaultValue as PreferencesMap[T]
+      return defaultValue as unknown
     }
-    const value = (await this.db.get(key, undefined)) as PreferencesMap[T] | null
-    return value !== null ? value : ((await computeFallback(fallback)) as PreferencesMap[T])
+    const value = await this.db.get(key, undefined)
+    return value !== null ? value : await computeFallback(fallback)
   }
 
-  getDefaultValue<T extends keyof PreferencesMap>(key: T): PreferencesMap[T] | undefined {
-    return (this._defaultPreferences[key] ??= this.loadDefaultConfigs()[key])
+  set<K extends keyof PreferencesMap>(
+    key: K,
+    value: PreferencesMap[K] | undefined | null
+  ): Promise<PreferencesMap[K] | void>
+  set<U = unknown>(key: string, value: U | undefined | null): Promise<U | void>
+  async set(key: string, value: unknown): Promise<unknown | void> {
+    const result = await this.setMany({ [key]: value } as any)
+    return (result as any)[key]
   }
 
-  async set<T extends keyof PreferencesMap>(
-    key: T,
-    value: PreferencesMap[T] | undefined | null
-  ): Promise<PreferencesMap[T] | void> {
-    const result = await this.setMany({ [key]: value })
-    return result[key] as PreferencesMap[T] | void
-  }
-
-  async setMany(input: {
-    [key in keyof PreferencesMap]?: PreferencesMap[key] | undefined | null
+  setMany(input: {
+    [K in keyof PreferencesMap]?: PreferencesMap[K] | undefined | null
   }): Promise<{
-    [key in keyof PreferencesMap]?: PreferencesMap[key] | undefined | null
-  }> {
+    [K in keyof PreferencesMap]?: PreferencesMap[K] | undefined | null
+  }>
+  setMany<U = unknown>(
+    input: Record<string, U | undefined | null>
+  ): Promise<Record<string, U | undefined | null>>
+  async setMany(input: Record<string, unknown>) {
     const defaults = this.loadDefaultConfigs()
     const changes: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(input)) {
@@ -105,12 +110,15 @@ export class PreferencesService extends Service {
       }
     }
     await this.db.set(changes)
-    this.ctx.emit('preferences/changed', {
-      ctx: this.ctx,
-      input,
-      changes,
-    })
+    this.ctx.emit('preferences/changed', { ctx: this.ctx, input, changes })
     return changes
+  }
+
+  defaultOf<T extends keyof PreferencesMap>(key: T): PreferencesMap[T] | undefined
+  defaultOf<U = unknown>(key: string): U | undefined
+  defaultOf(key: string) {
+    return (this._defaultPreferences[key] ??=
+      this.loadDefaultConfigs()[key as keyof PreferencesMap])
   }
 
   /**
