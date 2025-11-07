@@ -179,7 +179,9 @@ export class WikiTitleService extends Service {
       url.startsWith(this.wikiArticleBaseUrl) ||
       url.startsWith(this.wikiIndexPhpUrl) ||
       // Some servers allow index.php to be omitted
-      url.startsWith(`${this.wikiBaseUrl}/?`)
+      url.startsWith(`${this.wikiBaseUrl}/?`) ||
+      // It's the landing page
+      url === this.ctx.wiki.landingPageUrl
     )
   }
 
