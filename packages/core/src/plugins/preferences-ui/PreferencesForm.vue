@@ -12,11 +12,10 @@
 
     .tabbar-content
       SchemaFormVue(
-        v-for='(schema, index) in activeSchemas',
-        :key='`${activeCategoryName}-${index}`',
-        :schema='schema',
-        :value='initialValue',
-        @update:value='value = $event',
+        v-if='activeSchema',
+        :schema='activeSchema',
+        :value='value',
+        @update:value='value = { ...value, ...$event }',
         :validate-on-change='false',
         :i18n='{ rootLabel: "" }'
       )
@@ -26,43 +25,37 @@
 </template>
 
 <script setup lang="ts" vapor>
-import { computed, onMounted, ref, watch, shallowRef } from 'vue'
+import { computed, onMounted, ref, shallowRef } from 'vue'
 import { useIPE } from '@/utils/vueHooks'
 import type {
   InPageEditPreferenceUIRegistryItem,
   InPageEditPreferenceUICategory,
 } from '../../services/PreferencesService'
 import SchemaFormVue from 'schemastery-form/vue'
+import Schema from 'schemastery'
 
 const ctx = useIPE()!
 const DEV = import.meta.env.DEV
 
 const tabs = ref<InPageEditPreferenceUICategory[]>([])
 const activeCategoryName = ref('')
-const activeRegistries = shallowRef<InPageEditPreferenceUIRegistryItem[]>([])
-const activeSchemas = computed(() => activeRegistries.value.map((reg) => reg.schema))
+const registries = shallowRef<InPageEditPreferenceUIRegistryItem[]>([])
+const activeSchema = computed(() => {
+  const filtered = registries.value
+    .filter((reg) => reg.category === activeCategoryName.value)
+    .map((reg) => reg.schema)
+  if (filtered.length === 0) return null
+  return Schema.intersect(filtered)
+})
 
-/**
- * 为什么要维护两个 value：
- * 存在多个 SchemaForm 共享一个 value 的竞态问题
- * 为了避免这种情况，我们维护两个 value：
- * 1. initialValue - 用于初始化表单
- * 2. value - 用于保存原始值，表单更新时，我们先更新 value
- * 3. 在切换标签页等 UI 整体重新渲染的时候，我们再同步 initialValue 的值
- */
-const initialValue = shallowRef<any>({})
-const value = shallowRef<any>({})
+const value = ref<any>({})
 
 defineExpose({
   getValue() {
     return deepToRaw(value)
   },
-  updateValue(details: Record<string, unknown>) {
+  mergeValue(details: Record<string, unknown>) {
     console.info('request to update value', details)
-    initialValue.value = {
-      ...initialValue.value,
-      ...details,
-    }
     value.value = {
       ...value.value,
       ...details,
@@ -70,22 +63,12 @@ defineExpose({
   },
 })
 
-watch(
-  activeCategoryName,
-  (newCategory) => {
-    if (newCategory) {
-      initialValue.value = value.value
-      activeRegistries.value = ctx.preferences.getConfigRegistries(newCategory)
-    }
-  },
-  { immediate: true }
-)
-
 onMounted(async () => {
   ctx.inject(['preferences'], async (ctx) => {
     const all = await ctx.preferences.getAll()
-    initialValue.value = value.value = all
+    value.value = all
     tabs.value = ctx.preferences.getConfigCategories()
+    registries.value = ctx.preferences.getConfigRegistries()
     activeCategoryName.value = tabs.value[0].name
   })
 })

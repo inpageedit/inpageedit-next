@@ -18,6 +18,14 @@ declare module '@/InPageEdit' {
     'quick-edit/edit-notice'(payload: QuickEditEventPayload & { editNotices: ReactNode[] }): void
     'quick-edit/submit'(payload: QuickEditSubmitPayload & { ctx: InPageEdit }): void
   }
+  interface PreferencesMap {
+    'quickEdit.editSummary': string
+    'quickEdit.editMinor': boolean
+    'quickEdit.outSideClose': boolean
+    'quickEdit.watchList': WatchlistAction
+    'quickEdit.keyshortcut.save': string
+    'quickEdit.editFont': string
+  }
 }
 
 export interface QuickEditOptions {
@@ -152,16 +160,16 @@ export class PluginQuickEdit extends BasePlugin {
       }
     }
 
-    const outSideClose = (await this.ctx.preferences.get<boolean>('quickEdit.outSideClose'))!
-    const watchList = (await this.ctx.preferences.get<WatchlistAction>('quickEdit.watchList'))!
+    const outSideClose = (await this.ctx.preferences.get('quickEdit.outSideClose'))!
+    const watchList = (await this.ctx.preferences.get('quickEdit.watchList'))!
     const editSummary =
       typeof payload.editSummary === 'string'
         ? payload.editSummary
-        : (await this.ctx.preferences.get<string>('quickEdit.editSummary'))!
+        : (await this.ctx.preferences.get('quickEdit.editSummary'))!
     const editMinor =
       typeof payload.editMinor === 'boolean'
         ? payload.editMinor
-        : (await this.ctx.preferences.get<boolean>('quickEdit.editMinor'))!
+        : (await this.ctx.preferences.get('quickEdit.editMinor'))!
     const fontOptions = await this.getEditFontOptions()
 
     const options: QuickEditOptions = {
@@ -171,7 +179,7 @@ export class PluginQuickEdit extends BasePlugin {
       ...payload,
     }
     if (!options.editSummary) {
-      options.editSummary = (await this.ctx.preferences.get<string>('quickEdit.editSummary')) || ''
+      options.editSummary = (await this.ctx.preferences.get('quickEdit.editSummary')) || ''
     }
     this.ctx.emit('quick-edit/init-options', { ctx: this.ctx, options })
 
@@ -365,8 +373,7 @@ export class PluginQuickEdit extends BasePlugin {
         side: 'left',
         className: 'is-primary submit-btn',
         label: 'Submit',
-        keyPress:
-          (await this.ctx.preferences.get<string>('quickEdit.keyshortcut.save')) || undefined,
+        keyPress: (await this.ctx.preferences.get('quickEdit.keyshortcut.save')) || undefined,
         method: () => {
           const formData = new FormData(editForm)
           console.info(wikiPage, editForm, {
@@ -501,7 +508,7 @@ export class PluginQuickEdit extends BasePlugin {
 
   static readonly BUILT_IN_FONT_OPTIONS = ['preferences', 'monospace', 'sans-serif', 'serif']
   async getEditFontOptions() {
-    const prefEditFont = (await this.ctx.preferences.get<string>('quickEdit.editFont'))!
+    const prefEditFont = (await this.ctx.preferences.get('quickEdit.editFont'))!
     if (PluginQuickEdit.BUILT_IN_FONT_OPTIONS.includes(prefEditFont)) {
       const editfont =
         prefEditFont === 'preferences'

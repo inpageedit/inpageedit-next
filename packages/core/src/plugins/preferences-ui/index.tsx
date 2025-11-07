@@ -1,12 +1,31 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import PreferencesForm from './PreferencesForm.vue'
 import { CustomIPEModal } from '@/services/ModalService.js'
+import type { App as VueApp } from 'vue'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
     preferencesUI: PluginPreferencesUI
     // Alias
     prefsModal: PluginPreferencesUI
+  }
+  export interface Events {
+    'preferences-ui/modal-shown'(payload: { ctx: InPageEdit; modal: CustomIPEModal }): void
+    'preferences-ui/vue-app-mounted'(payload: {
+      ctx: InPageEdit
+      app: VueApp
+      form: InstanceType<typeof PreferencesForm>
+    }): void
+    'preferences-ui/modal-tab-changed'(payload: {
+      ctx: InPageEdit
+      category: string
+      $tabContent: HTMLElement
+    }): void
+    'preferences-ui/form-data-saved'(payload: {
+      ctx: InPageEdit
+      data: Record<string, unknown>
+    }): void
+    'preferences-ui/modal-closed'(payload: { ctx: InPageEdit; modal: CustomIPEModal }): void
   }
 }
 
@@ -108,7 +127,7 @@ export class PluginPreferencesUI extends BasePlugin {
       .catch(this.ctx.logger.warn)
 
     this.ctx.on('preferences/changed', (payload) => {
-      this._form?.updateValue?.(payload.input)
+      this._form?.mergeValue?.(payload.input)
     })
   }
 
@@ -138,9 +157,20 @@ export class PluginPreferencesUI extends BasePlugin {
     const root = <div id="ipe-preferences-app" style={{ minHeight: '65vh' }}></div>
     modal.setContent(root as HTMLElement)
 
+    this.ctx.emit('preferences-ui/modal-shown', {
+      ctx: this.ctx,
+      modal,
+    })
+
     const app = this.createForm()
     const form = app.mount(root) as InstanceType<typeof PreferencesForm>
     this._form = form
+
+    this.ctx.emit('preferences-ui/vue-app-mounted', {
+      ctx: this.ctx,
+      app,
+      form,
+    })
 
     modal.setButtons([
       {
@@ -153,13 +183,11 @@ export class PluginPreferencesUI extends BasePlugin {
       {
         label: 'Save',
         className: 'is-primary is-ghost',
-        method: () => {
+        method: async () => {
           const value = form.getValue()
-          this.logger.info('saving preferences', value)
           try {
-            Object.entries(value).forEach(([key, val]) => {
-              this.ctx.preferences.set(key, val).catch(console.error)
-            })
+            const ret = await this.ctx.preferences.setMany(value)
+            this.logger.info('preferences saved', value, ret)
           } catch (error) {
             this.logger.error('failed to save preferences', error)
           }
@@ -179,6 +207,11 @@ export class PluginPreferencesUI extends BasePlugin {
       app.unmount()
       this._latestModal = null
       this._form = null
+
+      this.ctx.emit('preferences-ui/modal-closed', {
+        ctx: this.ctx,
+        modal,
+      })
     })
 
     return modal
@@ -196,10 +229,16 @@ export class PluginPreferencesUI extends BasePlugin {
     }
     await Promise.all(
       Object.entries(value).map(([key, val]) => {
-        return this.ctx.preferences.set(key, val)
+        return this.ctx.preferences.set(key as any, val)
       })
     )
     return true
+  }
+  getExistingFormValue() {
+    return this._form?.getValue()
+  }
+  mergeToExistingForm(value: Record<string, unknown>) {
+    this._form?.mergeValue?.(value)
   }
 
   createForm() {

@@ -159,6 +159,7 @@ export class InPageEdit extends Context {
 // 导出依赖包以便用户使用
 export { default as Schema } from 'schemastery'
 export * from '@inpageedit/logger'
+export interface PreferencesMap {}
 
 // 类型体操
 export { Inject, Service } from '@cordisjs/core'

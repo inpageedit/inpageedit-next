@@ -123,7 +123,7 @@ const idOf = (path: PathSeg[]) => `schema_${sanitizeForId(dotPath(path) || 'root
 const nameOf = (path: PathSeg[]) => dotPath(path)
 
 const setPartAttr = (element: Element, ...parts: string[]) => {
-  const tokens = new Set<string>(...parts)
+  const tokens = new Set<string>(parts)
   if (!tokens.size) return
   element.setAttribute('part', Array.from(tokens).join(' '))
 }
@@ -132,6 +132,7 @@ const EXPORTED_PARTS = [
   'wrapper',
   'form',
   'field',
+  'field-intersect',
   'field-string',
   'field-number',
   'field-boolean',
@@ -258,6 +259,23 @@ function defaultOf<T = any>(schema: Schema<T>): T {
       return anySchema.value as T
     case 'date':
       return undefined as unknown as T
+    case 'intersect': {
+      const list: any[] = anySchema.list || []
+      const merge = (a: any, b: any) => {
+        if (Array.isArray(a) && Array.isArray(b)) return b.slice()
+        if (a && b && typeof a === 'object' && typeof b === 'object') {
+          const out: any = { ...a }
+          for (const k of Object.keys(b)) {
+            out[k] = k in out ? merge(out[k], b[k]) : b[k]
+          }
+          return out
+        }
+        return b ?? a
+      }
+      let acc: any = {}
+      for (const sub of list) acc = merge(acc, defaultOf(sub))
+      return acc as T
+    }
     default:
       return undefined as unknown as T
   }
@@ -295,7 +313,7 @@ abstract class BaseFieldElement<T = any> extends HTMLElement {
       setPartAttr($label, 'field-label')
       $field.appendChild($label)
     }
-    if (description) {
+    if (description && description !== this._label) {
       const $desc = document.createElement('div')
       $desc.className = 'helper'
       $desc.textContent = description
@@ -365,13 +383,16 @@ class SchemaFormString extends BaseFieldElement<string | undefined> {
   private $input?: HTMLInputElement
 
   protected render() {
-    // 如果已经有输入框，只更新值而不重新创建
     if (this.$input && this.$root.contains(this.$input)) {
-      const currentValue = (this._value ?? '') as string
-      if (this.$input.value !== currentValue && document.activeElement !== this.$input) {
-        this.$input.value = currentValue
+      const hasLabelInDom = !!this.$root.querySelector('label.label')
+      const needRebuildForLabel = !!this._label && !hasLabelInDom
+      if (!needRebuildForLabel) {
+        const currentValue = (this._value ?? '') as string
+        if (this.$input.value !== currentValue && document.activeElement !== this.$input) {
+          this.$input.value = currentValue
+        }
+        return
       }
-      return
     }
 
     this.$root.innerHTML = `<style>${BASE_STYLE}</style>`
@@ -400,13 +421,17 @@ class SchemaFormNumber extends BaseFieldElement<number | undefined> {
   private $input?: HTMLInputElement
 
   protected render() {
-    // 如果已经有输入框，只更新值而不重新创建
     if (this.$input && this.$root.contains(this.$input)) {
-      const currentValue = (this._value ?? '') as any
-      if (this.$input.value !== String(currentValue) && document.activeElement !== this.$input) {
-        this.$input.value = currentValue
+      const hasLabelInDom = !!this.$root.querySelector('label.label')
+      const needRebuildForLabel = !!this._label && !hasLabelInDom
+      if (!needRebuildForLabel) {
+        const currentValue = (this._value ?? '') as any
+        if (this.$input.value !== String(currentValue) && document.activeElement !== this.$input) {
+          this.$input.value = currentValue
+        }
+
+        return
       }
-      return
     }
 
     this.$root.innerHTML = `<style>${BASE_STYLE}</style>`
@@ -487,26 +512,29 @@ class SchemaFormDate extends BaseFieldElement<Date | undefined> {
   private $input?: HTMLInputElement
 
   protected render() {
-    // 如果已经有输入框，只更新值而不重新创建
     if (this.$input && this.$root.contains(this.$input)) {
-      const meta = metaOf(this._schema)
-      const role = meta.role || 'date'
-      if (document.activeElement !== this.$input) {
-        if (this._value instanceof Date) {
-          if (role === 'date') this.$input.value = formatDate(this._value)
-          else if (role === 'time') this.$input.value = formatTime(this._value)
-          else if (role === 'datetime') this.$input.value = formatDateTimeLocal(this._value)
-        } else if (typeof this._value === 'string' && role !== 'time') {
-          const d = new Date(this._value)
-          if (!isNaN(+d)) {
-            if (role === 'date') this.$input.value = formatDate(d)
-            else if (role === 'datetime') this.$input.value = formatDateTimeLocal(d)
+      const hasLabelInDom = !!this.$root.querySelector('label.label')
+      const needRebuildForLabel = !!this._label && !hasLabelInDom
+      if (!needRebuildForLabel) {
+        const meta = metaOf(this._schema)
+        const role = meta.role || 'date'
+        if (document.activeElement !== this.$input) {
+          if (this._value instanceof Date) {
+            if (role === 'date') this.$input.value = formatDate(this._value)
+            else if (role === 'time') this.$input.value = formatTime(this._value)
+            else if (role === 'datetime') this.$input.value = formatDateTimeLocal(this._value)
+          } else if (typeof this._value === 'string' && role !== 'time') {
+            const d = new Date(this._value)
+            if (!isNaN(+d)) {
+              if (role === 'date') this.$input.value = formatDate(d)
+              else if (role === 'datetime') this.$input.value = formatDateTimeLocal(d)
+            }
+          } else if (!this._value) {
+            this.$input.value = ''
           }
-        } else if (!this._value) {
-          this.$input.value = ''
         }
+        return
       }
-      return
     }
 
     this.$root.innerHTML = `<style>${BASE_STYLE}</style>`
@@ -563,15 +591,18 @@ class SchemaFormConst extends BaseFieldElement<any> {
 
     if (meta.role === 'raw-html') {
       if (value instanceof Node) {
-        this.$root.appendChild(value)
+        this.$root.append(value)
+        return
+      } else if (typeof value === 'function') {
+        this.$root.append(value())
+        return
+      } else if (typeof value === 'string') {
+        const htmlNode = document.createElement('div')
+        htmlNode.innerHTML = String(value)
+        setPartAttr(htmlNode, 'field-const-value')
+        this.$root.appendChild(htmlNode)
         return
       }
-
-      const htmlNode = document.createElement('div')
-      htmlNode.innerHTML = String(value)
-      setPartAttr(htmlNode, 'field-const-value')
-      this.$root.appendChild(htmlNode)
-      return
     }
 
     const $field = this.makeFieldContainer('const', meta.description)
@@ -588,12 +619,73 @@ class SchemaFormConst extends BaseFieldElement<any> {
 }
 registerCustomElement('schema-form-const', SchemaFormConst)
 
+class SchemaFormIntersect extends BaseFieldElement<Record<string, any>> {
+  protected render() {
+    this.$root.innerHTML = `<style>${BASE_STYLE}</style>`
+    const meta = metaOf(this._schema)
+    const $field = this.makeFieldContainer('intersect', meta.description)
+    $field.classList.remove('field')
+    const $box = document.createElement('div')
+    $box.classList.add('group')
+    setPartAttr($box, 'field-group')
+
+    const list: any[] = (this._schema as any).list || []
+
+    // 检测是否为“纯 object 交叉”
+    const allObjects = list.length > 0 && list.every((s) => s?.type === 'object')
+
+    // 简单深合并工具
+    const merge = (a: any, b: any) => {
+      if (Array.isArray(a) && Array.isArray(b)) return b.slice()
+      if (a && b && typeof a === 'object' && typeof b === 'object') {
+        const out: any = { ...a }
+        for (const k of Object.keys(b)) {
+          out[k] = k in out ? merge(out[k], b[k]) : b[k]
+        }
+        return out
+      }
+      return b ?? a
+    }
+
+    if (allObjects) {
+      // 分组渲染：每个子 schema 以同一路径渲染并合并到同一个对象值
+      const current = this._value && typeof this._value === 'object' ? this._value : {}
+      list.forEach((sub, i) => {
+        const label = sub?.meta?.description ?? ''
+        const child = createFieldForSchema(sub, this._path, current, label, this._i18n)
+        child.addEventListener('change', (e: any) => {
+          e.stopPropagation() // 子项不直接冒泡到表单，由 intersect 统一合并并上抛
+          const next = merge(this._value ?? {}, e.detail.value)
+          this.emitChange(next)
+        })
+        $box.appendChild(child)
+      })
+    } else {
+      // 回退：避免出现两个“同一值”的重复输入控件
+      const last = list[list.length - 1]
+      const child = createFieldForSchema(last, this._path, this._value, this._label, this._i18n)
+      child.addEventListener('change', (e: any) => {
+        e.stopPropagation()
+        // 对于非 object 交叉，只能采用“以最后一个子项的值为准”的保守策略
+        this.emitChange(e.detail.value)
+      })
+      $box.appendChild(child)
+    }
+
+    $field.appendChild($box)
+    this.$root.appendChild($field)
+  }
+}
+registerCustomElement('schema-form-intersect', SchemaFormIntersect)
+
 // ---------------------------------------------------------------------------
 // 复杂字段：union / tuple / object / array / dict —— 泛型辅助
 // ---------------------------------------------------------------------------
 function tagForSchema(schema: Schema<any>): keyof HTMLElementTagNameMap {
   const t = (schema as any).type
   switch (t) {
+    case 'intersect':
+      return 'schema-form-intersect' as any
     case 'string':
       return 'schema-form-string' as any
     case 'number':
@@ -1156,6 +1248,7 @@ export class SchemaForm<T extends any = unknown> extends HTMLElement {
   private _state: any
   private $root: ShadowRoot
   private _i18n: Required<SchemaFormI18n> = { ...DEFAULT_I18N }
+  private _i18nCommitted = false
   constructor() {
     super()
     this.$root = this.attachShadow({ mode: 'open' })
@@ -1240,7 +1333,9 @@ export class SchemaForm<T extends any = unknown> extends HTMLElement {
 
   // i18n 相关
   set i18n(v: Partial<SchemaFormI18n>) {
+    if (this._i18nCommitted) return
     this._i18n = { ...this._i18n, ...v }
+    this._i18nCommitted = true
     this.render()
   }
   get i18n() {
@@ -1332,6 +1427,7 @@ export function install() {
   registerCustomElement('schema-form-object', SchemaFormObject)
   registerCustomElement('schema-form-array', SchemaFormArray)
   registerCustomElement('schema-form-dict', SchemaFormDict)
+  registerCustomElement('schema-form-intersect', SchemaFormIntersect)
 }
 
 // ---------------------------------------------------------------------------
@@ -1350,5 +1446,6 @@ declare global {
     'schema-form-object': SchemaFormObject
     'schema-form-array': SchemaFormArray
     'schema-form-dict': SchemaFormDict
+    'schema-form-intersect': SchemaFormIntersect
   }
 }

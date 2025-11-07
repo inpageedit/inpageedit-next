@@ -48,23 +48,20 @@ onMounted(async () => {
   await initRegistry()
 })
 
-const enablePlugin = (registry: string, id: string) => {
+const enablePlugin = async (registry: string, id: string) => {
   ctx.store.installAndSetPreference(registry, id)
 }
-const disablePlugin = (registry: string, id: string) => {
+const disablePlugin = async (registry: string, id: string) => {
   ctx.store.uninstallAndRemovePreference(registry, id)
 }
 
 // init plugin states
 const initInstalStatus = async () => {
-  const prefs =
-    (await ctx.store.ctx.preferences.get<{ registry: string; id: string }[]>(
-      'plugin-store.plugins'
-    )) || []
+  const prefs = (await ctx.store.ctx.preferences.get('pluginStore.plugins')) || []
   installedPlugins.value = prefs.map((p) => `${p.registry}:${p.id}`)
 }
 function onPreferencesChanged(payload: { changes: Record<string, unknown> }) {
-  const plugins = payload.changes['plugin-store.plugins'] as {
+  const plugins = payload.changes['pluginStore.plugins'] as {
     registry: string
     id: string
   }[]

@@ -22,27 +22,6 @@ const tryGetGlobalPlugin = (main_export: string) => {
   return null
 }
 
-@RegisterPreferences(
-  Schema.object({
-    // TODO: 先写死，后面改
-    'plugin-store.registry-url': Schema.string()
-      .default(
-        import.meta.env.PROD
-          ? 'https://plugins.ipe.wiki/registry.json'
-          : 'http://127.0.0.1:1005/src/__test__/plugin-registry/index.json'
-      )
-      .hidden(),
-    'plugin-store.plugins': Schema.array(
-      Schema.object({
-        registry: Schema.string().required(),
-        id: Schema.string().required(),
-      })
-    )
-      .hidden()
-      .default([])
-      .description('Plugins to install'),
-  }).extra('category', 'plugin-store')
-)
 @Inject({
   storage: {
     required: true,
@@ -70,7 +49,7 @@ export class PluginPluginStore extends BasePlugin {
   static readonly PluginStoreSchemas = PluginStoreSchemas
 
   private async _createManagementApp(ctx = this.ctx) {
-    const registryUrl = await ctx.preferences.get('plugin-store.registry-url')
+    const registryUrl = await ctx.preferences.get('pluginStore.registryUrl')
     const app = createVueAppWithIPE(ctx, PluginStoreApp, {
       registryUrl,
     })
@@ -86,32 +65,51 @@ export class PluginPluginStore extends BasePlugin {
       index: 90,
     })
 
-    const container = <section id="ipe-plugin-store-vue"></section>
     ctx.preferences.registerCustomConfig(
       'plugin-store',
       Schema.object({
-        'plugin-store': Schema.const(container).role('raw-html'),
+        // TODO: 先写死，后面改
+        'pluginStore.registryUrl': Schema.string()
+          .default(
+            import.meta.env.PROD
+              ? 'https://plugins.ipe.wiki/registry.json'
+              : 'http://127.0.0.1:1005/src/__test__/plugin-registry/index.json'
+          )
+          .hidden(),
+        'pluginStore._browseButton': Schema.const(
+          <section>
+            <button className="btn primary" onClick={() => this.showModal()}>
+              Browse Plugins
+            </button>
+          </section>
+        ).role('raw-html'),
+        'pluginStore.plugins': Schema.array(
+          Schema.object({
+            registry: Schema.string().required(),
+            id: Schema.string().required(),
+          })
+        )
+          .description('Installed plugins')
+          .default([]),
       }),
       'plugin-store'
     )
+  }
 
-    let vueApp: VueApp | null = null
-    const observer = new IntersectionObserver(async ([entry]) => {
-      if (entry.isIntersecting) {
-        const app = await this._createManagementApp(ctx)
-        app.mount(container)
-        vueApp = app
-      } else {
-        vueApp?.unmount()
-        vueApp = null
-      }
+  private _vueApp: VueApp | null = null
+  async showModal() {
+    const modal = this.ctx.modal.show({
+      title: 'Plugin Store',
     })
-    observer.observe(container)
-    ctx.on('dispose', () => {
-      observer.disconnect()
-      vueApp?.unmount()
-      vueApp = null
+    const container = <section id="ipe-plugin-store-vue"></section>
+    modal.setContent(container)
+    const app = await this._createManagementApp(this.ctx)
+    app.mount(container)
+    modal.on(modal.Event.Close, () => {
+      app.unmount()
+      this._vueApp = null
     })
+    return modal
   }
 
   private _installedPlugins = new Map<string, Promise<ForkScope<InPageEdit> | null>>()
@@ -139,24 +137,22 @@ export class PluginPluginStore extends BasePlugin {
 
   async addToPreferences(registry: string, id: string) {
     let prefs =
-      (await this.ctx.preferences.get<{ registry: string; id: string }[]>(
-        'plugin-store.plugins'
-      )) || []
+      (await this.ctx.preferences.get<{ registry: string; id: string }[]>('pluginStore.plugins')) ||
+      []
     const existed = prefs.some((p) => p.registry === registry && p.id === id)
     if (existed) {
       return true
     }
     prefs.push({ registry, id })
-    await this.ctx.preferences.set('plugin-store.plugins', prefs)
+    await this.ctx.preferences.set('pluginStore.plugins', prefs)
     return true
   }
   async removeFromPreferences(registry: string, id: string) {
     let prefs =
-      (await this.ctx.preferences.get<{ registry: string; id: string }[]>(
-        'plugin-store.plugins'
-      )) || []
+      (await this.ctx.preferences.get<{ registry: string; id: string }[]>('pluginStore.plugins')) ||
+      []
     prefs = prefs.filter((p) => p.registry !== registry || p.id !== id)
-    await this.ctx.preferences.set('plugin-store.plugins', prefs)
+    await this.ctx.preferences.set('pluginStore.plugins', prefs)
     return true
   }
 

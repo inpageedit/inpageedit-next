@@ -1,5 +1,5 @@
-import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit.js'
-import { IPEStorageRecord, AbstractIPEStorageManager } from '@/services/storage/index.js'
+import { Inject, InPageEdit, Schema, Service, type PreferencesMap } from '@/InPageEdit.js'
+import { AbstractIPEStorageManager } from '@/services/storage/index.js'
 import { computeFallback, ComputeAble } from '@/utils/computeable.js'
 
 declare module '@/InPageEdit' {
@@ -65,30 +65,40 @@ export class PreferencesService extends Service {
     })
   }
 
-  async get<T = any>(key: string, fallback?: ComputeAble<T>): Promise<T | null> {
+  async get<T extends keyof PreferencesMap>(
+    key: T,
+    fallback?: ComputeAble<PreferencesMap[T]>
+  ): Promise<PreferencesMap[T] | null> {
     fallback ??= () => {
       const defaultValue = this.getDefaultValue(key)
       this.logger.debug(key, `(fallback value: ${defaultValue})`)
-      return defaultValue as T
+      return defaultValue as PreferencesMap[T]
     }
-    const value = (await this.db.get(key, undefined)) as T | null
-    return value !== null ? value : ((await computeFallback(fallback)) as T)
+    const value = (await this.db.get(key, undefined)) as PreferencesMap[T] | null
+    return value !== null ? value : ((await computeFallback(fallback)) as PreferencesMap[T])
   }
 
-  getDefaultValue(key: string): unknown {
+  getDefaultValue<T extends keyof PreferencesMap>(key: T): PreferencesMap[T] | undefined {
     return (this._defaultPreferences[key] ??= this.loadDefaultConfigs()[key])
   }
 
-  async set<T>(key: string, value: T): Promise<T | void> {
+  async set<T extends keyof PreferencesMap>(
+    key: T,
+    value: PreferencesMap[T] | undefined | null
+  ): Promise<PreferencesMap[T] | void> {
     const result = await this.setMany({ [key]: value })
-    return result[key] as T | void
+    return result[key] as PreferencesMap[T] | void
   }
 
-  async setMany(input: Record<string, unknown>): Promise<Record<string, unknown | void>> {
+  async setMany(input: {
+    [key in keyof PreferencesMap]?: PreferencesMap[key] | undefined | null
+  }): Promise<{
+    [key in keyof PreferencesMap]?: PreferencesMap[key] | undefined | null
+  }> {
     const defaults = this.loadDefaultConfigs()
     const changes: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(input)) {
-      if (value === defaults[key] || value === void 0) {
+      if (value === (defaults as any)[key] || value === void 0) {
         changes[key] = void 0
       } else {
         changes[key] = value
@@ -111,7 +121,7 @@ export class PreferencesService extends Service {
     for await (const [key, record] of this.db.entries()) {
       // 旧版本埋的坑
       if (key === '_touched') continue
-      data[key] = record.value
+      ;(data as any)[key] = record.value
     }
     return data
   }
@@ -123,14 +133,14 @@ export class PreferencesService extends Service {
    * - sort by keys
    */
   async getExportableRecord(configs?: Record<string, unknown>) {
-    configs ??= await this.getAll()
+    configs ??= (await this.getAll()) as any
     const defaults = this.loadDefaultConfigs()
 
     const out: Record<string, any> = {}
     Object.entries(defaults)
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([key, value]) => {
-        const pref = configs[key]
+        const pref = configs![key]
         if (pref !== void 0 && pref !== value) {
           out[key] = pref
         }
@@ -139,7 +149,7 @@ export class PreferencesService extends Service {
   }
 
   private loadDefaultConfigs() {
-    const data = {} as Record<string, any>
+    const data = {} as any
     this.getConfigRegistries().forEach((item) => {
       // 首先读取 schema 上的默认值
       try {
@@ -154,14 +164,14 @@ export class PreferencesService extends Service {
       this._defaultPreferences[key] = val
     })
 
-    return data
+    return data as PreferencesMap
   }
 
-  registerCustomConfig(name: string, schema: Schema, category: string) {
+  registerCustomConfig(id: string, schema: Schema, category?: string) {
     this.customRegistries.push({
-      name,
+      name: id,
       schema,
-      category,
+      category: category || 'general',
     })
     return this
   }
@@ -194,6 +204,11 @@ export class PreferencesService extends Service {
       .concat(this.customRegistries)
       .filter((item) => !category || item.category === category)
   }
+  getAllSchema() {
+    return new Schema<PreferencesMap>(
+      Schema.intersect(this.getConfigRegistries().map((item) => item.schema))
+    )
+  }
 
   defineCategory(category: InPageEditPreferenceUICategory) {
     const index = this.categoryDefinitions.findIndex((tab) => tab.name === category.name)
@@ -222,7 +237,7 @@ export class PreferencesService extends Service {
     }
     count && this.logger.info(`Migrated ${count} preferences from master DB`)
     await masterDB.clear()
-    await masterDB.db.close()
+    await masterDB?.db?.disconnect?.()
     return count
   }
 }

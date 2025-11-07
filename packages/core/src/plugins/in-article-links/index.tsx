@@ -21,6 +21,11 @@ declare module '@/InPageEdit' {
       action: 'quickEdit' | 'quickDiff'
     }): void
   }
+  interface PreferencesMap {
+    'inArticleLinks.quickEdit.enable': boolean
+    'inArticleLinks.quickDiff.enable': boolean
+    'inArticleLinks.quickEdit.redlinks': boolean
+  }
 }
 
 export interface InArticleWikiAnchorMetadata extends WikiLinkMetadata {
@@ -72,10 +77,10 @@ export class PluginInArticleLinks extends BasePlugin<{
 
   protected async start() {
     // TODO: 这些都不应该硬编码，暂时先这样
-    if (await this.ctx.preferences.get<boolean>('inArticleLinks.quickEdit.enable')) {
+    if (await this.ctx.preferences.get('inArticleLinks.quickEdit.enable')) {
       this.handleQuickEdit()
     }
-    if (await this.ctx.preferences.get<boolean>('inArticleLinks.quickDiff.enable')) {
+    if (await this.ctx.preferences.get('inArticleLinks.quickDiff.enable')) {
       this.handleQuickDiff()
     }
   }
@@ -143,9 +148,7 @@ export class PluginInArticleLinks extends BasePlugin<{
 
   async handleQuickEdit() {
     let enable = false
-    const showButtonOnRedlinks = await this.ctx.preferences.get<boolean>(
-      'inArticleLinks.quickEdit.redlinks'
-    )
+    const showButtonOnRedlinks = await this.ctx.preferences.get('inArticleLinks.quickEdit.redlinks')
 
     this.ctx.inject(['quickEdit'], (ctx) => {
       enable = true

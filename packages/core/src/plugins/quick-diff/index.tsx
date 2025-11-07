@@ -25,6 +25,9 @@ declare module '@/InPageEdit' {
       wikiPage: IWikiPage
     }): void
   }
+  interface PreferencesMap {
+    'quickDiff.keyshortcut': string
+  }
 }
 
 export interface CompareApiRequestOptions {
@@ -142,7 +145,7 @@ export class PluginQuickDiff extends BasePlugin {
       {
         label: 'Diff',
         side: 'left',
-        keyPress: (await this.ctx.preferences.get<string>('quickDiff.keyshortcut')) || undefined,
+        keyPress: (await this.ctx.preferences.get('quickDiff.keyshortcut')) || undefined,
         className: 'btn btn-secondary',
         method: () => {
           const pageTitle = wikiPage.title

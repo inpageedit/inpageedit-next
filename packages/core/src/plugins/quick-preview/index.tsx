@@ -27,6 +27,10 @@ declare module '@/InPageEdit' {
     'quick-preview/show-modal'(payload: Omit<QuickPreviewEventPayload, 'parseData'>): void
     'quick-preview/loaded'(payload: QuickPreviewEventPayload): void
   }
+  interface PreferencesMap {
+    'quickPreview.keyshortcut.quickEdit': string
+    'quickPreview.keyshortcut.quickDelete': string
+  }
 }
 
 @Inject(['api', 'wikiPage', 'modal', 'preferences'])

@@ -1,7 +1,7 @@
 <template lang="pug">
 #demo-app
   h1 Schemastery Form Vue Demo
-  SchemasteryFormVue(:schema='schema', v-model:value='value')
+  SchemasteryFormVue(:schema='schema', v-model:value='value', :i18n='i18n')
   button(@click='onGetValue') Get Value
   pre {{ schema(value) }}
   pre {{ schema.toJSON() }}
@@ -79,6 +79,8 @@ const value = ref<TestSchema>({
     },
   },
 })
+
+const i18n = { rootLabel: '' }
 
 const onGetValue = () => {
   console.log('Current Value:', schema.value(value.value))

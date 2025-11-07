@@ -12,6 +12,9 @@ declare module '@/InPageEdit' {
     'toolbox/button-clicked'(payload: { ctx: InPageEdit; button: HTMLElement; id: string }): void
     'toolbox/toggle'(payload: { ctx: InPageEdit; opened: boolean }): void
   }
+  interface PreferencesMap {
+    toolboxAlwaysShow: boolean
+  }
 }
 
 @RegisterPreferences(

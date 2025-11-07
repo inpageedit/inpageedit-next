@@ -21,6 +21,9 @@ declare module '@/InPageEdit' {
     ): void
     'quick-delete/submit'(payload: QuickDeleteSubmitPayload & { ctx: InPageEdit }): void
   }
+  interface PreferencesMap {
+    'quickDelete.reason': string
+  }
 }
 
 export interface QuickDeleteOptions {
@@ -106,7 +109,7 @@ export class PluginQuickDelete extends BasePlugin {
     const deleteReason =
       typeof payload.deleteReason === 'string'
         ? payload.deleteReason
-        : (await this.ctx.preferences.get<string>('deleteReason'))!
+        : (await this.ctx.preferences.get('quickDelete.reason'))!
 
     const options: QuickDeleteOptions = {
       ...this.DEFAULT_OPTIONS,
@@ -114,7 +117,7 @@ export class PluginQuickDelete extends BasePlugin {
       ...payload,
     }
     if (!options.deleteReason) {
-      options.deleteReason = (await this.ctx.preferences.get<string>('deleteReason')) || ''
+      options.deleteReason = (await this.ctx.preferences.get('quickDelete.reason')) || ''
     }
     if (!options) this.ctx.emit('quick-delete/init-options', { ctx: this.ctx, options })
 
