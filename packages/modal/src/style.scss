@@ -100,6 +100,15 @@ body.ipe-modal-no-scroll {
   }
 }
 
+/* 可拖动 draggable */
+.ipe-modal-modal.is-draggable {
+  // 限制内容高度，否则会看不到
+  .ipe-modal-modal__content {
+    max-height: 85dvh;
+    overflow: auto;
+  }
+}
+
 /* 全屏模式：窗口撑满视口 */
 .ipe-modal-modal.is-fullscreen .ipe-modal-modal__window {
   width: 100vw;

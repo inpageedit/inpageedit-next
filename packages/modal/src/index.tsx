@@ -523,10 +523,14 @@ export class IPEModal {
     $header.append($title, $icons)
 
     // Enable drag (only when no backdrop)
-    if (!hasBackdrop && this.options.draggable) {
+    if (this.options.draggable && hasBackdrop) {
+      this.options.draggable = false
+    }
+    if (this.options.draggable) {
       $header.style.cursor = 'move'
       $header.style.userSelect = 'none'
       $header.addEventListener('pointerdown', this.onDragStart.bind(this))
+      $modal.classList.add('is-draggable')
     }
 
     // Content
@@ -590,6 +594,15 @@ export class IPEModal {
       $backdrop.addEventListener('pointerdown', (e) => {
         if (!this.options.outSideClose) return
         if (e.target === $backdrop) this.close()
+      })
+    }
+
+    // Bring draggable modal to front when clicking inside the window
+    if (this.options.draggable) {
+      $window.addEventListener('pointerdown', (e) => {
+        if (e.target && $window.contains(e.target as Node)) {
+          this.bringToFront()
+        }
       })
     }
 
