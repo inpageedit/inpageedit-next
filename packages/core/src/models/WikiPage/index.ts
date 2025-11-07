@@ -64,6 +64,22 @@ export interface WikiPageConstructor {
   // Static members
   newFromApi(payload: MwApiParams): Promise<IWikiPage>
   newBlankPage(init?: Partial<PageInfo>): IWikiPage
+  /**
+   * Create a new WikiPage instance from any kind of identifier
+   * priority: revid > pageid > title
+   */
+  newFromAnyKind(payload: {
+    title?: string
+    pageid?: number
+    revid?: number
+  }): Promise<IWikiPage | null>
+  newBatchFromApi(
+    params: MwApiParams & {
+      titles?: string[]
+      pageids?: number[]
+      revids?: number[]
+    }
+  ): Promise<IWikiPage[]>
 }
 
 export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
@@ -147,6 +163,38 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
     }
     static newBlankPage(init: Partial<PageInfo> = {}) {
       return new WikiPage(init, false)
+    }
+    static async newFromAnyKind(payload: { title?: string; pageId?: number; revisionId?: number }) {
+      const { title, pageId, revisionId } = payload || {}
+      if (revisionId) {
+        return this.newFromApi({ revids: parseInt(revisionId.toString(), 10) })
+      } else if (pageId) {
+        return this.newFromApi({ pageids: parseInt(pageId.toString(), 10) })
+      } else if (title) {
+        return this.newFromApi({ titles: title.toString() })
+      }
+      return null
+    }
+    static async newBatchFromApi(
+      params: MwApiParams & {
+        titles?: string[]
+        pageids?: number[]
+        revids?: number[]
+      }
+    ) {
+      const { titles, pageids, revids, ...rest } = params || {}
+      const { data } = await this.api.post<{
+        query: {
+          pages: PageInfo[]
+        }
+      }>({
+        ...WikiPage.DEFAULT_QUERY_PARAMS,
+        titles: titles?.join('|') ?? undefined,
+        pageids: pageids?.join('|') ?? undefined,
+        revids: revids?.join('|') ?? undefined,
+        ...rest,
+      })
+      return data?.query?.pages?.map((page) => new WikiPage(page, true)) || []
     }
 
     // Page actions
