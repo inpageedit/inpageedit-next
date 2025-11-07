@@ -30,6 +30,7 @@ export class PluginPrefSync extends BasePlugin {
           <section>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <button
+                className="btn primary"
                 onClick={(e) => {
                   e.preventDefault()
                   const modal = ctx.preferencesUI.getExistingModal()
@@ -50,6 +51,7 @@ export class PluginPrefSync extends BasePlugin {
                 Import
               </button>
               <button
+                className="btn primary"
                 onClick={(e) => {
                   e.preventDefault()
                   const btn = e.target as HTMLButtonElement
@@ -93,6 +95,7 @@ export class PluginPrefSync extends BasePlugin {
           <section>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <button
+                className="btn"
                 onClick={(e) => {
                   e.preventDefault()
                   const modal = ctx.preferencesUI.getExistingModal()
@@ -127,6 +130,7 @@ export class PluginPrefSync extends BasePlugin {
                 Import from file
               </button>
               <button
+                className="btn"
                 onClick={async (e) => {
                   e.preventDefault()
                   const data = await ctx.preferences.getExportableRecord()

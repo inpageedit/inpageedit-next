@@ -32,20 +32,23 @@ export class PluginPreferencesUI extends BasePlugin {
             <h2>✏️ InPageEdit NEXT</h2>
             <i>v{this.ctx.version}</i>
             <h2>Portals</h2>
-            <div style="display: flex; flex-direction: column; gap: 1rem">
+            <div style="display: grid; gap: 0.5em; text-align: center">
               <a
+                className="btn primary"
+                style={{ display: 'inline-block', textDecoration: 'none' }}
                 href={this.ctx.Endpoints.HOME_URL}
                 target="_blank"
-                style={{ display: 'block', width: '100%' }}
               >
                 Official Website & Help Center
               </a>
-              <ActionButton
-                href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version}`}
-                style={{ display: 'block', width: '100%' }}
+              <a
+                className="btn primary"
+                style={{ display: 'inline-block', textDecoration: 'none' }}
+                href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version.split('-')[0]}`}
+                target="_blank"
               >
                 Update Logs
-              </ActionButton>
+              </a>
             </div>
             <h2>Join us</h2>
             <ul>

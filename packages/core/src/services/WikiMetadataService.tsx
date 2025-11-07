@@ -98,6 +98,7 @@ export class WikiMetadataService extends Service {
                   click the button below.
                 </p>
                 <button
+                  className="btn danger"
                   onClick={(e) => {
                     e.preventDefault()
                     Promise.all(
