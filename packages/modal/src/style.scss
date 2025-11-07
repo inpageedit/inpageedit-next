@@ -94,19 +94,6 @@ body.ipe-modal-no-scroll {
 .ipe-modal-modal.is-centered {
   display: grid;
   align-items: center;
-  .ipe-modal-modal__content {
-    max-height: 75dvh;
-    overflow: auto;
-  }
-}
-
-/* 可拖动 draggable */
-.ipe-modal-modal.is-draggable {
-  // 限制内容高度，否则会看不到
-  .ipe-modal-modal__content {
-    max-height: 85dvh;
-    overflow: auto;
-  }
 }
 
 /* 全屏模式：窗口撑满视口 */
@@ -241,7 +228,8 @@ body.ipe-modal-no-scroll {
 /* ------------------------------- Content ----------------------------------- */
 .ipe-modal-modal__content {
   padding: var(--ipe-modal-spacing);
-  overflow: visible;
+  max-height: 85dvh;
+  overflow: auto;
   -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
 }
 
