@@ -100,16 +100,22 @@ export class PluginPreferencesUI extends BasePlugin {
   }
 
   protected async start(): Promise<void> {
+    // TODO: 不要硬编码……
     import('./PluginPrefSync.js')
       .then(({ PluginPrefSync }) => {
         this.ctx.plugin(PluginPrefSync)
       })
       .catch(this.ctx.logger.warn)
+
+    this.ctx.on('preferences/changed', (payload) => {
+      this._form?.updateValue?.(payload.input)
+    })
   }
 
   protected stop(): Promise<void> | void {}
 
   _latestModal: CustomIPEModal | null = null
+  _form: InstanceType<typeof PreferencesForm> | null = null
   showModal() {
     if (this._latestModal && !this._latestModal.isDestroyed) {
       return this._latestModal
@@ -134,11 +140,12 @@ export class PluginPreferencesUI extends BasePlugin {
 
     const app = this.createForm()
     const form = app.mount(root) as InstanceType<typeof PreferencesForm>
+    this._form = form
 
     modal.setButtons([
       {
-        label: 'Cancel',
-        className: 'is-danger is-ghost',
+        label: 'Close',
+        className: 'is-ghost',
         method: () => {
           modal.close()
         },
@@ -171,6 +178,7 @@ export class PluginPreferencesUI extends BasePlugin {
       this.logger.debug('preferences modal closed, vue app unmounting')
       app.unmount()
       this._latestModal = null
+      this._form = null
     })
 
     return modal
@@ -180,6 +188,18 @@ export class PluginPreferencesUI extends BasePlugin {
   }
   getExistingModal() {
     return this._latestModal
+  }
+  async saveFormData() {
+    const value = this._form?.getValue()
+    if (!value) {
+      return false
+    }
+    await Promise.all(
+      Object.entries(value).map(([key, val]) => {
+        return this.ctx.preferences.set(key, val)
+      })
+    )
+    return true
   }
 
   createForm() {

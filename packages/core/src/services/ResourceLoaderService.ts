@@ -11,9 +11,7 @@ export class ResourceLoaderService extends Service {
     super(ctx, 'resourceLoader', true)
   }
   protected stop(): void | Promise<void> {
-    // document.querySelectorAll('[data-ipe]').forEach((el) => {
-    //   el.remove()
-    // })
+    this.removeAll()
   }
 
   loadScript(src: string, attrs?: Record<string, any>): Promise<HTMLScriptElement | null> {
@@ -82,6 +80,26 @@ export class ResourceLoaderService extends Service {
       link.onerror = (e) => reject(e)
     })
     return promise
+  }
+
+  removeStyle(href: string) {
+    const key = `style:${href}`
+    const link = document.querySelector(`[data-ipe="${key}"]`)
+    if (link) {
+      link.remove()
+    }
+  }
+  removeScript(src: string) {
+    const key = `script:${src}`
+    const script = document.querySelector(`[data-ipe="${key}"]`)
+    if (script) {
+      script.remove()
+    }
+  }
+  removeAll() {
+    document.querySelectorAll('[data-ipe]').forEach((el) => {
+      el.remove()
+    })
   }
 
   resolveImportPath(path: string) {

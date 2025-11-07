@@ -6,7 +6,7 @@
         v-for='tab in tabs',
         :key='tab.name',
         :class='{ active: activeCategoryName === tab.name }',
-        @click='activeCategoryName = tab.name',
+        @click='handleTabClick($event, tab.name)',
         :data-value='tab.name'
       ) {{ tab.label }}
 
@@ -57,6 +57,17 @@ defineExpose({
   getValue() {
     return deepToRaw(value)
   },
+  updateValue(details: Record<string, unknown>) {
+    console.info('request to update value', details)
+    initialValue.value = {
+      ...initialValue.value,
+      ...details,
+    }
+    value.value = {
+      ...value.value,
+      ...details,
+    }
+  },
 })
 
 watch(
@@ -78,6 +89,15 @@ onMounted(async () => {
     activeCategoryName.value = tabs.value[0].name
   })
 })
+
+const handleTabClick = (event: MouseEvent, name: string) => {
+  event.preventDefault()
+  activeCategoryName.value = name
+  const target = event.currentTarget as HTMLAnchorElement
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }
+}
 </script>
 
 <style scoped lang="scss">

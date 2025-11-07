@@ -8,6 +8,15 @@ declare module '@/InPageEdit' {
     // Alias
     prefs: PreferencesService
   }
+  export interface Events {
+    'preferences/changed'(payload: {
+      ctx: InPageEdit
+      /** original input */
+      input: Record<string, unknown>
+      /** changed settings */
+      changes: Record<string, unknown>
+    }): void
+  }
 }
 
 export interface InPageEditPreferenceUICategory {
@@ -70,29 +79,28 @@ export class PreferencesService extends Service {
     return (this._defaultPreferences[key] ??= this.loadDefaultConfigs()[key])
   }
 
-  set<T = any>(key: string, value: T): Promise<IPEStorageRecord<T> | void> {
-    const defaultValue = this.getDefaultValue(key)
-    if (value === defaultValue) {
-      return this.db.delete(key)
-    } else {
-      return this.db.set(key, value)
-    }
+  async set<T>(key: string, value: T): Promise<T | void> {
+    const result = await this.setMany({ [key]: value })
+    return result[key] as T | void
   }
 
-  async setMany(record: Record<string, unknown>) {
+  async setMany(input: Record<string, unknown>): Promise<Record<string, unknown | void>> {
     const defaults = this.loadDefaultConfigs()
-    const filtered = Object.fromEntries(
-      Object.entries(record).filter(([key, value]) => {
-        const defaultValue = defaults[key]
-        return value !== void 0 && value !== defaultValue
-      })
-    )
-    await Promise.all(
-      Object.entries(filtered).map(([key, value]) => {
-        return this.set(key, value as any)
-      })
-    )
-    return filtered
+    const changes: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(input)) {
+      if (value === defaults[key] || value === void 0) {
+        changes[key] = void 0
+      } else {
+        changes[key] = value
+      }
+    }
+    await this.db.set(changes)
+    this.ctx.emit('preferences/changed', {
+      ctx: this.ctx,
+      input,
+      changes,
+    })
+    return changes
   }
 
   /**

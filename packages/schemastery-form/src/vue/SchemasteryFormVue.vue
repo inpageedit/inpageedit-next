@@ -74,12 +74,12 @@ onBeforeUnmount(() => {
 
 // 外部变更 -> 同步进 web component（避免循环，按引用判断）
 watch(
-  () => schema,
+  schema,
   (s) => {
     if (isUpdatingFromComponent) return
-    if (elRef.value && s && elRef.value.schema !== s.value) {
+    if (elRef.value && s && elRef.value.schema !== s) {
       isUpdatingFromProps = true
-      elRef.value.schema = s.value
+      elRef.value.schema = s
       nextTick(() => {
         isUpdatingFromProps = false
       })
@@ -89,23 +89,19 @@ watch(
 )
 
 watch(
-  () => value,
-  (d) => {
+  value,
+  (nextVal) => {
     if (isUpdatingFromComponent) return
     if (!elRef.value) return
-    // 为了避免无意义的重渲染，只在引用或浅比较不等时设置
-    if (d.value === undefined) return
+    if (nextVal === undefined) return
 
-    // 获取当前 Web Component 内的数据
     const currentData = elRef.value.getData({ validate: false })
-
-    // 深度比较，如果数据实际上没有变化，则不调用 setData
-    if (JSON.stringify(currentData) === JSON.stringify(d.value)) {
+    if (JSON.stringify(currentData) === JSON.stringify(nextVal)) {
       return
     }
 
     isUpdatingFromProps = true
-    elRef.value.setData(d.value, { validate: false })
+    elRef.value.setData(nextVal, { validate: false })
     nextTick(() => {
       isUpdatingFromProps = false
     })

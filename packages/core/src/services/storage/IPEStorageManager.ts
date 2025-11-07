@@ -41,17 +41,54 @@ export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager
 
   set(key: string, value: null | undefined): Promise<void>
   set(key: string, value: T): Promise<IPEStorageRecord<T>>
-  async set(key: string, value: T | null | undefined): Promise<IPEStorageRecord<T> | void> {
-    if (value === null || typeof value === 'undefined') {
-      return this.delete(key)
+  set(
+    record: Record<string, T | null | undefined>
+  ): Promise<Record<string, IPEStorageRecord<T> | void>>
+  async set(
+    keyOrRecord: string | Record<string, T | null | undefined>,
+    maybeValue?: T | null | undefined
+  ): Promise<IPEStorageRecord<T> | void | Record<string, IPEStorageRecord<T> | void>> {
+    const now = Date.now()
+
+    // Overload 1: set(key, value)
+    if (typeof keyOrRecord === 'string') {
+      const key = keyOrRecord
+      const value = maybeValue as T | null | undefined
+      if (value === null || typeof value === 'undefined') {
+        return this.delete(key)
+      }
+      const record: IPEStorageRecord<T> = {
+        time: now,
+        value,
+        version: this.version,
+      }
+      await this.db.set(key, record)
+      return record
     }
-    const record: IPEStorageRecord<T> = {
-      time: Date.now(),
-      value,
-      version: this.version,
+
+    // Overload 2: set(record)
+    const recordObject = keyOrRecord as Record<string, T | null | undefined>
+    const toSet: Array<[string, IPEStorageRecord<T>]> = []
+    const toDelete: Array<string> = []
+    const results: Record<string, IPEStorageRecord<T> | void> = {}
+
+    for (const [key, value] of Object.entries(recordObject)) {
+      if (value === null || typeof value === 'undefined') {
+        toDelete.push(key)
+      } else {
+        const rec: IPEStorageRecord<T> = { time: now, value: value as T, version: this.version }
+        toSet.push([key, rec])
+        results[key] = rec
+      }
     }
-    await this.db.set(key, record)
-    return record
+
+    if (toSet.length > 0) {
+      await this.db.setMany(toSet)
+    }
+    if (toDelete.length > 0) {
+      await this.db.deleteMany(toDelete)
+    }
+    return results
   }
 
   async has(key: string, ttl = this.ttl): Promise<boolean> {

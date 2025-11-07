@@ -109,6 +109,7 @@ export class InPageEdit extends Context {
       import('@/plugins/in-article-links/index.js').then(
         ({ PluginInArticleLinks }) => PluginInArticleLinks
       ),
+      import('@/plugins/plugin-store/index.js').then(({ PluginPluginStore }) => PluginPluginStore),
       import('@/plugins/preferences-ui/index.js').then(
         ({ PluginPreferencesUI }) => PluginPreferencesUI
       ),

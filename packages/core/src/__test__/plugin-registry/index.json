@@ -1,0 +1,76 @@
+{
+  "manifest_version": 1,
+  "name": "InPageEdit Official Plugin Central",
+  "base_url": "http://127.0.0.1:1005/src/__test__/plugin-registry/",
+  "homepage": "http://127.0.0.1:1005/src/__test__/plugin-registry/index.json",
+  "maintainers": [
+    {
+      "name": "dragon-fish",
+      "email": "dragon-fish@qq.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/inpageedit/inpageedit-next.git"
+  },
+  "packages": [
+    {
+      "id": "autoload-plugin",
+      "name": "Autoload Plugin",
+      "version": "1.0.0",
+      "description": "A sample plugin for InPageEdit",
+      "author": "dragon-fish",
+      "license": "MIT",
+      "loader": {
+        "kind": "autoload",
+        "entry": "sample/autoload.js",
+        "styles": [],
+        "main_export": null
+      }
+    },
+    {
+      "id": "module-plugin",
+      "name": "Module Plugin",
+      "version": "1.0.0",
+      "description": "A sample plugin for InPageEdit",
+      "author": "dragon-fish",
+      "license": "MIT",
+      "loader": {
+        "kind": "module",
+        "entry": "sample/index.mjs",
+        "styles": [],
+        "main_export": "PluginSample"
+      }
+    },
+    {
+      "id": "umd-plugin",
+      "name": "Global UMD Plugin",
+      "version": "1.0.0",
+      "description": "A sample plugin for InPageEdit",
+      "author": "dragon-fish",
+      "license": "MIT",
+      "loader": {
+        "kind": "umd",
+        "entry": "sample/index.umd.js",
+        "styles": [],
+        "main_export": "InPageEditPluginSample"
+      }
+    },
+    {
+      "id": "style-only-plugin",
+      "name": "Style Only Plugin",
+      "version": "1.0.0",
+      "description": "A sample plugin for InPageEdit",
+      "author": "dragon-fish",
+      "license": "MIT",
+      "loader": {
+        "kind": "styles",
+        "entry": null,
+        "styles": [
+          "sample/style.css"
+        ],
+        "main_export": "InPageEditPluginSample"
+      }
+    }
+  ]
+}

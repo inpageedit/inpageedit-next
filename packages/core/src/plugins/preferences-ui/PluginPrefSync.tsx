@@ -40,7 +40,6 @@ export class PluginPrefSync extends BasePlugin {
                   this.importFromUserPage()
                     .then((record) => {
                       this.notifyImportSuccess(record)
-                      modal?.close?.()
                     })
                     .finally(() => {
                       btn.disabled = false
@@ -72,7 +71,6 @@ export class PluginPrefSync extends BasePlugin {
                           </p>
                         ),
                       })
-                      modal?.close?.()
                     })
                     .finally(() => {
                       btn.disabled = false
@@ -111,7 +109,6 @@ export class PluginPrefSync extends BasePlugin {
                       }
                       const record = await this.importFromFile(file)
                       this.notifyImportSuccess(record)
-                      modal?.close?.()
                     } catch (e) {
                       ctx.modal.notify('error', {
                         title: 'Import failed',
@@ -133,6 +130,8 @@ export class PluginPrefSync extends BasePlugin {
                 className="btn"
                 onClick={async (e) => {
                   e.preventDefault()
+                  // 首先尝试保存当前的表单内容
+                  await ctx.preferencesUI.saveFormData()
                   const data = await ctx.preferences.getExportableRecord()
                   const json = JSON.stringify(data, null, 2)
                   ctx.modal.dialog(
@@ -255,6 +254,9 @@ export class PluginPrefSync extends BasePlugin {
     if (!title) {
       throw new Error('Cannot get user page title')
     }
+
+    // 首先尝试保存当前的表单内容
+    await ctx.preferencesUI.saveFormData()
 
     const json = await ctx.preferences.getExportableRecord()
     const text = JSON.stringify(json, null, 2)

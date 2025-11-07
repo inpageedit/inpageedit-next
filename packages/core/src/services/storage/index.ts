@@ -29,6 +29,9 @@ export interface IPEStorageRecord<T = any> {
 export interface AbstractIPEStorageManager<T = unknown> {
   get(key: string, ttl?: number, setter?: () => Promise<any> | any): Promise<T | null>
   set(key: string, value: null | undefined): Promise<void>
+  set(
+    record: Record<string, T | null | undefined>
+  ): Promise<Record<string, IPEStorageRecord<T> | void>>
   set(key: string, value: T): Promise<IPEStorageRecord<T>>
   has(key: string, ttl?: number): Promise<boolean>
   delete(key: string): Promise<void>
