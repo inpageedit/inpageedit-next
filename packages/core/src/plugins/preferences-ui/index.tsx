@@ -108,7 +108,7 @@ export class PluginPreferencesUI extends BasePlugin {
         ) as HTMLElement,
         tooltip: 'Configure Preferences',
         group: 'group2',
-        index: Infinity,
+        index: 99,
         onClick: () => this.showModal(),
       })
 

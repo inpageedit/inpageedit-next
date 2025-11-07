@@ -13,6 +13,7 @@
     .tabbar-content
       SchemaFormVue(
         v-if='activeSchema',
+        :key='activeCategoryName',
         :schema='activeSchema',
         :value='value',
         @update:value='value = { ...value, ...$event }',
@@ -60,6 +61,9 @@ defineExpose({
       ...value.value,
       ...details,
     }
+  },
+  selectTab(name: string) {
+    activeCategoryName.value = name
   },
 })
 

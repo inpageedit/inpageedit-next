@@ -245,7 +245,7 @@ export class PreferencesService extends Service {
     }
     count && this.logger.info(`Migrated ${count} preferences from master DB`)
     await masterDB.clear()
-    await masterDB?.db?.disconnect?.()
+    await masterDB?.db?.close?.()
     return count
   }
 }

@@ -1,13 +1,17 @@
 import { InPageEdit, Schema } from '@/InPageEdit'
 import { ForkScope, Inject } from '@cordisjs/core'
-import type { App as VueApp } from 'vue'
-import PluginStoreApp from './components/PluginStoreApp.vue'
+import { defineAsyncComponent, type App as VueApp } from 'vue'
 import { PluginStoreRegistry, PluginStoreSchemas } from './schema'
 import { AbstractIPEStorageManager } from '@/services/storage/index.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
     store: PluginPluginStore
+  }
+  interface PreferencesMap {
+    'pluginStore.registries': string[]
+    'pluginStore.plugins': { source?: 'online_manifest' | 'npm'; registry: string; id: string }[]
+    'pluginStore.cdnForNpm': string
   }
 }
 
@@ -22,42 +26,61 @@ const tryGetGlobalPlugin = (main_export: string) => {
   return null
 }
 
-@Inject({
-  storage: {
-    required: true,
-  },
-  resourceLoader: {
-    required: true,
-  },
-  preferences: {
-    required: false,
-  },
-})
+@Inject(['storage', 'preferences', 'resourceLoader'])
 export class PluginPluginStore extends BasePlugin {
+  private registryCacheDB: AbstractIPEStorageManager<PluginStoreRegistry>
+  static readonly PluginStoreSchemas = PluginStoreSchemas
+
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'plugin-store')
     ctx.set('store', this)
-    this._injectPreferenceUI()
     this.registryCacheDB = ctx.storage.createDatabse<PluginStoreRegistry>(
       'plugin-store-registry-caches',
       1000 * 60 * 60 * 24, // 1 day
       1
     )
   }
-  private registryCacheDB: AbstractIPEStorageManager<PluginStoreRegistry>
 
-  static readonly PluginStoreSchemas = PluginStoreSchemas
+  protected async start() {
+    this._installUserPlugins()
+    this._injectPreferenceUI()
+    this._injectToolbox()
+  }
+
+  private async _installUserPlugins() {
+    const prefs = await this.ctx.preferences.get('pluginStore.plugins', [])
+    if (!prefs?.length) {
+      return
+    }
+    for (const pref of prefs) {
+      this.install(pref.registry, pref.id, pref.source)
+    }
+  }
+
+  private async _injectToolbox() {
+    this.ctx.inject(['toolbox'], (ctx) => {
+      ctx.toolbox.addButton({
+        id: 'plugin-store',
+        tooltip: 'Plugin Store',
+        group: 'group2',
+        index: 90,
+        icon: '📦',
+        onClick: () => this.showModal(),
+      })
+      this.ctx.on('dispose', () => {
+        ctx.toolbox.removeButton('plugin-store')
+      })
+    })
+  }
 
   private async _createManagementApp(ctx = this.ctx) {
-    const registryUrl = await ctx.preferences.get('pluginStore.registryUrl')
-    const app = createVueAppWithIPE(ctx, PluginStoreApp, {
-      registryUrl,
-    })
+    const PluginStoreApp = defineAsyncComponent(() => import('./components/PluginStoreApp.vue'))
+    const app = createVueAppWithIPE(ctx, PluginStoreApp)
     return app
   }
 
   private async _injectPreferenceUI() {
-    const ctx = await this.ctx.useScope(['store', 'preferences'])
+    const ctx = this.ctx
     ctx.preferences.defineCategory({
       name: 'plugin-store',
       label: 'Plugin Store',
@@ -68,23 +91,33 @@ export class PluginPluginStore extends BasePlugin {
     ctx.preferences.registerCustomConfig(
       'plugin-store',
       Schema.object({
-        // TODO: 先写死，后面改
-        'pluginStore.registryUrl': Schema.string()
-          .default(
-            import.meta.env.PROD
-              ? 'https://plugins.ipe.wiki/registry.json'
-              : 'http://127.0.0.1:1005/src/__test__/plugin-registry/index.json'
-          )
-          .hidden(),
         'pluginStore._browseButton': Schema.const(
           <section>
-            <button className="btn primary" onClick={() => this.showModal()}>
-              Browse Plugins
+            <button
+              className="btn primary"
+              style={{ display: 'block', width: '100%', fontSize: '1.5em' }}
+              onClick={() => this.showModal()}
+            >
+              📦 Browse Plugins
             </button>
+            <div style={{ textAlign: 'center', marginTop: '1.5em', fontSize: '0.8em' }}>
+              🚫 DO NOT edit fileds below manually ↓
+            </div>
           </section>
         ).role('raw-html'),
+        'pluginStore.registries': Schema.array(Schema.string())
+          .default([
+            import.meta.env.PROD
+              ? 'https://plugins.ipe.wiki/registry.json'
+              : 'http://127.0.0.1:1005/src/__test__/plugin-registry/index.json',
+          ])
+          .description('Registry URLs'),
+        'pluginStore.cdnForNpm': Schema.string()
+          .description('CDN to install packages from npm')
+          .default('https://cdn.jsdelivr.net/npm/{{ package }}{{ version ? "@" + version : "" }}'),
         'pluginStore.plugins': Schema.array(
           Schema.object({
+            source: Schema.union(['online_manifest', 'npm']).default('online_manifest'),
             registry: Schema.string().required(),
             id: Schema.string().required(),
           })
@@ -100,10 +133,11 @@ export class PluginPluginStore extends BasePlugin {
   async showModal() {
     const modal = this.ctx.modal.show({
       title: 'Plugin Store',
+      sizeClass: 'small',
     })
     const container = <section id="ipe-plugin-store-vue"></section>
     modal.setContent(container)
-    const app = await this._createManagementApp(this.ctx)
+    const app = await this._createManagementApp(await this.ctx.useScope(['store']))
     app.mount(container)
     modal.on(modal.Event.Close, () => {
       app.unmount()
@@ -113,7 +147,11 @@ export class PluginPluginStore extends BasePlugin {
   }
 
   private _installedPlugins = new Map<string, Promise<ForkScope<InPageEdit> | null>>()
-  async install(registry: string, id: string): Promise<ForkScope<InPageEdit> | null> {
+  async install(
+    registry: string,
+    id: string,
+    source: 'online_manifest' | 'npm' = 'online_manifest'
+  ): Promise<ForkScope<InPageEdit> | null> {
     const registryInfo = await this.getRegistryInfo(registry)
     if (this._installedPlugins.has(`${registry}:${id}`)) {
       return (await this._installedPlugins.get(`${registry}:${id}`)) ?? null
@@ -285,5 +323,39 @@ export class PluginPluginStore extends BasePlugin {
   }
   private async setRegistryCache(registry: string, data: PluginStoreRegistry) {
     return this.registryCacheDB.set(registry, data)
+  }
+
+  /**
+   * 清除所有 registry 缓存
+   */
+  async clearAllRegistryCaches() {
+    await this.registryCacheDB.clear()
+    this.ctx.logger.debug('All registry caches cleared')
+  }
+
+  /**
+   * 刷新指定 registry 的缓存（重新从网络获取）
+   */
+  async refreshRegistryCache(registry: string): Promise<PluginStoreRegistry> {
+    await this.registryCacheDB.delete(registry)
+    const data = await this.fetchOnlineRegistryInfo(registry)
+    await this.setRegistryCache(registry, data)
+    this.ctx.logger.debug('Registry cache refreshed:', registry)
+    return data
+  }
+
+  /**
+   * 刷新所有已配置的 registry 缓存
+   */
+  async refreshAllRegistryCaches(): Promise<PluginStoreRegistry[]> {
+    const registryUrls = (await this.ctx.preferences.get('pluginStore.registries')) || []
+    const results = await Promise.allSettled(
+      registryUrls.map((url) => this.refreshRegistryCache(url))
+    )
+    const refreshed = results
+      .filter((r) => r.status === 'fulfilled')
+      .map((r) => (r as PromiseFulfilledResult<PluginStoreRegistry>).value)
+    this.ctx.logger.debug(`Refreshed ${refreshed.length} registry caches`)
+    return refreshed
   }
 }
