@@ -30,7 +30,7 @@ export interface InPageEditPreferenceUICategory {
    * @param ctx - InPageEdit 上下文
    * @param onUnmount - 卸载回调，当偏好设置 UI 被卸载时会被调用
    */
-  customRender?: (payload: {
+  customRenderer?: (payload: {
     ctx: InPageEdit
     onMounted: (callback: (container: HTMLElement) => void) => void
     onUnmount: (callback: () => void) => void

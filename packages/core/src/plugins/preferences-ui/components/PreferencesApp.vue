@@ -14,7 +14,7 @@
       .custom-render-container(
         ref='customRenderContainerRef',
         :key='activeCategoryName',
-        v-if='activeCategory && activeCategory.customRender'
+        v-if='activeCategory && activeCategory.customRenderer'
       )
       SchemaFormVue.auto-schema-form(
         v-if='autoGenerateForm && activeSchema',
@@ -131,7 +131,7 @@ watch(
     const container = customRenderContainerRef.value
     if (!container) return
     container.innerText = ''
-    if (cat && typeof cat.customRender === 'function') {
+    if (cat && typeof cat.customRenderer === 'function') {
       let onMountedCallback: (container: HTMLElement) => void = noop
       const onMounted = (callback: (container: HTMLElement) => void) => {
         onMountedCallback = callback
@@ -139,7 +139,7 @@ watch(
       const onUnmount = (callback: () => void) => {
         unmountCallbacks.value.push(callback)
       }
-      const node = await cat.customRender({ ctx, onMounted, onUnmount })
+      const node = await cat.customRenderer({ ctx, onMounted, onUnmount })
       if (node) {
         container.appendChild(node)
         onMountedCallback?.(container)

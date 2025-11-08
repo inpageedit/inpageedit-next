@@ -22,7 +22,7 @@ export class PluginPrefSync extends BasePlugin {
       label: 'Sync',
       description: 'Import and export preferences',
       index: 98,
-      customRender: () => {
+      customRenderer: () => {
         const userPageTitle = this.getUserPrefsPageTitle()
         return (
           <div className="theme-ipe-prose">

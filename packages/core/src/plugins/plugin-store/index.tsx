@@ -109,7 +109,7 @@ export class PluginPluginStore extends BasePlugin {
       label: 'Plugin Store',
       description: 'Plugin Store',
       index: 90,
-      customRender: async ({ onUnmount }) => {
+      customRenderer: async ({ onUnmount }) => {
         const container = <div id="ipe-plugin-store-preferences-vue"></div>
         const app = await this._createManagementApp()
         app.mount(container)

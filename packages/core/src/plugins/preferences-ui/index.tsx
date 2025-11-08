@@ -38,7 +38,7 @@ export class PluginPreferencesUI extends BasePlugin {
       label: 'About',
       description: 'About InPageEdit',
       index: 99,
-      customRender: () => {
+      customRenderer: () => {
         return (
           <section className="theme-ipe-prose">
             <h2>✏️ InPageEdit NEXT</h2>
