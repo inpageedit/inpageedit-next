@@ -1,11 +1,11 @@
 import { IDBPlus } from 'idb-plus'
-import { AbstractIPEStorageManager, IPEStorageRecord } from './index.js'
+import { AbstractIPEStorageManager, TypedStorageEntry } from '../index.js'
 
-export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager<T> {
-  readonly db: IDBPlus<string, IPEStorageRecord<T>>
+export class IDBStorageManager<T = unknown> implements AbstractIPEStorageManager<T> {
+  readonly db: IDBPlus<string, TypedStorageEntry<T>>
   keys: () => AsyncIterable<string>
-  values: () => AsyncIterable<IPEStorageRecord<T>>
-  entries: () => AsyncIterable<[string, IPEStorageRecord<T>]>
+  values: () => AsyncIterable<TypedStorageEntry<T>>
+  entries: () => AsyncIterable<[string, TypedStorageEntry<T>]>
 
   constructor(
     readonly dbName: string,
@@ -13,7 +13,7 @@ export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager
     public ttl: number = Infinity,
     public version?: number
   ) {
-    this.db = new IDBPlus<string, IPEStorageRecord<T>>(dbName, storeName)
+    this.db = new IDBPlus<string, TypedStorageEntry<T>>(dbName, storeName)
     this.keys = this.db.keys.bind(this.db)
     this.values = this.db.values.bind(this.db)
     this.entries = this.db.entries.bind(this.db)
@@ -22,6 +22,21 @@ export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager
     }
     if (isNaN(this.ttl) || this.ttl <= 0) {
       this.ttl = Infinity
+    }
+    this._clearExpiredEntries().catch(() => {})
+  }
+
+  private async _clearExpiredEntries() {
+    if (this.ttl === Infinity) return
+    const now = Date.now()
+    const toDelete: string[] = []
+    for await (const [key, entry] of this.db.entries()) {
+      if (typeof entry.time === 'number' && now - entry.time > this.ttl) {
+        toDelete.push(key)
+      }
+    }
+    if (toDelete.length > 0) {
+      await this.db.deleteMany(toDelete)
     }
   }
 
@@ -40,14 +55,14 @@ export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager
   }
 
   set(key: string, value: null | undefined): Promise<void>
-  set(key: string, value: T): Promise<IPEStorageRecord<T>>
+  set(key: string, value: T): Promise<TypedStorageEntry<T>>
   set(
     record: Record<string, T | null | undefined>
-  ): Promise<Record<string, IPEStorageRecord<T> | void>>
+  ): Promise<Record<string, TypedStorageEntry<T> | void>>
   async set(
     keyOrRecord: string | Record<string, T | null | undefined>,
     maybeValue?: T | null | undefined
-  ): Promise<IPEStorageRecord<T> | void | Record<string, IPEStorageRecord<T> | void>> {
+  ): Promise<TypedStorageEntry<T> | void | Record<string, TypedStorageEntry<T> | void>> {
     const now = Date.now()
 
     // Overload 1: set(key, value)
@@ -57,7 +72,7 @@ export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager
       if (value === null || typeof value === 'undefined') {
         return this.delete(key)
       }
-      const record: IPEStorageRecord<T> = {
+      const record: TypedStorageEntry<T> = {
         time: now,
         value,
         version: this.version,
@@ -68,15 +83,15 @@ export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager
 
     // Overload 2: set(record)
     const recordObject = keyOrRecord as Record<string, T | null | undefined>
-    const toSet: Array<[string, IPEStorageRecord<T>]> = []
+    const toSet: Array<[string, TypedStorageEntry<T>]> = []
     const toDelete: Array<string> = []
-    const results: Record<string, IPEStorageRecord<T> | void> = {}
+    const results: Record<string, TypedStorageEntry<T> | void> = {}
 
     for (const [key, value] of Object.entries(recordObject)) {
       if (value === null || typeof value === 'undefined') {
         toDelete.push(key)
       } else {
-        const rec: IPEStorageRecord<T> = { time: now, value: value as T, version: this.version }
+        const rec: TypedStorageEntry<T> = { time: now, value: value as T, version: this.version }
         toSet.push([key, rec])
         results[key] = rec
       }
@@ -99,6 +114,11 @@ export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager
 
   async delete(key: string): Promise<void> {
     await this.db.delete(key)
+  }
+
+  async updatedAt(key: string): Promise<number> {
+    const data = await this.loadFromDB(key)
+    return data ? data.time : 0
   }
 
   private async loadFromDB(key: string) {
@@ -124,7 +144,7 @@ export class IPEStorageManager<T = unknown> implements AbstractIPEStorageManager
     return data
   }
 
-  private checkIfExpired(data: IPEStorageRecord<T> | null, ttl = this.ttl) {
+  private checkIfExpired(data: TypedStorageEntry<T> | null, ttl = this.ttl) {
     if (!data) return false
     return Date.now() - data.time > ttl
   }
