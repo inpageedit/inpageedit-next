@@ -23,6 +23,44 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.12.0'>
+
+<template #title>0.12.0 <Badge type='rainbow'>重量级</Badge></template>
+
+- feat: introduce PluginStore
+  - <Badge type='rainbow'>新功能</Badge> 万众期待的 **插件商店** 终于来了！
+  - 从工具盒™中点击齿轮按钮，切换到“Plugin Store”标签页，立即体验！
+- feat: enhance PreferencesService with user-specific storage and migration from legacy database
+  - 现在偏好设置按用户隔离存储，旧数据会自动迁移到更新后首个使用的用户下
+- refactor!: + interface PreferencesMap
+  - 重构了 `preferences.set/get` 的类型定义，开发者可以通过重载 `PreferencesMap` 接口来扩展偏好设置的类型，从而获得自动补全和类型检查。
+  - ~~我爱类型体操~~
+- refactor: PreferenceForm now no longer rerender full form
+  - 现在 PreferenceFormApp 使用 `Schema.intersect` 来整合所有插件的配置构型，不再重新渲染整个表单，从而提升性能。
+- fix: normalize button ID before removal in PluginToolbox
+  - 修复了一个导致 `toolbox.removeButton` 无法正常移除按钮的问题
+- feat: implement MemoryStorage, LocalStorageManager, given default kv entries
+  - 实现了内存存储、本地存储管理器，并提供了默认的 KV 过滤器，方便开发者快速存储简单的数据。
+- feat: enhance preferences UI with improved data presentation and user interactions
+  - 优化了偏好设置的 UI，现在你可以更方便地管理插件的配置了！
+  - `preferencesUI.defineCategory` 现在支持传递 `customRenderer` 来定制渲染器，从而在自动表单上方添加额外的自定义内容。
+- feat: default reason for quick-delete, quick-move, and quick-redirect
+  - 为快速删除、快速移动和快速重定向插件添加了默认理由配置项
+- chore: housekeeping
+  - 优化了大量 UI。
+  - 更新了依赖，修复了一些小问题，提升了项目的整体质量。
+
+</ChangeLog>
+
+<ChangeLog version='0.11.1'>
+
+- fix: isWikiLink should handle landing page
+  - 修复了对 `$wgMainPageIsDomainRoot = true;` 的 wiki 中首页链接的错误判断
+- feat: enhanced draggable modal
+  - 简单优化了可拖拽模态框的样式
+
+</ChangeLog>
+
 <ChangeLog version='0.11.0'>
 
 - fix: ensure consistent export order in PreferencesService
