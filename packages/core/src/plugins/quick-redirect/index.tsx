@@ -1,10 +1,9 @@
-import { InPageEdit } from '@/InPageEdit'
+import { InPageEdit, Schema } from '@/InPageEdit'
 import { IPEModal } from '@inpageedit/modal'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickRedirect: PluginQuickRedirect['quickRedirect']
-    redirectPage: PluginQuickRedirect['redirectPage']
+    quickRedirect: PluginQuickRedirect
   }
   interface Events {
     'quick-redirect/init-options'(payload: {
@@ -13,6 +12,9 @@ declare module '@/InPageEdit' {
     }): void
     'quick-redirect/show-modal'(payload: { ctx: InPageEdit; modal: IPEModal }): void
     'quick-redirect/submit'(payload: { ctx: InPageEdit; payload: RedirectPageOptions }): void
+  }
+  interface PreferencesMap {
+    'quickRedirect.reason': string
   }
 }
 
@@ -26,14 +28,18 @@ export interface QuickRedirectOptions extends Partial<RedirectPageOptions> {}
 
 export class PluginQuickRedirect extends BasePlugin {
   static readonly inject = ['api', 'wikiPage', 'modal']
+  static readonly PreferencesSchema = Schema.object({
+    'quickRedirect.reason': Schema.string().default('[IPE-NEXT] Quick redirect'),
+  })
+    .description('Quick redirect options')
+    .extra('category', 'editor')
 
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-redirect')
   }
 
   protected start(): Promise<void> | void {
-    this.ctx.set('quickRedirect', this.quickRedirect.bind(this))
-    this.ctx.set('redirectPage', this.redirectPage.bind(this))
+    this.ctx.set('quickRedirect', this)
 
     const curPageName = window.mw?.config.get('wgPageName') || ''
     const canEdit = window.mw?.config.get('wgIsProbablyEditable')
@@ -65,7 +71,7 @@ export class PluginQuickRedirect extends BasePlugin {
         group: 'group1',
         index: 2,
         onClick: () => {
-          this.quickRedirect(
+          this.showModal(
             canEdit
               ? {
                   to: curPageName,
@@ -82,7 +88,8 @@ export class PluginQuickRedirect extends BasePlugin {
 
   protected stop(): Promise<void> | void {}
 
-  quickRedirect(options?: Partial<QuickRedirectOptions>) {
+  async showModal(options?: Partial<QuickRedirectOptions>) {
+    const reason = await this.ctx.preferences.get('quickRedirect.reason')
     if (!options) {
       options = {}
     }
@@ -162,7 +169,12 @@ export class PluginQuickRedirect extends BasePlugin {
               },
             ]}
           />
-          <InputBox label="Reason" id="reason" name="reason" value={options?.reason} />
+          <InputBox
+            label="Reason"
+            id="reason"
+            name="reason"
+            value={options?.reason ?? reason ?? ''}
+          />
           <div>
             <CheckBox name="overwrite" id="overwrite" checked={options?.overwrite}>
               Force create redirect even if the from page already exists

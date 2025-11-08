@@ -1,10 +1,9 @@
-import { Inject, InPageEdit } from '@/InPageEdit'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 import { IPEModal } from '@inpageedit/modal'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
-    quickMove: PluginQuickMove['quickMove']
-    movePage: PluginQuickMove['movePage']
+    quickMove: PluginQuickMove
   }
   interface Events {
     'quick-move/init-options'(payload: {
@@ -17,6 +16,9 @@ declare module '@/InPageEdit' {
       modal: IPEModal
       payload: MovePageOptions
     }): void
+  }
+  interface PreferencesMap {
+    'quickMove.reason': string
   }
 }
 
@@ -33,12 +35,18 @@ export interface QuickMoveOptions extends Partial<MovePageOptions> {
   lockToField?: boolean
 }
 
+@RegisterPreferences(
+  Schema.object({
+    'quickMove.reason': Schema.string().default('[IPE-NEXT] Quick move'),
+  })
+    .description('Quick move options')
+    .extra('category', 'editor')
+)
 @Inject(['modal', 'wiki'])
 export class PluginQuickMove extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-move')
-    ctx.set('quickMove', this.quickMove.bind(this))
-    ctx.set('movePage', this.movePage.bind(this))
+    ctx.set('quickMove', this)
   }
 
   protected start(): Promise<void> | void {
@@ -78,7 +86,7 @@ export class PluginQuickMove extends BasePlugin {
       group: 'group1',
       index: 1,
       onClick: () => {
-        this.quickMove(
+        this.showModal(
           canEdit
             ? {
                 lockFromField: true,
@@ -90,7 +98,8 @@ export class PluginQuickMove extends BasePlugin {
     })
   }
 
-  quickMove(options?: Partial<QuickMoveOptions>) {
+  async showModal(options?: Partial<QuickMoveOptions>) {
+    const reason = await this.ctx.preferences.get('quickMove.reason')
     const modal = this.ctx.modal
       .createObject({
         title: 'Quick Move',
@@ -181,7 +190,12 @@ export class PluginQuickMove extends BasePlugin {
               </CheckBox>
             </div>
           )}
-          <InputBox label="Reason" id="reason" name="reason" value={options?.reason} />
+          <InputBox
+            label="Reason"
+            id="reason"
+            name="reason"
+            value={options?.reason ?? reason ?? ''}
+          />
         </form>
       ) as HTMLElement
     )
