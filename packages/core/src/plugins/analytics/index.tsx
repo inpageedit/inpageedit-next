@@ -54,33 +54,40 @@ export class PluginAnalytics extends BasePlugin {
               design, and enhance user experience.
             </p>
             <h4>What data will be collected?</h4>
-            <ul style={{ listStyle: 'auto', paddingLeft: '1.5em' }}>
-              <li>Usage data: What features you use, what pages you edit, etc.</li>
-              <li>User information: Your username, user ID.</li>
-              <li>Site information: The wiki you are editing.</li>
-            </ul>
+            <ol style={{ listStyle: 'number', paddingLeft: '1em' }}>
+              <li>
+                <strong>Usage data</strong>: When and which features you use, what pages you edit,
+                etc.
+              </li>
+              <li>
+                <strong>User information</strong>: Your user name and user ID.
+              </li>
+              <li>
+                <strong>Site information</strong>: This wiki's url and site name.
+              </li>
+            </ol>
             <p>
               <strong>NO sensitive data will be collected.</strong>
             </p>
-            <ul style={{ listStyle: 'auto', paddingLeft: '1.5em' }}>
-              <li>
-                <a href={this.analyticsDashUrl} target="_blank" rel="noopener noreferrer">
-                  Analytics Platform →
-                </a>
-              </li>
-              <li>
-                <a
-                  href={`${this.analyticsDashUrl}/_redirect/user?${new URLSearchParams({
-                    siteApi: this.ctx.wiki.getSciprtUrl('api'),
-                    mwUserId: this.ctx.wiki.userInfo.id.toString(),
-                  }).toString()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  My Data →
-                </a>
-              </li>
-            </ul>
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <a href={this.analyticsDashUrl} target="_blank" rel="noopener noreferrer">
+                <button className="btn" style={{ width: '100%' }}>
+                  Analytics Platform
+                </button>
+              </a>
+              <a
+                href={`${this.analyticsDashUrl}/_redirect/user?${new URLSearchParams({
+                  siteApi: this.ctx.wiki.getSciprtUrl('api'),
+                  mwUserId: this.ctx.wiki.userInfo.id.toString(),
+                }).toString()}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <button className="btn" style={{ width: '100%' }}>
+                  View My Data
+                </button>
+              </a>
+            </div>
           </section>
         ).role('raw-html'),
         'analytics.enabled': Schema.boolean()
@@ -126,8 +133,8 @@ export class PluginAnalytics extends BasePlugin {
   private async _showConfirmNotify() {
     this.ctx.inject(['modal', 'storage'], async (ctx) => {
       const key = 'analytics/confirm-shown'
-      const shown = await this.ctx.storage.simpleKV.get(key)
-      const enabled = await this.ctx.preferences.get('analytics.enabled')
+      const shown = await ctx.storage.simpleKV.get(key)
+      const enabled = await ctx.preferences.get('analytics.enabled')
       if (shown || enabled) {
         return
       }

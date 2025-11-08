@@ -66,7 +66,7 @@ const resolveResourceUrl = (resourcePath: string, baseUrl: string, registryUrl: 
 export class PluginPluginStore extends BasePlugin {
   // re-export for external usage
   static readonly PluginStoreSchemas = PluginStoreSchemas
-
+  static REGISTRY_CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
   private registryInfoDB: AbstractIPEStorageManager<PluginStoreRegistry>
 
   constructor(public ctx: InPageEdit) {
@@ -74,7 +74,7 @@ export class PluginPluginStore extends BasePlugin {
     ctx.set('store', this)
     this.registryInfoDB = ctx.storage.createDatabase<PluginStoreRegistry>(
       'plugin-store-registry',
-      1000 * 60 * 60 * 2, // 2 hours
+      PluginPluginStore.REGISTRY_CACHE_TTL,
       1
     )
   }
@@ -82,7 +82,6 @@ export class PluginPluginStore extends BasePlugin {
   protected async start() {
     this._installUserPlugins()
     this._injectPreferenceUI()
-    this._injectToolbox()
   }
 
   private async _installUserPlugins() {
@@ -95,23 +94,8 @@ export class PluginPluginStore extends BasePlugin {
     }
   }
 
-  private async _injectToolbox() {
-    this.ctx.inject(['toolbox'], (ctx) => {
-      ctx.toolbox.addButton({
-        id: 'plugin-store',
-        tooltip: 'Plugin Store',
-        group: 'group2',
-        index: 90,
-        icon: '📦',
-        onClick: () => this.showModal(),
-      })
-      this.ctx.on('dispose', () => {
-        ctx.toolbox.removeButton('plugin-store')
-      })
-    })
-  }
-
-  private async _createManagementApp(ctx = this.ctx) {
+  private async _createManagementApp() {
+    const ctx = await this.ctx.withInject(['store'])
     const PluginStoreApp = defineAsyncComponent(() => import('./components/PluginStoreApp.vue'))
     const app = createVueAppWithIPE(ctx, PluginStoreApp)
     return app
@@ -119,30 +103,39 @@ export class PluginPluginStore extends BasePlugin {
 
   private async _injectPreferenceUI() {
     const ctx = this.ctx
+
     ctx.preferences.defineCategory({
       name: 'plugin-store',
       label: 'Plugin Store',
       description: 'Plugin Store',
       index: 90,
+      customRender: async ({ onUnmount }) => {
+        const container = <div id="ipe-plugin-store-preferences-vue"></div>
+        const app = await this._createManagementApp()
+        app.mount(container)
+
+        onUnmount(() => {
+          app.unmount()
+          this.ctx.logger.debug('Plugin Store preferences app unmounted')
+        })
+
+        return (
+          <section>
+            {container}
+            <div className="theme-ipe-prose">
+              <hr />
+              <div style={{ textAlign: 'center', marginBottom: '1em', fontSize: '0.8em' }}>
+                🚫 DO NOT edit fields below manually 🚫
+              </div>
+            </div>
+          </section>
+        )
+      },
     })
 
     ctx.preferences.registerCustomConfig(
       'plugin-store',
       Schema.object({
-        'pluginStore._browseButton': Schema.const(
-          <section>
-            <button
-              className="btn primary"
-              style={{ display: 'block', width: '100%', fontSize: '1.5em' }}
-              onClick={() => this.showModal()}
-            >
-              📦 Browse Plugins
-            </button>
-            <div style={{ textAlign: 'center', marginTop: '1.5em', fontSize: '0.8em' }}>
-              🚫 DO NOT edit fileds below manually ↓
-            </div>
-          </section>
-        ).role('raw-html'),
         'pluginStore.registries': Schema.array(Schema.string())
           .default([
             import.meta.env.PROD
@@ -161,13 +154,13 @@ export class PluginPluginStore extends BasePlugin {
           })
         )
           .description('Installed plugins')
-          .default([]),
+          .default([])
+          .hidden(),
       }),
       'plugin-store'
     )
   }
 
-  private _vueApp: VueApp | null = null
   async showModal() {
     const modal = this.ctx.modal.show({
       title: 'Plugin Store',
@@ -175,11 +168,10 @@ export class PluginPluginStore extends BasePlugin {
     })
     const container = <section id="ipe-plugin-store-vue"></section>
     modal.setContent(container)
-    const app = await this._createManagementApp(await this.ctx.withInject(['store']))
+    const app = await this._createManagementApp()
     app.mount(container)
     modal.on(modal.Event.Close, () => {
       app.unmount()
-      this._vueApp = null
     })
     return modal
   }

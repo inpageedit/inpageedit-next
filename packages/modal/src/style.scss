@@ -418,6 +418,17 @@ body.ipe-modal-no-scroll {
   /* 为了在窄屏上也可滚动，footer 依旧占位，窗口仍受 max-height 限制 */
   .ipe-modal-modal__footer {
     padding: 0;
+    background-color: transparent;
+    .ipe-modal-btn {
+      flex: 1;
+      border: 0;
+      margin: 0;
+      padding: 1rem;
+      border-radius: 0;
+    }
+    .ipe-modal-btn:not(:first-child) {
+      border-left: 1px solid rgba(0, 0, 0, 0.06);
+    }
   }
   .ipe-modal-modal__buttons--left {
     display: none;
@@ -427,19 +438,6 @@ body.ipe-modal-no-scroll {
     width: 100%;
     display: flex;
     gap: 0;
-  }
-  .ipe-modal-btn {
-    flex: 1;
-    border: 0;
-    margin: 0;
-    padding: 1rem;
-    border-radius: 0;
-  }
-  .ipe-modal-btn:not(:first-child) {
-    border-left: 1px solid rgba(0, 0, 0, 0.06);
-  }
-  .ipe-modal-modal__footer {
-    background-color: transparent;
   }
 }
 

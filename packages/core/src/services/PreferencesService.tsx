@@ -25,6 +25,21 @@ export interface InPageEditPreferenceUICategory {
   label: string
   description?: string
   index?: number
+  /**
+   * 自定义渲染函数
+   * @param ctx - InPageEdit 上下文
+   * @param onUnmount - 卸载回调，当偏好设置 UI 被卸载时会被调用
+   */
+  customRender?: (payload: {
+    ctx: InPageEdit
+    onMounted: (callback: (container: HTMLElement) => void) => void
+    onUnmount: (callback: () => void) => void
+  }) => Promise<Node> | Node
+  /**
+   * 是否自动生成该分类下的表单
+   * @default true
+   */
+  autoGenerateForm?: boolean
 }
 
 export interface InPageEditPreferenceUIRegistryItem {
@@ -58,21 +73,36 @@ export class PreferencesService extends Service {
       name: 'general',
       label: 'General',
       description: 'General settings',
+      autoGenerateForm: true,
     })
     this.defineCategory({
-      name: 'edit',
-      label: 'Editing',
+      name: 'editor',
+      label: 'Editor',
       description: 'Settings related to editing content',
+      autoGenerateForm: true,
     })
   }
 
   // 重载魔术：一些类型体操……
+  /**
+   * 获取配置项的值
+   * @param key 配置项的键名
+   * @param fallback 当配置项不存在时的回退值
+   * @returns
+   * - 未提供 key 时，返回所有配置项的键值对
+   * - 提供 key 时，返回对应配置项的值，若不存在则返回回退值或 null
+   * @tips 你可以通过重载 PreferencesMap 来定义你的配置项类型，以自动获得类型推导
+   */
+  get(): Promise<PreferencesMap>
   get<K extends keyof PreferencesMap>(
     key: K,
     fallback?: ComputeAble<PreferencesMap[K]>
   ): Promise<PreferencesMap[K] | null>
   get<U = unknown>(key: string, fallback?: ComputeAble<U>): Promise<U | null>
-  async get(key: string, fallback?: ComputeAble<unknown>): Promise<unknown | null> {
+  async get(key?: string, fallback?: ComputeAble<unknown>): Promise<unknown | null> {
+    if (!key) {
+      return this.getAll()
+    }
     fallback ??= () => {
       const defaultValue = this.defaultOf(key as keyof PreferencesMap)
       this.logger.debug(key, `(fallback value: ${defaultValue})`)
@@ -80,6 +110,21 @@ export class PreferencesService extends Service {
     }
     const value = await this.db.get(key, undefined)
     return value !== null ? value : await computeFallback(fallback)
+  }
+  /**
+   * 获取全部注册的配置项以及最终生效的值
+   * 未保存的配置项将使用默认值
+   */
+  async getAll() {
+    const data = this.loadDefaultConfigs()
+    for await (const [key, record] of this.db.entries()) {
+      // 旧版本埋的坑
+      if (key === '_touched') continue
+      if (key in data) {
+        ;(data as any)[key] = record.value
+      }
+    }
+    return data
   }
 
   set<K extends keyof PreferencesMap>(
@@ -120,19 +165,6 @@ export class PreferencesService extends Service {
   defaultOf(key: string) {
     return (this._defaultPreferences[key] ??=
       this.loadDefaultConfigs()[key as keyof PreferencesMap])
-  }
-
-  /**
-   * 获取全部注册的配置项，以及正在生效的值
-   */
-  async getAll() {
-    const data = this.loadDefaultConfigs()
-    for await (const [key, record] of this.db.entries()) {
-      // 旧版本埋的坑
-      if (key === '_touched') continue
-      ;(data as any)[key] = record.value
-    }
-    return data
   }
 
   /**

@@ -40,7 +40,7 @@ declare module '@/InPageEdit' {
       .default('ctrl-p')
       .description('Key shortcut to open quick preview in quick edit modal'),
   })
-    .extra('category', 'edit')
+    .extra('category', 'editor')
     .description('Quick preview options')
 )
 export class PluginQuickPreview extends BasePlugin {

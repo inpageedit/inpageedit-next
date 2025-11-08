@@ -116,7 +116,7 @@ export class WikiMetadataService extends Service {
             </div>
           ).role('raw-html'),
         }).description('WikiMetadataService'),
-        'general'
+        'about'
       )
     })
 

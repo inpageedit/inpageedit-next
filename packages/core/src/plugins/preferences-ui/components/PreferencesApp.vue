@@ -1,5 +1,5 @@
 <template lang="pug">
-.preferences-ui-app
+#preferences-ui-app
   .tabbar
     .tabbar-tabs
       a.tab(
@@ -11,9 +11,15 @@
       ) {{ tab.label }}
 
     .tabbar-content
-      SchemaFormVue(
-        v-if='activeSchema',
+      .custom-render-container(
+        ref='customRenderContainerRef',
         :key='activeCategoryName',
+        v-if='activeCategory && activeCategory.customRender'
+      )
+      SchemaFormVue.auto-schema-form(
+        v-if='autoGenerateForm && activeSchema',
+        :key='activeCategoryName',
+        :data-category='activeCategoryName',
         :schema='activeSchema',
         :value='value',
         @update:value='value = { ...value, ...$event }',
@@ -26,27 +32,46 @@
 </template>
 
 <script setup lang="ts" vapor>
-import { computed, onMounted, ref, shallowRef } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  shallowRef,
+  useTemplateRef,
+  watch,
+} from 'vue'
 import { useIPE } from '@/utils/vueHooks'
 import type {
   InPageEditPreferenceUIRegistryItem,
   InPageEditPreferenceUICategory,
-} from '../../services/PreferencesService'
+} from '../../../services/PreferencesService'
 import SchemaFormVue from 'schemastery-form/vue'
 import Schema from 'schemastery'
 
 const ctx = useIPE()!
 const DEV = import.meta.env.DEV
 
+const registries = shallowRef<InPageEditPreferenceUIRegistryItem[]>([])
 const tabs = ref<InPageEditPreferenceUICategory[]>([])
 const activeCategoryName = ref('')
-const registries = shallowRef<InPageEditPreferenceUIRegistryItem[]>([])
+const activeCategory = computed(() => {
+  return tabs.value.find((tab) => tab.name === activeCategoryName.value) || null
+})
 const activeSchema = computed(() => {
   const filtered = registries.value
     .filter((reg) => reg.category === activeCategoryName.value)
     .map((reg) => reg.schema)
   if (filtered.length === 0) return null
   return Schema.intersect(filtered)
+})
+
+const autoGenerateForm = computed(() => {
+  if (!activeCategory.value) return true
+  return typeof activeCategory.value.autoGenerateForm === 'boolean'
+    ? activeCategory.value.autoGenerateForm
+    : true
 })
 
 const value = ref<any>({})
@@ -85,6 +110,44 @@ const handleTabClick = (event: MouseEvent, name: string) => {
     target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
   }
 }
+
+const customRenderContainerRef = useTemplateRef('customRenderContainerRef')
+const unmountCallbacks = ref<Array<() => void>>([])
+
+onUnmounted(() => {
+  // 组件卸载时调用所有注册的卸载回调
+  unmountCallbacks.value.forEach((callback) => callback())
+  unmountCallbacks.value = []
+})
+
+watch(
+  activeCategory,
+  async (cat) => {
+    // 调用之前注册的卸载回调
+    unmountCallbacks.value.forEach((callback) => callback())
+    unmountCallbacks.value = []
+
+    await nextTick()
+    const container = customRenderContainerRef.value
+    if (!container) return
+    container.innerText = ''
+    if (cat && typeof cat.customRender === 'function') {
+      let onMountedCallback: (container: HTMLElement) => void = noop
+      const onMounted = (callback: (container: HTMLElement) => void) => {
+        onMountedCallback = callback
+      }
+      const onUnmount = (callback: () => void) => {
+        unmountCallbacks.value.push(callback)
+      }
+      const node = await cat.customRender({ ctx, onMounted, onUnmount })
+      if (node) {
+        container.appendChild(node)
+        onMountedCallback?.(container)
+      }
+    }
+  },
+  { immediate: true, deep: false }
+)
 </script>
 
 <style scoped lang="scss">
@@ -123,7 +186,7 @@ schema-form {
 </style>
 
 <style lang="scss">
-.preferences-ui-app {
+#preferences-ui-app {
   .schema-form-item.field {
     border: 0;
   }

@@ -1,8 +1,13 @@
 <template lang="pug">
 #ipe-plugin-store-app
   .sotre-header
-    .store-search-wrapper(v-if='registryInfos.length > 0')
-      input.store-search-input(v-model='searchInput', type='text', placeholder='Search plugins...')
+    .store-search-wrapper
+      input.store-search-input(
+        v-model='searchInput',
+        type='text',
+        placeholder='Search plugins...',
+        :disabled='registryInfos.length === 0'
+      )
       .store-search-icon 🔍
     button.store-refresh-btn(
       @click='refreshRegistries',
@@ -25,12 +30,13 @@
         .plugin-header
           .name {{ plugin.name }}
           .status-badge(v-if='isInstalled(plugin.registry, plugin.id)') ✓
+        a.registry-tag(:href='plugin.registryHomepage', target='_blank') {{ getRegistryLabel(plugin.registry) }}
         .plugin-id {{ plugin.id }}
-        .registry-tag {{ getRegistryLabel(plugin.registry) }}
         .plugin-desc(v-if='plugin.description') {{ plugin.description }}
         .plugin-meta
           span.version(v-if='plugin.version') v{{ plugin.version }}
           span.author(v-if='plugin.author') 👤 {{ plugin.author }}
+          span.license(v-if='plugin.license') 📜 {{ plugin.license }}
       button(
         :class='{ active: isInstalled(plugin.registry, plugin.id) }',
         @click='togglePlugin(plugin.registry, plugin.id)'
@@ -95,6 +101,7 @@ const filteredPlugins = computed(() => {
     (registry.packages || []).map((pkg) => ({
       ...pkg,
       registry: registry.registryUrl, // 使用完整的 registry URL (index.json 地址)
+      registryHomepage: registry.homepage,
     }))
   )
 
@@ -213,14 +220,16 @@ onBeforeUnmount(() => {
 
     .store-search-input {
       width: 100%;
-      padding: 0.5rem 0.875rem 0.5rem 2.5rem;
+      height: 2.5rem;
+      padding: 0 0.875rem 0 2.5rem;
       border: 1.5px solid var(--ipe-modal-border-color);
-      border-radius: calc(var(--ipe-modal-button-radius) + 2px);
+      border-radius: var(--ipe-modal-button-radius);
       font-size: 0.875rem;
       outline: none;
       background: var(--ipe-modal-bg);
       color: var(--ipe-modal-text);
       transition: all 0.2s ease;
+      line-height: 1.5;
 
       &:focus {
         border-color: var(--ipe-modal-accent);
@@ -243,13 +252,14 @@ onBeforeUnmount(() => {
   }
 
   .store-refresh-btn {
-    padding: 0.5rem 1rem;
+    height: 2.5rem;
+    padding: 0 1rem;
     border: 1.5px solid var(--ipe-modal-border-color);
     border-radius: var(--ipe-modal-button-radius);
     background: var(--ipe-modal-bg);
     color: var(--ipe-modal-text);
     cursor: pointer;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 500;
     white-space: nowrap;
     transition: all 0.2s ease;
@@ -276,7 +286,7 @@ onBeforeUnmount(() => {
 }
 
 .store-loading {
-  padding: 3rem 1.25rem;
+  padding: 10rem 1.25rem;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -350,8 +360,9 @@ onBeforeUnmount(() => {
 
       .name {
         font-weight: 600;
-        font-size: 0.9375rem;
+        font-size: 1rem;
         color: var(--ipe-modal-text);
+        line-height: 1.2;
       }
 
       .status-badge {
@@ -374,6 +385,7 @@ onBeforeUnmount(() => {
       padding: 0.125rem 0.375rem;
       border-radius: 3px;
       display: inline-block;
+      margin-left: 0.375rem;
     }
 
     .registry-tag {
@@ -385,7 +397,6 @@ onBeforeUnmount(() => {
       padding: 0.125rem 0.375rem;
       border-radius: 3px;
       display: inline-block;
-      margin-left: 0.375rem;
       border: 1px solid color-mix(in srgb, var(--ipe-modal-accent) 20%, transparent);
     }
 

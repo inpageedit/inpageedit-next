@@ -95,7 +95,7 @@ export interface QuickEditSubmitPayload {
       .default('preferences'),
   })
     .description('Quick edit options')
-    .extra('category', 'edit')
+    .extra('category', 'editor')
 )
 export class PluginQuickEdit extends BasePlugin {
   private readonly DEFAULT_OPTIONS: QuickEditOptions = {

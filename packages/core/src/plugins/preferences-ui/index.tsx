@@ -1,20 +1,18 @@
-import { Inject, InPageEdit, Schema } from '@/InPageEdit'
-import PreferencesForm from './PreferencesForm.vue'
+import { Inject, InPageEdit } from '@/InPageEdit'
+import PreferencesApp from './components/PreferencesApp.vue'
 import { CustomIPEModal } from '@/services/ModalService.js'
 import type { App as VueApp } from 'vue'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
     preferencesUI: PluginPreferencesUI
-    // Alias
-    prefsModal: PluginPreferencesUI
   }
   export interface Events {
     'preferences-ui/modal-shown'(payload: { ctx: InPageEdit; modal: CustomIPEModal }): void
     'preferences-ui/vue-app-mounted'(payload: {
       ctx: InPageEdit
       app: VueApp
-      form: InstanceType<typeof PreferencesForm>
+      form: InstanceType<typeof PreferencesApp>
     }): void
     'preferences-ui/modal-tab-changed'(payload: {
       ctx: InPageEdit
@@ -34,42 +32,34 @@ export class PluginPreferencesUI extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'preferences-ui')
     ctx.set('preferencesUI', this)
-    ctx.set('prefsModal', this)
 
     ctx.preferences.defineCategory({
       name: 'about',
       label: 'About',
       description: 'About InPageEdit',
       index: 99,
-    })
-
-    ctx.preferences.registerCustomConfig(
-      'about',
-      Schema.object({
-        about: Schema.const(
-          <div className="prose">
+      customRender: () => {
+        return (
+          <section className="theme-ipe-prose">
             <h2>✏️ InPageEdit NEXT</h2>
-            <i>v{this.ctx.version}</i>
-            <h2>Portals</h2>
-            <div style="display: grid; gap: 0.5em; text-align: center">
-              <a
-                className="btn primary"
-                style={{ display: 'inline-block', textDecoration: 'none' }}
-                href={this.ctx.Endpoints.HOME_URL}
-                target="_blank"
-              >
-                Official Website & Help Center
-              </a>
-              <a
-                className="btn primary"
-                style={{ display: 'inline-block', textDecoration: 'none' }}
-                href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version.split('-')[0]}`}
-                target="_blank"
-              >
-                Update Logs
-              </a>
-            </div>
-            <h2>Join us</h2>
+            <p>🚀 Modular, Extensible Supercharged Plugin for MediaWiki.</p>
+            <h3>Portals</h3>
+            <ul>
+              <li>
+                <a href={this.ctx.Endpoints.HOME_URL} target="_blank">
+                  Official Website & Help Center
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version.split('-')[0]}`}
+                  target="_blank"
+                >
+                  Update Logs
+                </a>
+              </li>
+            </ul>
+            <h3>Join us</h3>
             <ul>
               <li>
                 <strong>GitHub</strong>:{' '}
@@ -82,13 +72,14 @@ export class PluginPreferencesUI extends BasePlugin {
               </li>
             </ul>
             <hr />
-            <p>🚀 Modular, Extensible Supercharged Plugin for MediaWiki.</p>
-            <p>InPageEdit-NEXT Copyright © 2025-present dragon-fish</p>
-          </div>
-        ).role('raw-html'),
-      }).description(''),
-      'about'
-    )
+            <p style={{ textAlign: 'center' }}>
+              InPageEdit-NEXT Copyright © 2025-{new Date().getFullYear()} dragon-fish
+            </p>
+            <hr />
+          </section>
+        )
+      },
+    })
 
     ctx.inject(['toolbox'], (ctx) => {
       ctx.toolbox.addButton({
@@ -133,11 +124,11 @@ export class PluginPreferencesUI extends BasePlugin {
 
   protected stop(): Promise<void> | void {}
 
-  _latestModal: CustomIPEModal | null = null
-  _form: InstanceType<typeof PreferencesForm> | null = null
+  _modal: CustomIPEModal | null = null
+  _form: InstanceType<typeof PreferencesApp> | null = null
   showModal() {
-    if (this._latestModal && !this._latestModal.isDestroyed) {
-      return this._latestModal
+    if (this._modal && !this._modal.isDestroyed) {
+      return this._modal
     }
     const modal = this.ctx.modal.show({
       className: 'ipe-preference compact-buttons',
@@ -154,7 +145,12 @@ export class PluginPreferencesUI extends BasePlugin {
 
     modal.get$window().classList.add('dialog')
 
-    const root = <div id="ipe-preferences-app" style={{ minHeight: '65vh' }}></div>
+    const root = (
+      <div
+        id="ipe-preferences-app"
+        style={{ minHeight: 'calc(85dvh - var(--ipe-modal-spacing) * 2)' }}
+      ></div>
+    )
     modal.setContent(root as HTMLElement)
 
     this.ctx.emit('preferences-ui/modal-shown', {
@@ -162,8 +158,8 @@ export class PluginPreferencesUI extends BasePlugin {
       modal,
     })
 
-    const app = this.createForm()
-    const form = app.mount(root) as InstanceType<typeof PreferencesForm>
+    const app = this.createPreferencesUIApp()
+    const form = app.mount(root) as InstanceType<typeof PreferencesApp>
     this._form = form
 
     this.ctx.emit('preferences-ui/vue-app-mounted', {
@@ -200,12 +196,12 @@ export class PluginPreferencesUI extends BasePlugin {
       },
     ])
 
-    this._latestModal = modal
+    this._modal = modal
 
     modal.on(modal.Event.Close, () => {
       this.logger.debug('preferences modal closed, vue app unmounting')
       app.unmount()
-      this._latestModal = null
+      this._modal = null
       this._form = null
 
       this.ctx.emit('preferences-ui/modal-closed', {
@@ -216,28 +212,30 @@ export class PluginPreferencesUI extends BasePlugin {
 
     return modal
   }
-  closeModal() {
-    this._latestModal?.close()
+  getCurrentModal() {
+    return this._modal
   }
-  getExistingModal() {
-    return this._latestModal
+  closeCurrentModal() {
+    return this._modal?.close()
   }
-  async saveFormData() {
-    const value = this._form?.getValue()
+  async dispatchFormSave(form?: InstanceType<typeof PreferencesApp>) {
+    form = form || this._form || undefined
+    const value = form?.getValue()
     if (!value) {
       return false
     }
     this.ctx.preferences.setMany(value)
     return true
   }
-  getExistingFormValue() {
+  getCurrentFormValue() {
     return this._form?.getValue()
   }
-  mergeToExistingForm(value: Record<string, unknown>) {
+  mergeFormValue(value: Record<string, unknown>) {
     this._form?.mergeValue?.(value)
+    return !!this._form?.mergeValue
   }
 
-  createForm() {
-    return createVueAppWithIPE(this.ctx, PreferencesForm)
+  createPreferencesUIApp() {
+    return createVueAppWithIPE(this.ctx, PreferencesApp)
   }
 }

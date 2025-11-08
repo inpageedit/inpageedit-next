@@ -89,7 +89,7 @@ export interface CompareApiResponse {
       .description('Key shortcut to open quick diff in quick edit modal'),
   })
     .description('Quick diff options')
-    .extra('category', 'edit')
+    .extra('category', 'editor')
 )
 export class PluginQuickDiff extends BasePlugin {
   constructor(public ctx: InPageEdit) {
