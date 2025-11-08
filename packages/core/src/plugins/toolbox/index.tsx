@@ -226,7 +226,8 @@ export class PluginToolbox extends Service {
   }
 
   removeButton(id: string) {
-    const button = this.container.querySelector(`.ipe-toolbox-btn#${id}`)
+    const normalizedId = this.normalizeButtonId(id)
+    const button = this.container.querySelector(`#${normalizedId}`)
     button?.remove()
     this.ctx.emit('toolbox/button-removed', { ctx: this.ctx, id })
 
