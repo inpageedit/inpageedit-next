@@ -16,14 +16,50 @@ declare module '@/InPageEdit' {
 }
 
 const tryGetGlobalPlugin = (main_export: string) => {
-  let apply = (globalThis as any)[main_export!]
-  if (
-    typeof apply === 'function' ||
-    (typeof apply === 'object' && typeof apply?.apply === 'function')
-  ) {
-    return apply
+  if (!main_export) return null
+  try {
+    return main_export
+      .split('.')
+      .reduce<any>((acc, key) => (acc == null ? acc : acc[key]), globalThis as any)
+  } catch {
+    return null
   }
-  return null
+}
+
+/**
+ * 解析资源URL
+ * @param resourcePath - entry或style路径，可能是相对路径或完整URL
+ * @param baseUrl - registry中的base_url，可能是完整URL或相对路径
+ * @param registryUrl - registry的URL（必须是绝对URL，作为相对baseUrl时的基准）
+ * @returns 解析后的完整URL
+ */
+const resolveResourceUrl = (resourcePath: string, baseUrl: string, registryUrl: string): string => {
+  // 完整URL：直接返回
+  if (/^https?:\/\//i.test(resourcePath)) return resourcePath
+
+  // 兜底：规范化一个“带尾斜杠”的 helper
+  const ensureSlash = (s: string) => (s.endsWith('/') ? s : s + '/')
+
+  // 如果 baseUrl 是完整URL：直接用它当基准（并确保目录语义）
+  if (/^https?:\/\//i.test(baseUrl)) {
+    const normalizedBase = ensureSlash(baseUrl)
+    return new URL(resourcePath, normalizedBase).href
+  }
+
+  // baseUrl 是相对路径（如 './' 或 '/plugins'）
+  // 先把 baseUrl 相对于 registryUrl 解析成绝对URL
+  // 注意：当 baseUrl 是 '/plugins' 这种根相对路径时，new URL 会以 registryUrl 的 origin 作为根。
+  const registryAbs = (() => {
+    try {
+      return new URL(registryUrl).href
+    } catch {
+      // 极端情况（开发环境传了相对 registry），用页面 origin 兜底
+      return new URL(registryUrl, location.origin).href
+    }
+  })()
+
+  const resolvedBaseUrl = new URL(ensureSlash(baseUrl), registryAbs).href
+  return new URL(resourcePath, resolvedBaseUrl).href
 }
 
 @Inject(['storage', 'preferences', 'resourceLoader'])
@@ -36,7 +72,7 @@ export class PluginPluginStore extends BasePlugin {
     ctx.set('store', this)
     this.registryCacheDB = ctx.storage.createDatabse<PluginStoreRegistry>(
       'plugin-store-registry-caches',
-      1000 * 60 * 60 * 24, // 1 day
+      1000 * 60 * 60 * 2, // 2 hours
       1
     )
   }
@@ -108,7 +144,7 @@ export class PluginPluginStore extends BasePlugin {
         'pluginStore.registries': Schema.array(Schema.string())
           .default([
             import.meta.env.PROD
-              ? 'https://plugins.ipe.wiki/registry.json'
+              ? Endpoints.PLUGIN_REGISTRY_URL
               : 'http://127.0.0.1:1005/src/__test__/plugin-registry/index.json',
           ])
           .description('Registry URLs'),
@@ -153,11 +189,13 @@ export class PluginPluginStore extends BasePlugin {
     source: 'online_manifest' | 'npm' = 'online_manifest'
   ): Promise<ForkScope<InPageEdit> | null> {
     const registryInfo = await this.getRegistryInfo(registry)
-    if (this._installedPlugins.has(`${registry}:${id}`)) {
-      return (await this._installedPlugins.get(`${registry}:${id}`)) ?? null
+    const key = `${registry}:${id}`
+    if (this._installedPlugins.has(key)) {
+      return (await this._installedPlugins.get(key)) ?? null
     }
-    const scope = this._installOneByRegistryInfo(registryInfo, id)
-    this._installedPlugins.set(`${registry}:${id}`, scope)
+    // 2) 把 registry 原始 URL 传进去，供 URL 解析使用
+    const scope = this._installOneByRegistryInfo(registry, registryInfo, id)
+    this._installedPlugins.set(key, scope)
     return await scope
   }
   async uninstall(registry: string, id: string): Promise<boolean> {
@@ -203,28 +241,43 @@ export class PluginPluginStore extends BasePlugin {
     return this.uninstall(registry, id)
   }
 
+  // 3) 增加 registryUrl 参数
   private async _installOneByRegistryInfo(
+    registryUrl: string,
     registryInfo: PluginStoreRegistry,
     id: string
   ): Promise<ForkScope<InPageEdit> | null> {
     const baseUrl = registryInfo.base_url
     const pkg = registryInfo.packages.find((p) => p.id === id)
     if (!pkg) {
-      this.ctx.logger.warn(`Package ${id} not found in registry ${baseUrl}`)
+      this.ctx.logger.warn(`Package ${id} not found in registry ${registryUrl}`)
       return null
     }
+
     const loader = pkg.loader
     const { kind, entry = 'index.js', styles = [], main_export = null } = loader
-    const entryUrl = kind === 'styles' ? null : new URL(entry, baseUrl).href
 
-    if (kind !== 'styles' && !entryUrl) {
-      this.ctx.logger.warn(`Entry file ${entry} not found in registry ${baseUrl}`)
-      return null
+    // 4) 统一用 resolveResourceUrl 解析入口
+    let entryUrl: string | null = null
+    if (kind !== 'styles') {
+      if (!entry) {
+        this.ctx.logger.warn(`Entry url missing for ${id}`, loader)
+        return null
+      }
+      try {
+        entryUrl = resolveResourceUrl(entry, baseUrl, registryUrl)
+      } catch (e) {
+        this.ctx.logger.warn(
+          `Failed to resolve entry "${entry}" with base "${baseUrl}" and registry "${registryUrl}"`,
+          e
+        )
+        return null
+      }
     }
 
     const datasets = {
-      'data-plugin-store': baseUrl,
-      'data-plugin-package': JSON.stringify(pkg),
+      'data-plugin-registry': registryUrl,
+      'data-plugin-id': id,
     }
 
     let fork: ForkScope<InPageEdit> | null = null
@@ -233,16 +286,21 @@ export class PluginPluginStore extends BasePlugin {
       case 'autoload': {
         fork = this.ctx.plugin({
           inject: ['resourceLoader'],
-          name: `plugin-store-${baseUrl}-${id}`,
-          apply(ctx) {
-            ctx.resourceLoader.loadScript(entryUrl!, { ...datasets })
+          name: `plugin-store-${registryUrl}-${id}`,
+          apply: (ctx) => {
+            if (!entryUrl) return
+            ctx.resourceLoader.loadScript(entryUrl, { ...datasets })
           },
         })
         break
       }
       case 'module': {
-        const apply = await import(/* @vite-ignore */ entryUrl!).then(
-          (m) => m[main_export!] ?? m['default'] ?? m
+        if (!entryUrl) {
+          this.ctx.logger.warn(`Entry url missing for module kind, package ${id}`)
+          return null
+        }
+        const apply = await import(/* @vite-ignore */ entryUrl).then(
+          (m) => (main_export ? m[main_export] : m.default) ?? m
         )
         if (!apply) {
           this.ctx.logger.warn(`Main export ${main_export} not found in module ${entryUrl}`)
@@ -254,34 +312,52 @@ export class PluginPluginStore extends BasePlugin {
       case 'umd': {
         let apply = tryGetGlobalPlugin(main_export!)
         if (!apply) {
-          await this.ctx.resourceLoader.loadScript(entryUrl!, { ...datasets })
+          if (!entryUrl) {
+            this.ctx.logger.warn(`Entry url missing for umd kind, package ${id}`)
+            return null
+          }
+          await this.ctx.resourceLoader.loadScript(entryUrl, { ...datasets })
           apply = tryGetGlobalPlugin(main_export!)
         }
         if (!apply) {
-          this.ctx.logger.warn(`Main export ${main_export} not found in globalThis`)
+          this.ctx.logger.warn(
+            `Main export ${main_export} not found on globalThis after loading ${entryUrl}`
+          )
           return null
         }
         fork = this.ctx.plugin(apply)
         break
       }
+      case 'styles': {
+        // 没有脚本，仅样式。下面统一样式注入逻辑会覆盖
+        break
+      }
     }
 
+    // 5) 统一解析并注入样式（兼容绝对URL与相对 + base_url 的组合）
     if (styles && styles.length > 0) {
-      const urls = styles.map((u) => new URL(u, baseUrl).href).filter(Boolean)
-      // ensure plugin fork scope
-      fork ||= this.ctx.plugin({
-        name: `plugin-store-${baseUrl}-${id}`,
-        apply() {},
-      })
-      // register sub plugin for styles
+      let urls: string[] = []
+      try {
+        urls = styles.map((u) => resolveResourceUrl(u, baseUrl, registryUrl)).filter(Boolean)
+      } catch (e) {
+        this.ctx.logger.warn(`Failed to resolve styles for ${id}`, styles, e)
+      }
+
+      // 确保存在父 fork
+      fork ||= this.ctx.plugin({ name: `plugin-store-${registryUrl}-${id}`, apply() {} })
+
+      // 在子插件里加载样式，并在卸载时清理
       fork.ctx.plugin({
         inject: ['resourceLoader'],
-        name: `plugin-store-${baseUrl}-${id}-styles`,
-        apply(ctx) {
-          urls.map((u) => ctx.resourceLoader.loadStyle(u, { ...datasets }))
+        name: `plugin-store-${registryUrl}-${id}-styles`,
+        apply: (ctx) => {
+          urls.forEach((u) => ctx.resourceLoader.loadStyle(u, { ...datasets }))
           ctx.on('dispose', () => {
-            console.info('parent disposed, removing styles', urls)
-            urls.forEach((u) => ctx.resourceLoader.removeStyle(u))
+            try {
+              urls.forEach((u) => ctx.resourceLoader.removeStyle(u))
+            } catch (e) {
+              console.info('styles cleanup failed', e)
+            }
           })
         },
       })

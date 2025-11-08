@@ -4,4 +4,5 @@ export enum Endpoints {
   GITHUB_URL = 'https://github.com/inpageedit/inpageedit-next',
   HOME_URL = 'https://www.ipe.wiki/',
   UPDATE_LOGS_URL = 'https://www.ipe.wiki/changelogs/',
+  PLUGIN_REGISTRY_URL = 'https://registry.ipe.wiki/registry.v1.json',
 }
