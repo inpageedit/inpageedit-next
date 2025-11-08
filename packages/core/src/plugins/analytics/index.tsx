@@ -123,12 +123,14 @@ export class PluginAnalytics extends BasePlugin {
     window.addEventListener('beforeunload', handleUnload)
   }
 
-  private _showConfirmNotify() {
-    const shown = localStorage.getItem('IPE:analytics/confirm-shown')
-    if (shown) {
-      return
-    }
-    this.ctx.inject(['modal'], (ctx) => {
+  private async _showConfirmNotify() {
+    this.ctx.inject(['modal', 'storage'], async (ctx) => {
+      const key = 'analytics/confirm-shown'
+      const shown = await this.ctx.storage.simpleKV.get(key)
+      const enabled = await this.ctx.preferences.get('analytics.enabled')
+      if (shown || enabled) {
+        return
+      }
       ctx.modal.notify(
         'confirm',
         {
@@ -154,8 +156,8 @@ export class PluginAnalytics extends BasePlugin {
             label: 'Disable',
           },
           closeAfter: 0,
-          onClose() {
-            localStorage.setItem('IPE:analytics/confirm-shown', '1')
+          onClose: () => {
+            this.ctx.storage.simpleKV.set(key, 1)
           },
         },
         (result) => {

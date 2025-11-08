@@ -227,11 +227,7 @@ export class PluginPreferencesUI extends BasePlugin {
     if (!value) {
       return false
     }
-    await Promise.all(
-      Object.entries(value).map(([key, val]) => {
-        return this.ctx.preferences.set(key as any, val)
-      })
-    )
+    this.ctx.preferences.setMany(value)
     return true
   }
   getExistingFormValue() {

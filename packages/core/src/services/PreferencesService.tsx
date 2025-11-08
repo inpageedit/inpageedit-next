@@ -1,6 +1,7 @@
 import { Inject, InPageEdit, Schema, Service, type PreferencesMap } from '@/InPageEdit.js'
 import { AbstractIPEStorageManager } from '@/services/storage/index.js'
 import { computeFallback, ComputeAble } from '@/utils/computeable.js'
+import { IDBStorageManager } from './storage/managers/IDBStorageManager'
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -42,7 +43,7 @@ export class PreferencesService extends Service {
   constructor(public ctx: InPageEdit) {
     super(ctx, 'preferences', true)
     ctx.set('prefs', this)
-    this.db = ctx.storage.createDatabse<any>(`preferences:${ctx.wiki.userInfo.id}`, Infinity)
+    this.db = ctx.storage.createDatabase<any>(`preferences:${ctx.wiki.userInfo.id}`, Infinity)
     try {
       this._migrageFromLegacyMasterDB()
     } catch (e) {}
@@ -236,16 +237,16 @@ export class PreferencesService extends Service {
   }
 
   private async _migrageFromLegacyMasterDB() {
-    const masterDB = this.ctx.storage.createDatabse<any>('preferences', Infinity)
+    const legacyDB = this.ctx.storage.createDatabase<any>('preferences', Infinity)
     let count = 0
-    for await (const [key, record] of masterDB.entries()) {
+    for await (const [key, record] of legacyDB.entries()) {
       if (key === '_touched') continue
       await this.db.set(key, record.value)
       count++
     }
     count && this.logger.info(`Migrated ${count} preferences from master DB`)
-    await masterDB.clear()
-    await masterDB?.db?.close?.()
+    await legacyDB.clear()
+    await (legacyDB as IDBStorageManager)?.db?.disconnect?.()
     return count
   }
 }

@@ -17,7 +17,9 @@ export interface InPageEditCoreConfig {
   apiConfigs: Partial<FexiosConfigs>
   legacyPreferences: Record<string, any>
   logLevel: number
+  storageNamespace: string
   autoloadStyles: boolean
+  autoInstallCorePlugins: boolean
 }
 
 /**
@@ -38,7 +40,9 @@ export class InPageEdit extends Context {
     apiConfigs: {},
     legacyPreferences: {},
     logLevel: import.meta.env.DEV ? LoggerLevel.debug : LoggerLevel.info,
+    storageNamespace: 'InPageEdit',
     autoloadStyles: true,
+    autoInstallCorePlugins: true,
   }
   Endpoints = Endpoints
   readonly schema = Schema
@@ -55,7 +59,9 @@ export class InPageEdit extends Context {
       level: this.config.logLevel,
     })
     this.#initCoreServices()
-    this.#initCorePlugins()
+    if (this.config.autoInstallCorePlugins) {
+      this.#initCorePlugins()
+    }
     this.#initCoreAssets()
   }
 
@@ -65,7 +71,7 @@ export class InPageEdit extends Context {
     this.plugin(ResourceLoaderService)
     this.plugin(ModalService)
     this.plugin(PreferencesService)
-    this.plugin(StorageService)
+    this.plugin(StorageService, { dbName: this.config.storageNamespace })
     this.plugin(WikiMetadataService)
     this.plugin(WikiPageService)
     this.plugin(WikiTitleService)
@@ -147,7 +153,7 @@ export class InPageEdit extends Context {
     })
   }
 
-  async useScope(inject: Inject) {
+  async withInject(inject: Inject) {
     const { promise, resolve } = promiseWithResolvers<this>()
     this.inject(inject, (ctx) => {
       resolve(ctx)

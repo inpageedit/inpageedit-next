@@ -19,7 +19,7 @@ export interface WikiLinkMetadata {
 }
 
 export class WikiTitleService extends Service {
-  static readonly inject: Inject = ['wiki']
+  static readonly inject: Inject = ['wiki', 'wikiPage']
 
   readonly Title: WikiTitleConstructor
   constructor(public ctx: InPageEdit) {
@@ -72,7 +72,7 @@ export class WikiTitleService extends Service {
     const { promise, resolve, reject } = promiseWithResolvers<IWikiTitle | null>()
     this._cachedTitles.set(`${kind}:${id}`, promise)
     try {
-      const { wikiPage } = await this.ctx.useScope(['wikiPage'])
+      const { wikiPage } = this.ctx
       let page: IWikiPage | null = null
       if (kind === 'pageid') {
         page = await wikiPage.newFromPageId(id)

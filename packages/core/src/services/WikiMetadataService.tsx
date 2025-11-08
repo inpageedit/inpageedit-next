@@ -38,7 +38,7 @@ export class WikiMetadataService extends Service {
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'wiki', false)
-    this.CACHE_DB = ctx.storage.createDatabse<WikiMetadataKindMap[keyof WikiMetadataKindMap]>(
+    this.CACHE_DB = ctx.storage.createDatabase<WikiMetadataKindMap[keyof WikiMetadataKindMap]>(
       'wiki-metadata',
       Infinity,
       this.CACHE_VERSION

@@ -101,7 +101,23 @@ export class PluginPrefSync extends BasePlugin {
                   const input = document.createElement('input')
                   input.type = 'file'
                   input.accept = 'application/json'
+                  // Mobile Safari (and some older browsers) do not fire a 'cancel' event when
+                  // the file picker is dismissed without selecting a file. We use a
+                  // window 'focus' listener as a heuristic: once the picker closes
+                  // the window regains focus; if no file was chosen we treat it as cancel.
+                  // Fuck you Apple
+                  let handled = false
+                  const onDialogClose = () => {
+                    // If change handler did not run, treat as cancel
+                    if (!handled) {
+                      modal?.setLoadingState(false)
+                    }
+                    window.removeEventListener('focus', onDialogClose)
+                  }
+                  window.addEventListener('focus', onDialogClose, { once: true })
+
                   input.addEventListener('change', async (e) => {
+                    handled = true
                     try {
                       const file = (e.target as HTMLInputElement).files?.[0]
                       if (!file) {
@@ -118,13 +134,51 @@ export class PluginPrefSync extends BasePlugin {
                       modal?.setLoadingState(false)
                     }
                   })
-                  input.addEventListener('cancel', () => {
-                    modal?.setLoadingState(false)
-                  })
                   input.click()
                 }}
               >
                 Import from file
+              </button>
+              <button
+                className="btn"
+                onClick={(e) => {
+                  e.preventDefault()
+                  const input = (<input type="url"></input>) as HTMLInputElement
+                  const modal = ctx.preferencesUI.getExistingModal()
+                  ctx.modal.confirm(
+                    {
+                      title: 'Import Preferences from URL',
+                      content: (
+                        <div>
+                          <label htmlFor="url-input">
+                            Enter the URL of the preferences JSON file:
+                          </label>
+                          {input}
+                        </div>
+                      ),
+                    },
+                    async (result) => {
+                      const url = input.value.trim()
+                      if (!result || !url) {
+                        return
+                      }
+                      try {
+                        modal?.setLoadingState(true)
+                        const record = await this.importFromUrl(url)
+                        this.notifyImportSuccess(record)
+                      } catch (e) {
+                        ctx.modal.notify('error', {
+                          title: 'Import failed',
+                          content: e instanceof Error ? e.message : String(e),
+                        })
+                      } finally {
+                        modal?.setLoadingState(false)
+                      }
+                    }
+                  )
+                }}
+              >
+                Import from URL
               </button>
               <button
                 className="btn"
@@ -153,20 +207,22 @@ export class PluginPrefSync extends BasePlugin {
                       buttons: [
                         {
                           label: 'Copy',
-                          method: () => {
+                          method: (_, m) => {
                             navigator.clipboard.writeText(json)
                             ctx.modal.notify('success', {
                               content: 'Copied to clipboard',
                             })
+                            m.close()
                           },
                         },
                         {
                           label: 'Download',
-                          method: () => {
+                          method: (_, m) => {
                             const a = document.createElement('a')
                             a.href = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`
                             a.download = `ipe-prefs-${new Date().toISOString()}.json`
                             a.click()
+                            m.close()
                           },
                         },
                       ],
@@ -175,7 +231,7 @@ export class PluginPrefSync extends BasePlugin {
                   )
                 }}
               >
-                Save to file
+                Save as file
               </button>
             </div>
           </section>
@@ -216,27 +272,7 @@ export class PluginPrefSync extends BasePlugin {
     try {
       // 使用 raw action 获取 JSON 内容
       const rawUrl = title.getURL({ action: 'raw', ctype: 'application/json' })
-
-      let response: Response
-      try {
-        response = await fetch(rawUrl.toString())
-        if (!response.ok) {
-          if (response.status === 404) {
-            this.logger.debug('User preferences page does not exist')
-            return {}
-          }
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-      } catch (error) {
-        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-          this.logger.debug('User preferences page does not exist or network error')
-          return {}
-        }
-        throw error
-      }
-
-      const blob = await response.blob()
-      const changed = await this.importFromFile(blob)
+      const changed = await this.importFromUrl(rawUrl.toString())
       this.logger.info('Loaded preferences from user page:', title)
       return changed
     } catch (error) {
@@ -278,6 +314,16 @@ export class PluginPrefSync extends BasePlugin {
       this.logger.error('Failed to export preferences to user page:', error)
       throw error
     }
+  }
+
+  async importFromUrl(input: string): Promise<Record<string, unknown>> {
+    const response = await fetch(input)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    const blob = await response.blob()
+    const changed = await this.importFromFile(blob)
+    return changed
   }
 
   async importFromFile(input: Blob): Promise<Record<string, unknown>> {
