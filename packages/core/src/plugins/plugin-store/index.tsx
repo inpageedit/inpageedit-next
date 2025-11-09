@@ -154,8 +154,7 @@ export class PluginPluginStore extends BasePlugin {
           })
         )
           .description('Installed plugins')
-          .default([])
-          .hidden(),
+          .default([]),
       }),
       'plugin-store'
     )
@@ -183,7 +182,7 @@ export class PluginPluginStore extends BasePlugin {
     source: 'online_manifest' | 'npm' = 'online_manifest'
   ): Promise<ForkScope<InPageEdit> | null> {
     const registryInfo = await this.getRegistryInfo(registry)
-    const key = `${registry}:${id}`
+    const key = `${registry}#${id}`
     if (this._installedPlugins.has(key)) {
       return (await this._installedPlugins.get(key)) ?? null
     }
@@ -193,11 +192,11 @@ export class PluginPluginStore extends BasePlugin {
     return await scope
   }
   async uninstall(registry: string, id: string): Promise<boolean> {
-    const promise = this._installedPlugins.get(`${registry}:${id}`)
+    const promise = this._installedPlugins.get(`${registry}#${id}`)
     if (promise === void 0) {
       return true // not installed or already uninstalled
     }
-    this._installedPlugins.delete(`${registry}:${id}`)
+    this._installedPlugins.delete(`${registry}#${id}`)
     const scope = await promise
     if (scope) {
       return scope.dispose?.() ?? true // disposed successfully
