@@ -27,8 +27,8 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 <template #title>0.12.0 <Badge type='rainbow'>重量级</Badge></template>
 
-- feat: introduce PluginStore
-  - <Badge type='rainbow'>新功能</Badge> 万众期待的 **插件商店** 终于来了！
+- <Badge type='rainbow'>新功能</Badge> feat: introduce PluginStore
+  - 万众期待的 **插件商店** 终于来了！
   - 从工具盒™中点击齿轮按钮，切换到“Plugin Store”标签页，立即体验！
 - feat: enhance PreferencesService with user-specific storage and migration from legacy database
   - 现在偏好设置按用户隔离存储，旧数据会自动迁移到更新后首个使用的用户下
