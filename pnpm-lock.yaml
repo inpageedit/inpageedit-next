@@ -394,7 +394,7 @@ importers:
         version: 5.9.3
       unplugin-dts:
         specifier: 1.0.0-beta.6
-        version: 1.0.0-beta.6(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@vue/language-core@3.0.8(typescript@5.9.3))(esbuild@0.25.11)(rollup@4.53.2)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.0)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.3)(sass@1.93.3)(tsx@4.20.6))
+        version: 1.0.0-beta.6(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@vue/language-core@3.0.8(typescript@5.9.3))(esbuild@0.25.11)(rolldown@1.0.0-beta.47)(rollup@4.53.2)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.0)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.3)(sass@1.93.3)(tsx@4.20.6))
       vite:
         specifier: ^7.2.2
         version: 7.2.2(@types/node@24.10.0)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.3)(sass@1.93.3)(tsx@4.20.6)
@@ -9489,7 +9489,7 @@ snapshots:
       debug: 4.4.3
       kolorist: 1.8.0
       local-pkg: 1.1.2
-      magic-string: 0.30.19
+      magic-string: 0.30.21
       typescript: 5.9.3
       unplugin: 2.3.10
     optionalDependencies:
@@ -9509,7 +9509,7 @@ snapshots:
       debug: 4.4.3
       kolorist: 1.8.0
       local-pkg: 1.1.2
-      magic-string: 0.30.19
+      magic-string: 0.30.21
       typescript: 5.9.3
       unplugin: 2.3.10
     optionalDependencies:
@@ -9529,7 +9529,7 @@ snapshots:
       debug: 4.4.3
       kolorist: 1.8.0
       local-pkg: 1.1.2
-      magic-string: 0.30.19
+      magic-string: 0.30.21
       typescript: 5.9.3
       unplugin: 2.3.10
     optionalDependencies:
@@ -9541,7 +9541,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  unplugin-dts@1.0.0-beta.6(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@vue/language-core@3.0.8(typescript@5.9.3))(esbuild@0.25.11)(rollup@4.53.2)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.0)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.3)(sass@1.93.3)(tsx@4.20.6)):
+  unplugin-dts@1.0.0-beta.6(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@vue/language-core@3.0.8(typescript@5.9.3))(esbuild@0.25.11)(rolldown@1.0.0-beta.47)(rollup@4.53.2)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.0)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.3)(sass@1.93.3)(tsx@4.20.6)):
     dependencies:
       '@rollup/pluginutils': 5.2.0(rollup@4.53.2)
       '@volar/typescript': 2.4.23
@@ -9549,13 +9549,14 @@ snapshots:
       debug: 4.4.3
       kolorist: 1.8.0
       local-pkg: 1.1.2
-      magic-string: 0.30.19
+      magic-string: 0.30.21
       typescript: 5.9.3
       unplugin: 2.3.10
     optionalDependencies:
       '@microsoft/api-extractor': 7.54.0(@types/node@24.10.0)
       '@vue/language-core': 3.0.8(typescript@5.9.3)
       esbuild: 0.25.11
+      rolldown: 1.0.0-beta.47
       rollup: 4.53.2
       vite: 7.2.2(@types/node@24.10.0)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.3)(sass@1.93.3)(tsx@4.20.6)
     transitivePeerDependencies:

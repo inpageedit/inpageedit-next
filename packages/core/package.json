@@ -19,24 +19,20 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./InPageEdit": {
-      "source": "./src/InPageEdit.ts",
-      "types": "./dist/index.d.ts"
-    },
     "./components": {
       "types": "./dist/index.d.ts",
       "import": "./dist/components/index.js"
     },
     "./models": {
-      "types": "./dist/models/index.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/models/index.js"
     },
     "./plugins": {
-      "types": "./dist/plugins/index.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/plugins/index.js"
     },
     "./services": {
-      "types": "./dist/services/index.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/services/index.js"
     }
   },
