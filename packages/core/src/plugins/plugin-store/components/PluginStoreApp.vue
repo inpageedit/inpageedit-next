@@ -174,25 +174,38 @@ const togglePluginByKey = (p: any) => togglePlugin(p.registry, p.id)
 
 const refreshRegistries = async () => {
   if (isRefreshing.value) return
+  if (registryInfos.value.length === 0) {
+    ctx.modal.notify('info', {
+      content: 'No registry configured. Please add a registry first.',
+    })
+    return
+  }
+
   isRefreshing.value = true
-  try {
-    const urls = (await ctx.store.ctx.preferences.get('pluginStore.registries')) || []
-    const results = await Promise.allSettled(
-      urls.map(async (url: string) => ({
-        ...(await ctx.store.refreshRegistryCache(url)),
-        registryUrl: url,
-      }))
-    )
-    registryInfos.value = results
-      .filter((r) => r.status === 'fulfilled')
-      .map((r) => (r as PromiseFulfilledResult<RegistryWithUrl>).value)
-    ctx.modal.notify('success', { content: `${urls.length} registries refreshed successfully` })
-  } catch (e) {
-    ctx.modal.notify('error', { content: 'Failed to refresh registries' })
-  } finally {
-    setTimeout(() => {
-      isRefreshing.value = false
-    }, 3000)
+  const results = await ctx.store.refreshAllRegistryCaches()
+  const okResults = Object.entries(results).filter(([_, r]) => r !== null)
+  registryInfos.value = okResults.map(([url, r]) => ({
+    ...r!,
+    registryUrl: url,
+  }))
+  const failedUrls = Object.entries(results)
+    .filter(([_, r]) => r === null)
+    .map(([url]) => url)
+  isRefreshing.value = false
+
+  if (okResults.length === 0) {
+    ctx.modal.notify('error', {
+      content: 'All registries failed to refresh',
+    })
+  } else {
+    ctx.modal.notify('success', {
+      content: `${okResults.length} ${okResults.length === 1 ? 'registry' : 'registries'} refreshed successfully.`,
+    })
+    if (failedUrls.length > 0) {
+      ctx.modal.notify('warning', {
+        content: `${failedUrls.length} ${failedUrls.length === 1 ? 'registry' : 'registries'} failed to refresh:\n${failedUrls.join('\n')}`,
+      })
+    }
   }
 }
 

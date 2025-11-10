@@ -15,6 +15,8 @@ declare module '@/InPageEdit' {
   }
 }
 
+export type PluginStoreRegistrySource = 'online_manifest' | 'npm'
+
 const tryGetGlobalPlugin = (main_export: string) => {
   if (!main_export) return null
   try {
@@ -66,16 +68,19 @@ const resolveResourceUrl = (resourcePath: string, baseUrl: string, registryUrl: 
 export class PluginPluginStore extends BasePlugin {
   // re-export for external usage
   static readonly PluginStoreSchemas = PluginStoreSchemas
-  static REGISTRY_CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
-  private registryInfoDB: AbstractIPEStorageManager<PluginStoreRegistry>
+  static REGISTRY_INFO_CACHE_TTL = 1000 * 60 * 60 * 24 // 1 day
+  static REGISTRY_INFO_STORAGE_NAME = 'plugin-store-registry'
+  static REGISTRY_ETAG_STORAGE_NAME = 'psreg-etag'
+  private regInfoDB: AbstractIPEStorageManager<PluginStoreRegistry>
 
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'plugin-store')
     ctx.set('store', this)
-    this.registryInfoDB = ctx.storage.createDatabase<PluginStoreRegistry>(
-      'plugin-store-registry',
-      PluginPluginStore.REGISTRY_CACHE_TTL,
-      1
+    this.regInfoDB = ctx.storage.createDatabase<PluginStoreRegistry>(
+      PluginPluginStore.REGISTRY_INFO_STORAGE_NAME,
+      PluginPluginStore.REGISTRY_INFO_CACHE_TTL,
+      1,
+      'indexedDB'
     )
   }
 
@@ -179,9 +184,13 @@ export class PluginPluginStore extends BasePlugin {
   async install(
     registry: string,
     id: string,
-    source: 'online_manifest' | 'npm' = 'online_manifest'
+    source: PluginStoreRegistrySource = 'online_manifest'
   ): Promise<ForkScope<InPageEdit> | null> {
-    const registryInfo = await this.getRegistryInfo(registry)
+    const registryInfo = await this.getRegistryInfo(registry, source)
+    if (!registryInfo) {
+      this.ctx.logger.warn(`Registry ${registry} not found`)
+      return null
+    }
     const key = `${registry}#${id}`
     if (this._installedPlugins.has(key)) {
       return (await this._installedPlugins.get(key)) ?? null
@@ -362,96 +371,84 @@ export class PluginPluginStore extends BasePlugin {
   validateRegistry(data: any): PluginStoreRegistry {
     return PluginStoreSchemas.Registry(data)
   }
-  async getRegistryInfo(registry: string): Promise<PluginStoreRegistry> {
-    const cached = await this.getRegistryCache(registry)
-    if (cached) return cached
-    const data = await this._fetchOnlineRegistryInfo(registry)
-    await this.setRegistryCache(registry, data)
-    return data
-  }
-  private async _fetchOnlineRegistryInfo(registry: string): Promise<PluginStoreRegistry> {
-    const response = await fetch(registry)
-    const data = await response.json()
-    const validated = this.validateRegistry(data)
-    this.ctx.storage.simpleKV.set(`plugin-store-last-fetch/${registry}`, Date.now())
-    return validated
-  }
-  private _registryUpdateCheckCaches = new Map<string, Promise<boolean>>()
-  /**
-   * 检查自从上次缓存后，registry 是否有更新
-   * @param registry
-   * @returns
-   */
-  private async _checkIfOnlineRegistryUpdated(registry: string): Promise<boolean> {
-    if (this._registryUpdateCheckCaches.has(registry)) {
-      return this._registryUpdateCheckCaches.get(registry)!
-    }
-    const task = (async () => {
-      try {
-        const response = await fetch(registry, { method: 'HEAD' })
-        if (!response.ok) {
-          throw new Error(response.statusText, { cause: response })
+
+  async getRegistryInfo(
+    registry: string,
+    source: PluginStoreRegistrySource = 'online_manifest',
+    noCache = false
+  ): Promise<PluginStoreRegistry> {
+    try {
+      let info: PluginStoreRegistry
+      switch (source) {
+        case 'online_manifest': {
+          info = await this._fetchOnlineRegistryInfo(registry, noCache)
+          this.logger.debug('Fetched registry info from online manifest', info)
+          this.setRegistryCache(registry, info)
+          break
         }
-        // 304 Not Modified
-        if (response.status === 304) {
-          this.ctx.logger.debug('Registry not modified:', registry)
-          return false
+        default: {
+          throw new Error(`Unsupported registry source: ${source}`)
         }
-        // has last-modified header
-        const lastModified = response.headers.get('Last-Modified')
-        if (lastModified) {
-          const timestamp = Date.parse(lastModified)
-          if (!isNaN(timestamp)) {
-            return false
-          }
-          const cachedTimestamp = await this.ctx.storage.simpleKV.get(
-            `plugin-store-last-fetch/${registry}`
-          )
-          if (!cachedTimestamp || timestamp > cachedTimestamp) {
-            await this.ctx.storage.simpleKV.set(`plugin-store-last-fetch/${registry}`, timestamp)
-            return true
-          }
-          return false
-        }
-      } catch (e) {
-        this.ctx.logger.warn('Failed to fetch registry HEAD for last-modified', registry, e)
       }
-      return false
-    })()
-    this._registryUpdateCheckCaches.set(registry, task)
-    const result = await task
-    return result
+
+      return info
+    } catch (e) {
+      this.ctx.logger.warn('Failed to fetch registry info', e)
+    }
+
+    const info = await this.getRegistryCache(registry)
+    if (!info) {
+      throw new Error(`Failed to fetch registry info: ${registry}`)
+    }
+    return info
   }
+
+  private _onlineRegistryQueries = new Map<string, Promise<PluginStoreRegistry>>()
+  private async _fetchOnlineRegistryInfo(
+    registry: string,
+    noCache = false
+  ): Promise<PluginStoreRegistry> {
+    if (!noCache && this._onlineRegistryQueries.has(registry)) {
+      return await this._onlineRegistryQueries.get(registry)!
+    }
+    const task = async () => {
+      const payload: RequestInit = {
+        method: 'GET',
+      }
+      if (noCache) {
+        payload.cache = 'no-store'
+      }
+      const response = await fetch(registry, payload)
+      const data = await response.json()
+      const validated = this.validateRegistry(data)
+      return validated
+    }
+    const promise = task()
+    this._onlineRegistryQueries.set(registry, promise)
+    return await promise
+  }
+
   private async getRegistryCache(registry: string) {
-    const data = await this.registryInfoDB.get(registry)
+    const data = await this.regInfoDB.get(registry)
     if (data) {
       try {
-        const isUpdated = await this._checkIfOnlineRegistryUpdated(registry)
-        if (isUpdated) {
-          this.ctx.logger.debug('Registry updated online, ignoring cache:', registry)
-          this.deleteRegistryCache(registry)
-          return null
-        }
         const validated = this.validateRegistry(data)
         return validated
       } catch (e) {
         this.ctx.logger.warn('Invalid cached registry', e, data)
-        this.registryInfoDB.delete(registry)
+        this.regInfoDB.delete(registry)
       }
     }
     return null
   }
   private async setRegistryCache(registry: string, data: PluginStoreRegistry) {
-    return this.registryInfoDB.set(registry, data)
+    return this.regInfoDB.set(registry, data)
   }
   private async deleteRegistryCache(registry: string) {
-    await Promise.all([
-      this.registryInfoDB.delete(registry),
-      this.ctx.storage.simpleKV.delete(`plugin-store-last-fetch/${registry}`),
-    ])
+    await this.regInfoDB.delete(registry)
   }
   async clearAllRegistryCaches() {
-    await Promise.all([this.registryInfoDB.clear(), this.ctx.storage.simpleKV.clear()])
+    await this.regInfoDB.clear()
     this.ctx.logger.debug('All registry caches cleared')
   }
 
@@ -459,9 +456,10 @@ export class PluginPluginStore extends BasePlugin {
    * 刷新指定 registry 的缓存（重新从网络获取）
    */
   async refreshRegistryCache(registry: string): Promise<PluginStoreRegistry> {
-    await this.deleteRegistryCache(registry)
-    const data = await this._fetchOnlineRegistryInfo(registry)
-    await this.setRegistryCache(registry, data)
+    const data = await this.getRegistryInfo(registry, 'online_manifest', true)
+    if (!data) {
+      throw new Error(`Failed to refresh registry cache: ${registry}`)
+    }
     this.ctx.logger.debug('Registry cache refreshed:', registry)
     return data
   }
@@ -469,15 +467,19 @@ export class PluginPluginStore extends BasePlugin {
   /**
    * 刷新所有已配置的 registry 缓存
    */
-  async refreshAllRegistryCaches(): Promise<PluginStoreRegistry[]> {
+  async refreshAllRegistryCaches(): Promise<Record<string, PluginStoreRegistry | null>> {
     const registryUrls = (await this.ctx.preferences.get('pluginStore.registries')) || []
-    const results = await Promise.allSettled(
+    const responses = await Promise.allSettled(
       registryUrls.map((url) => this.refreshRegistryCache(url))
     )
-    const refreshed = results
-      .filter((r) => r.status === 'fulfilled')
-      .map((r) => (r as PromiseFulfilledResult<PluginStoreRegistry>).value)
-    this.ctx.logger.debug(`Refreshed ${refreshed.length} registry caches`)
-    return refreshed
+    const results: Record<string, PluginStoreRegistry | null> = {}
+    for (const [index, response] of responses.entries()) {
+      if (response.status === 'fulfilled') {
+        results[registryUrls[index]] = response.value
+      } else {
+        results[registryUrls[index]] = null
+      }
+    }
+    return results
   }
 }
