@@ -262,34 +262,57 @@ onBeforeUnmount(() => {})
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.375rem;
 }
 .registry-tag {
   color: var(--ipe-modal-accent);
-  background: color-mix(in srgb, var(--ipe-modal-accent) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ipe-modal-accent) 20%, transparent);
+  background: color-mix(in srgb, var(--ipe-modal-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ipe-modal-accent) 18%, transparent);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  &:hover {
+    background: color-mix(in srgb, var(--ipe-modal-accent) 12%, transparent);
+    border-color: color-mix(in srgb, var(--ipe-modal-accent) 30%, transparent);
+  }
   &.broken {
     text-decoration: line-through;
-    opacity: 0.7;
+    opacity: 0.65;
     cursor: not-allowed;
+  }
+}
+.plugin-id {
+  &.broken {
+    opacity: 0.65;
+    text-decoration: line-through;
   }
 }
 .plugin-desc {
   font-size: 0.8125rem;
   color: var(--ipe-modal-muted);
-  margin-bottom: 0.375rem;
-  line-height: 1.5;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+  &.broken-desc {
+    color: color-mix(in srgb, var(--ipe-modal-warning) 80%, var(--ipe-modal-text));
+    font-style: italic;
+  }
 }
 .plugin-meta {
   font-size: 0.75rem;
   color: var(--ipe-modal-muted);
   display: flex;
   gap: 1rem;
+  align-items: center;
   .version {
     font-family: monospace;
     font-weight: 500;
+    color: color-mix(in srgb, var(--ipe-modal-text) 80%, var(--ipe-modal-muted));
   }
   .author {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .license {
     display: flex;
     align-items: center;
     gap: 0.25rem;

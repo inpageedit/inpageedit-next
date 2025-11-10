@@ -223,5 +223,25 @@ onMounted(() => {
 .registry-info {
   flex: 1;
   min-width: 0;
+  .homepage {
+    margin-top: 0.25rem;
+    a {
+      color: var(--ipe-modal-accent);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      transition: all 0.2s ease;
+      &:hover {
+        color: color-mix(in srgb, var(--ipe-modal-accent) 80%, var(--ipe-modal-text));
+        text-decoration: underline;
+      }
+    }
+  }
+  .url {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--ipe-modal-muted);
+    margin-top: 0.125rem;
+    word-break: break-all;
+  }
 }
 </style>
