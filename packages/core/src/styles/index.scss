@@ -97,10 +97,8 @@
     sans-serif;
 
   // textarea
-  textarea[name='text'] {
+  textarea {
     width: 100%;
-    height: var(--textarea-height);
-    min-height: var(--textarea-min-height);
     background: var(--textarea-background);
     resize: vertical;
     border: var(--border-width) solid var(--color-border-input);
@@ -109,6 +107,10 @@
     line-height: var(--line-height-input);
     padding: var(--padding-input-y) var(--padding-input-x);
     outline: none;
+    &[name='text'] {
+      height: var(--textarea-height);
+      min-height: var(--textarea-min-height);
+    }
     &:focus {
       border-color: var(--color-primary);
       box-shadow: inset 0 0 0 var(--border-width) var(--color-primary);

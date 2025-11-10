@@ -120,7 +120,6 @@ export class InPageEdit extends Context {
         ({ PluginPreferencesUI }) => PluginPreferencesUI
       ),
       import('@/plugins/quick-edit/index.js').then(({ PluginQuickEdit }) => PluginQuickEdit),
-      import('@/plugins/quick-delete/index.js').then(({ PluginQuickDelete }) => PluginQuickDelete),
       import('@/plugins/quick-move/index.js').then(({ PluginQuickMove }) => PluginQuickMove),
       import('@/plugins/quick-preview/index.js').then(
         ({ PluginQuickPreview }) => PluginQuickPreview

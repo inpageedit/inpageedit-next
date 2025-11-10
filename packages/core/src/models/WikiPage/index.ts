@@ -30,7 +30,17 @@ export interface IWikiPage {
   delete(
     reason?: string,
     params?: MwApiParams
-  ): Promise<FexiosFinalContext<MwApiResponse<{ success: boolean }>>>
+  ): Promise<
+    FexiosFinalContext<
+      MwApiResponse<{
+        delete: {
+          title: string
+          reason: string
+          logid: boolean
+        }
+      }>
+    >
+  >
   moveTo(
     title: string,
     reason?: string,
@@ -248,11 +258,19 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
     ) {
       return this.edit(payload, { createonly: 1, ...params })
     }
-    async delete(reason?: string, params?: MwApiParams) {
-      return this.api.postWithEditToken({
+    async delete(reason?: string, params?: MwApiParams & { deletetalk?: boolean }) {
+      return this.api.postWithEditToken<{
+        delete: {
+          title: string
+          reason: string
+          logid: boolean
+        }
+      }>({
         action: 'delete',
-        pageid: this.pageInfo.pageid,
+        title: this.pageInfo.title || undefined,
+        pageid: this.pageInfo.pageid || undefined,
         reason,
+        deletetalk: params?.deletetalk,
         ...params,
       })
     }
