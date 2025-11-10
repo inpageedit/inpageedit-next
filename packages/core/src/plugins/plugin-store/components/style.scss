@@ -1,0 +1,253 @@
+// Shared UI styles for Plugin Store
+$transition-default: all 0.2s ease;
+$border-width: 1.5px;
+$tag-radius: 3px;
+
+.ipeps-header {
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: var(--ipe-modal-spacing);
+}
+.ipeps-header-title {
+  font-weight: 700;
+  color: var(--ipe-modal-text);
+}
+.ipeps-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+.ipeps-input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.ipeps-input {
+  width: 100%;
+  line-height: 1;
+  padding: 0.75rem 0.875rem;
+  border: $border-width solid var(--ipe-modal-border-color);
+  border-radius: var(--ipe-modal-button-radius);
+  font-size: 0.875rem;
+  outline: none;
+  background: var(--ipe-modal-bg);
+  color: var(--ipe-modal-text);
+  transition: $transition-default;
+  &.with-icon {
+    padding-left: 2rem;
+  }
+  &::placeholder {
+    color: var(--ipe-modal-muted);
+  }
+  &:focus {
+    border-color: var(--ipe-modal-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ipe-modal-accent) 10%, transparent);
+  }
+}
+
+.ipeps-button {
+  padding: 0.75rem 1rem;
+  line-height: 1;
+  border: $border-width solid var(--ipe-modal-border-color);
+  border-radius: var(--ipe-modal-button-radius);
+  background: var(--ipe-modal-bg);
+  color: var(--ipe-modal-text);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: $transition-default;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  &:hover:not(:disabled) {
+    background: var(--ipe-modal-secondary-bg);
+    border-color: var(--ipe-modal-accent);
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--ipe-modal-text) 10%, transparent);
+  }
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  &.is-primary {
+    border-color: var(--ipe-modal-accent);
+    color: var(--ipe-modal-accent);
+    &:hover:not(:disabled) {
+      background: var(--ipe-modal-accent);
+      color: var(--ipe-modal-bg);
+      box-shadow: 0 2px 6px color-mix(in srgb, var(--ipe-modal-accent) 25%, transparent);
+    }
+  }
+  &.is-accent {
+    border-color: var(--ipe-modal-accent);
+    color: var(--ipe-modal-accent);
+    &:hover:not(:disabled) {
+      background: var(--ipe-modal-accent);
+      color: var(--ipe-modal-bg);
+      box-shadow: 0 2px 6px color-mix(in srgb, var(--ipe-modal-accent) 25%, transparent);
+    }
+  }
+  &.is-danger {
+    border-color: var(--ipe-modal-danger);
+    color: var(--ipe-modal-danger);
+    &:hover:not(:disabled) {
+      background: var(--ipe-modal-danger);
+      color: var(--ipe-modal-bg);
+      border-color: var(--ipe-modal-danger);
+      box-shadow: 0 2px 6px color-mix(in srgb, var(--ipe-modal-danger) 25%, transparent);
+    }
+  }
+  &.is-ghost {
+    background: transparent;
+    &:hover:not(:disabled) {
+      background: var(--ipe-modal-secondary-bg);
+    }
+  }
+  &.is-active {
+    border-color: var(--ipe-modal-danger);
+    color: var(--ipe-modal-danger);
+    &:hover:not(:disabled) {
+      background: var(--ipe-modal-danger);
+      color: var(--ipe-modal-bg);
+      box-shadow: 0 2px 6px color-mix(in srgb, var(--ipe-modal-danger) 25%, transparent);
+    }
+  }
+}
+
+.ipeps-loading,
+.ipeps-empty {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+.ipeps-loading {
+  padding: 10rem 1.25rem;
+  .loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid var(--ipe-modal-border-color);
+    border-top-color: var(--ipe-modal-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .loading-text {
+    color: var(--ipe-modal-muted);
+    font-size: 0.875rem;
+  }
+}
+.ipeps-empty {
+  padding: 3rem 1.25rem;
+  .plugin-empty-icon {
+    font-size: 3rem;
+    opacity: 0.3;
+  }
+  .plugin-empty-text {
+    color: var(--ipe-modal-muted);
+    font-size: 0.875rem;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ipeps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.ipeps-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem;
+  border: $border-width solid var(--ipe-modal-border-color);
+  border-radius: calc(var(--ipe-modal-button-radius) + 2px);
+  background: var(--ipe-modal-secondary-bg);
+  transition: $transition-default;
+  &:hover {
+    background: var(--ipe-modal-divider-color);
+    border-color: color-mix(in srgb, var(--ipe-modal-accent) 30%, var(--ipe-modal-border-color));
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--ipe-modal-text) 5%, transparent);
+  }
+  &.installed {
+    background: color-mix(in srgb, var(--ipe-modal-success) 5%, var(--ipe-modal-secondary-bg));
+    border-color: color-mix(in srgb, var(--ipe-modal-success) 50%, var(--ipe-modal-border-color));
+    &:hover {
+      background: color-mix(in srgb, var(--ipe-modal-success) 8%, var(--ipe-modal-secondary-bg));
+      border-color: var(--ipe-modal-success);
+    }
+  }
+  &.broken {
+    background: color-mix(in srgb, var(--ipe-modal-warning) 5%, var(--ipe-modal-secondary-bg));
+    border-color: color-mix(in srgb, var(--ipe-modal-warning) 50%, var(--ipe-modal-border-color));
+    border-style: dashed;
+    &:hover {
+      background: color-mix(in srgb, var(--ipe-modal-warning) 8%, var(--ipe-modal-secondary-bg));
+      border-color: var(--ipe-modal-warning);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--ipe-modal-warning) 15%, transparent);
+    }
+  }
+
+  .item-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ipe-modal-text);
+    line-height: 1.2;
+  }
+  .item-desc {
+    font-size: 0.875rem;
+    color: var(--ipe-modal-muted);
+    line-height: 1.5;
+  }
+  .item-meta {
+    font-size: 0.75rem;
+    color: var(--ipe-modal-muted);
+    line-height: 1.5;
+  }
+}
+
+.ipeps-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.ipeps-tag {
+  font-size: 0.6875rem;
+  font-family: monospace;
+  margin-bottom: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: $tag-radius;
+  display: inline-block;
+  border: 1px solid var(--ipe-modal-border-color);
+  background: var(--ipe-modal-secondary-bg);
+}
+
+.ipeps-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: calc(var(--ipe-modal-button-radius) - 2px);
+  line-height: 1;
+  &.is-installed {
+    color: var(--ipe-modal-success);
+    background: color-mix(in srgb, var(--ipe-modal-success) 15%, transparent);
+  }
+  &.is-broken {
+    color: var(--ipe-modal-warning);
+    background: color-mix(in srgb, var(--ipe-modal-warning) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ipe-modal-warning) 30%, transparent);
+  }
+}

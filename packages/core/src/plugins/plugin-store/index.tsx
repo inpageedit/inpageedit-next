@@ -114,6 +114,7 @@ export class PluginPluginStore extends BasePlugin {
       label: 'Plugin Store',
       description: 'Plugin Store',
       index: 90,
+      autoGenerateForm: false,
       customRenderer: async ({ onUnmount }) => {
         const container = <div id="ipe-plugin-store-preferences-vue"></div>
         const app = await this._createManagementApp()
@@ -127,12 +128,12 @@ export class PluginPluginStore extends BasePlugin {
         return (
           <section>
             {container}
-            <div className="theme-ipe-prose">
+            {/* <div className="theme-ipe-prose">
               <hr />
               <div style={{ textAlign: 'center', marginBottom: '1em', fontSize: '0.8em' }}>
                 🚫 DO NOT edit fields below manually 🚫
               </div>
-            </div>
+            </div> */}
           </section>
         )
       },
@@ -147,10 +148,12 @@ export class PluginPluginStore extends BasePlugin {
               ? Endpoints.PLUGIN_REGISTRY_URL
               : 'http://127.0.0.1:1005/src/__test__/plugin-registry/index.json',
           ])
-          .description('Registry URLs'),
+          .description('Registry URLs')
+          .hidden(),
         'pluginStore.cdnForNpm': Schema.string()
           .description('CDN to install packages from npm')
-          .default('https://cdn.jsdelivr.net/npm/{{ package }}{{ version ? "@" + version : "" }}'),
+          .default('https://cdn.jsdelivr.net/npm/{{ package }}{{ version ? "@" + version : "" }}')
+          .hidden(),
         'pluginStore.plugins': Schema.array(
           Schema.object({
             source: Schema.union(['online_manifest', 'npm']).default('online_manifest'),
@@ -159,7 +162,8 @@ export class PluginPluginStore extends BasePlugin {
           })
         )
           .description('Installed plugins')
-          .default([]),
+          .default([])
+          .hidden(),
       }),
       'plugin-store'
     )
