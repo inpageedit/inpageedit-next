@@ -23,6 +23,35 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.13.0'>
+
+- refactor(core): update package structure and enhance type definitions
+- build(core): enhance types declaration
+
+此版本没有功能变动，主要优化了插件开发的体验。
+
+所有类型均可通过 `import type {} from '@inpageedit/core'` 单一入口导入，不再需要写一大堆 `import type {} from '@inpageedit/core/services/xxx'`。
+
+</ChangeLog>
+
+<ChangeLog version='0.12.1'>
+
+- feat: user can uninstall broken plugins
+  - 现在可以通过插件商店卸载损坏的插件了
+- feat: enhance PluginStore with improved registry handling and caching
+  - 优化了插件源的缓存和处理逻辑
+- feat: prefs sync icons
+  - 添加了偏好设置同步的图标
+- refactor: PluginStoreApp structure
+  - 重构了插件商店的结构
+- style: enhance PluginStore components with improved UI and interactions
+  - 优化了插件商店的组件的 UI 和 UX
+- refactor: remove quick-delete plugin and update related interfaces
+  - “快速删除”插件已不再内置，请前往插件商店下载
+  - 新版快速删除插件支持批量删除
+
+</ChangeLog>
+
 <ChangeLog version='0.12.0'>
 
 <template #title>0.12.0 <Badge type='rainbow'>重量级</Badge></template>
