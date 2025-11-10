@@ -26,69 +26,102 @@ export class PluginPrefSync extends BasePlugin {
         const userPageTitle = this.getUserPrefsPageTitle()
         return (
           <div className="theme-ipe-prose">
-            <section>
-              <h3>Backup your preferences via user page</h3>
-              {userPageTitle && (
+            {userPageTitle && (
+              <section>
+                <h3>Backup your preferences via user page</h3>
                 <p>
                   <a href={userPageTitle?.getURL().toString()} target="_blank">
                     {userPageTitle?.getPrefixedText()} →
                   </a>
                 </p>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <ActionButton
-                  type="primary"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    const modal = ctx.preferencesUI.getCurrentModal()
-                    const btn = e.target as HTMLButtonElement
-                    btn.disabled = true
-                    modal?.setLoadingState(true)
-                    this.importFromUserPage()
-                      .then((record) => {
-                        this.notifyImportSuccess(record)
-                      })
-                      .finally(() => {
-                        btn.disabled = false
-                        modal?.setLoadingState(false)
-                      })
-                  }}
-                >
-                  Import
-                </ActionButton>
-                <ActionButton
-                  type="primary"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    const btn = e.target as HTMLButtonElement
-                    btn.disabled = true
-                    const modal = ctx.preferencesUI.getCurrentModal()
-                    modal?.setLoadingState(true)
-                    this.exportToUserPage()
-                      .then((title) => {
-                        ctx.modal.notify('success', {
-                          title: 'Preferences Exported',
-                          content: (
-                            <p>
-                              Your preferences have been exported to{' '}
-                              <a href={title.getURL().toString()} target="_blank">
-                                {title.getPrefixedText()}
-                              </a>
-                              .
-                            </p>
-                          ),
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <ActionButton
+                    type="primary"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      const btn = e.target as HTMLButtonElement
+                      btn.disabled = true
+                      const modal = ctx.preferencesUI.getCurrentModal()
+                      modal?.setLoadingState(true)
+                      this.exportToUserPage()
+                        .then((title) => {
+                          ctx.modal.notify('success', {
+                            title: 'Preferences Exported',
+                            content: (
+                              <p>
+                                Your preferences have been exported to{' '}
+                                <a href={title.getURL().toString()} target="_blank">
+                                  {title.getPrefixedText()}
+                                </a>
+                                .
+                              </p>
+                            ),
+                          })
                         })
-                      })
-                      .finally(() => {
-                        btn.disabled = false
-                        modal?.setLoadingState(false)
-                      })
-                  }}
-                >
-                  Export
-                </ActionButton>
-              </div>
-            </section>
+                        .finally(() => {
+                          btn.disabled = false
+                          modal?.setLoadingState(false)
+                        })
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-up"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M12 18.004h-5.343c-2.572 -.004 -4.657 -2.011 -4.657 -4.487c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.38 0 2.57 .811 3.128 1.986" />
+                      <path d="M19 22v-6" />
+                      <path d="M22 19l-3 -3l-3 3" />
+                    </svg>{' '}
+                    Backup
+                  </ActionButton>
+                  <ActionButton
+                    onClick={(e) => {
+                      e.preventDefault()
+                      const modal = ctx.preferencesUI.getCurrentModal()
+                      const btn = e.target as HTMLButtonElement
+                      btn.disabled = true
+                      modal?.setLoadingState(true)
+                      this.importFromUserPage()
+                        .then((record) => {
+                          this.notifyImportSuccess(record)
+                        })
+                        .finally(() => {
+                          btn.disabled = false
+                          modal?.setLoadingState(false)
+                        })
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-down"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M12 18.004h-5.343c-2.572 -.004 -4.657 -2.011 -4.657 -4.487c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.38 0 2.573 .813 3.13 1.99" />
+                      <path d="M19 16v6" />
+                      <path d="M22 19l-3 3l-3 -3" />
+                    </svg>{' '}
+                    Restore
+                  </ActionButton>
+                </div>
+              </section>
+            )}
             <section>
               <h3>Import and export preferences</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
