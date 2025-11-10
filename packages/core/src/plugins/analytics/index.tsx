@@ -182,9 +182,6 @@ export class PluginAnalytics extends BasePlugin {
     ctx.on('in-article-links/anchor-clicked', (payload) => {
       this.addEvent('in-article-links', paramCase(payload.action))
     })
-    ctx.on('quick-delete/submit', (payload) => {
-      this.addEvent('quick-delete', 'submit', payload.wikiPage.title)
-    })
     ctx.on('quick-diff/loaded', (payload) => {
       this.addEvent('quick-diff', 'loaded', payload.compare.fromtitle)
     })

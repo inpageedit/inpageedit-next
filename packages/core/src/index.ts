@@ -1,9 +1,12 @@
-import '@/polyfills'
-import { InPageEdit as IPECore } from '@/InPageEdit'
+import './polyfills/index.js'
+import { InPageEdit } from './InPageEdit.js'
 import { Endpoints } from './constants/endpoints.js'
 
-export * from '@/InPageEdit'
-export { default as BasePlugin } from '@/plugins/BasePlugin'
+// 模块重导出
+export * from './InPageEdit.js'
+export { default as BasePlugin } from './plugins/BasePlugin.js'
+export { Endpoints }
+export { RegisterPreferences } from './decorators/Preferences.js'
 
 // Safe guard
 window.RLQ ||= []
@@ -15,17 +18,17 @@ runOnce('InPageEdit#autoload', () => {
   if (baseURL) {
     autoload({
       baseURL,
-      CoreClass: IPECore,
+      InPageEdit,
     })
   }
 })
 async function autoload(
   _overload: {
     baseURL?: string
-    CoreClass: typeof IPECore
-  } = { baseURL: detectMediaWikiApiEndpoint(), CoreClass: IPECore }
+    InPageEdit: typeof InPageEdit
+  } = { baseURL: detectMediaWikiApiEndpoint(), InPageEdit: InPageEdit }
 ) {
-  const { baseURL, CoreClass: IPE } = _overload
+  const { baseURL, InPageEdit: IPE } = _overload
 
   // 防止多次运行
   if (typeof window?.ipe?.stop === 'function') {
@@ -33,7 +36,7 @@ async function autoload(
     await window.ipe.stop()
   }
 
-  const oldGlobalVar: any = window.InPageEdit || {}
+  const oldGlobalVar: any = (window as any).InPageEdit || {}
   const ipe = new IPE({
     apiConfigs: {
       baseURL,
@@ -42,7 +45,6 @@ async function autoload(
   })
 
   // Merge into global variables
-  window.InPageEdit = IPE
   window.ipe = ipe
 
   // Start the App
@@ -107,15 +109,37 @@ function runOnce(key: string, fn: Function) {
   return true
 }
 
+// HMR
+if (import.meta.hot) {
+  const SEPARATOR = `\n${'='.repeat(20)} [InPageEdit] HMR ${'='.repeat(20)}\n`
+  import.meta.hot.accept(async (modules) => {
+    const apiBase = detectMediaWikiApiEndpoint()!
+    const IPE = modules?.InPageEdit as unknown as typeof InPageEdit
+    if (!apiBase || !IPE) {
+      console.warn(SEPARATOR.trimStart(), 'missing modules', SEPARATOR.trimEnd())
+      location.reload()
+      return
+    }
+
+    console.info(SEPARATOR.trimStart(), "I'm so hot!", modules, SEPARATOR.trimEnd())
+    await window?.ipe?.stop()
+    window.ipe = undefined as any
+    autoload({
+      baseURL: apiBase,
+      InPageEdit: IPE,
+    })
+  })
+}
+
+// 类型定义
+
 // Global types declaration
 declare global {
-  const InPageEdit: typeof IPECore
-  const ipe: IPECore
+  const ipe: InPageEdit
   interface Window {
-    InPageEdit: typeof IPECore
-    ipe: IPECore
+    ipe: InPageEdit
     __IPE_MODULES__: {
-      push(payload: (ipe: IPECore) => void): void
+      push(payload: (ipe: InPageEdit) => void): void
     }
   }
 }
@@ -144,29 +168,15 @@ declare global {
       fire(...data: T): this
       remove(...handler: Array<(...data: T) => any>): this
     }
-    function hook(name: 'InPageEdit.ready'): Hook<[IPECore]>
+    function hook(name: 'InPageEdit.ready'): Hook<[InPageEdit]>
   }
 }
 
-// HMR
-if (import.meta.hot) {
-  const SEPARATOR = `\n${'='.repeat(20)} [InPageEdit] HMR ${'='.repeat(20)}\n`
-  import.meta.hot.accept(async (modules) => {
-    const apiBase = detectMediaWikiApiEndpoint()!
-    const IPE = modules?.InPageEdit as unknown as typeof IPECore
-    if (!apiBase || !IPE) {
-      console.warn(SEPARATOR.trimStart(), 'missing modules', SEPARATOR.trimEnd())
-      location.reload()
-      return
-    }
+// 类型重导出
 
-    console.info(SEPARATOR.trimStart(), "I'm so hot!", modules, SEPARATOR.trimEnd())
-    await window?.ipe?.stop()
-    window.ipe = undefined as any
-    window.InPageEdit = undefined as any
-    autoload({
-      baseURL: apiBase,
-      CoreClass: IPE,
-    })
-  })
-}
+// expose all types
+export type * from './components/index.js'
+export type * from './models/index.js'
+export type * from './plugins/index.js'
+export type * from './services/index.js'
+export type * from './types/index.js'

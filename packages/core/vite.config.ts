@@ -3,7 +3,6 @@ import { version } from './package.json'
 import { resolve } from 'node:path'
 import Vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
-import dts from 'unplugin-dts/vite'
 
 const DEV = process.env.NODE_ENV === 'development'
 const BUILD_FORMAT = process.env.VITE_BUILD_FORMAT || 'import'
@@ -75,10 +74,13 @@ export default defineConfig(() => {
           entry: {
             index: 'src/index.ts',
             'components/index': 'src/components/index.ts',
+            'models/index': 'src/models/index.ts',
+            'plugins/index': 'src/plugins/index.ts',
+            'services/index': 'src/services/index.ts',
           },
           name: 'InPageEditBundle',
           formats: ['es'],
-          fileName: (format, entryName) => {
+          fileName: (_, entryName) => {
             return `${entryName}.js`
           },
           cssFileName: 'style',
@@ -95,15 +97,6 @@ export default defineConfig(() => {
           },
         },
       }
-      config.plugins = [
-        ...config.plugins,
-        dts({
-          tsconfigPath: './tsconfig.app.json',
-          entryRoot: './src',
-          // TODO: 试了一下不好使
-          // bundleTypes: true,
-        }),
-      ]
       break
     }
     case 'bundle': {

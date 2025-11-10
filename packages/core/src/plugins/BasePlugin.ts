@@ -1,4 +1,5 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
+import type { Logger } from '@inpageedit/logger'
 import { snakeCase } from '@/utils/string'
 
 interface DisposeHandler {
@@ -62,21 +63,21 @@ export default class BasePlugin<ConfigType extends unknown = any> {
 
   protected start(): Promise<void> | void {}
   protected stop(): Promise<void> | void {}
-  protected addDisposeHandler(fn: DisposeHandler) {
+  protected addDisposeHandler(fn: DisposeHandler): void {
     this.disposeHandlers.push(fn)
   }
-  protected removeDisposeHandler(fn: DisposeHandler) {
+  protected removeDisposeHandler(fn: DisposeHandler): void {
     this.disposeHandlers = this.disposeHandlers.filter((f) => f !== fn)
   }
 
   set name(name: string) {
     this.#name = snakeCase(name).toUpperCase()
   }
-  get name() {
+  get name(): string {
     return this.#name
   }
 
-  get logger() {
+  get logger(): Logger {
     return this.ctx.logger(this.name)
   }
 }

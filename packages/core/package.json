@@ -13,6 +13,7 @@
   ],
   "exports": {
     "./package.json": "./package.json",
+    "./style.css": "./dist/style.css",
     ".": {
       "source": "./src/index.ts",
       "types": "./dist/index.d.ts",
@@ -20,48 +21,41 @@
     },
     "./InPageEdit": {
       "source": "./src/InPageEdit.ts",
-      "types": "./dist/InPageEdit.d.ts"
+      "types": "./dist/index.d.ts"
     },
-    "./style.css": "./dist/style.css",
     "./components": {
-      "types": "./dist/components/index.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/components/index.js"
     },
-    "./models/*": {
-      "types": "./dist/plugins/*.d.ts"
+    "./models": {
+      "types": "./dist/models/index.d.ts",
+      "import": "./dist/models/index.js"
     },
-    "./plugins/*": {
-      "types": "./dist/plugins/*.d.ts"
+    "./plugins": {
+      "types": "./dist/plugins/index.d.ts",
+      "import": "./dist/plugins/index.js"
     },
-    "./services/*": {
-      "types": "./dist/services/*.d.ts"
-    },
-    "./types/*": {
-      "types": "./dist/services/*.d.ts"
-    },
-    "./src/*": {
-      "source": "./src/*",
-      "types": "./src/*"
-    },
-    "./dist/*": {
-      "source": "./dist/*",
-      "types": "./dist/*"
+    "./services": {
+      "types": "./dist/services/index.d.ts",
+      "import": "./dist/services/index.js"
     }
   },
+  "sideEffects": false,
   "scripts": {
     "start": "zx dev/scripts/setup-dev.ts",
     "dev": "vite",
     "test": "vitest run ./src",
-    "build": "run-p build:*",
+    "build": "run-p build:import build:bundle && npm run build:types",
     "build:import": "cross-env VITE_BUILD_FORMAT=import vite build",
     "build:bundle": "cross-env VITE_BUILD_FORMAT=bundle vite build",
+    "build:types": "rolldown -c rolldown.config.ts",
     "prepublish": "npm run build",
     "lint": "eslint ./src",
     "unit-test": "vitest run ./src",
     "unit-test:watch": "vitest ./src",
     "clean": "rimraf dist/* lib/*",
     "format": "prettier --write ./src",
-    "typecheck": "tsc --noEmit --project ./tsconfig.app.json"
+    "typecheck": "vue-tsc --noEmit --project ./tsconfig.app.json"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -77,6 +71,7 @@
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/compiler-sfc": "^3.5.24",
     "@vue/language-plugin-pug": "^3.1.3",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.1",
@@ -86,14 +81,16 @@
     "prettier": "^3.6.2",
     "pug": "^3.0.3",
     "rimraf": "^6.1.0",
+    "rolldown": "1.0.0-beta.47",
+    "rolldown-plugin-dts": "^0.17.5",
     "sass-embedded": "^1.93.3",
     "tsx": "^4.20.6",
     "types-mediawiki": "^2.0.0",
     "typescript": "^5.9.3",
     "unplugin-auto-import": "^20.2.0",
-    "unplugin-dts": "1.0.0-beta.6",
     "vite": "^7.2.2",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "vue-tsc": "^3.1.3"
   },
   "dependencies": {
     "@cordisjs/core": "^3.18.1",

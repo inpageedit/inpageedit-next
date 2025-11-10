@@ -2,6 +2,8 @@ import { InPageEdit } from '@/InPageEdit'
 import { FexiosConfigs } from 'wiki-saikou'
 import { MwApi } from 'wiki-saikou/browser'
 
+export type * from 'wiki-saikou/browser'
+
 declare module '@/InPageEdit' {
   interface InPageEdit {
     api: MwApi

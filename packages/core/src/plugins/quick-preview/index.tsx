@@ -4,7 +4,6 @@ import { IWikiPage } from '@/models/WikiPage'
 import { MwApiParams } from 'wiki-saikou'
 import { PageParseData } from '@/models/WikiPage/types/PageParseData'
 import { IPEModal, IPEModalOptions } from '@inpageedit/modal'
-import { QuickDeleteInitPayload } from '../quick-delete/index.js'
 
 interface QuickPreviewEventPayload {
   ctx: InPageEdit
@@ -51,7 +50,6 @@ export class PluginQuickPreview extends BasePlugin {
 
   protected start(): Promise<void> | void {
     this.ctx.on('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
-    this.ctx.on('quick-delete/wiki-page', this.injectQuickDelete.bind(this))
   }
 
   protected stop(): Promise<void> | void {}
@@ -170,19 +168,5 @@ export class PluginQuickPreview extends BasePlugin {
       latestPreviewModal?.destroy()
       latestPreviewModal = undefined
     })
-  }
-
-  private injectQuickDelete({ ctx, modal, wikiPage }: QuickDeleteInitPayload) {
-    modal.addButton(
-      {
-        label: 'Preview',
-        side: 'left',
-        className: 'btn btn-secondary',
-        method: () => {
-          this.logger.warn('To be implemented: preview wikitext for quick delete')
-        },
-      },
-      2
-    )
   }
 }

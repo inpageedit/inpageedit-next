@@ -1,5 +1,5 @@
 {
-  "include": ["src/**/*", "src/**/*.vue"],
+  "include": ["src/**/*", "src/**/*.vue", "node_modules/types-mediawiki"],
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "composite": true,
@@ -12,8 +12,11 @@
     "jsx": "react-jsx",
     "jsxImportSource": "jsx-dom",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
     "skipLibCheck": true,
     "noEmit": true,
+    "declaration": true,
+    // "isolatedDeclarations": true,
     "paths": {
       "@/*": ["./src/*"]
     }

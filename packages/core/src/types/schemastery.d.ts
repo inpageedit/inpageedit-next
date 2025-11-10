@@ -1,4 +1,4 @@
-import 'schemastery'
+import type {} from 'schemastery'
 
 declare global {
   namespace Schemastery {

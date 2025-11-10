@@ -363,3 +363,8 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
 
   return WikiPage as WikiPageConstructor
 }
+
+// re-export types
+export * from './types/PageInfo'
+export * from './types/PageParseData'
+export * from './types/WatchlistAction'

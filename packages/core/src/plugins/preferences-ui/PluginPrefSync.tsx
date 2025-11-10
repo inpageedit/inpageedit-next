@@ -1,4 +1,4 @@
-import { Inject, InPageEdit, Schema } from '@/InPageEdit.js'
+import { Inject, InPageEdit } from '@/InPageEdit.js'
 import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction.js'
 import { IWikiTitle } from '@/models/WikiTitle/index.js'
 
