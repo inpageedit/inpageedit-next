@@ -23,12 +23,18 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.13.1'>
+
+- 修复了一些小问题，提升了项目的整体质量。
+
+</ChangeLog>
+
 <ChangeLog version='0.13.0'>
+
+此版本没有功能变动，主要优化了插件开发的体验。
 
 - refactor(core): update package structure and enhance type definitions
 - build(core): enhance types declaration
-
-此版本没有功能变动，主要优化了插件开发的体验。
 
 所有类型均可通过 `import type {} from '@inpageedit/core'` 单一入口导入，不再需要写一大堆 `import type {} from '@inpageedit/core/services/xxx'`。
 
