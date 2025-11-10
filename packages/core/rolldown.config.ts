@@ -1,10 +1,8 @@
-// rolldown.config.ts
-import { readFile, stat, writeFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
-import { defineConfig } from 'rolldown'
+import { defineConfig, OutputChunk } from 'rolldown'
 import { dts } from 'rolldown-plugin-dts'
 import AutoImport from 'unplugin-auto-import/rolldown'
 
+// https://rolldown.rs/options/input
 export default defineConfig({
   input: './src/index.ts',
   tsconfig: 'tsconfig.app.json',
@@ -36,14 +34,14 @@ export default defineConfig({
      * replace all `declare module '[@.]/.+?'` with `declare module '.'`
      */
     {
-      name: 'shamfully-fix-dts-index',
-      async writeBundle(options, bundle) {
-        console.info('shamfully-fix-dts-index', options, bundle)
-        const outDir = (options as any)?.dir || 'dist'
-        const indexDtsPath = resolve(import.meta.dirname, outDir, 'index.d.ts')
-        if (!(await stat(indexDtsPath)).isFile()) return
-        const content = await readFile(indexDtsPath, 'utf-8')
-        const replaced = content.replace(
+      name: 'shamefully-fix-dts-index',
+      async generateBundle(_, bundle) {
+        console.info(bundle)
+        const dts = Object.values(bundle).find(
+          (v) => v.type === 'chunk' && v.fileName === 'index.d.ts'
+        ) as OutputChunk
+        if (!dts) return
+        dts.code = dts.code.replace(
           /declare\s+module\s+(['"][@\.]\/.+?['"])\s*\{/g,
           // prettier-ignore
           [
@@ -51,9 +49,6 @@ export default defineConfig({
             "declare module '.' {"
           ].join('\n')
         )
-        if (replaced !== content) {
-          await writeFile(indexDtsPath, replaced, 'utf-8')
-        }
       },
     },
   ],
@@ -62,7 +57,8 @@ export default defineConfig({
       '@': './src',
     },
   },
-  // 忽略 .scss/.css/.vue 文件，因为我们只需要暴露 JS API 即可，组件和样式不重要
-  external: [/\.scss$/, /\.css$/, /\.vue$/],
-  output: [{ dir: 'dist', format: 'es', cssEntryFileNames: 'style.css' }],
+
+  // 忽略 css 文件，因为我们只需要暴露 JS API，样式啥的不重要
+  external: [/\.scss$/, /\.css$/],
+  output: { dir: 'dist', format: 'es', cleanDir: false },
 })
