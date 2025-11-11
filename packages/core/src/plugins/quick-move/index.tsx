@@ -42,7 +42,7 @@ export interface QuickMoveOptions extends Partial<MovePageOptions> {
     .description('Quick move options')
     .extra('category', 'editor')
 )
-@Inject(['modal', 'wiki'])
+@Inject(['modal', 'wiki', '$'])
 export class PluginQuickMove extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-move')
@@ -56,6 +56,7 @@ export class PluginQuickMove extends BasePlugin {
   }
 
   private injectToolbox(ctx: InPageEdit) {
+    const $ = ctx.$
     const curPageName = window.mw?.config.get('wgPageName') || ''
     const canEdit = window.mw?.config.get('wgIsProbablyEditable')
     ctx.toolbox.addButton({
@@ -82,7 +83,7 @@ export class PluginQuickMove extends BasePlugin {
           <path d="M13 12h.01" />
         </svg>
       ),
-      tooltip: 'Quick Move',
+      tooltip: $('Quick Move'),
       group: 'group1',
       index: 1,
       onClick: () => {
@@ -99,10 +100,11 @@ export class PluginQuickMove extends BasePlugin {
   }
 
   async showModal(options?: Partial<QuickMoveOptions>) {
+    const $ = this.ctx.$
     const reason = await this.ctx.preferences.get('quickMove.reason')
     const modal = this.ctx.modal
       .createObject({
-        title: 'Quick Move',
+        title: $('Quick Move'),
         content: (<ProgressBar />) as HTMLElement,
         className: 'quick-move compact-buttons',
         sizeClass: 'smallToMedium',
@@ -137,7 +139,7 @@ export class PluginQuickMove extends BasePlugin {
             }
             if (!options.from || !options.to) {
               this.ctx.modal.notify('error', {
-                title: 'Failed to move',
+                title: $('Failed to move'),
                 content: 'From and to are required.',
               })
               return
@@ -151,7 +153,7 @@ export class PluginQuickMove extends BasePlugin {
               .catch((error) => {
                 modal.setLoadingState(false)
                 this.ctx.modal.notify('error', {
-                  title: 'Failed to move',
+                  title: $('Failed to move'),
                   content: error instanceof Error ? error.message : String(error),
                 })
               })
@@ -160,13 +162,13 @@ export class PluginQuickMove extends BasePlugin {
           <TwinSwapInput
             inputs={[
               {
-                label: 'Move from',
+                label: $('Move from'),
                 name: 'from',
                 value: options?.from,
                 required: true,
               },
               {
-                label: 'Move to',
+                label: $('Move to'),
                 name: 'to',
                 value: options?.to,
                 required: true,
@@ -175,23 +177,23 @@ export class PluginQuickMove extends BasePlugin {
           />
           <div>
             <CheckBox name="movetalk" id="movetalk" checked={options?.movetalk}>
-              Move talk page
+              {$('Move talk page')}
             </CheckBox>
           </div>
           <div>
             <CheckBox name="movesubpages" id="movesubpages" checked={options?.movesubpages}>
-              Move subpage(s) (up to 100)
+              {$('Move subpage(s) (up to 100)')}
             </CheckBox>
           </div>
           {this.ctx.wiki.hasRight('suppressredirect') && (
             <div>
               <CheckBox name="noredirect" id="noredirect" checked={options?.noredirect}>
-                Move without leaving a redirect
+                {$('Move without leaving a redirect')}
               </CheckBox>
             </div>
           )}
           <InputBox
-            label="Reason"
+            label={$('Reason')}
             id="reason"
             name="reason"
             value={options?.reason ?? reason ?? ''}
@@ -202,7 +204,7 @@ export class PluginQuickMove extends BasePlugin {
 
     modal.setButtons([
       {
-        label: 'Move',
+        label: $('Move'),
         className: 'is-primary is-ghost',
         method: () => {
           formRef?.dispatchEvent(new Event('submit'))

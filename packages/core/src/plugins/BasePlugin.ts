@@ -6,6 +6,8 @@ interface DisposeHandler {
   (ctx: InPageEdit): Promise<void> | void
 }
 
+const DEFAULT_INJECTS = ['modal', 'preferences', 'wiki', '$', '$$']
+
 export default class BasePlugin<ConfigType extends unknown = any> {
   #name!: string
   public config: ConfigType
@@ -29,6 +31,9 @@ export default class BasePlugin<ConfigType extends unknown = any> {
       if (!this.name) {
         this.name = this.constructor.name
       }
+      const ctor = this.constructor as typeof BasePlugin
+      const inject = Array.isArray(ctor.inject) ? ctor.inject : []
+      ctor.inject = [...DEFAULT_INJECTS, ...inject] as Inject
       try {
         const ret = this.start()
         if (ret && typeof (ret as Promise<unknown>).then === 'function') {

@@ -1,6 +1,4 @@
 import { Inject, InPageEdit } from '@/InPageEdit'
-import { interpolate } from '@/utils/interpolate.js'
-;(window as any).interpolate = interpolate
 
 @Inject(['modal', 'toolbox', 'wiki'])
 class PluginDebug extends BasePlugin {

@@ -33,7 +33,6 @@ declare global {
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
   const ensureSlash: typeof import('./utils/string')['ensureSlash']
   const injectIPE: typeof import('./utils/vueHooks')['injectIPE']
-  const interpolate: typeof import('./utils/interpolate')['interpolate']
   const makeCallable: typeof import('./utils/makeCallable')['makeCallable']
   const makeSearchParams: typeof import('./utils/url')['makeSearchParams']
   const makeURL: typeof import('./utils/url')['makeURL']

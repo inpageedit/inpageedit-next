@@ -1,4 +1,4 @@
-import { Context, Inject, Events as CordisEvents } from '@cordisjs/core'
+import { Context, Inject } from '@cordisjs/core'
 import Schema from 'schemastery'
 import { LoggerLevel, createLogger, type Logger } from '@inpageedit/logger'
 import { deepMerge, FexiosConfigs } from 'wiki-saikou'
@@ -58,7 +58,11 @@ export class InPageEdit extends Context {
       color: '#33aaff',
       level: this.config.logLevel,
     })
-    this.#initCoreServices()
+    this.#init()
+  }
+
+  async #init() {
+    await this.#initCoreServices()
     if (this.config.autoInstallCorePlugins) {
       this.#initCorePlugins()
     }
@@ -66,6 +70,7 @@ export class InPageEdit extends Context {
   }
 
   async #initCoreServices() {
+    this.plugin(I18nService)
     this.plugin(ApiService, this.config.apiConfigs)
     this.plugin(CurrentPageService)
     this.plugin(ResourceLoaderService)
@@ -78,6 +83,9 @@ export class InPageEdit extends Context {
 
     // 标记内置服务，所以用户即使忘记 inject 也能使用
     this.#markServiceAsBuiltIn([
+      'i18n',
+      '$',
+      '$$',
       'api',
       'currentPage',
       'resourceLoader',
@@ -94,10 +102,7 @@ export class InPageEdit extends Context {
     ])
   }
 
-  #markServiceAsBuiltIn(services: string | string[]) {
-    if (typeof services === 'string') {
-      services = [services]
-    }
+  #markServiceAsBuiltIn(services: string[]) {
     if (!Array.isArray(services) || services.length === 0) return this
     for (const name of services) {
       const internal = this[InPageEdit.internal][name]
@@ -167,8 +172,26 @@ export * from '@inpageedit/logger'
 export interface PreferencesMap {}
 
 // 类型体操
-export { Inject, Service } from '@cordisjs/core'
+export {
+  Inject,
+  EffectScope,
+  ForkScope,
+  MainScope,
+  ScopeStatus,
+  symbols as CordisSymbols,
+  Service,
+  CordisError,
+  Lifecycle,
+} from '@cordisjs/core'
+import {
+  Events as CordisEvents,
+  Plugin as CordisPlugin,
+  Registry as CordisRegistry,
+} from '@cordisjs/core'
+import { I18nService } from './services/i18n/index.js'
 export interface Events<C extends InPageEdit = InPageEdit> extends CordisEvents<C> {}
+export type IPEPlugin<C = any> = CordisPlugin<InPageEdit, C>
+export type IPERegistry = CordisRegistry<InPageEdit>
 export interface InPageEdit {
   [InPageEdit.events]: Events<this>
 }

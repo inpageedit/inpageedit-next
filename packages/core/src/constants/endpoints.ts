@@ -5,4 +5,5 @@ export enum Endpoints {
   HOME_URL = 'https://www.ipe.wiki/',
   UPDATE_LOGS_URL = 'https://www.ipe.wiki/changelogs/',
   PLUGIN_REGISTRY_URL = 'https://registry.ipe.wiki/registry.v1.json',
+  I18N_INDEX_URL = 'https://registry.ipe.wiki/i18n/index.json',
 }
