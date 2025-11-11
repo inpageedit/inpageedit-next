@@ -42,7 +42,7 @@ export default defineConfig({
         ) as OutputChunk
         if (!dts) return
         dts.code = dts.code.replace(
-          /declare\s+module\s+(['"][@\.]\/.+?['"])\s*\{/g,
+          /declare\s+module\s+(['"][@\.{1,2}]\/.+?['"])\s*\{/g,
           // prettier-ignore
           [
             '//              ↓ $1',
