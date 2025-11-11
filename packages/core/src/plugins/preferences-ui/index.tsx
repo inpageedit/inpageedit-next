@@ -33,6 +33,7 @@ export class PluginPreferencesUI extends BasePlugin {
     super(ctx, {}, 'preferences-ui')
     ctx.set('preferencesUI', this)
     const $ = ctx.$
+    const $$ = ctx.$$
 
     ctx.preferences.defineCategory({
       name: 'about',
@@ -43,12 +44,12 @@ export class PluginPreferencesUI extends BasePlugin {
         return (
           <section className="theme-ipe-prose">
             <h2>✏️ InPageEdit NEXT</h2>
-            <p>🚀 Modular, Extensible Supercharged Plugin for MediaWiki.</p>
-            <h3>Portals</h3>
+            <p>{$$`about.description`}</p>
+            <h3>{$$`about.portals.header`}</h3>
             <ul>
               <li>
                 <a href={this.ctx.Endpoints.HOME_URL} target="_blank">
-                  {$`Official Website & Help Center`}
+                  {$$`about.portals.officialwebsite`}
                 </a>
               </li>
               <li>
@@ -56,20 +57,20 @@ export class PluginPreferencesUI extends BasePlugin {
                   href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version.split('-')[0]}`}
                   target="_blank"
                 >
-                  {$`Update Logs`}
+                  {$$`about.portals.updatelogs`}
                 </a>
               </li>
             </ul>
-            <h3>Join us</h3>
+            <h3>{$$`about.joinus.header`}</h3>
             <ul>
               <li>
-                <strong>GitHub</strong>:{' '}
+                <strong>{$$`about.joinus.github`}</strong>:{' '}
                 <a href={this.ctx.Endpoints.GITHUB_URL} target="_blank">
                   inpageedit/inpageedit-next
                 </a>
               </li>
               <li>
-                <strong>QQ Group</strong>: 1026023666
+                <strong>{$$`about.joinus.qqgroup`}</strong>: 1026023666
               </li>
             </ul>
             <hr />

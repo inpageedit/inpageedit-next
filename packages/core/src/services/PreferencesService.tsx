@@ -209,11 +209,17 @@ export class PreferencesService extends Service {
   }
 
   registerCustomConfig(id: string, schema: Schema, category?: string) {
-    this.customRegistries.push({
+    const config = {
       name: id,
       schema,
       category: category || 'general',
-    })
+    }
+    const index = this.customRegistries.findIndex((item) => item.name === id)
+    if (index >= 0) {
+      this.customRegistries[index] = config
+    } else {
+      this.customRegistries.push(config)
+    }
     return this
   }
 

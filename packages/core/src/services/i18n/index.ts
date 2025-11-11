@@ -1,6 +1,42 @@
 import { Inject, InPageEdit, Logger, Schema, Service } from '@/InPageEdit'
 import { I18nManager as I18nManager } from './I18nManager.js'
 import { Endpoints } from '@/constants/endpoints.js'
+import { AbstractIPEStorageManager } from '../storage/index.js'
+
+export interface I18nIndexV1 {
+  manifest_version: 1
+  languages: {
+    /** language code, e.g. 'zh-cn' */
+    code: string
+    /** language file name, relative to index.json */
+    file: string
+    /**
+     * Hint only:
+     * This language lacks first-class support, but there are alternatives available.
+     * — The alternative file has been set to `file`, no redirection needed.
+     */
+    missing?: boolean
+    /**
+     * Hint only:
+     * Which one was used as a alternative for this language?
+     */
+    fallback?: string
+  }[]
+}
+
+export const I18nIndexV1Schema = new Schema<I18nIndexV1>(
+  Schema.object({
+    manifest_version: Schema.const(1).required(),
+    languages: Schema.array(
+      Schema.object({
+        code: Schema.string().required(),
+        file: Schema.string().required(),
+        missing: Schema.boolean(),
+        fallback: Schema.string(),
+      })
+    ).required(),
+  })
+)
 
 declare module '@/InPageEdit' {
   export interface InPageEdit {
@@ -62,26 +98,9 @@ declare module '@/InPageEdit' {
   }
 }
 
-export interface I18nIndex {
-  /**
-   * 如果指定的语言文件不存在，尝试使用 fallback 语言文件
-   * 可以fallback多次，直到找到或者最终fallback到en
-   */
-  fallbacks: Record<string, string>
-  /**
-   * 语言代码 - 语言文件
-   * "zh-cn": "zh-cn.json"
-   * 文件地址相对 index.json
-   */
-  languages: Record<string, string>
-}
-
 @Inject(['wiki', 'preferences'])
 @RegisterPreferences(
   Schema.object({
-    language: Schema.union(['@user', '@site', Schema.string().description('Custom language code')])
-      .description('UI language')
-      .default('@user'),
     'i18n.index_url': Schema.string()
       .description('I18n index URL (DO NOT CHANGE THIS) ')
       .default(
@@ -90,72 +109,135 @@ export interface I18nIndex {
           : import.meta.resolve('/src/__mock__/i18n/index.json')
       ),
   })
-    .description('UI language preferences')
+    .description('')
     .extra('category', 'general')
 )
 export class I18nService extends Service {
   private readonly logger: Logger
-  private indexUrl!: string
-  private indexCache: I18nIndex | null = null
+  private _indexUrl!: string
+  private _indexCache: I18nIndexV1 | null = null
   public readonly manager: I18nManager
+
+  private i18nIndexDB: AbstractIPEStorageManager<I18nIndexV1>
+  private i18nDataDB: AbstractIPEStorageManager<Record<string, string>>
+
+  $!: I18nManager['$']
+  $raw!: I18nManager['$raw']
+  $$!: I18nManager['$$']
+  $$raw!: I18nManager['$$raw']
+
   constructor(readonly ctx: InPageEdit) {
     super(ctx, 'i18n', false)
     this.logger = this.ctx.logger('I18nService')
     this.manager = new I18nManager(
       {},
       {
-        language: 'en',
+        language: '',
         globals: {
           getUrl: (...args: Parameters<InPageEdit['wiki']['getUrl']>) => ctx.wiki.getUrl(...args),
         },
       }
     )
+    this.i18nIndexDB = ctx.storage.createDatabase<I18nIndexV1>(
+      'i18n-index',
+      1000 * 60 * 60 * 24 * 3, // 3 days
+      1,
+      'indexedDB'
+    )
+    this.i18nDataDB = ctx.storage.createDatabase<Record<string, string>>(
+      'i18n-data',
+      1000 * 60 * 60 * 24 * 3, // 3 days
+      1,
+      'indexedDB'
+    )
+    this.$ = this.manager.$.bind(this.manager)
+    this.$raw = this.manager.$raw.bind(this.manager)
+    this.$$ = this.manager.$$.bind(this.manager)
+    this.$$raw = this.manager.$$raw.bind(this.manager)
   }
 
   protected async start(): Promise<void> {
-    this.indexUrl = (await this.ctx.preferences.get('i18n.index_url')) || ''
-    if (!this.indexUrl) {
+    // pre-register
+    this.ctx.preferences.registerCustomConfig(
+      'language',
+      Schema.object({
+        language: Schema.union([
+          '@user',
+          '@site',
+          Schema.string().description('Custom language code'),
+        ])
+          .description('UI language')
+          .default('@user'),
+      }).description('UI language')
+    )
+
+    const indexUrl = (this._indexUrl = (await this.ctx.preferences.get('i18n.index_url')) || '')
+    if (!indexUrl) {
       this.logger.error('I18n index URL is not set')
+      this.setupShortcuts()
       return
     }
 
-    const index = await this.fetchIndex().catch(() => null)
+    let index: I18nIndexV1 | null = null
+    try {
+      index = await this.getI18nIndex(indexUrl)
+    } catch (e) {
+      this.logger.error('Failed to fetch i18n index', e)
+      this.setupShortcuts()
+      return
+    }
+    this._indexCache = index
 
-    const prefLang = await this.ctx.preferences.get('language')
-    const language = this.resolveLanguage(prefLang)
+    const prefer = await this.ctx.preferences.get('language')
+    const normalized = this.normalizeLanguageCode(prefer)
 
-    this.logger.debug('Settings', { pref: prefLang, resolved: language })
+    this.logger.debug('Settings', { prefer, normalized })
 
     try {
-      const fallbackMap = this.buildFallbackMap(index || undefined)
-      this.manager.setFallbacks(fallbackMap)
-      await this.ensureLanguageLoaded(language)
-      this.manager.setLanguage(language)
+      await this.switchLanguage(normalized)
       this.logger.info(`Initialized for language: ${this.language}`)
     } catch (e) {
       this.logger.error('Failed to fetch i18n index', e)
-      this.manager.setLanguage(language)
+      this.manager.setLanguage('en')
     }
+
+    // rewrite-schema
+    this.ctx.preferences.registerCustomConfig(
+      'language',
+      Schema.object({
+        language: Schema.union([
+          Schema.const('@user').description(this.$`Same as your personal language`),
+          Schema.const('@site').description(this.$`Same as the site language`),
+          ...this.getAvailableLanguageCodes().map((code) => Schema.const(code).description(code)),
+        ]).default('@user'),
+      }).description(this.$`InPageEdit UI language`)
+    )
+
+    this.setupShortcuts()
 
     // 当偏好设置中的 language 发生变化时，自动热切换
     this.ctx.on('preferences/changed', async ({ changes }) => {
       if (!('language' in changes)) return
-      const next = this.resolveLanguage(changes.language)
+      const next = this.normalizeLanguageCode(changes.language)
       if (next && next !== this.language) {
         await this.switchLanguage(next)
       }
     })
+  }
 
+  private setupShortcuts() {
+    if (!this.manager) throw new Error('I18nManager is not initialized')
     this.ctx.set('$', this.manager.$.bind(this.manager))
     this.ctx.set('$raw', this.manager.$raw.bind(this.manager))
     this.ctx.set('$$', this.manager.$$.bind(this.manager))
     this.ctx.set('$$raw', this.manager.$$raw.bind(this.manager))
   }
 
-  private resolveLanguage(language: any) {
-    if (language === '@user') return this.ctx.wiki.userInfo.options.language
-    if (language === '@site') return this.ctx.wiki.siteInfo.general.lang
-    return language ? String(language) || 'en' : 'en'
+  private normalizeLanguageCode(code: any) {
+    if (!code || typeof code !== 'string') return 'en'
+    if (code === '@user') code = this.ctx.wiki.userInfo.options.language || 'en'
+    if (code === '@site') code = this.ctx.wiki.siteInfo.general.lang || 'en'
+    return paramCase(String(code)).toLowerCase()
   }
 
   get language() {
@@ -173,9 +255,10 @@ export class I18nService extends Service {
    * 直接切换到具体语言（不修改偏好值）
    */
   async switchLanguage(language: string) {
-    await this.ensureLanguageLoaded(language)
-    this.manager.setLanguage(language)
-    this.ctx.emit('i18n/changed', { ctx: this.ctx, language: this.language })
+    const lang = this.normalizeLanguageCode(language)
+    await this.ensureLanguageLoaded(lang)
+    this.manager.setLanguage(lang)
+    this.ctx.emit('i18n/changed', { ctx: this.ctx, language: lang })
   }
 
   /**
@@ -197,54 +280,96 @@ export class I18nService extends Service {
   }
 
   /**
-   * 设置/覆盖回退链表（每个语言对应一串按优先级排列的语言码）。
-   * - 直接传递 index.json 的单步回退映射；I18nManager 内部会按同样策略多级回退。
-   * - 若未设置，I18nManager 内部默认所有语言最终兜底到 'en'。
-   */
-  setFallbacks(fallbacks: Record<string, string>) {
-    this.manager.setFallbacks(fallbacks)
-  }
-
-  /**
    * 列出可用语言与文件（来源于 index.json）
    */
-  async getAvailableLanguages(): Promise<Record<string, string>> {
-    const index = await this.fetchIndex()
-    return index.languages
+  getAvailableLanguageCodes(): string[] {
+    if (!this._indexCache) throw new Error('I18n index is not loaded')
+    return this._indexCache.languages
+      .filter((x) => !x.missing)
+      .reduce((acc, item) => {
+        acc.push(item.code)
+        return acc
+      }, [] as string[])
   }
 
-  private async fetchIndex(): Promise<I18nIndex> {
-    if (this.indexCache) return this.indexCache
-    const index = (await fetch(this.indexUrl).then((res) => res.json())) as I18nIndex
-    this.indexCache = index
+  private findLanguageMeta(
+    index: I18nIndexV1,
+    language: string
+  ): {
+    lang: string
+    code: string
+    file: string
+    missing?: boolean
+    fallback?: string
+  } | null {
+    const normalized = paramCase(String(language)).toLowerCase()
+    const found = index.languages.find((x) => x.code.toLowerCase() === normalized)
+    if (found) {
+      return {
+        lang: found.code,
+        code: found.code,
+        file: found.file,
+        missing: found.missing,
+        fallback: found.fallback,
+      }
+    } else {
+      const fallback = index.languages.find((x) => x.code.toLowerCase() === 'en')
+      if (fallback) {
+        return {
+          lang: fallback.code,
+          code: fallback.code,
+          file: fallback.file,
+        }
+      }
+      return null
+    }
+  }
+
+  public async getI18nIndex(url: string, noCache = false): Promise<I18nIndexV1> {
+    if (noCache) return this.fetchI18nIndex(url)
+    const cached = await this.i18nIndexDB.get(url)
+    if (cached) return cached
+    const index = await this.fetchI18nIndex(url)
+    this.i18nIndexDB.set(url, index)
     return index
   }
-
-  private async fetchLanguageData(language: string) {
-    const index = await this.fetchIndex()
-    let lang = language
-    let file: string | undefined = index.languages[lang]
-    while (!file && index.fallbacks[lang]) {
-      lang = index.fallbacks[lang]
-      file = index.languages[lang]
-    }
-    if (file) {
-      const data = await fetch(new URL(file, this.indexUrl).toString()).then((res) => res.json())
-      return { lang, data }
-    } else {
-      return { lang, data: {} }
-    }
+  private async fetchI18nIndex(url: string): Promise<I18nIndexV1> {
+    const index = (await fetch(url).then((res) => res.json())) as I18nIndexV1
+    return I18nIndexV1Schema(index)
   }
 
   private async ensureLanguageLoaded(language: string) {
-    if (this.manager?.hasLanguage(language)) return
-    const data = await this.fetchLanguageData(language)
-    this.manager.setLanguageData(data.lang, data.data)
+    if (!this.manager || !this._indexCache) throw new Error('I18nManager is not initialized')
+    if (this.manager.hasLanguage(language)) {
+      return this.logger.debug('Language already loaded', language)
+    }
+    const data = await this.getLanguageData(language)
+    this.manager.setLanguageData(language, data)
+    this.logger.debug('Language data ensured', language, data)
   }
 
-  private buildFallbackMap(index?: I18nIndex) {
-    // 直接透传 index.json 的单步映射
-    return index?.fallbacks || {}
+  public async getLanguageData(language: string, noCache = false): Promise<Record<string, string>> {
+    if (!this._indexCache) throw new Error('I18n index is not loaded')
+    const meta = this.findLanguageMeta(this._indexCache, language)
+    if (!meta) return {}
+
+    const key = `${this._indexUrl}#${meta.file}`
+    if (!noCache) {
+      const cached = await this.i18nDataDB.get(key)
+      if (cached) {
+        this.logger.debug('Using cached language data', language, cached)
+        return cached
+      }
+    }
+
+    const data = await fetch(new URL(meta.file, this._indexUrl).toString()).then((res) =>
+      res.json()
+    )
+
+    this.i18nDataDB.set(key, data)
+    this.logger.debug('Language data fetched', language, data)
+
+    return data
   }
 
   /**

@@ -147,7 +147,7 @@ export class PluginPluginStore extends BasePlugin {
           .default([
             import.meta.env.PROD
               ? Endpoints.PLUGIN_REGISTRY_URL
-              : 'http://127.0.0.1:1005/src/__test__/plugin-registry/index.json',
+              : import.meta.resolve('/src/__mock__/plugin-registry/index.json'),
           ])
           .description($`Registry URLs`)
           .hidden(),

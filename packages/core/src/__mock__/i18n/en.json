@@ -1,4 +1,18 @@
 {
+  "about": {
+    "description": "🚀 Modular, Extensible Supercharged Plugin for MediaWiki.",
+    "portals": {
+      "header": "Portals",
+      "officialwebsite": "Official Website",
+      "updatelogs": "Update Logs"
+    },
+    "joinus": {
+      "header": "Join us",
+      "github": "GitHub",
+      "qqgroup": "QQ Group"
+    },
+    "copyright": "InPageEdit-NEXT Copyright © 2025-{new Date().getFullYear()} dragon-fish"
+  },
   "About": "About",
   "About InPageEdit": "About InPageEdit",
   "Plugin Store": "Plugin Store",

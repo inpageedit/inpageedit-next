@@ -12,20 +12,6 @@ function joinTemplateStrings(strings: TemplateStringsArray, values: Array<unknow
 export class I18nManager {
   private languages = new Map<string, Map<string, string>>()
   private currentLanguage = 'en'
-  /**
-   * 回退映射
-   * @example ```
-   * {
-   *  "zh": "zh-hans",
-   *  "zh-classical": "lzh",
-   *  "zh-cn": "zh-hans",
-   *  "zh-hant": "zh-hans",
-   *  "zh-hk": "zh-hant"
-   * }
-   * 回退：zh-hk -> zh-hant -> zh-hans -> en // 最终回退到 en
-   * ```
-   */
-  private fallbacks: Record<string, string> = {}
   // 记录某个键在哪些语言中缺失了
   private missingKeys = new Map<string, string[]>()
   // 记录已使用的所有键
@@ -35,15 +21,11 @@ export class I18nManager {
     init?: Record<string, any>,
     options?: {
       language?: string
-      fallbacks?: Record<string, string>
       globals?: Record<string, unknown>
     }
   ) {
     const lang = options?.language || 'en'
     this.currentLanguage = lang
-    if (options?.fallbacks) {
-      this.setFallbacks(options.fallbacks)
-    }
     this.interpolate = createInterpolate(options?.globals)
     if (init && Object.keys(init).length) {
       this.setLanguageData(lang, init)
@@ -87,17 +69,6 @@ export class I18nManager {
     for (const [k, v] of Object.entries(flat)) {
       dict.set(k, v)
     }
-    return this
-  }
-
-  setFallbacks(fallbacks?: Record<string, string>) {
-    const normalized = Object.fromEntries(
-      Object.entries(fallbacks || {}).map(([k, v]) => [
-        paramCase(k).toLowerCase(),
-        paramCase(v).toLowerCase(),
-      ])
-    )
-    this.fallbacks = normalized
     return this
   }
 
@@ -382,28 +353,9 @@ export class I18nManager {
   }
 
   private resolveLanguageOrder(language: string) {
-    const order: string[] = []
-    const visited = new Set<string>()
-    const push = (lg: string) => {
-      if (!visited.has(lg)) {
-        visited.add(lg)
-        order.push(lg)
-      }
-    }
-    push(language)
-    // 按单步映射多级回退，例如 zh-hk -> zh-hant -> zh-hans
-    const seen = new Set<string>()
-    let cur = language
-    while (true) {
-      const next = this.fallbacks[cur]
-      if (!next) break
-      if (seen.has(next)) break
-      seen.add(next)
-      push(next)
-      cur = next
-    }
-    if (!visited.has('en')) order.push('en')
-    return order
+    // 简化回退逻辑：仅当前语言 -> en
+    const cur = language
+    return cur === 'en' ? ['en'] : [cur, 'en']
   }
 
   /**
