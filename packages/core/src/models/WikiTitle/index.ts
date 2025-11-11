@@ -295,8 +295,11 @@ export function createWikiTitleModel(metadata: WikiSiteInfo): WikiTitleConstruct
       if (namespace === void 0) {
         this.fixNSByTitle()
       } else {
-        // 如果显式传入了命名空间，移除标题中的命名空间前缀
-        this.stripNamespaceFromTitle()
+        // 显式传入命名空间时：仅当标题中的前缀与显式命名空间一致时才移除前缀
+        const parsed = this.parseTitlePrefix(this.#title)
+        if (parsed && parsed.namespaceId === this.#ns) {
+          this.#title = parsed.mainTitle
+        }
       }
 
       if (this.getMainText() === '') {
@@ -308,6 +311,34 @@ export function createWikiTitleModel(metadata: WikiSiteInfo): WikiTitleConstruct
       return new WikiTitle(title, namespace)
     }
     newTitle = WikiTitle.create.bind(WikiTitle)
+
+    /**
+     * 解析标题前缀，返回匹配到的命名空间 ID 与剥离后的主标题
+     */
+    private parseTitlePrefix(rawTitle: string): { namespaceId: number; mainTitle: string } | null {
+      const colonIndex = rawTitle.indexOf(':')
+      if (colonIndex <= 0) {
+        return null
+      }
+      const potentialNamespace = rawTitle.substring(0, colonIndex)
+      const mainTitle = rawTitle.substring(colonIndex + 1)
+      const namespaceId = namespaceUtils.findNamespaceId(
+        potentialNamespace,
+        WikiTitle._namespaceIndex
+      )
+      if (namespaceId === null) return null
+      return { namespaceId, mainTitle }
+    }
+
+    /**
+     * 如果标题包含可识别命名空间，则采用该命名空间并剥离前缀
+     */
+    private adoptNamespaceFromTitle(): void {
+      const parsed = this.parseTitlePrefix(this.#title)
+      if (!parsed) return
+      this.#title = parsed.mainTitle
+      this.#ns = parsed.namespaceId
+    }
 
     private fixNSByTitle(): void {
       const colonIndex = this.#title.indexOf(':')
@@ -321,44 +352,8 @@ export function createWikiTitleModel(metadata: WikiSiteInfo): WikiTitleConstruct
         return
       }
 
-      const potentialNamespace = this.#title.substring(0, colonIndex)
-      const mainTitle = this.#title.substring(colonIndex + 1)
-
-      // 查找匹配的命名空间
-      const namespaceId = namespaceUtils.findNamespaceId(
-        potentialNamespace,
-        WikiTitle._namespaceIndex
-      )
-      if (namespaceId !== null) {
-        this.#title = mainTitle
-        this.#ns = namespaceId
-      }
-    }
-
-    private stripNamespaceFromTitle(): void {
-      const colonIndex = this.#title.indexOf(':')
-      if (colonIndex === -1) {
-        return // 没有命名空间前缀，不需要处理
-      }
-
-      if (colonIndex === 0) {
-        // 只有冒号，将冒号后的部分作为标题
-        this.#title = this.#title.substring(1)
-        return
-      }
-
-      const potentialNamespace = this.#title.substring(0, colonIndex)
-      const mainTitle = this.#title.substring(colonIndex + 1)
-
-      // 查找匹配的命名空间，如果找到则移除前缀
-      const namespaceId = namespaceUtils.findNamespaceId(
-        potentialNamespace,
-        WikiTitle._namespaceIndex
-      )
-      if (namespaceId !== null) {
-        // 移除命名空间前缀，只保留主标题
-        this.#title = mainTitle
-      }
+      // 查找匹配的命名空间并采用
+      this.adoptNamespaceFromTitle()
     }
 
     private getNamespaceInfo() {
@@ -367,48 +362,39 @@ export function createWikiTitleModel(metadata: WikiSiteInfo): WikiTitleConstruct
       )
     }
 
-    getMainDBKey(): string {
+    /**
+     * 若为特殊页面，返回解析后的真实主名（含子页面）；否则返回 null
+     */
+    private resolveSpecialFullTitle(): string | null {
+      if (this.#ns !== -1) return null
+      const realName = specialPageUtils.findSpecialPageRealName(
+        this.#title,
+        WikiTitle._specialPageIndex
+      )
+      if (!realName) return null
+      const subPage = this.#title.includes('/')
+        ? this.#title.substring(this.#title.indexOf('/'))
+        : ''
+      return realName + subPage
+    }
+
+    /**
+     * 将主标题格式化为输出内容（文本或 DBKey），并做大小写规范化
+     */
+    private formatMainForOutput(mode: 'text' | 'db'): string {
       const nsInfo = this.getNamespaceInfo()
+      const resolved = this.resolveSpecialFullTitle()
+      const base = resolved ?? this.#title
+      const converted = mode === 'db' ? titleUtils.toDBKey(base) : titleUtils.toNormalText(base)
+      return titleUtils.ensureCase(converted, nsInfo.case)
+    }
 
-      // 如果是特殊页面，将主部分替换为真实名称，保留子页面部分
-      if (this.#ns === -1) {
-        const realName = specialPageUtils.findSpecialPageRealName(
-          this.#title,
-          WikiTitle._specialPageIndex
-        )
-        if (realName) {
-          // 构建包含子页面的完整标题
-          const subPage = this.#title.includes('/')
-            ? this.#title.substring(this.#title.indexOf('/'))
-            : ''
-          const fullTitle = realName + subPage
-          return titleUtils.ensureCase(titleUtils.toDBKey(fullTitle), nsInfo.case)
-        }
-      }
-
-      return titleUtils.ensureCase(titleUtils.toDBKey(this.#title), nsInfo.case)
+    getMainDBKey(): string {
+      return this.formatMainForOutput('db')
     }
 
     getMainText(): string {
-      const nsInfo = this.getNamespaceInfo()
-
-      // 如果是特殊页面，将主部分替换为真实名称，保留子页面部分
-      if (this.#ns === -1) {
-        const realName = specialPageUtils.findSpecialPageRealName(
-          this.#title,
-          WikiTitle._specialPageIndex
-        )
-        if (realName) {
-          // 构建包含子页面的完整标题
-          const subPage = this.#title.includes('/')
-            ? this.#title.substring(this.#title.indexOf('/'))
-            : ''
-          const fullTitle = realName + subPage
-          return titleUtils.ensureCase(titleUtils.toNormalText(fullTitle), nsInfo.case)
-        }
-      }
-
-      return titleUtils.ensureCase(titleUtils.toNormalText(this.#title), nsInfo.case)
+      return this.formatMainForOutput('text')
     }
 
     private getMainRootText(): string {
@@ -473,33 +459,58 @@ export function createWikiTitleModel(metadata: WikiSiteInfo): WikiTitleConstruct
     }
 
     getURL(params?: Record<string, string> | URLSearchParams): URL {
-      const articlePath = WikiTitle._meta.general.articlepath
       const prefixedDbKey = this.getPrefixedDBKey()
+      return this.buildArticleURL(prefixedDbKey, params)
+    }
 
-      // 替换 $1 占位符为页面标题，冒号不进行编码
+    /**
+     * 构建文章 URL 并附加查询参数
+     */
+    private buildArticleURL(
+      prefixedDbKey: string,
+      params?: Record<string, string> | URLSearchParams
+    ): URL {
+      const articlePath = WikiTitle._meta.general.articlepath
       const path = articlePath.replace('$1', prefixedDbKey)
       const url = new URL(path, location.origin)
-
       if (params) {
         const searchParams =
           params instanceof URLSearchParams ? params : new URLSearchParams(params)
-
         searchParams.forEach((value, key) => {
           url.searchParams.set(key, value)
         })
       }
-
       return url
     }
 
     /**
      * 设置标题，重置当前实例的 dbkey 和 ns
-     * @param title 新的标题字符串
+     * 行为：
+     * - 如果标题包含可识别的命名空间前缀，则以该前缀为准更新 ns，并移除前缀
+     * - 如果标题前缀与当前 ns 相同，则仅移除冗余前缀并保留当前 ns
+     * - 否则（无前缀），重置为主命名空间
      */
     setTitle(title: string): this {
       this.#title = title
+      const previousNs = this.#ns
+      // 默认重置为主命名空间
       this.#ns = 0
-      this.fixNSByTitle()
+
+      const parsed = this.parseTitlePrefix(this.#title)
+      if (parsed) {
+        // 如果与之前的 ns 一致，则视为冗余前缀，仅剥离前缀并保持 ns
+        if (previousNs !== 0 && parsed.namespaceId === previousNs) {
+          this.#title = parsed.mainTitle
+          this.#ns = previousNs
+        } else {
+          // 使用标题中的命名空间
+          this.#title = parsed.mainTitle
+          this.#ns = parsed.namespaceId
+        }
+        return this
+      }
+
+      // 无可识别前缀，保持主命名空间
       return this
     }
 

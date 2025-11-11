@@ -6,6 +6,8 @@ import { MOCK_SITE_INFO } from '@/__test__/utils/constants.js'
 // 创建测试用的 SiteMetadata
 const getSiteMetadata = (): WikiSiteInfo => MOCK_SITE_INFO
 
+;(globalThis as any).location = new URL(MOCK_SITE_INFO.general.base)
+
 describe('WikiTitle', () => {
   let WikiTitle: ReturnType<typeof createWikiTitleModel>
   let metadata: WikiSiteInfo
@@ -154,12 +156,14 @@ describe('WikiTitle', () => {
 
   describe('边界情况', () => {
     it('应该处理空标题', () => {
-      const title = new WikiTitle('')
+      expect(() => new WikiTitle('')).toThrow(Error)
+    })
 
-      expect(title.getMainText()).toBe('')
-      expect(title.getMainDBKey()).toBe('')
-      expect(title.getPrefixedText()).toBe('')
-      expect(title.getPrefixedDBKey()).toBe('')
+    it('重复的名字空间', () => {
+      const title1 = new WikiTitle('user:foo', 2)
+      const title2 = new WikiTitle('template:foo', 2)
+      expect(title1.getPrefixedDBKey()).toBe('User:Foo')
+      expect(title2.getPrefixedDBKey()).toBe('User:Template:foo')
     })
 
     it('应该处理不存在的命名空间', () => {
