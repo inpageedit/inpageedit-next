@@ -5,8 +5,53 @@ import { Endpoints } from '@/constants/endpoints.js'
 declare module '@/InPageEdit' {
   export interface InPageEdit {
     i18n: I18nService
-    $: I18nManager['translate']
-    $$: I18nManager['message']
+
+    /**
+     * $ => translate [payload as template]
+     * @example
+     * ```
+     * $`hello, world`
+     * // good:    "你好，世界"
+     * // missing: "hello, world"
+     * $('dragon')`hello, {{ $1 }}`
+     * // good:    "你好，dragon"
+     * // missing: "hello, dragon"
+     * ```
+     */
+    $: I18nManager['$']
+    /**
+     * $raw => translateRaw [payload as template]
+     * @example
+     * ```
+     * $raw`hello, {{ $1 }}`
+     * // good:    "你好，{{ $1 }}"
+     * // missing: "hello, {{ $1 }}"
+     * ```
+     */
+    $raw: I18nManager['$raw']
+    /**
+     * $$ => message [payload as key]
+     * @example
+     * ```
+     * $$`hello`
+     * // good:    "你好"
+     * // missing: "(hello)"
+     * $$('dragon')`greeting`
+     * // good:    "你好，dragon"
+     * // missing: "(greeting)"
+     * ```
+     */
+    $$: I18nManager['$$']
+    /**
+     * $$raw => messageRaw [payload as key]
+     * @example
+     * ```
+     * $$raw`greeting`
+     * // good:    "你好，{{ name }}"
+     * // missing: "(greeting)"
+     * ```
+     */
+    $$raw: I18nManager['$$raw']
   }
   export interface PreferencesMap {
     language: string
@@ -101,8 +146,10 @@ export class I18nService extends Service {
       }
     })
 
-    this.ctx.set('$', this.manager.translate.bind(this.manager))
-    this.ctx.set('$$', this.manager.message.bind(this.manager))
+    this.ctx.set('$', this.manager.$.bind(this.manager))
+    this.ctx.set('$raw', this.manager.$raw.bind(this.manager))
+    this.ctx.set('$$', this.manager.$$.bind(this.manager))
+    this.ctx.set('$$raw', this.manager.$$raw.bind(this.manager))
   }
 
   private resolveLanguage(language: any) {

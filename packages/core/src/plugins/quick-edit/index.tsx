@@ -61,7 +61,7 @@ export interface QuickEditSubmitPayload {
   watchlist?: WatchlistAction
 }
 
-@Inject(['api', 'wikiPage', 'wikiTitle', 'currentPage', 'wiki', 'modal', 'preferences'])
+@Inject(['api', 'wikiPage', 'wikiTitle', 'currentPage', 'wiki', 'modal', 'preferences', '$'])
 @RegisterPreferences(
   Schema.object({
     'quickEdit.editSummary': Schema.string()
@@ -124,6 +124,7 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   async showModal(payload?: string | Partial<QuickEditOptions>) {
+    const $ = this.ctx.$
     if (typeof payload === 'undefined') {
       payload = {}
     } else if (typeof payload === 'string') {
@@ -232,7 +233,7 @@ export class PluginQuickEdit extends BasePlugin {
     try {
       wikiPage = await this.getWikiPageFromPayload(options)
       if (wikiPage.pageInfo.special) {
-        throw new Error('Special page is not editable')
+        throw new Error($`Special page is not editable`)
       }
     } catch (e) {
       modal.off(modal.Event.Close)
@@ -252,9 +253,11 @@ export class PluginQuickEdit extends BasePlugin {
     modal.setTitle(
       (
         <>
-          {isCreatingNewSection ? 'New section' : `Quick ${isCreatingNewPage ? 'Create' : 'Edit'}`}:{' '}
-          <u>{wikiPage.pageInfo.title}</u>
-          {isEdittingOld ? ` (Revision ${edittingRevId})` : ''}
+          {isCreatingNewSection
+            ? $`New section`
+            : $`Quick ${isCreatingNewPage ? 'Create' : 'Edit'}`}
+          : <u>{wikiPage.pageInfo.title}</u>
+          {isEdittingOld ? ` (${$`Revision`} ${edittingRevId})` : ''}
         </>
       ) as HTMLElement
     )
@@ -263,18 +266,18 @@ export class PluginQuickEdit extends BasePlugin {
     // Page not exists
     if (isCreatingNewPage) {
       editNotices.push(
-        <MBox title="Attention" type="important">
-          <p>This page does not exist.</p>
+        <MBox title={$`Attention`} type="important">
+          <p>{$`This page does not exist.`}</p>
         </MBox>
       )
     }
     // Edit based on old revision
     if (isEdittingOld) {
       editNotices.push(
-        <MBox title="Attention" type="warning">
-          <p>
-            You are editing a <em>historical version</em>; the content is not the latest!
-          </p>
+        <MBox title={$`Attention`} type="warning">
+          <p
+            innerHTML={$`You are editing a <em>historical version</em>; the content is not the latest!`}
+          ></p>
         </MBox>
       )
     }
@@ -296,11 +299,11 @@ export class PluginQuickEdit extends BasePlugin {
           {options.section === 'new' && (
             <>
               <InputBox
-                label="Section title"
+                label={$`Section title`}
                 id="summary"
                 name="summary"
                 value={''}
-                inputProps={{ placeholder: 'Topic for new section, this will be the h2 heading' }}
+                inputProps={{ placeholder: $`Topic for new section, this will be the h2 heading` }}
               />
             </>
           )}
@@ -323,11 +326,11 @@ export class PluginQuickEdit extends BasePlugin {
           }}
         >
           {!isCreatingNewSection && (
-            <InputBox label="Summary" id="summary" name="summary" value={options.editSummary} />
+            <InputBox label={$`Summary`} id="summary" name="summary" value={options.editSummary} />
           )}
           <div className="ipe-input-box">
             <label htmlFor="watchlist" style={{ display: 'block' }}>
-              Watchlist
+              {$`Watchlist`}
             </label>
             <div style={{ display: 'flex', gap: '1rem' }}>
               {[
@@ -349,10 +352,10 @@ export class PluginQuickEdit extends BasePlugin {
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <CheckBox name="minor" id="minor" checked={options.editMinor}>
-              Minor edit
+              {$`Minor edit`}
             </CheckBox>
             <CheckBox name="reloadAfterSave" id="reloadAfterSave" checked={options.reloadAfterSave}>
-              Reload after save
+              {$`Reload after save`}
             </CheckBox>
           </div>
         </div>
@@ -372,7 +375,7 @@ export class PluginQuickEdit extends BasePlugin {
       {
         side: 'left',
         className: 'is-primary submit-btn',
-        label: 'Submit',
+        label: $`Submit`,
         keyPress: (await this.ctx.preferences.get('quickEdit.keyshortcut.save')) || undefined,
         method: () => {
           const formData = new FormData(editForm)
@@ -397,8 +400,8 @@ export class PluginQuickEdit extends BasePlugin {
               })
               modal.close()
               this.ctx.modal.notify('success', {
-                title: 'Submission Successful',
-                content: 'Your changes have been saved.',
+                title: $`Submission Successful`,
+                content: $`Your changes have been saved.`,
               })
               if (formData.get('reloadAfterSave')) {
                 await sleep(500)
@@ -407,7 +410,7 @@ export class PluginQuickEdit extends BasePlugin {
             })
             .catch((error) => {
               this.ctx.modal.notify('error', {
-                title: 'Submission Error',
+                title: $`Submission Error`,
                 content: error instanceof Error ? error.message : String(error),
               })
               modal.setLoadingState(false)
@@ -426,16 +429,15 @@ export class PluginQuickEdit extends BasePlugin {
           this.ctx.modal.confirm(
             {
               className: 'is-primary',
-              title: 'Unsaved Changes',
-              content:
-                'All edit contents will be lost after closing the modal. Are you sure you want to close?',
+              title: $`Unsaved Changes`,
+              content: $`All edit contents will be lost after closing the modal. Are you sure you want to close?`,
               center: true,
               okBtn: {
-                label: 'Give Up',
+                label: $`Give Up`,
                 className: 'is-danger is-ghost',
               },
               cancelBtn: {
-                label: 'Continue Editing',
+                label: $`Continue Editing`,
                 className: 'is-primary is-ghost',
               },
             },
@@ -465,7 +467,7 @@ export class PluginQuickEdit extends BasePlugin {
         return true
       }
       e.preventDefault()
-      return 'You have unsaved changes. Are you sure you want to leave?'
+      return $`You have unsaved changes. Are you sure you want to leave?`
     }
     window.addEventListener('beforeunload', beforeUnload)
     modal.on(modal.Event.Close, () => {
@@ -538,6 +540,7 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   private async injectToolbox(ctx: InPageEdit) {
+    const $ = this.ctx.$
     const title = this.ctx.currentPage.wikiTitle
     const canEdit = this.ctx.wiki.hasRight('edit') && title && title.getNamespaceId() >= 0
     ctx.toolbox.addButton({
@@ -566,7 +569,7 @@ export class PluginQuickEdit extends BasePlugin {
       buttonProps: {
         disabled: !canEdit,
       },
-      tooltip: canEdit ? 'Quick Edit' : 'Not editable',
+      tooltip: canEdit ? $`Quick Edit` : $`Not editable`,
       onClick: () => {
         const revision = new URLSearchParams(window.location.search).get('oldid')
         this.showModal({

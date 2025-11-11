@@ -27,7 +27,7 @@ export interface RedirectPageOptions {
 export interface QuickRedirectOptions extends Partial<RedirectPageOptions> {}
 
 export class PluginQuickRedirect extends BasePlugin {
-  static readonly inject = ['api', 'wikiPage', 'modal']
+  static readonly inject = ['api', 'wikiPage', 'modal', '$']
   static readonly PreferencesSchema = Schema.object({
     'quickRedirect.reason': Schema.string().default('[IPE-NEXT] Quick redirect'),
   })
@@ -89,6 +89,7 @@ export class PluginQuickRedirect extends BasePlugin {
   protected stop(): Promise<void> | void {}
 
   async showModal(options?: Partial<QuickRedirectOptions>) {
+    const $ = this.ctx.$
     const reason = await this.ctx.preferences.get('quickRedirect.reason')
     if (!options) {
       options = {}
@@ -96,7 +97,7 @@ export class PluginQuickRedirect extends BasePlugin {
     this.ctx.emit('quick-redirect/init-options', { ctx: this.ctx, options })
     const modal = this.ctx.modal
       .createObject({
-        title: 'Quick Redirect',
+        title: $`Quick Redirect`,
         content: (<ProgressBar />) as HTMLElement,
         className: 'quick-redirect compact-buttons',
         sizeClass: 'smallToMedium',
@@ -129,8 +130,8 @@ export class PluginQuickRedirect extends BasePlugin {
             }
             if (!options.from || !options.to) {
               this.ctx.modal.notify('error', {
-                title: 'Failed to redirect',
-                content: 'From and to are required.',
+                title: $`Failed to redirect`,
+                content: $`From and to are required.`,
               })
               return
             }
@@ -140,14 +141,14 @@ export class PluginQuickRedirect extends BasePlugin {
               .then((res) => {
                 modal.close()
                 this.ctx.modal.notify('success', {
-                  title: 'Redirect successful',
-                  content: 'The redirect has been created.',
+                  title: $`Redirect successful`,
+                  content: $`The redirect has been created.`,
                 })
               })
               .catch((error) => {
                 modal.setLoadingState(false)
                 this.ctx.modal.notify('error', {
-                  title: 'Failed to redirect',
+                  title: $`Failed to redirect`,
                   content: error instanceof Error ? error.message : String(error),
                 })
               })
@@ -156,13 +157,13 @@ export class PluginQuickRedirect extends BasePlugin {
           <TwinSwapInput
             inputs={[
               {
-                label: 'From',
+                label: $`Redirect from`,
                 name: 'from',
                 value: options?.from,
                 required: true,
               },
               {
-                label: 'To',
+                label: $`Redirect to`,
                 name: 'to',
                 value: options?.to,
                 required: true,
@@ -170,14 +171,14 @@ export class PluginQuickRedirect extends BasePlugin {
             ]}
           />
           <InputBox
-            label="Reason"
+            label={$`Reason`}
             id="reason"
             name="reason"
             value={options?.reason ?? reason ?? ''}
           />
           <div>
             <CheckBox name="overwrite" id="overwrite" checked={options?.overwrite}>
-              Force create redirect even if the from page already exists
+              {$`Force create redirect even if the from page already exists`}
             </CheckBox>
           </div>
         </form>
@@ -185,7 +186,7 @@ export class PluginQuickRedirect extends BasePlugin {
     )
     modal.setButtons([
       {
-        label: 'Create Redirect',
+        label: $`Create Redirect`,
         className: 'is-primary is-ghost',
         method: () => {
           formRef?.dispatchEvent(new Event('submit'))

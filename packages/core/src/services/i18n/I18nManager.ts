@@ -1,12 +1,35 @@
 import { createInterpolate } from './interpolate.js'
 import type { Interpolator } from './interpolate.js'
 
+function joinTemplateStrings(strings: TemplateStringsArray, values: Array<unknown>) {
+  let out = strings[0] ?? ''
+  for (let i = 0; i < values.length; i++) {
+    out += String(values[i]) + (strings[i + 1] ?? '')
+  }
+  return out
+}
+
 export class I18nManager {
   private languages = new Map<string, Map<string, string>>()
   private currentLanguage = 'en'
+  /**
+   * 回退映射
+   * @example ```
+   * {
+   *  "zh": "zh-hans",
+   *  "zh-classical": "lzh",
+   *  "zh-cn": "zh-hans",
+   *  "zh-hant": "zh-hans",
+   *  "zh-hk": "zh-hant"
+   * }
+   * 回退：zh-hk -> zh-hant -> zh-hans -> en // 最终回退到 en
+   * ```
+   */
   private fallbacks: Record<string, string> = {}
-  // 记录缺失键与其在各语言链上缺失的语言码（保持首次加入顺序，避免重复）
+  // 记录某个键在哪些语言中缺失了
   private missingKeys = new Map<string, string[]>()
+  // 记录已使用的所有键
+  private usedKeys = new Set<string>()
   interpolate: Interpolator
   constructor(
     init?: Record<string, any>,
@@ -89,6 +112,7 @@ export class I18nManager {
   }
 
   hasLanguage(language: string) {
+    language = paramCase(language).toLowerCase()
     return this.languages.has(language)
   }
 
@@ -118,6 +142,7 @@ export class I18nManager {
   }
 
   get(key: string) {
+    this.recordUsedKey(key)
     const langs = this.resolveLanguageOrder(this.currentLanguage)
     const missing: string[] = []
     for (const lg of langs) {
@@ -135,13 +160,12 @@ export class I18nManager {
   }
 
   /**
-   * Interpolate a message with optional arguments
-   * If the message is not found, the key will be used as the template
+   * [payload as template] Interpolate a message with optional arguments
    * @example
    * ```
    * i18n.msg('Hello, {{ name }}', 'dragon')
-   * // key exists: "你好，dragon"
-   * // key not exists: "Hello, dragon"
+   * // good:    "你好，dragon"
+   * // missing: "Hello, dragon"
    * ```
    */
   translate(msg: string): string
@@ -161,9 +185,44 @@ export class I18nManager {
     }
     return this.interpolate(template, ...(args as any))
   }
-  $ = this.translate.bind(this)
+  /**
+   * $ => translate
+   * @example
+   * ```
+   * $`hello, world` // "你好，世界"
+   * $('dragon')`hello, {{ $1 }}` // "你好，dragon"
+   */
+  $(
+    context: Record<string, unknown>
+  ): (strings: TemplateStringsArray, ...values: unknown[]) => string
+  $(...numricContext: string[]): (strings: TemplateStringsArray, ...values: unknown[]) => string
+  $(strings: TemplateStringsArray, ...values: unknown[]): string
+  $(...args: any[]): any {
+    const isTagCall = Array.isArray(args[0]) && (args[0] as any)?.raw
+    if (isTagCall) {
+      // 直接作为模板标签使用：$`...`
+      const strings = args[0] as TemplateStringsArray
+      const values = args.slice(1)
+      const msg = joinTemplateStrings(strings, values)
+      return this.translate(msg)
+    }
+    // 先传上下文/位置参数，返回模板标签函数：$({...})`...` / $('a','b')`...`
+    const capturedArgs = args
+    return (strings: TemplateStringsArray, ...values: unknown[]) => {
+      const msg = joinTemplateStrings(strings, values)
+      return this.translate(msg, ...(capturedArgs as any))
+    }
+  }
 
-  // Do not interpolate, just return the raw message
+  /**
+   * [payload as template] Return the raw message without interpolation
+   * @example
+   * ```
+   * i18n.rawMsg('Hello, {{ name }}')
+   * // good:    "你好，{{ name }}"
+   * // missing: "Hello, {{ name }}"
+   * ```
+   */
   translateRaw(msg: string): string {
     if (!msg) {
       return ''
@@ -174,16 +233,41 @@ export class I18nManager {
     const template = this.get(msg)
     return template ?? msg
   }
-  $raw = this.translateRaw.bind(this)
+  /**
+   * $raw => translateRaw
+   * @example
+   * ```
+   * $raw`hello, {{ $1 }}`
+   * // good:    "你好，{{ $1 }}"
+   * // missing: "hello, {{ $1 }}"
+   * ```
+   */
+  $raw(
+    _context: Record<string, unknown>
+  ): (strings: TemplateStringsArray, ...values: unknown[]) => string
+  $raw(..._numricContext: string[]): (strings: TemplateStringsArray, ...values: unknown[]) => string
+  $raw(strings: TemplateStringsArray, ...values: unknown[]): string
+  $raw(...args: any[]): any {
+    const isTagCall = Array.isArray(args[0]) && (args[0] as any)?.raw
+    if (isTagCall) {
+      const strings = args[0] as TemplateStringsArray
+      const values = args.slice(1)
+      const msg = joinTemplateStrings(strings, values)
+      return this.translateRaw(msg)
+    }
+    return (strings: TemplateStringsArray, ...values: unknown[]) => {
+      const msg = joinTemplateStrings(strings, values)
+      return this.translateRaw(msg)
+    }
+  }
 
   /**
-   * Interpolate a message by key with optional arguments
-   * If the message is not found, the placeholder will be returned
+   * [payload as key] Interpolate a message by key with optional arguments
    * @example
    * ```
    * i18n.strictMsg('greeting', 'dragon')
-   * // key exists: "你好，dragon"
-   * // key not exists: "(greeting)"
+   * // good:    "你好，dragon"
+   * // missing: "(greeting)"
    * ```
    */
   message(key: string): string
@@ -203,8 +287,47 @@ export class I18nManager {
     }
     return this.interpolate(template, ...(args as any))
   }
-  $$ = this.message.bind(this)
+  /**
+   * $$ => message
+   * @example
+   * ```
+   * $$`hello`
+   * // good:    "你好"
+   * // missing: "(hello)"
+   * $$('dragon')`greeting`
+   * // good:    "你好，dragon"
+   * // missing: "(greeting)"
+   * ```
+   */
+  $$(
+    context: Record<string, unknown>
+  ): (strings: TemplateStringsArray, ...values: unknown[]) => string
+  $$(...numricContext: string[]): (strings: TemplateStringsArray, ...values: unknown[]) => string
+  $$(strings: TemplateStringsArray, ...values: unknown[]): string
+  $$(...args: any[]): any {
+    const isTagCall = Array.isArray(args[0]) && (args[0] as any)?.raw
+    if (isTagCall) {
+      const strings = args[0] as TemplateStringsArray
+      const values = args.slice(1)
+      const key = joinTemplateStrings(strings, values)
+      return this.message(key)
+    }
+    const capturedArgs = args
+    return (strings: TemplateStringsArray, ...values: unknown[]) => {
+      const key = joinTemplateStrings(strings, values)
+      return this.message(key, ...(capturedArgs as any))
+    }
+  }
 
+  /**
+   * [payload as key] Return the raw message without interpolation
+   * @example
+   * ```
+   * i18n.rawMsg('greeting')
+   * // good:    "你好，{{ name }}"
+   * // missing: "(greeting)"
+   * ```
+   */
   messageRaw(key: string): string {
     if (!key) {
       return ''
@@ -215,7 +338,35 @@ export class I18nManager {
     const template = this.get(key)
     return template ?? `(${key})`
   }
-  $$raw = this.messageRaw.bind(this)
+  /**
+   * $$raw => messageRaw
+   * @example
+   * ```
+   * $$raw`greeting`
+   * // good:    "你好，{{ name }}"
+   * // missing: "(greeting)"
+   * ```
+   */
+  $$raw(
+    _context: Record<string, unknown>
+  ): (strings: TemplateStringsArray, ...values: unknown[]) => string
+  $$raw(
+    ..._numricContext: string[]
+  ): (strings: TemplateStringsArray, ...values: unknown[]) => string
+  $$raw(strings: TemplateStringsArray, ...values: unknown[]): string
+  $$raw(...args: any[]): any {
+    const isTagCall = Array.isArray(args[0]) && (args[0] as any).raw
+    if (isTagCall) {
+      const strings = args[0] as TemplateStringsArray
+      const values = args.slice(1)
+      const key = joinTemplateStrings(strings, values)
+      return this.messageRaw(key)
+    }
+    return (strings: TemplateStringsArray, ...values: unknown[]) => {
+      const key = joinTemplateStrings(strings, values)
+      return this.messageRaw(key)
+    }
+  }
 
   getAvailableLanguages() {
     return Array.from(this.languages.keys())
@@ -277,5 +428,20 @@ export class I18nManager {
       if (!list.includes(lg)) list.push(lg)
     }
     this.missingKeys.set(key, list)
+  }
+
+  private recordUsedKey(key: string) {
+    this.usedKeys.add(key)
+  }
+
+  private getUsedKeys() {
+    return Array.from(this.usedKeys)
+  }
+  private generateBlankKeyRecord() {
+    const record: Record<string, string> = {}
+    for (const key of this.getUsedKeys()) {
+      record[key] = ''
+    }
+    return record
   }
 }

@@ -112,8 +112,8 @@ export class PluginPluginStore extends BasePlugin {
 
     ctx.preferences.defineCategory({
       name: 'plugin-store',
-      label: $('Plugin Store'),
-      description: $('Plugin Store'),
+      label: $`Plugin Store`,
+      description: $`Plugin Store`,
       index: 90,
       autoGenerateForm: false,
       customRenderer: async ({ onUnmount }) => {
@@ -149,10 +149,10 @@ export class PluginPluginStore extends BasePlugin {
               ? Endpoints.PLUGIN_REGISTRY_URL
               : 'http://127.0.0.1:1005/src/__test__/plugin-registry/index.json',
           ])
-          .description($('Registry URLs'))
+          .description($`Registry URLs`)
           .hidden(),
         'pluginStore.cdnForNpm': Schema.string()
-          .description($('CDN to install packages from npm'))
+          .description($`CDN to install packages from npm`)
           .default('https://cdn.jsdelivr.net/npm/{{ package }}{{ version ? "@" + version : "" }}')
           .hidden(),
         'pluginStore.plugins': Schema.array(
@@ -162,7 +162,7 @@ export class PluginPluginStore extends BasePlugin {
             id: Schema.string().required(),
           })
         )
-          .description($('Installed plugins'))
+          .description($`Installed plugins`)
           .default([])
           .hidden(),
       }),
@@ -172,7 +172,7 @@ export class PluginPluginStore extends BasePlugin {
 
   async showModal() {
     const modal = this.ctx.modal.show({
-      title: $('Plugin Store'),
+      title: $`Plugin Store`,
       sizeClass: 'small',
     })
     const container = <section id="ipe-plugin-store-vue"></section>

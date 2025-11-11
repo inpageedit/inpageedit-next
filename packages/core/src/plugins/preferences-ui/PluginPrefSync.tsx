@@ -8,7 +8,7 @@ declare module '@/InPageEdit' {
   }
 }
 
-@Inject(['preferences', 'wikiPage', 'wikiTitle', 'modal', 'preferencesUI'])
+@Inject(['preferences', 'wiki', 'wikiPage', 'wikiTitle', 'modal', 'preferencesUI', '$'])
 export class PluginPrefSync extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'pref-sync')
@@ -17,10 +17,11 @@ export class PluginPrefSync extends BasePlugin {
 
   protected start(): Promise<void> | void {
     const ctx = this.ctx
+    const $ = ctx.$
     ctx.preferences.defineCategory({
       name: 'pref-sync',
-      label: 'Sync',
-      description: 'Import and export preferences',
+      label: $`Sync`,
+      description: $`Import and export preferences`,
       index: 98,
       customRenderer: () => {
         const userPageTitle = this.getUserPrefsPageTitle()
@@ -28,7 +29,7 @@ export class PluginPrefSync extends BasePlugin {
           <div className="theme-ipe-prose">
             {userPageTitle && (
               <section>
-                <h3>Backup your preferences via user page</h3>
+                <h3>{$`Backup your preferences via user page`}</h3>
                 <p>
                   <a href={userPageTitle?.getURL().toString()} target="_blank">
                     {userPageTitle?.getPrefixedText()} →
@@ -46,7 +47,7 @@ export class PluginPrefSync extends BasePlugin {
                       this.exportToUserPage()
                         .then((title) => {
                           ctx.modal.notify('success', {
-                            title: 'Preferences Exported',
+                            title: $`Preferences Exported`,
                             content: (
                               <p>
                                 Your preferences have been exported to{' '}
@@ -81,7 +82,7 @@ export class PluginPrefSync extends BasePlugin {
                       <path d="M19 22v-6" />
                       <path d="M22 19l-3 -3l-3 3" />
                     </svg>{' '}
-                    Backup
+                    {$`Backup`}
                   </ActionButton>
                   <ActionButton
                     onClick={(e) => {
@@ -117,13 +118,13 @@ export class PluginPrefSync extends BasePlugin {
                       <path d="M19 16v6" />
                       <path d="M22 19l-3 3l-3 -3" />
                     </svg>{' '}
-                    Restore
+                    {$`Restore`}
                   </ActionButton>
                 </div>
               </section>
             )}
             <section>
-              <h3>Import and export preferences</h3>
+              <h3>{$`Import and export preferences`}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <ActionButton
                   onClick={(e) => {
@@ -169,7 +170,7 @@ export class PluginPrefSync extends BasePlugin {
                     input.click()
                   }}
                 >
-                  Import from file
+                  {$`Import from file`}
                 </ActionButton>
                 <ActionButton
                   onClick={(e) => {
@@ -178,11 +179,11 @@ export class PluginPrefSync extends BasePlugin {
                     const modal = ctx.preferencesUI.getCurrentModal()
                     ctx.modal.confirm(
                       {
-                        title: 'Import Preferences from URL',
+                        title: $`Import Preferences from URL`,
                         content: (
                           <div>
                             <label htmlFor="url-input">
-                              Enter the URL of the preferences JSON file:
+                              {$`Enter the URL of the preferences JSON file:`}
                             </label>
                             {input}
                           </div>
@@ -209,7 +210,7 @@ export class PluginPrefSync extends BasePlugin {
                     )
                   }}
                 >
-                  Import from URL
+                  {$`Import from URL`}
                 </ActionButton>
                 <ActionButton
                   onClick={async (e) => {
@@ -220,10 +221,10 @@ export class PluginPrefSync extends BasePlugin {
                     const json = JSON.stringify(data, null, 2)
                     ctx.modal.dialog(
                       {
-                        title: 'Save to file',
+                        title: $`Save to file`,
                         content: (
                           <div>
-                            <label htmlFor="data">Your InPageEdit preferences:</label>
+                            <label htmlFor="data">{$`Your InPageEdit preferences:`}</label>
                             <textarea
                               name="data"
                               id="data"
@@ -240,13 +241,13 @@ export class PluginPrefSync extends BasePlugin {
                             method: (_, m) => {
                               navigator.clipboard.writeText(json)
                               ctx.modal.notify('success', {
-                                content: 'Copied to clipboard',
+                                content: $`Copied to clipboard`,
                               })
                               m.close()
                             },
                           },
                           {
-                            label: 'Download',
+                            label: $`Download`,
                             method: (_, m) => {
                               const a = document.createElement('a')
                               a.href = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`
@@ -261,7 +262,7 @@ export class PluginPrefSync extends BasePlugin {
                     )
                   }}
                 >
-                  Save as file
+                  {$`Save as file`}
                 </ActionButton>
               </div>
             </section>
@@ -364,14 +365,17 @@ export class PluginPrefSync extends BasePlugin {
   }
 
   private notifyImportSuccess(configs?: Record<string, unknown>) {
+    const $ = this.ctx.$
     const keys = Object.keys(configs ?? {})
     const count = keys.length
     return this.ctx.modal.notify('success', {
-      title: 'Preferences Imported',
+      title: $`Preferences Imported`,
       content: (
         <section>
           <p>
-            Successfully imported {count || ''} {count !== 1 ? 'settings' : 'setting'}:
+            {$({
+              count,
+            })`Successfully imported {{ count }} {{ count > 1 ? "settings" : "setting" }}:`}
           </p>
           <ol style={{ listStyle: 'auto', paddingLeft: '1em' }}>
             {keys.map((key) => (

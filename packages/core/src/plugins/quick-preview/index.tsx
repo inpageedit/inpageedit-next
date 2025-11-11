@@ -32,7 +32,7 @@ declare module '@/InPageEdit' {
   }
 }
 
-@Inject(['api', 'wikiPage', 'modal', 'preferences'])
+@Inject(['api', 'wikiPage', 'modal', 'preferences', '$'])
 @RegisterPreferences(
   Schema.object({
     'quickPreview.keyshortcut': Schema.string()
@@ -61,6 +61,8 @@ export class PluginQuickPreview extends BasePlugin {
     modal?: IPEModal,
     modalOptions?: Partial<IPEModalOptions>
   ) {
+    const $ = this.ctx.$
+
     wikiPage ||= this.ctx.wikiPage.newBlankPage({
       title: 'API',
     })
@@ -77,7 +79,7 @@ export class PluginQuickPreview extends BasePlugin {
     }
 
     modal.show()
-    modal.setTitle('Preview - Loading...')
+    modal.setTitle($`Preview - Loading...`)
     modal.setContent(<ProgressBar />)
     modal.bringToFront()
     this.ctx.emit('quick-preview/show-modal', {
@@ -93,7 +95,7 @@ export class PluginQuickPreview extends BasePlugin {
         const {
           data: { parse },
         } = ret
-        modal.setTitle(`Preview - ${parse.title}`)
+        modal.setTitle($(parse.title)`Preview - {{ $1 }}`)
         let outputRef: HTMLElement | null = null
         modal.setContent(
           (
@@ -106,7 +108,9 @@ export class PluginQuickPreview extends BasePlugin {
             </section>
           ) as HTMLElement
         )
-        window.mw?.hook('wikipage.content').fire($(outputRef!))
+        if (window.mw?.hook && typeof jQuery === 'function') {
+          window.mw.hook('wikipage.content').fire(jQuery(outputRef!))
+        }
         this.ctx.emit('quick-preview/loaded', {
           ctx: this.ctx,
           modal,
@@ -116,10 +120,10 @@ export class PluginQuickPreview extends BasePlugin {
         })
       })
       .catch((error) => {
-        modal.setTitle('Preview - Failed')
+        modal.setTitle($`Preview - Failed`)
         modal.setContent(
           <>
-            <p>Failed to preview</p>
+            <p>{$`Failed to preview`}</p>
             <p>{error instanceof Error ? error.message : String(error)}</p>
           </>
         )
@@ -129,10 +133,11 @@ export class PluginQuickPreview extends BasePlugin {
   }
 
   private async injectQuickEdit({ options, modal, wikiPage }: QuickEditEventPayload) {
+    const $ = this.ctx.$
     let latestPreviewModal: IPEModal | undefined = undefined
     modal.addButton(
       {
-        label: 'Preview',
+        label: $`Preview`,
         side: 'left',
         className: 'btn btn-secondary',
         keyPress:

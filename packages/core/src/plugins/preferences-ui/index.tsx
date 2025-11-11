@@ -27,16 +27,17 @@ declare module '@/InPageEdit' {
   }
 }
 
-@Inject(['preferences', 'modal'])
+@Inject(['preferences', 'modal', '$'])
 export class PluginPreferencesUI extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'preferences-ui')
     ctx.set('preferencesUI', this)
+    const $ = ctx.$
 
     ctx.preferences.defineCategory({
       name: 'about',
-      label: 'About',
-      description: 'About InPageEdit',
+      label: $`About`,
+      description: $`About InPageEdit`,
       index: 99,
       customRenderer: () => {
         return (
@@ -47,7 +48,7 @@ export class PluginPreferencesUI extends BasePlugin {
             <ul>
               <li>
                 <a href={this.ctx.Endpoints.HOME_URL} target="_blank">
-                  Official Website & Help Center
+                  {$`Official Website & Help Center`}
                 </a>
               </li>
               <li>
@@ -55,7 +56,7 @@ export class PluginPreferencesUI extends BasePlugin {
                   href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version.split('-')[0]}`}
                   target="_blank"
                 >
-                  Update Logs
+                  {$`Update Logs`}
                 </a>
               </li>
             </ul>

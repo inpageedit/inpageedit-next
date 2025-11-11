@@ -81,7 +81,7 @@ export interface CompareApiResponse {
   }
 }
 
-@Inject(['wiki', 'getUrl', 'preferences'])
+@Inject(['wiki', 'getUrl', 'preferences', '$'])
 @RegisterPreferences(
   Schema.object({
     'quickDiff.keyshortcut': Schema.string()
@@ -105,6 +105,7 @@ export class PluginQuickDiff extends BasePlugin {
   protected stop(): Promise<void> | void {}
 
   private injectHistoryPage() {
+    const $ = this.ctx.$
     const mwCompareForm = qs<HTMLFormElement>('#mw-history-compare')
     if (!mwCompareForm) {
       return
@@ -129,7 +130,7 @@ export class PluginQuickDiff extends BasePlugin {
             })
           }}
         >
-          Quick Diff
+          {$`Quick Diff`}
         </button>
       )
     })
@@ -140,10 +141,11 @@ export class PluginQuickDiff extends BasePlugin {
       // User is creating a new page, no need to show diff button
       return
     }
+    const $ = this.ctx.$
     let latestDiffModal: IPEModal | undefined = undefined
     modal.addButton(
       {
-        label: 'Diff',
+        label: $`Diff`,
         side: 'left',
         keyPress: (await this.ctx.preferences.get('quickDiff.keyshortcut')) || undefined,
         className: 'btn btn-secondary',
@@ -155,7 +157,7 @@ export class PluginQuickDiff extends BasePlugin {
               ?.value as string) || ''
 
           if (fromtext === totext) {
-            return this.ctx.modal.notify('info', { title: 'Quick Diff', content: 'No changes' })
+            return this.ctx.modal.notify('info', { title: $`Quick Diff`, content: $`No changes` })
           }
 
           this.ctx.emit('quick-diff/quick-edit-modal', {
@@ -210,10 +212,11 @@ export class PluginQuickDiff extends BasePlugin {
     modal?: IPEModal,
     modalOptions?: Partial<IPEModalOptions>
   ) {
+    const $ = this.ctx.$
     if (!modal || modal.isDestroyed) {
       modal = this.ctx.modal
         .createObject({
-          title: 'Loading diff...',
+          title: $`Loading diff...`,
           content: '',
           className: 'quick-diff',
           center: false,
@@ -260,7 +263,7 @@ export class PluginQuickDiff extends BasePlugin {
         modal.setTitle(
           compare.fromtitle && compare.totitle
             ? `${compare.fromtitle}${compare.fromrevid ? ` (${compare.fromrevid})` : ''} ⇔ ${compare.totitle}${compare.torevid ? ` (${compare.torevid})` : ''}`
-            : 'Differences'
+            : $`Differences`
         )
         let diffTable!: HTMLElement
         modal.setContent(
@@ -304,7 +307,7 @@ export class PluginQuickDiff extends BasePlugin {
 
         if (compare.fromrevid && compare.torevid) {
           modal.addButton({
-            label: 'Original Compare Page',
+            label: $`Original Compare Page`,
             side: 'right',
             className: 'btn btn-secondary',
             method: () => {
@@ -325,7 +328,7 @@ export class PluginQuickDiff extends BasePlugin {
       .catch((err) => {
         modal.setContent(
           (
-            <MBox title="Failed to load diff" type="error">
+            <MBox title={$`Failed to load diff`} type="error">
               <pre>{err instanceof Error ? err.message : String(err)}</pre>
             </MBox>
           ) as HTMLElement
