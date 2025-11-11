@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { interpolate } from './interpolate.js'
+import { interpolate, createInterpolate } from './interpolate.js'
 
 describe('interpolate', () => {
   it('should return empty string for missing variable', () => {
@@ -87,5 +87,29 @@ describe('interpolate', () => {
       interpolate('Result: {{ ((a + b) * c - d) / e }}', { a: 2, b: 3, c: 4, d: 10, e: 2 })
     ).toBe('Result: 5')
     expect(interpolate('{{ Math.random() > 0.5 ? "High" : "Low" }}')).toMatch(/^(High|Low)$/)
+  })
+})
+
+describe('createInterpolate (globals support)', () => {
+  it('should allow calling global functions', () => {
+    const getUrl = (title: string) => `/wiki/${encodeURIComponent(title)}`
+    const itp = createInterpolate({ getUrl })
+    expect(itp('url is: {{ getUrl(title) }}', { title: 'foo bar' })).toBe('url is: /wiki/foo%20bar')
+  })
+
+  it('should not override context by globals (context wins)', () => {
+    const itp = createInterpolate({ name: 'global' })
+    expect(itp('hello, {{ name }}', { name: 'ctx' })).toBe('hello, ctx')
+  })
+
+  it('should support non-function globals', () => {
+    const itp = createInterpolate({
+      site: { name: 'MyWiki', lang: 'zh-hans' },
+      base: 'https://example.org',
+      featureEnabled: true,
+    })
+    expect(itp('site: {{ site.name }}')).toBe('site: MyWiki')
+    expect(itp('base: {{ base }}')).toBe('base: https://example.org')
+    expect(itp('enabled: {{ featureEnabled ? "Y" : "N" }}')).toBe('enabled: Y')
   })
 })

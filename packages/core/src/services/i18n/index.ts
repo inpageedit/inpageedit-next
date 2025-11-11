@@ -5,8 +5,8 @@ import { Endpoints } from '@/constants/endpoints.js'
 declare module '@/InPageEdit' {
   export interface InPageEdit {
     i18n: I18nService
-    $: I18nManager['t']
-    $$: I18nManager['msg']
+    $: I18nManager['translate']
+    $$: I18nManager['message']
   }
   export interface PreferencesMap {
     language: string
@@ -56,7 +56,15 @@ export class I18nService extends Service {
   constructor(readonly ctx: InPageEdit) {
     super(ctx, 'i18n', false)
     this.logger = this.ctx.logger('I18nService')
-    this.manager = new I18nManager({}, { language: 'en' })
+    this.manager = new I18nManager(
+      {},
+      {
+        language: 'en',
+        globals: {
+          getUrl: (...args: Parameters<InPageEdit['wiki']['getUrl']>) => ctx.wiki.getUrl(...args),
+        },
+      }
+    )
   }
 
   protected async start(): Promise<void> {
@@ -93,8 +101,8 @@ export class I18nService extends Service {
       }
     })
 
-    this.ctx.set('$', this.manager.t.bind(this.manager))
-    this.ctx.set('$$', this.manager.msg.bind(this.manager))
+    this.ctx.set('$', this.manager.translate.bind(this.manager))
+    this.ctx.set('$$', this.manager.message.bind(this.manager))
   }
 
   private resolveLanguage(language: any) {
@@ -177,7 +185,7 @@ export class I18nService extends Service {
       const data = await fetch(new URL(file, this.indexUrl).toString()).then((res) => res.json())
       return { lang, data }
     } else {
-      return { lang, data: null }
+      return { lang, data: {} }
     }
   }
 

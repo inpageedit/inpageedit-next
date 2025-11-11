@@ -13,10 +13,7 @@ export type PreferenceAugmented<D, C extends AnyConstructor> = C & {
  * @RegisterPreferences(
  *   Schema.object({
  *     foo: Schema.string().description('Foo description'),
- *   }),
- *   {
- *     foo: 'default foo value',
- *   }
+ *   })
  * )
  * class Foo {}
  * ```
@@ -28,9 +25,6 @@ export type PreferenceAugmented<D, C extends AnyConstructor> = C & {
  *    static ConfigSchema = Schema.object({
  *      foo: Schema.string().description('Foo description')
  *    })
- *    static ConfigDefaults = {
- *      foo: 'default foo value'
- *    }
  * }
  * ```
  */

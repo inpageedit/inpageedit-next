@@ -27,6 +27,39 @@ export function interpolate(template: string, context: Record<string, unknown>):
 export function interpolate(template: string, ...numricContext: string[]): string
 export function interpolate(template: string, numricContext: string[]): string
 export function interpolate(template: string, ...args: Array<unknown>): string {
+  return baseInterpolate(undefined, template, ...args)
+}
+
+/**
+ * 创建带有“全局可用函数/变量”的插值函数。
+ * - 传入的 globals 会作为模板可用的全局，只在上下文未提供同名键时生效（上下文优先）。
+ * - 返回的函数与 interpolate 具有相同签名。
+ *
+ * 示例：
+ * ```ts
+ * const interpolate = createInterpolate({ getUrl })
+ * interpolate('url is: {{ getUrl(title) }}', { title: 'foo' })
+ * ```
+ */
+export type Interpolator = {
+  (template: string): string
+  (template: string, context: Record<string, unknown>): string
+  (template: string, ...numricContext: string[]): string
+  (template: string, numricContext: string[]): string
+}
+export function createInterpolate(globals?: Record<string, unknown>): Interpolator {
+  const g = globals ? { ...globals } : undefined
+  const fn = (template: string, ...args: Array<unknown>) => {
+    return baseInterpolate(g, template, ...args)
+  }
+  return fn as Interpolator
+}
+
+function baseInterpolate(
+  globals: Record<string, unknown> | undefined,
+  template: string,
+  ...args: Array<unknown>
+): string {
   if (!template) return ''
 
   let out = String(template)
@@ -52,6 +85,14 @@ export function interpolate(template: string, ...args: Array<unknown>): string {
   }
   if (named && Object.keys(named).length) {
     for (const k of Object.keys(named)) ctx[k] = (named as any)[k]
+  }
+  // 合入全局（不覆盖上下文已提供的同名键）
+  if (globals && Object.keys(globals).length) {
+    for (const k of Object.keys(globals)) {
+      if (typeof ctx[k] === 'undefined') {
+        ctx[k] = (globals as any)[k]
+      }
+    }
   }
 
   out = out.replace(/\{\{\s*([\s\S]*?)\s*\}\}/g, (_m, exprRaw: string) => {

@@ -1,3 +1,11 @@
 {
-  "Hello, {{ name }}": "你好，{{ name }}"
+  "Quick Move": "快速移动",
+  "Move from": "从此标题",
+  "Move to": "移动至",
+  "Move talk page": "移动讨论页",
+  "Move subpage(s) (up to 100)": "移动子页面（最多 100 个）",
+  "Move without leaving a redirect": "移动后不保留重定向",
+  "Reason": "原因",
+  "Move": "移动",
+  "Plugin Store": "插件中心"
 }

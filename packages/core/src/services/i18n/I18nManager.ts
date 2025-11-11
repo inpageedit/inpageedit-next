@@ -1,4 +1,5 @@
-import { interpolate } from './interpolate.js'
+import { createInterpolate } from './interpolate.js'
+import type { Interpolator } from './interpolate.js'
 
 export class I18nManager {
   private languages = new Map<string, Map<string, string>>()
@@ -6,20 +7,30 @@ export class I18nManager {
   private fallbacks: Record<string, string> = {}
   // 记录缺失键与其在各语言链上缺失的语言码（保持首次加入顺序，避免重复）
   private missingKeys = new Map<string, string[]>()
+  interpolate: Interpolator
   constructor(
     init?: Record<string, any>,
-    options?: { language?: string; fallbacks?: Record<string, string> }
+    options?: {
+      language?: string
+      fallbacks?: Record<string, string>
+      globals?: Record<string, unknown>
+    }
   ) {
     const lang = options?.language || 'en'
     this.currentLanguage = lang
     if (options?.fallbacks) {
       this.setFallbacks(options.fallbacks)
     }
+    this.interpolate = createInterpolate(options?.globals)
     if (init && Object.keys(init).length) {
       this.setLanguageData(lang, init)
     }
   }
-  interpolate = interpolate
+
+  setGlobals(globals: Record<string, unknown>) {
+    this.interpolate = createInterpolate(globals)
+    return this
+  }
 
   /**
    * ```
@@ -47,6 +58,7 @@ export class I18nManager {
   }
 
   setLanguageData(language: string, data: Record<string, any>): this {
+    language = paramCase(language).toLowerCase()
     const dict = this.ensureLanguageMap(language)
     const flat = this.toStringRecord(data)
     for (const [k, v] of Object.entries(flat)) {
@@ -56,11 +68,18 @@ export class I18nManager {
   }
 
   setFallbacks(fallbacks?: Record<string, string>) {
-    this.fallbacks = fallbacks || {}
+    const normalized = Object.fromEntries(
+      Object.entries(fallbacks || {}).map(([k, v]) => [
+        paramCase(k).toLowerCase(),
+        paramCase(v).toLowerCase(),
+      ])
+    )
+    this.fallbacks = normalized
     return this
   }
 
   setLanguage(language: string) {
+    language = paramCase(language).toLowerCase()
     this.currentLanguage = language
     return this
   }
@@ -125,27 +144,40 @@ export class I18nManager {
    * // key not exists: "Hello, dragon"
    * ```
    */
-  t(key: string): string
-  t(key: string, context: Record<string, unknown>): string
-  t(key: string, ...numricContext: string[]): string
-  t(key: string, numricContext: string[]): string
-  t(key: string, ...args: Array<unknown>): string {
-    if (!key) {
+  translate(msg: string): string
+  translate(msg: string, context: Record<string, unknown>): string
+  translate(msg: string, ...numricContext: string[]): string
+  translate(msg: string, numricContext: string[]): string
+  translate(msg: string, ...args: Array<unknown>): string {
+    if (!msg) {
       return ''
     }
     if (this.currentLanguage === 'qqx') {
-      return `⧼${key}⧽`
+      return `⧼${msg}⧽`
     }
-    const template = this.get(key)
+    const template = this.get(msg)
     if (typeof template === 'undefined') {
-      return interpolate(key, ...(args as any))
+      return this.interpolate(msg, ...(args as any))
     }
-    return interpolate(template, ...(args as any))
+    return this.interpolate(template, ...(args as any))
   }
-  $ = this.t.bind(this)
+  $ = this.translate.bind(this)
+
+  // Do not interpolate, just return the raw message
+  translateRaw(msg: string): string {
+    if (!msg) {
+      return ''
+    }
+    if (this.currentLanguage === 'qqx') {
+      return `⧼${msg}⧽`
+    }
+    const template = this.get(msg)
+    return template ?? msg
+  }
+  $raw = this.translateRaw.bind(this)
 
   /**
-   * Interpolate a message with optional arguments
+   * Interpolate a message by key with optional arguments
    * If the message is not found, the placeholder will be returned
    * @example
    * ```
@@ -154,11 +186,11 @@ export class I18nManager {
    * // key not exists: "(greeting)"
    * ```
    */
-  msg(key: string): string
-  msg(key: string, context: Record<string, unknown>): string
-  msg(key: string, ...numricContext: string[]): string
-  msg(key: string, numricContext: string[]): string
-  msg(key: string, ...args: Array<unknown>): string {
+  message(key: string): string
+  message(key: string, context: Record<string, unknown>): string
+  message(key: string, ...numricContext: string[]): string
+  message(key: string, numricContext: string[]): string
+  message(key: string, ...args: Array<unknown>): string {
     if (!key) {
       return ''
     }
@@ -169,9 +201,21 @@ export class I18nManager {
     if (typeof template === 'undefined') {
       return `(${key})`
     }
-    return interpolate(template, ...(args as any))
+    return this.interpolate(template, ...(args as any))
   }
-  $$ = this.msg.bind(this)
+  $$ = this.message.bind(this)
+
+  messageRaw(key: string): string {
+    if (!key) {
+      return ''
+    }
+    if (this.currentLanguage === 'qqx') {
+      return `⧼${key}⧽`
+    }
+    const template = this.get(key)
+    return template ?? `(${key})`
+  }
+  $$raw = this.messageRaw.bind(this)
 
   getAvailableLanguages() {
     return Array.from(this.languages.keys())
