@@ -11,7 +11,7 @@ export class IDBStorageManager<T = unknown> implements AbstractIPEStorageManager
     readonly dbName: string,
     readonly storeName: string,
     public ttl: number = Infinity,
-    public version?: number
+    public version?: number | string
   ) {
     this.db = new IDBPlus<string, TypedStorageEntry<T>>(dbName, storeName)
     this.keys = this.db.keys.bind(this.db)
@@ -135,7 +135,11 @@ export class IDBStorageManager<T = unknown> implements AbstractIPEStorageManager
       return null
     }
     // Version mismatch
-    if (typeof this.version === 'number' && data.version !== this.version) {
+    if (
+      typeof this.version !== 'undefined' &&
+      typeof this.version !== 'undefined' &&
+      data.version !== this.version
+    ) {
       try {
         await this.delete(key)
       } catch (_) {}

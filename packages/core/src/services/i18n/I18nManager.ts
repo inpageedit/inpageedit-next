@@ -84,7 +84,8 @@ export class I18nManager {
 
   hasLanguage(language: string) {
     language = paramCase(language).toLowerCase()
-    return this.languages.has(language)
+    const data = this.languages.get(language)
+    return data && Object.keys(data).length > 0
   }
 
   private toStringRecord(data: Record<string, any>, prefix?: string): Record<string, string> {

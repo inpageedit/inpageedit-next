@@ -1,13 +1,13 @@
 <template lang="pug">
 #ipe-plugin-install-manager
   .ipeps-header
-    .ipeps-header-title Plugins
+    .ipeps-header-title {{ $`Plugins` }}
     .ipeps-input-wrapper
       input.ipeps-input.with-icon(
         v-model.trim='searchInput',
         type='text',
-        placeholder='Search plugins...',
-        :disabled='!allPluginsToDisplay.length'
+        placeholder='{{ $`Search plugins...` }}',
+        :disabled='!pluginsFromRegistries.length'
       )
       .ipeps-input-icon 🔍
     button.ipeps-button(
@@ -15,11 +15,11 @@
       :disabled='isRefreshing || !hasRegistries',
       :class='{ refreshing: isRefreshing }',
       variant='primary'
-    ) {{ isRefreshing ? 'Refreshing...' : 'Refresh' }}
+    ) {{ isRefreshing ? $`Refreshing...` : $`Refresh` }}
 
   .ipeps-loading(v-if='!hasRegistries && !firstInit')
     .loading-spinner
-    .loading-text Loading...
+    .loading-text {{ $`Loading...` }}
 
   .ipeps-list(v-else-if='allPluginsToDisplay.length')
     .ipeps-item(
@@ -33,7 +33,7 @@
           span.ipeps-badge(
             v-if='isInstalledKey(plugin._key) || plugin.isBroken',
             :class='{ "is-installed": isInstalledKey(plugin._key), "is-broken": plugin.isBroken }'
-          ) {{ plugin.isBroken ? '⚠️ broken' : '✓' }}
+          ) {{ plugin.isBroken ? $$`plugin-store.tags.broken` : $$`plugin-store.tags.installed` }}
         .ipeps-tags
           a.ipeps-tag.registry-tag(
             v-if='plugin.registryHomepage && !plugin.isRegistryMissing',
@@ -56,16 +56,16 @@
         :active='isInstalledKey(plugin._key)',
         :variant='isInstalledKey(plugin._key) ? "danger" : "primary"',
         @click='togglePluginByKey(plugin)'
-      ) {{ isInstalledKey(plugin._key) ? 'Remove' : 'Install' }}
+      ) {{ isInstalledKey(plugin._key) ? $`Remove` : $`Install` }}
 
   .ipeps-empty(v-else)
     .plugin-empty-icon 📦
-    .plugin-empty-text No matching plugins found
+    .plugin-empty-text {{ $`No matching plugins found` }}
 </template>
 
 <script setup lang="ts" vapor>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import type { PluginStoreRegistry } from '../schema.js'
+import type { PluginStorePackage, PluginStoreRegistry } from '../schema.js'
 import UIBaseButton from './ui/UIBaseButton.vue'
 
 interface RegistryWithUrl extends PluginStoreRegistry {
@@ -76,8 +76,19 @@ interface PluginIdentifier {
   id: string
 }
 
+interface PluginViewModel extends PluginStorePackage {
+  _key: string
+  registry: string
+  registryHomepage: string
+  registryLabel: string
+  isBroken: boolean
+  isRegistryMissing: boolean
+}
+
 // --- state ---
 const ctx = useIPE()
+const $ = ctx.$
+const $$ = ctx.$$
 const registryInfos = ref<RegistryWithUrl[]>([])
 const installedPlugins = ref<PluginIdentifier[]>([])
 const searchInput = ref('')
@@ -102,21 +113,26 @@ const urlToLabel = (registryUrl: string) => {
 const firstInit = ref(false)
 const hasRegistries = computed(() => registryInfos.value.length > 0)
 
+const pluginsFromRegistries = computed<PluginViewModel[]>(
+  () =>
+    registryInfos.value.flatMap((reg) =>
+      (reg.packages || []).map((pkg) => ({
+        ...pkg,
+        _key: makeKey(reg.registryUrl, pkg.id),
+        registry: reg.registryUrl,
+        registryHomepage: reg.homepage,
+        registryLabel: urlToLabel(reg.registryUrl),
+        isBroken: false,
+        isRegistryMissing: false,
+      }))
+    ) as PluginViewModel[]
+)
+
 // merge normal + broken, and normalize once here
 const normalizedPlugins = computed(() => {
   const q = searchInput.value.trim().toLowerCase()
 
-  const all: Array<any> = registryInfos.value.flatMap((reg) =>
-    (reg.packages || []).map((pkg) => ({
-      ...pkg,
-      _key: makeKey(reg.registryUrl, pkg.id),
-      registry: reg.registryUrl,
-      registryHomepage: reg.homepage,
-      registryLabel: urlToLabel(reg.registryUrl),
-      isBroken: false,
-      isRegistryMissing: false,
-    }))
-  )
+  const all: Array<any> = pluginsFromRegistries.value
 
   // broken installed plugins (installed but not available now)
   const availableKeys = new Set(all.map((p) => p._key))
@@ -164,8 +180,8 @@ const getDesc = (p: any) => {
   if (p.description) return p.description
   if (!p.isBroken) return ''
   return p.isRegistryMissing
-    ? '[Recommend to uninstall] The registry is unavailable. Try refreshing or re-adding the registry to fix this issue.'
-    : '[Recommend to uninstall] This plugin was removed from the registry. Try refreshing the registry to confirm.'
+    ? $$`plugin-store.broken.registry-unavailable`
+    : $$`plugin-store.broken.plugin-removed`
 }
 
 // actions

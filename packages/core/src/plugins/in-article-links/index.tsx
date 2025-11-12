@@ -35,7 +35,7 @@ export interface InArticleWikiAnchorMetadata extends WikiLinkMetadata {
   redlink: boolean
 }
 
-@Inject(['wiki', 'wikiTitle', 'preferences'])
+@Inject(['wiki', 'wikiTitle', 'preferences', '$'])
 @RegisterPreferences(
   Schema.object({
     'inArticleLinks.enable': Schema.boolean()
@@ -66,11 +66,12 @@ export class PluginInArticleLinks extends BasePlugin<{
       'InArticleLinks'
     )
     this.ctx.set('inArticleLinks', this)
+    const $ = this.ctx.$
 
     this.ctx.preferences.defineCategory({
-      label: 'In Article Links',
       name: 'in-article-links',
-      description: 'In-article links preferences',
+      label: $`prefs.inArticleLinks.label`,
+      description: $`prefs.inArticleLinks.$`,
       index: 9,
     })
   }

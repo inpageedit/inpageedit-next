@@ -1,95 +1,193 @@
 {
   "manifest_version": 1,
-  "languages": [
-    {
-      "code": "en",
-      "file": "en.json"
+  "base_language": "en",
+  "last_modified": "2025-11-12T09:25:35.401Z",
+  "languages": {
+    "en": {
+      "file": "en.json",
+      "data": {
+        "Add": "Add",
+        "All edit contents will be lost after closing the modal. Are you sure you want to close?": "All edit contents will be lost after closing the modal. Are you sure you want to close?",
+        "Analytics Platform": "Analytics Platform",
+        "Backup": "Backup",
+        "Backup your preferences via user page": "Backup your preferences via user page",
+        "Cancel": "Cancel",
+        "CDN to install packages from npm": "CDN to install packages from npm",
+        "Clear caches & Reload": "Clear caches & Reload",
+        "Continue Editing": "Continue Editing",
+        "Create Redirect": "Create Redirect",
+        "Delete from page if it exists": "Delete from page if it exists",
+        "Diff": "Diff",
+        "Differences": "Differences",
+        "Force create redirect even if the from page already exists": "Force create redirect even if the from page already exists",
+        "Give Up": "Give Up",
+        "Groups": "Groups",
+        "If the information shown above is incorrect (for example, the user is not you), click the button below.": "If the information shown above is incorrect (for example, the user is not you), click the button below.",
+        "Import and export preferences": "Import and export preferences",
+        "Import from file": "Import from file",
+        "Import from URL": "Import from URL",
+        "InPageEdit Analytics": "InPageEdit Analytics",
+        "InPageEdit Analytics is the companion analytics platform for the InPageEdit NEXT project. By collecting and displaying usage data from around the world, it helps developers and the community better understand how the tool is used, optimize feature design, and enhance user experience.": "InPageEdit Analytics is the companion analytics platform for the InPageEdit NEXT project. By collecting and displaying usage data from around the world, it helps developers and the community better understand how the tool is used, optimize feature design, and enhance user experience.",
+        "Install": "Install",
+        "Installed plugins": "Installed plugins",
+        "Loading diff...": "Loading diff...",
+        "Minor edit": "Minor edit",
+        "Move": "Move",
+        "Move from": "Move from",
+        "Move subpages (up to 100)": "Move subpages (up to 100)",
+        "Move talk page": "Move talk page",
+        "Move to": "Move to",
+        "Move without leaving a redirect": "Move without leaving a redirect",
+        "No": "No",
+        "No changes": "No changes",
+        "NO sensitive data will be collected.": "NO sensitive data will be collected.",
+        "OK": "OK",
+        "Plugin Store": "Plugin Store",
+        "Plugins": "Plugins",
+        "prefs.about.copyright": "InPageEdit-NEXT Copyright © 2025-{{ new Date().getFullYear() }} dragon-fish",
+        "prefs.about.description": "About InPageEdit",
+        "prefs.about.header": "✏️ InPageEdit NEXT",
+        "prefs.about.intro": "🚀 Modular, Extensible Supercharged Plugin for MediaWiki.",
+        "prefs.about.joinus.github": "GitHub",
+        "prefs.about.joinus.header": "Join us",
+        "prefs.about.joinus.qqgroup": "QQ Group",
+        "prefs.about.label": "About",
+        "prefs.about.portals.header": "Portals",
+        "prefs.about.portals.officialwebsite": "Official Website",
+        "prefs.about.portals.updatelogs": "Update Logs",
+        "prefs.analytics.$": "InPageEdit Analytics",
+        "prefs.analytics.enabled": "Share my usage data with the community.",
+        "prefs.inArticleLinks.$": "In-article links preferences",
+        "prefs.inArticleLinks.enable": "Enable in-article links",
+        "prefs.inArticleLinks.label": "In-article Links",
+        "prefs.inArticleLinks.quickDiff.enable": "Enable in-article links for quick diff",
+        "prefs.inArticleLinks.quickEdit.enable": "Enable in-article links for quick edit",
+        "prefs.inArticleLinks.quickEdit.redlinks": "Show quick edit button for redlinks",
+        "prefs.language.$": "Language preferences",
+        "prefs.language.language": "Language",
+        "prefs.quickDiff.keyshortcut": "Key shortcut to open quick diff in quick edit modal",
+        "prefs.quickEdit.$": "Quick edit options",
+        "prefs.quickEdit.editFont": "Font to use in quick edit's textarea",
+        "prefs.quickEdit.editMinor": "Default to checking \"minor edit\" option",
+        "prefs.quickEdit.editSummary": "Default edit summary for quick edits",
+        "prefs.quickEdit.keyshortcut.save": "save button key shortcut (blank to disable)",
+        "prefs.quickEdit.outSideClose": "Close editor modal by clicking outside",
+        "prefs.quickEdit.watchList": "Watchlist options",
+        "prefs.quickMove.$": "Quick move options",
+        "prefs.quickMove.reason": "Default reason for quick move",
+        "prefs.quickPreview.keyshortcut": "Key shortcut to open quick preview in quick edit modal",
+        "prefs.quickRedirect.$": "Quick redirect options",
+        "prefs.quickRedirect.reason": "Default reason for quick redirect",
+        "prefs.toolboxAlwaysShow.$": "Toolbox™ preferences",
+        "prefs.toolboxAlwaysShow.description": "Make the Toolbox™ opened by default",
+        "Preview": "Preview",
+        "Preview - {{ $1 }}": "Preview - {{ $1 }}",
+        "Preview - Loading...": "Preview - Loading...",
+        "Quick Diff": "Quick Diff",
+        "Quick Edit": "Quick Edit",
+        "Quick Move": "Quick Move",
+        "Quick Preview": "Quick Preview",
+        "Quick Redirect": "Quick Redirect",
+        "Reason": "Reason",
+        "Redirect from": "Redirect from",
+        "Redirect to": "Redirect to",
+        "Registries": "Registries",
+        "Registry added.": "Registry added.",
+        "Registry removed and {{ count }} {{ count < 1 ? 'plugin' : 'plugins' }} uninstalled.": "Registry removed and {{ count }} {{ count < 1 ? 'plugin' : 'plugins' }} uninstalled.",
+        "Registry removed.": "Registry removed.",
+        "Registry URLs": "Registry URLs",
+        "Reload after save": "Reload after save",
+        "Remove": "Remove",
+        "Remove and uninstall plugins": "Remove and uninstall plugins",
+        "Remove only": "Remove only",
+        "Remove registry": "Remove registry",
+        "Restore": "Restore",
+        "Save as file": "Save as file",
+        "Search plugins...": "Search plugins...",
+        "Site": "Site",
+        "Site information": "Site information",
+        "Submit": "Submit",
+        "Summary": "Summary",
+        "Sync": "Sync",
+        "There {{ count < 1 ? 'is' : 'are' }} {{ count }} installed {{ count < 1 ? 'plugin' : 'plugins' }} from this registry": "There {{ count < 1 ? 'is' : 'are' }} {{ count }} installed {{ count < 1 ? 'plugin' : 'plugins' }} from this registry",
+        "This wiki's url and site name.": "This wiki's url and site name.",
+        "Unsaved Changes": "Unsaved Changes",
+        "Usage data": "Usage data",
+        "User": "User",
+        "User information": "User information",
+        "View My Data": "View My Data",
+        "Watchlist": "Watchlist",
+        "watchlist.nochange": "Keep current status",
+        "watchlist.preferences": "Follow MW preferences",
+        "watchlist.unwatch": "Remove from watchlist",
+        "watchlist.watch": "Add to watchlist",
+        "What data will be collected?": "What data will be collected?",
+        "When and which features you use, what pages you edit, etc.": "When and which features you use, what pages you edit, etc.",
+        "Wiki Informations": "Wiki Informations",
+        "Yes": "Yes",
+        "Your user name and user ID.": "Your user name and user ID."
+      }
     },
-    {
-      "code": "gan",
+    "gan": {
       "file": "zh-hant.json",
-      "missing": true,
       "fallback": "zh-hant"
     },
-    {
-      "code": "gan-hans",
+    "gan-hans": {
       "file": "zh-hans.json",
-      "missing": true,
       "fallback": "zh-hans"
     },
-    {
-      "code": "gan-hant",
+    "gan-hant": {
       "file": "zh-hant.json",
-      "missing": true,
       "fallback": "zh-hant"
     },
-    {
-      "code": "ii",
+    "ii": {
       "file": "zh-hans.json",
-      "missing": true,
       "fallback": "zh-hans"
     },
-    {
-      "code": "wuu",
+    "ja": {
+      "file": "ja.json"
+    },
+    "wuu": {
       "file": "zh-hans.json",
-      "missing": true,
       "fallback": "zh-hans"
     },
-    {
-      "code": "za",
+    "za": {
       "file": "zh-hans.json",
-      "missing": true,
       "fallback": "zh-hans"
     },
-    {
-      "code": "zh",
+    "zh": {
       "file": "zh-hans.json",
-      "missing": true,
       "fallback": "zh-hans"
     },
-    {
-      "code": "zh-cn",
+    "zh-cn": {
       "file": "zh-hans.json",
-      "missing": true,
       "fallback": "zh-hans"
     },
-    {
-      "code": "zh-hans",
+    "zh-hans": {
       "file": "zh-hans.json"
     },
-    {
-      "code": "zh-hant",
+    "zh-hant": {
       "file": "zh-hant.json"
     },
-    {
-      "code": "zh-hk",
+    "zh-hk": {
       "file": "zh-hant.json",
-      "missing": true,
       "fallback": "zh-hant"
     },
-    {
-      "code": "zh-mo",
+    "zh-mo": {
       "file": "zh-hant.json",
-      "missing": true,
       "fallback": "zh-hant"
     },
-    {
-      "code": "zh-my",
+    "zh-my": {
       "file": "zh-hans.json",
-      "missing": true,
       "fallback": "zh-hans"
     },
-    {
-      "code": "zh-sg",
+    "zh-sg": {
       "file": "zh-hans.json",
-      "missing": true,
       "fallback": "zh-hans"
     },
-    {
-      "code": "zh-tw",
+    "zh-tw": {
       "file": "zh-hant.json",
-      "missing": true,
       "fallback": "zh-hant"
     }
-  ]
+  }
 }

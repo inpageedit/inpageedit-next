@@ -15,7 +15,7 @@ export class LocalStorageManager<T = unknown> implements AbstractIPEStorageManag
     public dbName?: string,
     readonly storeName?: string,
     public ttl: number = Infinity,
-    public version?: number,
+    public version?: number | string,
     public engine: 'localStorage' | 'sessionStorage' | 'memory' = 'localStorage'
   ) {
     // Normalize ttl
@@ -55,7 +55,11 @@ export class LocalStorageManager<T = unknown> implements AbstractIPEStorageManag
       return null
     }
     // Version check
-    if (typeof this.version === 'number' && rec.version !== this.version) {
+    if (
+      typeof this.version !== 'undefined' &&
+      typeof this.version !== 'undefined' &&
+      rec.version !== this.version
+    ) {
       this.deleteSync(key)
       return null
     }

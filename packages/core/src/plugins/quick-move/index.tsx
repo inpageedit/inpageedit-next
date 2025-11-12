@@ -182,7 +182,7 @@ export class PluginQuickMove extends BasePlugin {
           </div>
           <div>
             <CheckBox name="movesubpages" id="movesubpages" checked={options?.movesubpages}>
-              {$`Move subpage(s) (up to 100)`}
+              {$`Move subpages (up to 100)`}
             </CheckBox>
           </div>
           {this.ctx.wiki.hasRight('suppressredirect') && (

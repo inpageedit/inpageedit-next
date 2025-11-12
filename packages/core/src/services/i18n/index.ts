@@ -5,34 +5,29 @@ import { AbstractIPEStorageManager } from '../storage/index.js'
 
 export interface I18nIndexV1 {
   manifest_version: 1
-  languages: {
-    /** language code, e.g. 'zh-cn' */
-    code: string
-    /** language file name, relative to index.json */
-    file: string
-    /**
-     * Hint only:
-     * This language lacks first-class support, but there are alternatives available.
-     * — The alternative file has been set to `file`, no redirection needed.
-     */
-    missing?: boolean
-    /**
-     * Hint only:
-     * Which one was used as a alternative for this language?
-     */
-    fallback?: string
-  }[]
+  base_language: string
+  last_modified: string
+  languages: Record<string, I18nIndexLanguage>
+}
+
+export interface I18nIndexLanguage {
+  file: string
+  fallback?: string
+  data?: Record<string, any>
 }
 
 export const I18nIndexV1Schema = new Schema<I18nIndexV1>(
   Schema.object({
     manifest_version: Schema.const(1).required(),
-    languages: Schema.array(
+    base_language: Schema.string().required(),
+    last_modified: Schema.string().required(),
+    languages: Schema.dict(
       Schema.object({
-        code: Schema.string().required(),
         file: Schema.string().required(),
-        missing: Schema.boolean(),
         fallback: Schema.string(),
+        data: Schema.transform(Schema.dict(Schema.any()).default({}), (v) =>
+          Object.keys(v).length > 0 ? v : undefined
+        ),
       })
     ).required(),
   })
@@ -141,13 +136,13 @@ export class I18nService extends Service {
     this.i18nIndexDB = ctx.storage.createDatabase<I18nIndexV1>(
       'i18n-index',
       1000 * 60 * 60 * 24 * 3, // 3 days
-      1,
+      this.ctx.version,
       'indexedDB'
     )
     this.i18nDataDB = ctx.storage.createDatabase<Record<string, string>>(
       'i18n-data',
       1000 * 60 * 60 * 24 * 3, // 3 days
-      1,
+      this.ctx.version,
       'indexedDB'
     )
     this.$ = this.manager.$.bind(this.manager)
@@ -187,6 +182,11 @@ export class I18nService extends Service {
       return
     }
     this._indexCache = index
+    Object.entries(index.languages).forEach(([code, meta]) => {
+      if (meta.data && Object.keys(meta.data).length > 0) {
+        this.manager.setLanguageData(code, meta.data)
+      }
+    })
 
     const prefer = await this.ctx.preferences.get('language')
     const normalized = this.normalizeLanguageCode(prefer)
@@ -284,10 +284,10 @@ export class I18nService extends Service {
    */
   getAvailableLanguageCodes(): string[] {
     if (!this._indexCache) throw new Error('I18n index is not loaded')
-    return this._indexCache.languages
-      .filter((x) => !x.missing)
-      .reduce((acc, item) => {
-        acc.push(item.code)
+    return Object.entries(this._indexCache.languages)
+      .filter(([_, meta]) => !meta.fallback)
+      .reduce((acc, [code, _]) => {
+        acc.push(code)
         return acc
       }, [] as string[])
   }
@@ -295,40 +295,37 @@ export class I18nService extends Service {
   private findLanguageMeta(
     index: I18nIndexV1,
     language: string
-  ): {
-    lang: string
-    code: string
-    file: string
-    missing?: boolean
-    fallback?: string
-  } | null {
+  ): (I18nIndexLanguage & { code: string }) | undefined {
     const normalized = paramCase(String(language)).toLowerCase()
-    const found = index.languages.find((x) => x.code.toLowerCase() === normalized)
+    const found = index.languages[normalized]
     if (found) {
       return {
-        lang: found.code,
-        code: found.code,
-        file: found.file,
-        missing: found.missing,
-        fallback: found.fallback,
+        code: normalized,
+        ...found,
       }
     } else {
-      const fallback = index.languages.find((x) => x.code.toLowerCase() === 'en')
-      if (fallback) {
+      const en = index.languages['en']
+      if (en) {
         return {
-          lang: fallback.code,
-          code: fallback.code,
-          file: fallback.file,
+          code: 'en',
+          ...en,
         }
       }
-      return null
     }
   }
 
   public async getI18nIndex(url: string, noCache = false): Promise<I18nIndexV1> {
-    if (noCache) return this.fetchI18nIndex(url)
-    const cached = await this.i18nIndexDB.get(url)
-    if (cached) return cached
+    if (!noCache) {
+      const cached = await this.i18nIndexDB.get(url)
+      if (cached) {
+        try {
+          return I18nIndexV1Schema(cached)
+        } catch (e) {
+          this.logger.error('Failed to parse cached i18n index', e)
+          this.i18nIndexDB.delete(url)
+        }
+      }
+    }
     const index = await this.fetchI18nIndex(url)
     this.i18nIndexDB.set(url, index)
     return index
@@ -356,18 +353,18 @@ export class I18nService extends Service {
     const key = `${this._indexUrl}#${meta.file}`
     if (!noCache) {
       const cached = await this.i18nDataDB.get(key)
-      if (cached) {
+      if (cached && Object.keys(cached).length > 0) {
         this.logger.debug('Using cached language data', language, cached)
         return cached
       }
     }
 
-    const data = await fetch(new URL(meta.file, this._indexUrl).toString()).then((res) =>
-      res.json()
-    )
+    const data =
+      meta.data ||
+      (await fetch(new URL(meta.file, this._indexUrl).toString()).then((res) => res.json()))
 
     this.i18nDataDB.set(key, data)
-    this.logger.debug('Language data fetched', language, data)
+    this.logger.debug('Language data fetched', language, meta.file, data)
 
     return data
   }

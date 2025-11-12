@@ -74,28 +74,28 @@ export class WikiMetadataService extends Service {
     this.ctx.set('getSciprtUrl', this.getSciprtUrl.bind(this))
     this.ctx.set('getMainpageUrl', this.getMainpageUrl.bind(this))
 
-    this.ctx.inject(['preferences'], (ctx) => {
+    this.ctx.inject(['preferences', '$'], (ctx) => {
+      const $ = ctx.$
       ctx.preferences.registerCustomConfig(
         'WikiMetadataService',
         Schema.object({
           WikiMetadataService: Schema.const(
             <div>
-              <h3>Wiki Informations</h3>
+              <h3>{$`Wiki Informations`}</h3>
               <ul>
                 <li>
-                  <strong>Site:</strong> {this.general.sitename} ({this.landingPageUrl})
+                  <strong>{$`Site`}:</strong> {this.general.sitename} ({this.landingPageUrl})
                 </li>
                 <li>
-                  <strong>User</strong>: {this.userInfo.name} (ID: {this.userInfo.id})
+                  <strong>{$`User`}</strong>: {this.userInfo.name} (ID: {this.userInfo.id})
                 </li>
                 <li>
-                  <strong>Groups</strong>: {this.userGroups.join(', ') || 'None'}
+                  <strong>{$`Groups`}</strong>: {this.userGroups.join(', ') || 'None'}
                 </li>
               </ul>
               <div>
                 <p style={{ fontStyle: 'italic' }}>
-                  If the information shown above is incorrect (for example, the user is not you),
-                  click the button below.
+                  {$`If the information shown above is incorrect (for example, the user is not you), click the button below.`}
                 </p>
                 <button
                   className="btn danger"
@@ -110,7 +110,7 @@ export class WikiMetadataService extends Service {
                     })
                   }}
                 >
-                  🧹 Clear caches & Reload
+                  🧹 {$`Clear caches & Reload`}
                 </button>
               </div>
             </div>

@@ -221,7 +221,7 @@ export class PluginQuickEdit extends BasePlugin {
       side: 'right',
       type: 'button',
       className: 'is-danger is-ghost',
-      label: 'Cancel',
+      label: $`Cancel`,
       method() {
         modal.close()
       },
@@ -233,7 +233,7 @@ export class PluginQuickEdit extends BasePlugin {
     try {
       wikiPage = await this.getWikiPageFromPayload(options)
       if (wikiPage.pageInfo.special) {
-        throw new Error($`Special page is not editable`)
+        throw new Error($`Special page is not editable.`)
       }
     } catch (e) {
       modal.off(modal.Event.Close)
@@ -254,7 +254,7 @@ export class PluginQuickEdit extends BasePlugin {
       (
         <>
           {isCreatingNewSection
-            ? $`New section`
+            ? $`New Section`
             : $`Quick ${isCreatingNewPage ? 'Create' : 'Edit'}`}
           : <u>{wikiPage.pageInfo.title}</u>
           {isEdittingOld ? ` (${$`Revision`} ${edittingRevId})` : ''}
@@ -345,7 +345,7 @@ export class PluginQuickEdit extends BasePlugin {
                   value={action}
                   inputProps={{ checked: watchList === action }}
                 >
-                  {action}
+                  {$`watchlist.${action}`}
                 </RadioBox>
               ))}
             </div>
@@ -542,7 +542,7 @@ export class PluginQuickEdit extends BasePlugin {
   private async injectToolbox(ctx: InPageEdit) {
     const $ = this.ctx.$
     const title = this.ctx.currentPage.wikiTitle
-    const canEdit = this.ctx.wiki.hasRight('edit') && title && title.getNamespaceId() >= 0
+    const canEdit = title && title.getNamespaceId() >= 0
     ctx.toolbox.addButton({
       id: 'quick-edit',
       group: 'group1',

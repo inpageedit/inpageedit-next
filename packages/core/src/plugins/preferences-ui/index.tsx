@@ -27,7 +27,7 @@ declare module '@/InPageEdit' {
   }
 }
 
-@Inject(['preferences', 'modal', '$'])
+@Inject(['preferences', 'modal', '$', '$$'])
 export class PluginPreferencesUI extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'preferences-ui')
@@ -37,19 +37,19 @@ export class PluginPreferencesUI extends BasePlugin {
 
     ctx.preferences.defineCategory({
       name: 'about',
-      label: $`About`,
-      description: $`About InPageEdit`,
+      label: $$`prefs.about.label`,
+      description: $$`prefs.about.description`,
       index: 99,
       customRenderer: () => {
         return (
           <section className="theme-ipe-prose">
             <h2>✏️ InPageEdit NEXT</h2>
-            <p>{$$`about.description`}</p>
-            <h3>{$$`about.portals.header`}</h3>
+            <p>{$$`prefs.about.intro`}</p>
+            <h3>{$$`prefs.about.portals.header`}</h3>
             <ul>
               <li>
                 <a href={this.ctx.Endpoints.HOME_URL} target="_blank">
-                  {$$`about.portals.officialwebsite`}
+                  {$$`prefs.about.portals.officialwebsite`}
                 </a>
               </li>
               <li>
@@ -57,26 +57,24 @@ export class PluginPreferencesUI extends BasePlugin {
                   href={`${this.ctx.Endpoints.UPDATE_LOGS_URL}#${this.ctx.version.split('-')[0]}`}
                   target="_blank"
                 >
-                  {$$`about.portals.updatelogs`}
+                  {$$`prefs.about.portals.updatelogs`}
                 </a>
               </li>
             </ul>
-            <h3>{$$`about.joinus.header`}</h3>
+            <h3>{$$`prefs.about.joinus.header`}</h3>
             <ul>
               <li>
-                <strong>{$$`about.joinus.github`}</strong>:{' '}
+                <strong>{$$`prefs.about.joinus.github`}</strong>:{' '}
                 <a href={this.ctx.Endpoints.GITHUB_URL} target="_blank">
                   inpageedit/inpageedit-next
                 </a>
               </li>
               <li>
-                <strong>{$$`about.joinus.qqgroup`}</strong>: 1026023666
+                <strong>{$$`prefs.about.joinus.qqgroup`}</strong>: 1026023666
               </li>
             </ul>
             <hr />
-            <p style={{ textAlign: 'center' }}>
-              InPageEdit-NEXT Copyright © 2025-{new Date().getFullYear()} dragon-fish
-            </p>
+            <p style={{ textAlign: 'center' }}>{$$`prefs.about.copyright`}</p>
             <hr />
           </section>
         )
@@ -99,7 +97,7 @@ export class PluginPreferencesUI extends BasePlugin {
             <path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6z" />
           </svg>
         ) as HTMLElement,
-        tooltip: 'Configure Preferences',
+        tooltip: $`Configure Preferences`,
         group: 'group2',
         index: 99,
         onClick: () => this.showModal(),
@@ -129,6 +127,7 @@ export class PluginPreferencesUI extends BasePlugin {
   _modal: CustomIPEModal | null = null
   _form: InstanceType<typeof PreferencesApp> | null = null
   showModal() {
+    const $ = this.ctx.$
     if (this._modal && !this._modal.isDestroyed) {
       return this._modal
     }
@@ -137,7 +136,7 @@ export class PluginPreferencesUI extends BasePlugin {
       sizeClass: 'small',
       outSideClose: false,
       center: true,
-      title: `InPageEdit Preferences (${this.ctx.version})`,
+      title: `${$`InPageEdit Preferences`} (${this.ctx.version})`,
       content: (
         <>
           <ProgressBar />

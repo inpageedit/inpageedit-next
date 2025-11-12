@@ -1,16 +1,16 @@
 <template lang="pug">
 #ipe-registry-manager
   .ipeps-header
-    .ipeps-header-title Registries
+    .ipeps-header-title {{ $`Registries` }}
     .ipeps-input-wrapper
       input.ipeps-input.with-icon(
         v-model.trim='inputValue',
         type='url',
-        placeholder='Add registry URL (https://...)',
+        :placeholder='$`Add registry URL` + ` (https://...)`',
         :disabled='isAdding'
       )
       .ipeps-input-icon 📦
-    UIBaseButton(@click='onAddRegistry', :disabled='isAdding || !inputValue', variant='primary') {{ isAdding ? 'Adding...' : 'Add' }}
+    UIBaseButton(@click='onAddRegistry', :disabled='isAdding || !inputValue', variant='primary') {{ isAdding ? $`Adding...` : $`Add` }}
 
   .ipeps-list(v-if='registries.length')
     .ipeps-item(v-for='reg in registries', :key='reg.registryUrl')
@@ -21,25 +21,27 @@
           .url {{ reg.registryUrl }}
         .item-meta {{ reg.packages.length }} packages
       .ipeps-actions
-        UIBaseButton(@click='onRemoveRegistry(reg.registryUrl)', variant='danger') Remove
+        UIBaseButton(@click='onRemoveRegistry(reg.registryUrl)', variant='danger') {{ $`Remove` }}
   .ipeps-empty(v-else)
     .icon 🗂️
-    .text No registries configured
+    .text {{ $`No registries configured` }}
     .description
       UIBaseButton(
         @click='onAddOfficialRegistry',
         variant='primary',
         style='padding: 0.25rem 0.5rem'
-      ) setup default registry
+      ) {{ $`Setup default registry` }}
 </template>
 
 <script setup lang="ts" vapor>
 import { onMounted, ref } from 'vue'
-import { h as $ } from 'jsx-dom'
+import { h } from 'jsx-dom'
 import type { PluginStoreRegistry } from '../schema.js'
 import UIBaseButton from './ui/UIBaseButton.vue'
 
 const ctx = useIPE()
+const $ = ctx.$
+const $$ = ctx.$$
 
 interface RegistryViewModel extends PluginStoreRegistry {
   registryUrl: string
@@ -122,14 +124,14 @@ async function onRemoveRegistry(url: string) {
   if (installedOfReg.length === 0) {
     ctx.modal.confirm(
       {
-        title: 'Remove registry',
-        content: `Remove registry:\n${url}`,
+        title: $$`plugin-store.remove-registry.title`,
+        content: $$`plugin-store.remove-registry.tip-content`,
         cancelBtn: {
-          label: 'Cancel',
+          label: $`Cancel`,
           className: 'is-ghost',
         },
         okBtn: {
-          label: 'Remove',
+          label: $`Remove`,
           className: 'is-danger',
         },
       },
@@ -144,32 +146,29 @@ async function onRemoveRegistry(url: string) {
 
   ctx.modal.dialog(
     {
-      title: 'Remove registry',
-      // content: `There ${installedOfReg.length === 1 ? 'is' : 'are'} ${installedOfReg.length} installed plugin${installedOfReg.length === 1 ? '' : 's'} from this registry:\n${installedOfReg.map((p) => p.id).join('\n')}`,
-      content: $('div', { class: 'theme-ipe-prose' }, [
-        $(
-          'p',
-          {},
-          `There ${installedOfReg.length === 1 ? 'is' : 'are'} ${installedOfReg.length} installed plugin${installedOfReg.length === 1 ? '' : 's'} from this registry:`
-        ),
-        $(
+      title: $$`plugin-store.remove-registry.title`,
+      content: h('div', { class: 'theme-ipe-prose' }, [
+        h('p', {}, $$({ $1: installedOfReg.length })`plugin-store.remove-registry.confirm-content`),
+        h(
           'ul',
           {},
-          installedOfReg.map((p) => $('li', {}, p.id))
+          installedOfReg.map((p) => h('li', {}, p.id))
         ),
       ]),
       buttons: [
         {
-          label: 'Remove only',
+          label: $$`plugin-store.remove-registry.buttons.remove-only`,
           className: 'is-danger is-ghost',
           method: async (_, m) => {
             await removeRegistryUrl(url)
-            ctx.modal.notify('success', { content: 'Registry removed.' })
+            ctx.modal.notify('success', {
+              content: $$`plugin-store.remove-registry.remove-success`,
+            })
             m.close()
           },
         },
         {
-          label: 'Remove and uninstall plugins',
+          label: $$`plugin-store.remove-registry.buttons.remove-and-uninstall`,
           className: 'is-danger',
           method: async (_, m) => {
             await removeRegistryUrl(url)
@@ -187,7 +186,9 @@ async function onRemoveRegistry(url: string) {
               }
             }
             ctx.modal.notify('success', {
-              content: `Registry removed and ${installedOfReg.length} ${installedOfReg.length === 1 ? 'plugin' : 'plugins'} uninstalled.`,
+              content: $$({
+                $1: installedOfReg.length,
+              })`plugin-store.remove-registry.remove-with-plugins-success`,
             })
             m.close()
           },

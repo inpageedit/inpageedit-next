@@ -23,7 +23,7 @@ export interface IPEBeaconUsage {
   page?: string
 }
 
-@Inject(['wiki', 'preferences'])
+@Inject(['wiki', 'preferences', '$'])
 export class PluginAnalytics extends BasePlugin {
   private _usages: IPEBeaconUsage[] = []
   private _timer: ReturnType<typeof setInterval> | null = null
@@ -41,38 +41,36 @@ export class PluginAnalytics extends BasePlugin {
 
   protected start(): Promise<void> | void {
     const ctx = this.ctx
+    const $ = ctx.$
     ctx.preferences.registerCustomConfig(
       'analytics',
       Schema.object({
         'analytics._intro': Schema.const(
           <section>
-            <h3>InPageEdit Analytics</h3>
+            <h3>{$`InPageEdit Analytics`}</h3>
             <p>
-              InPageEdit Analytics is the companion analytics platform for the InPageEdit NEXT
-              project. By collecting and displaying usage data from around the world, it helps
-              developers and the community better understand how the tool is used, optimize feature
-              design, and enhance user experience.
+              {$`InPageEdit Analytics is the companion analytics platform for the InPageEdit NEXT project. By collecting and displaying usage data from around the world, it helps developers and the community better understand how the tool is used, optimize feature design, and enhance user experience.`}
             </p>
-            <h4>What data will be collected?</h4>
+            <h4>{$`What data will be collected?`}</h4>
             <ol style={{ listStyle: 'number', paddingLeft: '1em' }}>
               <li>
-                <strong>Usage data</strong>: When and which features you use, what pages you edit,
-                etc.
+                <strong>{$`Usage data`}</strong>:{' '}
+                {$`When and which features you use, what pages you edit, etc.`}
               </li>
               <li>
-                <strong>User information</strong>: Your user name and user ID.
+                <strong>{$`User information`}</strong>: {$`Your user name and user ID.`}
               </li>
               <li>
-                <strong>Site information</strong>: This wiki's url and site name.
+                <strong>{$`Site information`}</strong>: {$`This wiki's url and site name.`}
               </li>
             </ol>
             <p>
-              <strong>NO sensitive data will be collected.</strong>
+              <strong>{$`NO sensitive data will be collected.`}</strong>
             </p>
             <div style={{ display: 'grid', gap: '0.5rem' }}>
               <a href={this.analyticsDashUrl} target="_blank" rel="noopener noreferrer">
                 <button className="btn" style={{ width: '100%' }}>
-                  Analytics Platform
+                  {$`Analytics Platform`}
                 </button>
               </a>
               <a
@@ -84,16 +82,16 @@ export class PluginAnalytics extends BasePlugin {
                 rel="noopener noreferrer"
               >
                 <button className="btn" style={{ width: '100%' }}>
-                  View My Data
+                  {$`View My Data`}
                 </button>
               </a>
             </div>
           </section>
         ).role('raw-html'),
         'analytics.enabled': Schema.boolean()
-          .description('Share my usage data with the community.')
+          .description($`prefs.analytics.enabled`)
           .default(false),
-      }).description('Analytics settings'),
+      }).description($`prefs.analytics.$`),
       'general'
     )
   }
@@ -131,6 +129,7 @@ export class PluginAnalytics extends BasePlugin {
   }
 
   private async _showConfirmNotify() {
+    const $ = this.ctx.$
     this.ctx.inject(['modal', 'storage'], async (ctx) => {
       const key = 'analytics/confirm-shown'
       const shown = await ctx.storage.simpleKV.get(key)
@@ -141,26 +140,32 @@ export class PluginAnalytics extends BasePlugin {
       ctx.modal.notify(
         'confirm',
         {
-          title: 'Enable Analytics',
+          title: $`Enable Analytics`,
           content: (
             <div>
-              <p>Help us improve InPageEdit by sharing your usage data with us.</p>
-              <p>What data will be collected?</p>
+              <p>{$`Help us improve InPageEdit by sharing your usage data with us.`}</p>
+              <p>{$`What data will be collected?`}</p>
               <ul style={{ listStyle: 'auto', paddingLeft: '1.5em' }}>
-                <li>Usage data: What features you use, what pages you edit, etc.</li>
-                <li>User information: Your username, user ID.</li>
-                <li>Site information: The wiki you are editing.</li>
+                <li>
+                  {$`Usage data`}: {$`When and which features you use, what pages you edit, etc.`}
+                </li>
+                <li>
+                  {$`User information`}: {$`Your user name and user ID.`}
+                </li>
+                <li>
+                  {$`Site information`}: {$`This wiki's url and site name.`}
+                </li>
               </ul>
               <p>
-                <strong>NO sensitive data will be collected.</strong>
+                <strong>{$`NO sensitive data will be collected.`}</strong>
               </p>
             </div>
           ),
           okBtn: {
-            label: 'Enable',
+            label: $`Enable`,
           },
           cancelBtn: {
-            label: 'Disable',
+            label: $`Disable`,
           },
           closeAfter: 0,
           onClose: () => {

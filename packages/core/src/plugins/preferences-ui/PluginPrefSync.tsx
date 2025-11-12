@@ -175,13 +175,15 @@ export class PluginPrefSync extends BasePlugin {
                 <ActionButton
                   onClick={(e) => {
                     e.preventDefault()
-                    const input = (<input type="url"></input>) as HTMLInputElement
+                    const input = (
+                      <input type="url" style={{ width: '100%' }}></input>
+                    ) as HTMLInputElement
                     const modal = ctx.preferencesUI.getCurrentModal()
                     ctx.modal.confirm(
                       {
-                        title: $`Import Preferences from URL`,
+                        title: $`Import from URL`,
                         content: (
-                          <div>
+                          <div className="ipe-input-box">
                             <label htmlFor="url-input">
                               {$`Enter the URL of the preferences JSON file:`}
                             </label>

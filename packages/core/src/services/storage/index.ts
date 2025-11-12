@@ -29,7 +29,7 @@ export class StorageService extends Service<StorageServiceConfig> {
   createDatabase<T = any>(
     storeName: string,
     ttl?: number,
-    version?: number,
+    version?: number | string,
     engine: 'indexedDB' | 'localStorage' | 'sessionStorage' | 'memory' = 'indexedDB'
   ): AbstractIPEStorageManager<T> {
     const canUseIDB = 'indexedDB' in window && window.indexedDB !== null
@@ -55,7 +55,7 @@ export interface TypedStorageEntry<T = any> {
   /** stored value */
   value: T
   /** version */
-  version?: number
+  version?: number | string
 }
 
 export interface AbstractIPEStorageManager<T = unknown> {
