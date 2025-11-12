@@ -36,6 +36,20 @@ export class PluginPreferencesUI extends BasePlugin {
     const $$ = ctx.$$
 
     ctx.preferences.defineCategory({
+      name: 'general',
+      label: $`prefs.general.label`,
+      description: $`prefs.general.description`,
+      autoGenerateForm: true,
+    })
+
+    ctx.preferences.defineCategory({
+      name: 'editor',
+      label: $`prefs.editor.label`,
+      description: $`prefs.editor.description`,
+      autoGenerateForm: true,
+    })
+
+    ctx.preferences.defineCategory({
       name: 'about',
       label: $$`prefs.about.label`,
       description: $$`prefs.about.description`,
@@ -66,11 +80,11 @@ export class PluginPreferencesUI extends BasePlugin {
               <li>
                 <strong>{$$`prefs.about.joinus.github`}</strong>:{' '}
                 <a href={this.ctx.Endpoints.GITHUB_URL} target="_blank">
-                  inpageedit/inpageedit-next
+                  {`${this.ctx.Endpoints.GITHUB_OWNER}/${this.ctx.Endpoints.GITHUB_REPO}`}
                 </a>
               </li>
               <li>
-                <strong>{$$`prefs.about.joinus.qqgroup`}</strong>: 1026023666
+                <strong>{$$`prefs.about.joinus.qqgroup`}</strong>: {this.ctx.Endpoints.QQ_GROUP_ID}
               </li>
             </ul>
             <hr />
@@ -171,14 +185,14 @@ export class PluginPreferencesUI extends BasePlugin {
 
     modal.setButtons([
       {
-        label: 'Close',
+        label: $`Close`,
         className: 'is-ghost',
         method: () => {
           modal.close()
         },
       },
       {
-        label: 'Save',
+        label: $`Save`,
         className: 'is-primary is-ghost',
         method: async () => {
           const value = form.getValue()
@@ -190,8 +204,8 @@ export class PluginPreferencesUI extends BasePlugin {
           }
           modal.close()
           this.ctx.modal.notify('success', {
-            title: 'Preferences Saved',
-            content: <p>Some settings may take effect after reloading the page.</p>,
+            title: $`Preferences Saved`,
+            content: <p>{$`Some settings may take effect after reloading the page.`}</p>,
           })
         },
       },

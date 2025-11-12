@@ -68,20 +68,7 @@ export class PreferencesService extends Service {
     return this.ctx.logger('PREFERENCES')
   }
 
-  async start() {
-    this.defineCategory({
-      name: 'general',
-      label: 'General',
-      description: 'General settings',
-      autoGenerateForm: true,
-    })
-    this.defineCategory({
-      name: 'editor',
-      label: 'Editor',
-      description: 'Settings related to editing content',
-      autoGenerateForm: true,
-    })
-  }
+  async start() {}
 
   // 重载魔术：一些类型体操……
   /**

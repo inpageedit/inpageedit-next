@@ -125,7 +125,7 @@ async function onRemoveRegistry(url: string) {
     ctx.modal.confirm(
       {
         title: $$`plugin-store.remove-registry.title`,
-        content: $$`plugin-store.remove-registry.tip-content`,
+        content: $$`plugin-store.remove-registry.tip-content` + `\n${url}`,
         cancelBtn: {
           label: $`Cancel`,
           className: 'is-ghost',
@@ -138,7 +138,7 @@ async function onRemoveRegistry(url: string) {
       async (ok) => {
         if (!ok) return
         await removeRegistryUrl(url)
-        ctx.modal.notify('success', { content: 'Registry removed.' })
+        ctx.modal.notify('success', { content: $$`plugin-store.remove-registry.remove-success` })
       }
     )
     return
