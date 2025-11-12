@@ -47,9 +47,18 @@ document.body.append(
 
 ## Supported languages
 
-> [!NOTE]
->
-> Currently only English is supported. We're working on i18n support.
+- **English (en)**
+- العربية (ar)
+- Français (fr)
+- Hindī (hi)
+- 日本語 (ja)
+- Nederlands (nl)
+- Polski (pl)
+- Português do Brasil (pt_BR)
+- **中文(简体) (zh-Hans)**
+- 中文(繁體) (zh-Hant)
+
+[Help us translate](https://crowdin.com/project/inpageedit)
 
 ---
 
@@ -59,4 +68,4 @@ document.body.append(
 >
 > InPageEdit-NEXT Copyright © 2025-present dragon-fish
 
-See more: [GitHub](https://github.com/inpageedit/inpageedit-next) | [Change Logs](https://www.ipe.wiki/changelogs/) | [File Issues](https://github.com/inpageedit/inpageedit-next/issues)
+See more: [GitHub](https://github.com/inpageedit/inpageedit-next) | [Change Logs](https://www.ipe.wiki/changelogs/) | [File Issues](https://github.com/inpageedit/inpageedit-next/issues) | [Plugin Registry](https://github.com/inpageedit/plugin-registry) | [Translate (Crowdin)](https://crowdin.com/project/inpageedit)
