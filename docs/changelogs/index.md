@@ -23,6 +23,18 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.14.0'>
+
+<template #title>0.14.0 <Badge type='rainbow'>重量级</Badge></template>
+
+- <Badge type='rainbow'>i18n</Badge> feat(core): introduce I18nService
+  - 现已添加多语言支持
+  - 部分组件的翻译暂未完善，如有发现，欢迎反馈
+- fix(core): improve WikiTitle model and tests
+  - `WikiTitle` 不会再重复添加命名空间前缀了
+
+</ChangeLog>
+
 <ChangeLog version='0.13.1'>
 
 - 修复了一些小问题，提升了项目的整体质量。
