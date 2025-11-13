@@ -1,14 +1,8 @@
 {
-  "__meta__": {
-    "code": "zh-hant",
-    "name": "中文(繁體) (zh-hant)",
-    "timestamp": "2025-11-12T11:16:14.783Z",
-    "model": "deepseek-v3.1"
-  },
   "Add": "新增",
   "Add registry URL": "新增註冊表網址",
   "Adding...": "新增中...",
-  "All edit contents will be lost after closing the modal. Are you sure you want to close?": "關閉模態框後，所有編輯內容將會遺失。確定要關閉嗎？",
+  "All edit contents will be lost after closing the modal. Are you sure you want to close?": "所有编辑内容在关闭后将丢失。您确定要关闭吗？",
   "Analytics Platform": "分析平台",
   "Attention": "注意",
   "Backup": "備份",
@@ -53,7 +47,7 @@
   "Move to": "移動至何處",
   "Move without leaving a redirect": "移動而不留下重新導向",
   "New section": "新章節",
-  "No": "否",
+  "No": "No",
   "No changes": "無變更",
   "No matching plugins found": "找不到符合的外掛",
   "No registries configured": "未設定註冊表",
@@ -171,7 +165,7 @@
   "What data will be collected?": "將會收集哪些資料？",
   "When and which features you use, what pages you edit, etc.": "您何時使用了哪些功能、編輯了哪些頁面等。",
   "Wiki Informations": "Wiki 資訊",
-  "Yes": "是",
+  "Yes": "Yes",
   "You are editing a <em>historical version</em> version; the content is not the latest!": "您正在編輯<em>歷史版本</em>；內容並非最新！",
   "Your changes have been saved.": "您的變更已儲存。",
   "Your content": "您的內容",

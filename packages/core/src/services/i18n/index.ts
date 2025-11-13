@@ -12,8 +12,14 @@ export interface I18nIndexV1 {
 
 export interface I18nIndexLanguage {
   file: string
+  iso_name?: string
+  endonym?: string
   fallback?: string
-  data?: Record<string, any>
+  data?: I18nStringRecord
+}
+
+interface I18nStringRecord {
+  [key: string]: string | I18nStringRecord
 }
 
 export const I18nIndexV1Schema = new Schema<I18nIndexV1>(
@@ -25,6 +31,8 @@ export const I18nIndexV1Schema = new Schema<I18nIndexV1>(
       Schema.object({
         file: Schema.string().required(),
         fallback: Schema.string(),
+        iso_name: Schema.string(),
+        endonym: Schema.string(),
         data: Schema.transform(Schema.dict(Schema.any()).default({}), (v) =>
           Object.keys(v).length > 0 ? v : undefined
         ),
@@ -210,7 +218,9 @@ export class I18nService extends Service {
         language: Schema.union([
           Schema.const('@user').description(this.$`Same as your personal language`),
           Schema.const('@site').description(this.$`Same as the site language`),
-          ...this.getAvailableLanguageCodes().map((code) => Schema.const(code).description(code)),
+          ...this.getAvailableLanguageCodes().map(({ code, endonym, iso_name }) =>
+            Schema.const(code).description(endonym || iso_name || code)
+          ),
         ]).default('@user'),
       }).description(this.$`InPageEdit UI language`)
     )
@@ -284,14 +294,17 @@ export class I18nService extends Service {
   /**
    * 列出可用语言与文件（来源于 index.json）
    */
-  getAvailableLanguageCodes(): string[] {
+  getAvailableLanguageCodes(): (I18nIndexLanguage & { code: string })[] {
     if (!this._indexCache) throw new Error('I18n index is not loaded')
     return Object.entries(this._indexCache.languages)
       .filter(([_, meta]) => !meta.fallback)
-      .reduce((acc, [code, _]) => {
-        acc.push(code)
-        return acc
-      }, [] as string[])
+      .reduce(
+        (acc, [code, meta]) => {
+          acc.push({ code, ...meta })
+          return acc
+        },
+        [] as (I18nIndexLanguage & { code: string })[]
+      )
   }
 
   private findLanguageMeta(
