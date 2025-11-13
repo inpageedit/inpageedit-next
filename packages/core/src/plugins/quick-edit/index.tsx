@@ -569,7 +569,7 @@ export class PluginQuickEdit extends BasePlugin {
       buttonProps: {
         disabled: !canEdit,
       },
-      tooltip: canEdit ? $`Quick Edit` : $`Not editable`,
+      tooltip: () => (canEdit ? $`Quick Edit` : $`Not editable`),
       onClick: () => {
         const revision = new URLSearchParams(window.location.search).get('oldid')
         this.showModal({

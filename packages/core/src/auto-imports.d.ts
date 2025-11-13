@@ -28,6 +28,7 @@ declare global {
   const camelCase: typeof import('./utils/string')['camelCase']
   const capitalize: typeof import('./utils/string')['capitalize']
   const computeFallback: typeof import('./utils/computeable')['computeFallback']
+  const computeFallbackSync: typeof import('./utils/computeable')['computeFallbackSync']
   const createVueAppWithIPE: typeof import('./utils/vueHooks')['createVueAppWithIPE']
   const deepToRaw: typeof import('./utils/vueReactivity')['deepToRaw']
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
@@ -75,7 +76,7 @@ declare global {
   export type { Endpoints } from './constants/endpoints'
   import('./constants/endpoints')
   // @ts-ignore
-  export type { ComputeAble } from './utils/computeable'
+  export type { ComputeAble, ComputeAbleSync } from './utils/computeable'
   import('./utils/computeable')
   // @ts-ignore
   export type { PreferenceAugmented } from './decorators/Preferences'

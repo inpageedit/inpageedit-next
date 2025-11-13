@@ -68,7 +68,7 @@ export class PluginQuickRedirect extends BasePlugin {
             <path d="M5 11v-6a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-9.5" />
           </svg>
         ) as HTMLElement,
-        tooltip: $`Quick Redirect`,
+        tooltip: () => $`Quick Redirect`,
         group: 'group1',
         index: 2,
         onClick: () => {

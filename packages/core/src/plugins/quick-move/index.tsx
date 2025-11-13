@@ -83,7 +83,7 @@ export class PluginQuickMove extends BasePlugin {
           <path d="M13 12h.01" />
         </svg>
       ),
-      tooltip: $`Quick Move`,
+      tooltip: () => $`Quick Move`,
       group: 'group1',
       index: 1,
       onClick: () => {

@@ -1,6 +1,7 @@
 import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit'
 import { JSX, ReactElement } from 'jsx-dom'
 import './styles.scss'
+import { ComputeAbleSync } from '@/utils/computeable.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -24,8 +25,8 @@ declare module '@/InPageEdit' {
 interface ToolboxButton {
   id: string
   group?: 'auto' | 'group1' | 'group2'
-  icon: string | HTMLElement | SVGElement | ReactElement
-  tooltip?: string | HTMLElement
+  icon: ComputeAbleSync<string | HTMLElement | SVGElement | ReactElement>
+  tooltip?: ComputeAbleSync<string | HTMLElement>
   itemProps?: JSX.IntrinsicElements['li']
   buttonProps?: JSX.IntrinsicElements['button']
   onClick?: (event: MouseEvent) => void
@@ -64,8 +65,11 @@ export class PluginToolbox extends Service {
     this.setupHoverLogic()
     document.body.appendChild(this.container)
 
-    // 初始化时更新按钮延迟
-    this.updateButtonDelays()
+    // 国际化变化时重新渲染
+    this.ctx.on('i18n/changed', () => {
+      console.info('i18n/changed', this.buttons)
+      this.renderAll()
+    })
   }
 
   protected stop(): void | Promise<void> {
@@ -152,7 +156,7 @@ export class PluginToolbox extends Service {
           <rect width="448" height="512" fill="none" />
           <path
             fill="currentColor"
-            d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c0 17.67 14.33 32 32 32v-32c0-17.67-14.33-32-32-32"
+            d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32"
           />
         </svg>
       </button>
@@ -291,7 +295,7 @@ export class PluginToolbox extends Service {
     // 结构尽量保持，避免在 <li> 上绑定 click 造成双触发
     const element = (
       <li class="btn-tip-group" id={normalizedId} data-id={id} data-index={index} {...itemProps}>
-        <div class="btn-tip">{tooltip}</div>
+        <div class="btn-tip">{computeFallbackSync(tooltip)}</div>
         <button
           id={`${normalizedId}-btn`}
           data-id={payload.id}
@@ -306,7 +310,7 @@ export class PluginToolbox extends Service {
           }}
           {...buttonProps}
         >
-          {icon}
+          {computeFallbackSync(icon)}
         </button>
       </li>
     )

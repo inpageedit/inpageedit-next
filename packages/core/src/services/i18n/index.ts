@@ -220,7 +220,7 @@ export class I18nService extends Service {
     // 当偏好设置中的 language 发生变化时，自动热切换
     this.ctx.on('preferences/changed', async ({ changes }) => {
       if (!('language' in changes)) return
-      const next = this.normalizeLanguageCode(changes.language)
+      const next = this.normalizeLanguageCode(await this.ctx.preferences.get('language'))
       if (next && next !== this.language) {
         await this.switchLanguage(next)
       }
