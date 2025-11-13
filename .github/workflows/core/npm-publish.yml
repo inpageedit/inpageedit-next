@@ -1,0 +1,138 @@
+name: Release @inpageedit/core to npm
+
+on:
+  push:
+    tags:
+      - 'core/*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The version to publish'
+        required: true
+      npm_tag:
+        description: 'The npm dist-tag to publish (e.g. latest, next, beta)'
+        required: false
+        default: 'latest'
+
+permissions:
+  contents: read
+  # Required for OIDC (npm provenance)
+  id-token: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      NPM_CONFIG_PROVENANCE: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+          registry-url: https://registry.npmjs.org/
+
+      - name: Read package version
+        id: package-version
+        working-directory: packages/core
+        run: |
+          PKG_VERSION=$(jq -r '.version' package.json)
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check version
+        shell: bash
+        run: |
+          PKG_VERSION='${{ steps.package-version.outputs.version }}'
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.version }}" != "$PKG_VERSION" ]]; then
+              echo "Version mismatch: ${{ inputs.version }} != $PKG_VERSION"
+              exit 1
+            fi
+          fi
+
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            TAG='${{ github.ref_name }}'
+            # Strip 'core/' prefix if present
+            if [[ "$TAG" == core/* ]]; then
+              TAG="${TAG#core/}"
+            fi
+
+            if [[ "$TAG" != "$PKG_VERSION" ]]; then
+              echo "Version mismatch: $TAG != $PKG_VERSION"
+              exit 1
+            fi
+          fi
+
+      - name: Resolve npm dist-tag
+        id: npm-tag
+        run: |
+          # workflow_dispatch 时使用输入；否则默认为 latest
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && -n "${{ inputs.npm_tag }}" ]]; then
+            TAG='${{ inputs.npm_tag }}'
+          else
+            TAG='latest'
+          fi
+
+          echo "tag=$TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build (workspace)
+        run: |
+          pnpm --filter modal build
+          pnpm --filter schemastery-form build
+          pnpm --filter core build
+
+      # - name: Unit test
+      #   run: pnpm test
+
+      - name: Publish @inpageedit/core
+        run: |
+          pnpm --filter core publish \
+            --no-git-checks \
+            --tag '${{ steps.npm-tag.outputs.tag }}'
+
+      - name: Purge jsDelivr cache
+        run: |
+          set -u
+
+          PURGE_PREFIXES=(
+            "https://purge.jsdelivr.net/npm/@inpageedit/core"
+            "https://purge.jsdelivr.net/npm/@inpageedit/core@latest"
+          )
+
+          PURGE_FILES=(
+            "dist/index.js"
+            "dist/style.css"
+            "dist/index.js.map"
+            "lib/index.umd.js"
+            "lib/index.umd.js.map"
+            "lib/style.css"
+          )
+
+          for prefix in "${PURGE_PREFIXES[@]}"; do
+            for file in "${PURGE_FILES[@]}"; do
+              url="${prefix}/${file}"
+              echo "Purging: $url"
+              curl -m 60 "$url" || echo "Failed: $url"
+            done
+          done
