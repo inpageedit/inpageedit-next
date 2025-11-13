@@ -18,7 +18,7 @@ export interface PluginStoreRegistryMaintainer {
 }
 
 export interface PluginStoreRegistryRepository {
-  type: 'git'
+  type: string
   url: string
 }
 
@@ -70,7 +70,7 @@ export namespace PluginStoreSchemas {
 
   export const RegistryRepository = new Schema<PluginStoreRegistryRepository>(
     Schema.object({
-      type: Schema.union(['git']).required().default('git'),
+      type: Schema.string().required(),
       url: Schema.string().required(),
     })
   )

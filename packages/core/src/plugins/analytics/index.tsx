@@ -202,11 +202,19 @@ export class PluginAnalytics extends BasePlugin {
     ctx.on('quick-edit/submit', (payload) => {
       this.addEvent('quick-edit', 'submit', payload.wikiPage.title)
     })
-    ctx.on('quick-move/submit', (payload) => {
+    ctx.on('quick-move/submit', () => {
       this.addEvent('quick-move', 'submit')
     })
-    ctx.on('toolbox/button-clicked', (payload) => {
+    ctx.on('toolbox/button-clicked', ({ payload }) => {
       this.addEvent('toolbox', `button-clicked#${payload.id || 'unknown'}`)
+    })
+    ctx.on('plugin-store/plugin-installed', ({ registry, id, by }) => {
+      if (by === 'new-added') {
+        this.addEvent('plugin-store', 'plugin-installed', `${registry.name}#${id}`)
+      }
+    })
+    ctx.on('plugin-store/plugin-uninstalled', ({ registry, id }) => {
+      this.addEvent('plugin-store', 'plugin-uninstalled', `${registry.name}#${id}`)
     })
   }
 

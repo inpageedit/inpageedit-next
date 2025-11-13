@@ -13,6 +13,26 @@ declare module '@/InPageEdit' {
     'pluginStore.plugins': { source?: 'online_manifest' | 'npm'; registry: string; id: string }[]
     'pluginStore.cdnForNpm': string
   }
+  interface Events {
+    'plugin-store/registry-fetched'(payload: {
+      ctx: InPageEdit
+      registry: PluginStoreRegistry
+    }): void
+    'plugin-store/registry-not-found'(payload: { ctx: InPageEdit; registryUrl: string }): void
+    'plugin-store/registry-removed'(payload: { ctx: InPageEdit; registryUrl: string }): void
+    'plugin-store/plugin-installed'(payload: {
+      ctx: InPageEdit
+      registry: PluginStoreRegistry
+      id: string
+      // 新安装 or 通过用户配置加载
+      by: 'new-added' | 'user-preference'
+    }): void
+    'plugin-store/plugin-uninstalled'(payload: {
+      ctx: InPageEdit
+      registry: PluginStoreRegistry
+      id: string
+    }): void
+  }
 }
 
 export type PluginStoreRegistrySource = 'online_manifest' | 'npm'
@@ -95,7 +115,7 @@ export class PluginPluginStore extends BasePlugin {
       return
     }
     for (const pref of prefs) {
-      this.install(pref.registry, pref.id, pref.source)
+      this.install(pref.registry, pref.id, pref.source, 'user-preference')
     }
   }
 
@@ -189,7 +209,8 @@ export class PluginPluginStore extends BasePlugin {
   async install(
     registry: string,
     id: string,
-    source: PluginStoreRegistrySource = 'online_manifest'
+    source: PluginStoreRegistrySource = 'online_manifest',
+    _by: 'new-added' | 'user-preference' = 'new-added'
   ): Promise<ForkScope<InPageEdit> | null> {
     const registryInfo = await this.getRegistryInfo(registry, source)
     if (!registryInfo) {
@@ -203,7 +224,16 @@ export class PluginPluginStore extends BasePlugin {
     // 2) 把 registry 原始 URL 传进去，供 URL 解析使用
     const scope = this._installOneByRegistryInfo(registry, registryInfo, id)
     this._installedPlugins.set(key, scope)
-    return await scope
+    const fork = await scope
+    if (fork) {
+      this.ctx.emit('plugin-store/plugin-installed', {
+        ctx: this.ctx,
+        registry: registryInfo,
+        id,
+        by: _by,
+      })
+    }
+    return fork
   }
   async uninstall(registry: string, id: string): Promise<boolean> {
     const promise = this._installedPlugins.get(`${registry}#${id}`)
@@ -213,7 +243,20 @@ export class PluginPluginStore extends BasePlugin {
     this._installedPlugins.delete(`${registry}#${id}`)
     const scope = await promise
     if (scope) {
-      return scope.dispose?.() ?? true // disposed successfully
+      const disposed = scope.dispose?.() ?? true // disposed successfully
+      try {
+        const registryInfo =
+          (await this.getRegistryCache(registry)) ||
+          (await this.getRegistryInfo(registry).catch(() => null))
+        if (registryInfo) {
+          this.ctx.emit('plugin-store/plugin-uninstalled', {
+            ctx: this.ctx,
+            registry: registryInfo,
+            id,
+          })
+        }
+      } catch {}
+      return disposed
     }
     return true // not a plugin, just removed from the list
   }
@@ -241,7 +284,7 @@ export class PluginPluginStore extends BasePlugin {
 
   async installAndSetPreference(registry: string, id: string) {
     await this.addToPreferences(registry, id)
-    return this.install(registry, id)
+    return this.install(registry, id, 'online_manifest', 'new-added')
   }
   async uninstallAndRemovePreference(registry: string, id: string) {
     await this.removeFromPreferences(registry, id)
@@ -403,6 +446,10 @@ export class PluginPluginStore extends BasePlugin {
 
     const info = await this.getRegistryCache(registry)
     if (!info) {
+      this.ctx.emit('plugin-store/registry-not-found', {
+        ctx: this.ctx,
+        registryUrl: registry,
+      })
       throw new Error(`Failed to fetch registry info: ${registry}`)
     }
     return info
@@ -426,6 +473,11 @@ export class PluginPluginStore extends BasePlugin {
       const response = await fetch(registry, payload)
       const data = await response.json()
       const validated = this.validateRegistry(data)
+      // 成功在线获取并校验后触发事件
+      this.ctx.emit('plugin-store/registry-fetched', {
+        ctx: this.ctx,
+        registry: validated,
+      })
       return validated
     }
     const promise = task()
@@ -451,6 +503,10 @@ export class PluginPluginStore extends BasePlugin {
   }
   private async deleteRegistryCache(registry: string) {
     await this.regInfoDB.delete(registry)
+    this.ctx.emit('plugin-store/registry-removed', {
+      ctx: this.ctx,
+      registryUrl: registry,
+    })
   }
   async clearAllRegistryCaches() {
     await this.regInfoDB.clear()
