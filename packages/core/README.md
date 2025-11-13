@@ -6,15 +6,15 @@
 
 🚀 MediaWiki 的模块化、可扩展超级增强插件
 
-**InPageEdit NEXT**是由机智的小鱼君开发的一款 MediaWiki 多功能插件。主要功能旨在使许多 MediaWiki 的功能在不打开新标签页的情况下完成(包括但不限于编辑)，极大加快维护 wiki 的速度。模块化设计、类型定义清晰完整，插件可自由热插拔。
+**InPageEdit NEXT** 是由机智的小鱼君开发的一款 MediaWiki 多功能插件。主要功能旨在使许多 MediaWiki 的功能在不打开新标签页的情况下完成(包括但不限于编辑)，极大加快维护 wiki 的速度。模块化设计、类型定义清晰完整，插件可自由热插拔。
 
 → <https://www.ipe.wiki> ←
+
+[![](https://data.jsdelivr.com/v1/package/npm/@inpageedit/core/badge)](https://www.jsdelivr.com/package/npm/@inpageedit/core) [![Crowdin](https://badges.crowdin.net/inpageedit/localized.svg)](https://crowdin.com/project/inpageedit)
 
 </div>
 
 ## 快速上手 / Quick Start
-
-[![](https://data.jsdelivr.com/v1/package/npm/@inpageedit/core/badge)](https://www.jsdelivr.com/package/npm/@inpageedit/core)
 
 在*个人 JS 页*添加以下代码：
 
@@ -43,7 +43,7 @@ document.body.append(
 
 - 可热插拔的模块化设计
 - 完全使用 TypeScript 编写
-- 超简单的扩展能力，示例插件：[hello-world](./docs/.templates/examples/plugins/hello-world.js)
+- 超简单的扩展能力：[示例插件](https://github.com/inpageedit/plugin-registry/tree/master/packages/_boilerplate)
 
 ## Supported languages
 
@@ -57,6 +57,7 @@ document.body.append(
 - Português do Brasil (pt_BR)
 - **中文(简体) (zh-Hans)**
 - 中文(繁體) (zh-Hant)
+- _(and more, using machine translation...)_
 
 [Help us translate](https://crowdin.com/project/inpageedit)
 
