@@ -166,6 +166,8 @@ export class I18nService extends Service {
       }).description('UI language')
     )
 
+    this.ctx.on('clear-cache', this.onClearCache.bind(this))
+
     const indexUrl = (this._indexUrl = (await this.ctx.preferences.get('i18n.index_url')) || '')
     if (!indexUrl) {
       this.logger.error('I18n index URL is not set')
@@ -382,5 +384,10 @@ export class I18nService extends Service {
    */
   clearMissingReport() {
     this.manager.clearMissingReport()
+  }
+
+  private async onClearCache() {
+    await this.i18nIndexDB.clear()
+    await this.i18nDataDB.clear()
   }
 }

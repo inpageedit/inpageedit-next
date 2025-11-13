@@ -10,6 +10,13 @@ declare module '@/InPageEdit' {
     getSciprtUrl: WikiMetadataService['getSciprtUrl']
     getMainpageUrl: WikiMetadataService['getMainpageUrl']
   }
+  interface Events {
+    /**
+     * Application requires to clear caches and reload the page
+     * If returns true, the page will not be reloaded
+     */
+    'clear-cache'(): AwaitAble<boolean | void>
+  }
 }
 
 interface WikiMetadataKindMap {
@@ -69,6 +76,7 @@ export class WikiMetadataService extends Service {
     await Promise.all(
       Object.keys(this.QUERY_DATA).map((key) => this.initData(key as keyof WikiMetadataKindMap))
     )
+    this.ctx.on('clear-cache', this.onClearCache.bind(this))
 
     this.ctx.set('getUrl', this.getUrl.bind(this))
     this.ctx.set('getSciprtUrl', this.getSciprtUrl.bind(this))
@@ -99,15 +107,12 @@ export class WikiMetadataService extends Service {
                 </p>
                 <button
                   className="btn danger"
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.preventDefault()
-                    Promise.all(
-                      Object.keys(this.QUERY_DATA).map((key) =>
-                        this.invalidateCache(key as keyof WikiMetadataKindMap)
-                      )
-                    ).then(() => {
+                    const prevent = await ctx.serial('clear-cache')
+                    if (!prevent) {
                       window.location.reload()
-                    })
+                    }
                   }}
                 >
                   🧹 {$`Clear caches & Reload`}
@@ -180,6 +185,9 @@ export class WikiMetadataService extends Service {
   async invalidateCache<T extends keyof WikiMetadataKindMap>(kind: T) {
     const key = this.getCacheKey(kind)
     return this.CACHE_DB.delete(key)
+  }
+  private async onClearCache() {
+    await this.CACHE_DB.clear()
   }
 
   // ====== shortcuts ======
