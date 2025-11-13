@@ -23,6 +23,12 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.14.1'>
+
+- 修复了一些小问题，提升了项目的整体质量。
+
+</ChangeLog>
+
 <ChangeLog version='0.14.0'>
 
 <template #title>0.14.0 <Badge type='rainbow'>重量级</Badge></template>
