@@ -23,6 +23,15 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.14.3'>
+
+- feat(core): update canonical URL retrieval to include alternate hreflang
+  - 修复了位于语言变体页面上的条目无法正确解析 canonical URL 的问题
+- fix: enhance quickEdit submission error handling
+  - 优化了快速编辑提交时的错误处理逻辑，部分提交错误现在允许选择忽略并重新提交
+
+</ChangeLog>
+
 <ChangeLog version='0.14.2'>
 
 - 修复了一些小问题，提升了项目的整体质量。
