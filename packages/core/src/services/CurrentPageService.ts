@@ -75,7 +75,10 @@ export class CurrentPageService extends Service {
     return this.url.searchParams
   }
   get canonicalUrl() {
-    const href = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
+    const href = (
+      qs<HTMLLinkElement>('link[rel="alternate"][hreflang="x-default"]') ||
+      qs<HTMLLinkElement>('link[rel="canonical"]')
+    )?.href
     let url: URL | null = null
     if (href) {
       url = new URL(href, location.origin)
