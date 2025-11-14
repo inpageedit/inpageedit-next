@@ -10,6 +10,10 @@ export interface WikiPageEditPayload {
   summary?: string
   watchlist?: WatchlistAction
   section?: number | 'new' | undefined
+  createonly?: boolean
+  recreate?: boolean
+  starttimestamp?: string
+  baserevid?: number
 }
 
 export interface IWikiPage {
@@ -20,11 +24,15 @@ export interface IWikiPage {
     params?: MwApiParams
   ): Promise<FexiosFinalContext<MwApiResponse<{ parse: PageParseData }>>>
   edit(
-    payload: WikiPageEditPayload,
+    payload: WikiPageEditPayload & MwApiParams,
+    /** @deprecated Append params in `payload` instead */
     params?: MwApiParams
   ): Promise<FexiosFinalContext<MwApiResponse<{ success: boolean }>>>
   createOnly(
-    payload: { text: string } & Pick<WikiPageEditPayload, 'summary' | 'watchlist'>,
+    payload: Pick<WikiPageEditPayload, 'summary' | 'watchlist'> & {
+      text: string
+      recreate?: boolean
+    },
     params?: MwApiParams
   ): Promise<FexiosFinalContext<MwApiResponse<{ success: boolean }>>>
   delete(
@@ -229,34 +237,24 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
         ...params,
       })
     }
-    async edit(payload: WikiPageEditPayload, params?: MwApiParams) {
-      const {
-        text,
-        prependtext,
-        appendtext,
-        summary = '',
-        watchlist = WatchlistAction.preferences,
-        section,
-      } = payload
+    async edit(payload: WikiPageEditPayload & MwApiParams, params?: MwApiParams) {
       return this.api.postWithEditToken({
         action: 'edit',
         title: this.title,
         starttimestamp: this.pageInfo.touched,
         basetimestamp: this.revisions[0]?.timestamp,
-        text,
-        prependtext,
-        appendtext,
-        summary,
-        watchlist,
-        section,
+        ...payload,
         ...params,
       })
     }
     async createOnly(
-      payload: { text: string; summary?: string; watchlist?: WatchlistAction },
+      payload: Pick<WikiPageEditPayload, 'summary' | 'watchlist'> & {
+        text: string
+        recreate?: boolean
+      },
       params?: MwApiParams
     ) {
-      return this.edit(payload, { createonly: 1, ...params })
+      return this.edit(payload, { createonly: 1, recreate: payload.recreate, ...params })
     }
     async delete(reason?: string, params?: MwApiParams & { deletetalk?: boolean }) {
       return this.api.postWithEditToken<{

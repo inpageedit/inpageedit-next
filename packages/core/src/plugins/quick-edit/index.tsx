@@ -4,6 +4,7 @@ import { WatchlistAction } from '@/models/WikiPage/types/WatchlistAction'
 import { IPEModal } from '@inpageedit/modal'
 import { ReactNode } from 'jsx-dom'
 import { makeCallable } from '@/utils/makeCallable.js'
+import { MediaWikiApiError } from 'wiki-saikou'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -58,6 +59,7 @@ export interface QuickEditSubmitPayload {
   section?: number | 'new' | undefined
   minor?: boolean
   createonly?: boolean
+  recreate?: boolean
   watchlist?: WatchlistAction
 }
 
@@ -370,14 +372,15 @@ export class PluginQuickEdit extends BasePlugin {
       </form>
     ) as HTMLFormElement
     modal.setContent(editForm)
-    // shamefully fix: make sure the submit button is always the first
+
+    let dismissWarnings = false
     modal.addButton(
       {
         side: 'left',
         className: 'is-primary submit-btn',
         label: $`Submit`,
         keyPress: (await this.ctx.preferences.get('quickEdit.keyshortcut.save')) || undefined,
-        method: () => {
+        method: async () => {
           const formData = new FormData(editForm)
           console.info(wikiPage, editForm, {
             text: formData.get('text') as string,
@@ -385,36 +388,66 @@ export class PluginQuickEdit extends BasePlugin {
             minor: formData.get('minor') === 'on',
           })
           modal.setLoadingState(true)
-          this.handleSubmit({
-            wikiPage,
-            text: formData.get('text') as string,
-            summary: formData.get('summary') as string,
-            minor: formData.get('minor') === 'on',
-            section: options.section,
-            createonly: wikiPage.pageid === 0,
-            watchlist: watchList,
-          })
-            .then(async () => {
-              modal.setOptions({
-                beforeClose: noop,
-              })
-              modal.close()
-              this.ctx.modal.notify('success', {
-                title: $`Submission Successful`,
-                content: $`Your changes have been saved.`,
-              })
-              if (formData.get('reloadAfterSave')) {
-                await sleep(500)
-                location.reload()
+
+          try {
+            await this.handleSubmit({
+              wikiPage,
+              text: formData.get('text') as string,
+              summary: formData.get('summary') as string,
+              minor: formData.get('minor') === 'on',
+              section: options.section,
+              watchlist: watchList,
+              // 如果无视风险，那么就不再尝试解决冲突，直接重建页面
+              createonly: wikiPage.pageid === 0 && !dismissWarnings,
+              recreate: wikiPage.pageid === 0 && dismissWarnings,
+            })
+
+            modal.setOptions({
+              beforeClose: noop,
+            })
+            modal.close()
+
+            this.ctx.modal.notify('success', {
+              title: $`Submission Successful`,
+              content: $`Your changes have been saved.`,
+            })
+
+            if (formData.get('reloadAfterSave')) {
+              await sleep(500)
+              location.reload()
+            }
+          } catch (error) {
+            modal.setLoadingState(false)
+
+            if (MediaWikiApiError.is(error)) {
+              if (
+                error.code === 'pagedeleted' ||
+                error.code === 'editconflict' ||
+                error.code === 'articleexists'
+              ) {
+                dismissWarnings = true
+                this.ctx.modal.notify('warning', {
+                  title: $`Submission Error`,
+                  content: (
+                    <div>
+                      <p>
+                        <strong>{error.message}</strong>
+                      </p>
+                      <p>{$`You can try to submit again to dismiss the warnings.`}</p>
+                    </div>
+                  ),
+                  closeAfter: 15 * 1000,
+                })
+                return // can be dismissed by re-submission
               }
+            }
+
+            // Errors not handled above
+            this.ctx.modal.notify('error', {
+              title: $`Submission Error`,
+              content: error instanceof Error ? error.message : String(error),
             })
-            .catch((error) => {
-              this.ctx.modal.notify('error', {
-                title: $`Submission Error`,
-                content: error instanceof Error ? error.message : String(error),
-              })
-              modal.setLoadingState(false)
-            })
+          }
         },
       },
       0
@@ -476,36 +509,17 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   async handleSubmit(payload: QuickEditSubmitPayload) {
-    const wikiPage = payload.wikiPage
-    const summary = payload.summary || ''
-    const text = payload.text || ''
-    const minor = payload.minor
-    const createonly = payload.createonly
-    const watchlist = payload.watchlist
-    const section = payload.section
+    const { wikiPage, ...rest } = payload
 
     this.ctx.emit('quick-edit/submit', {
       ctx: this.ctx,
       wikiPage,
-      summary,
-      text,
-      minor,
-      createonly,
-      watchlist,
+      ...rest,
     })
 
-    return wikiPage.edit(
-      {
-        summary,
-        text,
-        watchlist,
-        section,
-      },
-      {
-        minor,
-        createonly,
-      }
-    )
+    return wikiPage.edit({
+      ...rest,
+    })
   }
 
   static readonly BUILT_IN_FONT_OPTIONS = ['preferences', 'monospace', 'sans-serif', 'serif']
