@@ -51,9 +51,25 @@ async function autoload(
   await ipe.start()
 
   // Trigger the mw.hook
-  window.RLQ.push(() => {
-    mw.hook('InPageEdit.ready').fire(ipe)
-  })
+  window.RLQ.push([
+    'mediawiki.util',
+    () => {
+      const fireHook = () => {
+        if (typeof mw?.hook === 'function') {
+          mw.hook('InPageEdit.ready').fire(ipe)
+          return true
+        }
+        return false
+      }
+      if (!fireHook()) {
+        const interval = window.setInterval(() => {
+          if (fireHook()) {
+            window.clearInterval(interval)
+          }
+        }, 77)
+      }
+    },
+  ])
 
   // Initialize global modules
   if (Array.isArray(window.__IPE_MODULES__)) {
