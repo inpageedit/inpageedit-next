@@ -262,7 +262,7 @@
 
   svg.icon {
     height: 1em;
-    height: 1lh;
+    height: max(1em, 1lh);
     width: auto;
     vertical-align: middle;
   }
