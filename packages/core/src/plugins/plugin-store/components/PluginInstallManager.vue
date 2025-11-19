@@ -6,7 +6,7 @@
       input.ipeps-input.with-icon(
         v-model.trim='searchInput',
         type='text',
-        placeholder='{{ $`Search plugins...` }}',
+        :placeholder='$`Search plugins...`',
         :disabled='!pluginsFromRegistries.length'
       )
       .ipeps-input-icon 🔍

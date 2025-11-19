@@ -148,7 +148,11 @@ async function onRemoveRegistry(url: string) {
     {
       title: $$`plugin-store.remove-registry.title`,
       content: h('div', { class: 'theme-ipe-prose' }, [
-        h('p', {}, $$({ $1: installedOfReg.length })`plugin-store.remove-registry.confirm-content`),
+        h(
+          'p',
+          {},
+          $$({ count: installedOfReg.length })`plugin-store.remove-registry.confirm-content`
+        ),
         h(
           'ul',
           {},
