@@ -1,0 +1,51 @@
+name: 改进建议 / Enhancement Suggestion
+description: 提出现有功能的改进想法 / Suggest an improvement to existing functionality
+title: '[ENHANCEMENT] ${{ values.description }}'
+labels: ['Enhancement']
+assignees: ['dragon-fish']
+
+body:
+  - type: input
+    id: description
+    attributes:
+      label: 简述 / Short Description
+      description: 用一句话概括你想要改进的内容 / One-sentence summary of the enhancement
+      placeholder: 'e.g. Make the UI look more like retro vaporwave dashboards'
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 遇到的问题 / What’s the issue?
+      description: 描述你在当前功能中遇到的不足或想改善的点 / Describe what feels lacking or problematic right now
+      placeholder: 'e.g. Current UI does not summon enough neon nostalgia'
+    validations:
+      required: true
+
+  - type: textarea
+    id: improvement
+    attributes:
+      label: 改进方向 / Suggested Improvement
+      description: 说明你希望功能如何改变 / Describe how you’d like the feature to be improved
+      placeholder: 'e.g. I want the UI to adopt a retro vaporwave aesthetic with excessive pink grids'
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: 改进需求 / Enhancement Requirements
+      description: 说明此改进应具备的具体行为或效果 / Describe the expected behavior or requirements
+      placeholder: |
+        e.g.:
+        - Background should glow softly like a 1980s synth album cover
+        - Buttons should emit a gentle “vhs static” aura
+      render: markdown
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充说明 / Additional Context
+      description: 添加与你的改进建议相关的其他信息 / Add any additional context
+      placeholder: 'e.g. I once saw a vaporwave UI in a dream and now I can’t go back'

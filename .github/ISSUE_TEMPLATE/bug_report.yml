@@ -1,0 +1,120 @@
+name: 故障反馈 / Bug Report
+description: 我想汇报一个程序错误 / I want to report a program error
+title: '[BUG] core:${{ values.version }} ${{ values.description }}'
+labels: ['Bug']
+assignees: ['dragon-fish']
+
+body:
+  - type: input
+    id: description
+    attributes:
+      label: 简述 / Short Description
+      description: 请用一句话概括你遇到的故障 / One-sentence summary of the bug
+      placeholder: 'e.g. After clicking the edit button, my computer suddenly became hostile and attacked me'
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 重现步骤 / Steps to Reproduce
+      description: 请提供重现此故障的步骤 / Provide steps to reproduce the bug
+      placeholder: |
+        e.g.:
+        1. Click the edit button
+        2. The computer fans suddenly start spinning like a jet engine
+        3. The whole machine lifts off from the desk
+        4. I shout “Helicopter, helicopter?!”
+        5. The computer extends a hand and punches me
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 本应出现的情况 / Expected Behavior
+      description: 请描述你原本期待的行为 / Describe what you expected to happen
+      placeholder: 'e.g. I expected the browser to not physically assault me'
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: InPageEdit 版本 / Version
+      description: 你使用的 InPageEdit 版本号 / The version of InPageEdit you're using
+      placeholder: 'e.g. 1.1.4 or 1.9.1-beta.9'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统 / Operating System
+      description: 你使用的操作系统 / The operating system you are using
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iOS
+        - 其他 / Other
+    validations:
+      required: true
+
+  - type: input
+    id: os_custom
+    attributes:
+      label: 系统详情（如选择“其他”） / OS Details (if "Other")
+      placeholder: 'e.g. Chrome OS'
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: 浏览器 / Browser
+      description: 你使用的浏览器 / The browser you are using
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Opera
+        - 其他 / Other
+    validations:
+      required: true
+
+  - type: input
+    id: browser_custom
+    attributes:
+      label: 浏览器详情（如选择“其他”） / Browser Details (if "Other")
+      placeholder: 'e.g. Brave'
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图或日志 / Screenshots or Logs
+      description: 如有，请添加截图或日志以协助说明问题 / If applicable, add screenshots or logs
+      placeholder: 'Drag images here or paste image links'
+      render: markdown
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充说明 / Additional Context
+      description: 添加任何其他上下文信息 / Add any additional context about the problem
+      placeholder: 'e.g. Console errors, network requests, stack traces'
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: 确认事项 / Confirmations
+      description: 请确认以下内容 / Please confirm the following
+      options:
+        - label: 我正在使用最新发布的 IPE。 / I confirm I am using the latest IPE release.
+          required: true
+        - label: 我已在 issues 列表中搜索，没有找到相同问题。 / I have searched existing issues and found no duplicates.
+          required: true
+        - label: 我理解 IPE 面向 LTS MediaWiki 与现代浏览器设计，旧版本可能无法支持。 / I understand IPE targets LTS MediaWiki and modern browsers.
+          required: true
+        - label: 我确认问题不是由站点或个人 CSS/JS 或皮肤导致（默认皮肤除外）。 / I confirm the issue is not caused by site-wide or personal CSS/JS or skins.
+          required: true

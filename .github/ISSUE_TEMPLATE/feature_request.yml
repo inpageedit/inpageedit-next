@@ -1,0 +1,59 @@
+name: 功能请求 / Feature Request
+description: 提出新功能的想法 / Suggest a new feature for this project
+title: '[FEATURE] ${{ values.description }}'
+labels: ['Enhancement']
+assignees: ['dragon-fish']
+
+body:
+  - type: input
+    id: description
+    attributes:
+      label: 简述 / Short Description
+      description: 用一句话概括你想要的新功能 / One-sentence summary of the feature
+      placeholder: 'e.g. Add a “meow” button that meows once when clicked'
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: 使用场景 / Use Case
+      description: 描述这个功能会在什么情况下被使用 / Describe when and how this feature would be used
+      placeholder: 'e.g. When users need emotional support from a kemonomimi'
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: 为什么需要此功能？ / Why is this needed?
+      description: 说明此功能解决了什么问题或带来了什么价值 / Explain why this feature is useful or necessary
+      placeholder: 'e.g. It improves user happiness by 0.0001% under laboratory conditions'
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: 功能需求 / Feature Requirements
+      description: 描述此功能应具备的具体行为或要求 / Describe what this feature should do
+      placeholder: |
+        e.g.:
+        - Button should meow politely
+        - Volume should not exceed “mildly startling”
+      render: markdown
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 参考或示例 / Screenshots or Examples
+      description: 如有，请附上示例、链接或截图 / If applicable, add screenshots, mockups or references
+      placeholder: 'e.g. A drawing of a cat button you made in MS Paint'
+      render: markdown
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充说明 / Additional Context
+      description: 添加任何与此功能请求相关的额外信息 / Add any additional context
+      placeholder: 'e.g. This idea came to me in a dream at 3 AM'
