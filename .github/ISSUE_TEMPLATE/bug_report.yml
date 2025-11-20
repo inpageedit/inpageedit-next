@@ -1,6 +1,6 @@
 name: 故障反馈 / Bug Report
 description: 我想汇报一个程序错误 / I want to report a program error
-title: '[BUG] core:${{ values.version }} ${{ values.description }}'
+title: '[BUG] @${{ values.version }} ${{ values.description }}'
 labels: ['Bug']
 assignees: ['dragon-fish']
 
@@ -95,7 +95,6 @@ body:
       label: 截图或日志 / Screenshots or Logs
       description: 如有，请添加截图或日志以协助说明问题 / If applicable, add screenshots or logs
       placeholder: 'Drag images here or paste image links'
-      render: markdown
 
   - type: textarea
     id: additional
@@ -118,3 +117,5 @@ body:
           required: true
         - label: 我确认问题不是由站点或个人 CSS/JS 或皮肤导致（默认皮肤除外）。 / I confirm the issue is not caused by site-wide or personal CSS/JS or skins.
           required: true
+        - label: 我愿意为此问题提供一个 PR。 / I'd like to provide a PR for this issue.
+        - label: 虽然我不太熟悉 TypeScript，我也不确定我的代码能否通过测试，但我愿意尝试！ / I'm not familiar with TypeScript, and I'm not sure if my code can pass the tests, but I'd like to try.

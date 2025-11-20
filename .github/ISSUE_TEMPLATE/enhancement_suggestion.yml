@@ -14,6 +14,15 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: module
+    attributes:
+      label: 模块 / Module
+      description: 你想要改进的模块 / The module you want to improve
+      placeholder: 'e.g. core, quick-edit, quick-preview, etc.'
+    validations:
+      required: true
+
   - type: textarea
     id: problem
     attributes:
@@ -24,24 +33,19 @@ body:
       required: true
 
   - type: textarea
-    id: improvement
+    id: goals
     attributes:
-      label: 改进方向 / Suggested Improvement
+      label: 改进目标 / Improvement Goals
       description: 说明你希望功能如何改变 / Describe how you’d like the feature to be improved
-      placeholder: 'e.g. I want the UI to adopt a retro vaporwave aesthetic with excessive pink grids'
-    validations:
-      required: true
-
-  - type: textarea
-    id: requirements
-    attributes:
-      label: 改进需求 / Enhancement Requirements
-      description: 说明此改进应具备的具体行为或效果 / Describe the expected behavior or requirements
       placeholder: |
         e.g.:
-        - Background should glow softly like a 1980s synth album cover
-        - Buttons should emit a gentle “vhs static” aura
-      render: markdown
+        - I want the UI to adopt a retro vaporwave aesthetic with excessive pink grids.
+
+        The final effect should achieve the following goals:
+        - [ ] Background should glow softly like a 1980s synth album cover
+        - [ ] Buttons should emit a gentle “vhs static” aura
+    validations:
+      required: true
 
   - type: textarea
     id: additional
@@ -49,3 +53,12 @@ body:
       label: 补充说明 / Additional Context
       description: 添加与你的改进建议相关的其他信息 / Add any additional context
       placeholder: 'e.g. I once saw a vaporwave UI in a dream and now I can’t go back'
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: 确认事项 / Confirmations
+      description: 请确认以下内容 / Please confirm the following
+      options:
+        - label: 我愿意为此问题提供一个 PR。 / I'd like to provide a PR for this issue.
+        - label: 虽然我不太熟悉 TypeScript，我也不确定我的代码是否能够通过测试，但我愿意尝试！ / I'm not familiar with TypeScript, and I'm not sure if my code can pass the tests, but I'd like to try.

@@ -57,3 +57,12 @@ body:
       label: 补充说明 / Additional Context
       description: 添加任何与此功能请求相关的额外信息 / Add any additional context
       placeholder: 'e.g. This idea came to me in a dream at 3 AM'
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: 确认事项 / Confirmations
+      description: 请确认以下内容 / Please confirm the following
+      options:
+        - label: 我愿意为此功能请求提供一个 PR。 / I'd like to provide a PR for this feature request.
+        - label: 虽然我不太熟悉 TypeScript，我也不确定我的代码是否能够通过测试，但我愿意尝试！ / I'm not familiar with TypeScript, and I'm not sure if my code can pass the tests, but I'd like to try.
