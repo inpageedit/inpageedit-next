@@ -23,6 +23,15 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.14.5'>
+
+- fix(in-article-links): checks for quick-edit hook to attach reliably (#12 by @t7ru)
+  - 修复了一个时序问题，即使 IPE 加载速度超快（比 mw 的文章渲染速度还快！），也会正确添加页内链™
+- fix(styles): update svg icon height to use max function for improved responsiveness
+  - 修复了一个导致编辑段落图标不可见的问题
+
+</ChangeLog>
+
 <ChangeLog version='0.14.4'>
 
 - 修复了一些小问题，提升了项目的整体质量。
