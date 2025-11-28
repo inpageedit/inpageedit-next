@@ -111,7 +111,29 @@ jobs:
             --no-git-checks \
             --tag '${{ steps.npm-tag.outputs.tag }}'
 
+      - name: Wait for NPM source to update
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          PKG_VERSION='${{ steps.package-version.outputs.version }}'
+          NPM_TAG='${{ steps.npm-tag.outputs.tag }}'
+          # 轮询直到指定 tag 的版本与发布版本一致
+          while true; do
+            tag_version=$(curl -s "https://registry.npmjs.org/@inpageedit/core/$NPM_TAG" | jq -r '.version' 2>/dev/null || echo "")
+            if [ -n "$tag_version" ] && [ "$tag_version" == "$PKG_VERSION" ]; then
+              echo "NPM source updated"
+              break
+            fi
+            if [ -z "$tag_version" ]; then
+              echo "Failed to fetch version from NPM registry, retrying..."
+            else
+              echo "Waiting for NPM source to update... (required $PKG_VERSION for tag $NPM_TAG, got $tag_version)"
+            fi
+            sleep 5
+          done
+
       - name: Purge jsDelivr cache
+        if: always()
         run: |
           set -u
 
