@@ -36,7 +36,7 @@ declare module '@/InPageEdit' {
 @RegisterPreferences(
   Schema.object({
     'quickPreview.keyshortcut': Schema.string()
-      .default('ctrl-p')
+      .default('ctrl-i')
       .description('Key shortcut to open quick preview in quick edit modal'),
   })
     .extra('category', 'editor')
