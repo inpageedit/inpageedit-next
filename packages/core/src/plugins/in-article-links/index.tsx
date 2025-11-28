@@ -147,6 +147,22 @@ export class PluginInArticleLinks extends BasePlugin<{
       ) as InArticleWikiAnchorMetadata[]
   }
 
+  private onContentReady(callback: ($content: JQuery<HTMLElement>) => void) {
+    const register = () => {
+      if (!window.mw) return
+      window.mw.hook('wikipage.content').add(callback)
+      const $content = (window as any).$?.('#mw-content-text')
+      if ($content?.length) callback($content)
+    }
+
+    if (window.mw && typeof window.mw.hook === 'function') {
+      register()
+    } else {
+      window.RLQ = window.RLQ || ([] as any)
+      window.RLQ.push(['mediawiki.base', register])
+    }
+  }
+
   async handleQuickEdit() {
     let enable = false
     const showButtonOnRedlinks = await this.ctx.preferences.get('inArticleLinks.quickEdit.redlinks')
@@ -157,7 +173,7 @@ export class PluginInArticleLinks extends BasePlugin<{
         enable = false
       })
 
-      window?.mw?.hook?.('wikipage.content').add(($content) => {
+      this.onContentReady(($content) => {
         if (!enable) {
           return
         }
@@ -252,7 +268,7 @@ export class PluginInArticleLinks extends BasePlugin<{
         enable = false
       })
 
-      window?.mw?.hook?.('wikipage.content').add(($content) => {
+      this.onContentReady(($content) => {
         if (!enable) {
           return
         }
