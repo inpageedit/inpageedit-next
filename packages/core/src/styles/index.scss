@@ -260,13 +260,6 @@
     }
   }
 
-  svg.icon {
-    height: 1em;
-    height: max(1em, 1lh);
-    width: auto;
-    vertical-align: middle;
-  }
-
   // shamefully fix
   .ipe-action-button {
     color: var(--text-color);
@@ -648,9 +641,10 @@
   }
 }
 
+.theme-ipe svg.icon,
 svg.ipe-icon {
-  height: 1em;
-  height: 1lh;
+  height: 1em; // for
+  height: max(1em, 1lh);
   width: auto;
   vertical-align: middle;
 }
