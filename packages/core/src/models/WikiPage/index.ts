@@ -1,20 +1,7 @@
 import type { PageInfo } from './types/PageInfo'
 import { PageParseData } from './types/PageParseData'
-import { WatchlistAction } from './types/WatchlistAction'
 import { MediaWikiApi, MwApiParams, MwApiResponse, FexiosFinalContext } from 'wiki-saikou/browser'
-
-export interface WikiPageEditPayload {
-  text?: string
-  prependtext?: string
-  appendtext?: string
-  summary?: string
-  watchlist?: WatchlistAction
-  section?: number | 'new' | undefined
-  createonly?: boolean
-  recreate?: boolean
-  starttimestamp?: string
-  baserevid?: number
-}
+import { WikiPageActionEditRequest, WikiPageActionEditResult } from './types/WikiPageActionEdit.js'
 
 export interface IWikiPage {
   pageInfo: PageInfo
@@ -24,17 +11,17 @@ export interface IWikiPage {
     params?: MwApiParams
   ): Promise<FexiosFinalContext<MwApiResponse<{ parse: PageParseData }>>>
   edit(
-    payload: WikiPageEditPayload & MwApiParams,
+    payload: WikiPageActionEditRequest & MwApiParams,
     /** @deprecated Append params in `payload` instead */
     params?: MwApiParams
-  ): Promise<FexiosFinalContext<MwApiResponse<{ success: boolean }>>>
+  ): Promise<FexiosFinalContext<MwApiResponse<{ edit: WikiPageActionEditResult }>>>
   createOnly(
-    payload: Pick<WikiPageEditPayload, 'summary' | 'watchlist'> & {
+    payload: Pick<WikiPageActionEditRequest, 'summary' | 'watchlist'> & {
       text: string
       recreate?: boolean
     },
     params?: MwApiParams
-  ): Promise<FexiosFinalContext<MwApiResponse<{ success: boolean }>>>
+  ): Promise<FexiosFinalContext<MwApiResponse<{ edit: WikiPageActionEditResult }>>>
   delete(
     reason?: string,
     params?: MwApiParams
@@ -237,8 +224,8 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
         ...params,
       })
     }
-    async edit(payload: WikiPageEditPayload & MwApiParams, params?: MwApiParams) {
-      return this.api.postWithEditToken({
+    async edit(payload: WikiPageActionEditRequest & MwApiParams, params?: MwApiParams) {
+      const response = await this.api.postWithEditToken<{ edit: WikiPageActionEditResult }>({
         action: 'edit',
         title: this.title,
         starttimestamp: this.pageInfo.touched,
@@ -246,9 +233,14 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
         ...payload,
         ...params,
       })
+      if (response.data?.edit?.result === 'Success') {
+        return response
+      } else {
+        return Promise.reject(response)
+      }
     }
     async createOnly(
-      payload: Pick<WikiPageEditPayload, 'summary' | 'watchlist'> & {
+      payload: Pick<WikiPageActionEditRequest, 'summary' | 'watchlist'> & {
         text: string
         recreate?: boolean
       },
