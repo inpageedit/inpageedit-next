@@ -39,3 +39,12 @@ document.body.append(
 > 2. `MediaWiki:Gadgets-definition` 中相关的行修改为 `* IPE-NEXT[ResourceLoader|rights=edit,skipcaptcha]|IPE-NEXT.js|IPE-NEXT.css`
 >
 > </details>
+>
+> <details>
+>
+> <summary>部分维基站点的启用/安装方法：</summary>
+>
+> 1. [萌娘百科](https://zh.moegirl.org.cn) ：该站点已经通过小工具（Gadget）预装了本插件。登录站点后，在站点的 [参数设置](https://zh.moegirl.org.cn/Special:%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE#mw-prefsection-gadgets)-编辑工具 中可直接勾选并启用。
+> 2. [灰机Wiki](https://www.huijiwiki.com/) ：该站大部分站点出于对安全的考虑，禁用了个人JS功能。要在该站点下的分站启用插件，需要在灰机workshop的[Manifest:InPageEdit](https://templatemanager.huijiwiki.com/p/799)页面手动安装零件到分站（需要开发者权限）。安装后在分站中点击头像-偏好设置-小零件勾选并为自己启用。
+>
+> </details>
