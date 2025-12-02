@@ -69,6 +69,9 @@ importers:
       '@types/jquery':
         specifier: ^3.5.33
         version: 3.5.33
+      '@types/markdown-it-footnote':
+        specifier: ^3.0.4
+        version: 3.0.4
       '@types/node':
         specifier: ^22.18.12
         version: 22.18.12
@@ -102,6 +105,9 @@ importers:
       jsx-dom:
         specifier: ^8.1.6
         version: 8.1.6
+      markdown-it-footnote:
+        specifier: ^4.0.0
+        version: 4.0.0
       markdown-it-task-lists:
         specifier: ^2.1.1
         version: 2.1.1
@@ -1638,6 +1644,9 @@ packages:
 
   '@types/lodash@4.17.20':
     resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
+
+  '@types/markdown-it-footnote@3.0.4':
+    resolution: {integrity: sha512-XJ6n+v+2u+2gmYLSHcxyoNT/YrgrKvHuDJQlykFjuxCQCr86P2/fx1V6/0lcKxv5cSIlCaJ6sUcNS3zDI7I+LA==}
 
   '@types/markdown-it@14.1.2':
     resolution: {integrity: sha512-promo4eFwuiW+TfGxhi+0x3czqTYJkG8qB17ZUJiVF10Xm7NLVRSLUsfRTU/6h1e24VvRnXCx+hG7li58lkzog==}
@@ -3316,6 +3325,9 @@ packages:
     engines: {node: '>=6'}
     peerDependencies:
       markdown-it: '>= 9.0.0'
+
+  markdown-it-footnote@4.0.0:
+    resolution: {integrity: sha512-WYJ7urf+khJYl3DqofQpYfEYkZKbmXmwxQV8c8mO/hGIhgZ1wOe7R4HLFNwqx7TjILbnC98fuyeSsin19JdFcQ==}
 
   markdown-it-task-lists@2.1.1:
     resolution: {integrity: sha512-TxFAc76Jnhb2OUu+n3yz9RMu4CwGfaT788br6HhEDlvWfdeJcLUsxk1Hgw2yJio0OXsxv7pyIPmvECY7bMbluA==}
@@ -6153,6 +6165,10 @@ snapshots:
 
   '@types/lodash@4.17.20': {}
 
+  '@types/markdown-it-footnote@3.0.4':
+    dependencies:
+      '@types/markdown-it': 14.1.2
+
   '@types/markdown-it@14.1.2':
     dependencies:
       '@types/linkify-it': 5.0.0
@@ -8033,6 +8049,8 @@ snapshots:
   markdown-it-attrs@4.3.1(markdown-it@14.1.0):
     dependencies:
       markdown-it: 14.1.0
+
+  markdown-it-footnote@4.0.0: {}
 
   markdown-it-task-lists@2.1.1: {}
 
