@@ -25,6 +25,7 @@
     "@shikijs/vitepress-twoslash": "^3.13.0",
     "@tabler/icons-vue": "^3.35.0",
     "@types/jquery": "^3.5.33",
+    "@types/markdown-it-footnote": "^3.0.4",
     "@types/node": "^22.18.12",
     "@types/ssi-modal": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
