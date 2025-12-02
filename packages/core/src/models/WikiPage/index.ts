@@ -244,8 +244,8 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
       } else {
         /**
          * This situation is rare, but it may happen.
-         * In most cases, failed edit will return a MediaWikiApiError { "error": { "code": "editconflict", "info": "..." } }, but not this.
-         * So we need to throw the response directly.
+         * In most cases, failed edit will throw a MediaWikiApiError like `{ "error": { "code": "editconflict", "info": "..." } }`, but not `{ "edit": { "result": "Failure" } }`.
+         * We need to build a MediaWikiApiError manually.
          * @see https://github.com/inpageedit/inpageedit-next/issues/13
          */
         throw new MediaWikiApiError(

@@ -1,7 +1,7 @@
 import { WatchlistAction } from './WatchlistAction.js'
 
 /**
- * Result of MediaWiki edit action
+ * Request body of MediaWiki edit action
  * @see https://www.mediawiki.org/wiki/API:Edit
  */
 export interface WikiPageActionEditRequest {
