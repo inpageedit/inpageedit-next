@@ -1,6 +1,12 @@
 import type { PageInfo } from './types/PageInfo'
 import { PageParseData } from './types/PageParseData'
-import { MediaWikiApi, MwApiParams, MwApiResponse, FexiosFinalContext } from 'wiki-saikou/browser'
+import {
+  MediaWikiApi,
+  MwApiParams,
+  MwApiResponse,
+  FexiosFinalContext,
+  MediaWikiApiError,
+} from 'wiki-saikou/browser'
 import { WikiPageActionEditRequest, WikiPageActionEditResult } from './types/WikiPageActionEdit.js'
 
 export interface IWikiPage {
@@ -236,7 +242,13 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
       if (response.data?.edit?.result === 'Success') {
         return response
       } else {
-        return Promise.reject(response)
+        /**
+         * This situation is rare, but it may happen.
+         * In most cases, failed edit will return a MediaWikiApiError { "error": { "code": "editconflict", "info": "..." } }, but not this.
+         * So we need to throw the response directly.
+         * @see https://github.com/inpageedit/inpageedit-next/issues/13
+         */
+        throw response
       }
     }
     async createOnly(

@@ -1,5 +1,9 @@
 import { WatchlistAction } from './WatchlistAction.js'
 
+/**
+ * Result of MediaWiki edit action
+ * @see https://www.mediawiki.org/wiki/API:Edit
+ */
 export interface WikiPageActionEditRequest {
   text?: string
   prependtext?: string
@@ -13,11 +17,15 @@ export interface WikiPageActionEditRequest {
   baserevid?: number
 }
 
+/**
+ * Result of MediaWiki edit action
+ * @see https://www.mediawiki.org/wiki/API:Edit
+ */
 export interface WikiPageActionEditResult {
-  result: 'Success' | 'Failure' | 'Warning' | 'Error'
+  result: 'Success' | 'Failure'
   pageid: number
   title: string
   contentmodel: string
-  nochange: boolean
-  watched: boolean
+  nochange?: boolean
+  watched?: boolean
 }
