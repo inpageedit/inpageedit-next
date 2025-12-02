@@ -248,7 +248,17 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
          * So we need to throw the response directly.
          * @see https://github.com/inpageedit/inpageedit-next/issues/13
          */
-        throw response
+        throw new MediaWikiApiError(
+          [
+            {
+              module: 'edit',
+              code: 'editfailure',
+              text: 'Unknown edit failure. Please try again.',
+              docref: 'https://www.mediawiki.org/wiki/API:Edit',
+            },
+          ],
+          response
+        )
       }
     }
     async createOnly(
