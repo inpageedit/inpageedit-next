@@ -18,6 +18,7 @@ import {
   groupIconVitePlugin,
   localIconLoader,
 } from 'vitepress-plugin-group-icons'
+import MarkdownItFootnote from 'markdown-it-footnote'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import ts from 'typescript'
@@ -77,6 +78,7 @@ export default withMermaid(
         md.use(taskLists)
         md.use(InlineLinkPreviewElementTransform)
         md.use(groupIconMdPlugin)
+        md.use(MarkdownItFootnote)
       },
       codeTransformers: [
         // {

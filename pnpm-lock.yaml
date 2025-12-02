@@ -32,6 +32,9 @@ importers:
 
   docs:
     dependencies:
+      markdown-it-footnote:
+        specifier: ^4.0.0
+        version: 4.0.0
       naive-ui:
         specifier: ^2.43.1
         version: 2.43.1(vue@3.5.22(typescript@5.9.3))
@@ -3316,6 +3319,9 @@ packages:
     engines: {node: '>=6'}
     peerDependencies:
       markdown-it: '>= 9.0.0'
+
+  markdown-it-footnote@4.0.0:
+    resolution: {integrity: sha512-WYJ7urf+khJYl3DqofQpYfEYkZKbmXmwxQV8c8mO/hGIhgZ1wOe7R4HLFNwqx7TjILbnC98fuyeSsin19JdFcQ==}
 
   markdown-it-task-lists@2.1.1:
     resolution: {integrity: sha512-TxFAc76Jnhb2OUu+n3yz9RMu4CwGfaT788br6HhEDlvWfdeJcLUsxk1Hgw2yJio0OXsxv7pyIPmvECY7bMbluA==}
@@ -8033,6 +8039,8 @@ snapshots:
   markdown-it-attrs@4.3.1(markdown-it@14.1.0):
     dependencies:
       markdown-it: 14.1.0
+
+  markdown-it-footnote@4.0.0: {}
 
   markdown-it-task-lists@2.1.1: {}
 

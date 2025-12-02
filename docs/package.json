@@ -55,6 +55,7 @@
     "wiki-saikou": "^7.1.2"
   },
   "dependencies": {
+    "markdown-it-footnote": "^4.0.0",
     "naive-ui": "^2.43.1",
     "schemastery": "^3.17.1",
     "schemastery-form": "^0.2.1",
