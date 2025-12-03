@@ -1,0 +1,41 @@
+.ipe-quickUpload {
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    input[type='file'] {
+      width: 100%;
+    }
+  }
+
+  &__preview {
+    text-align: center;
+    margin-bottom: 1rem;
+
+    &-placeholder {
+      display: inline-block;
+      width: 200px;
+      height: 200px;
+      max-width: 100%;
+      background-color: rgba(128, 128, 128, 0.1);
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+
+    &-info {
+      text-align: start;
+    }
+
+    img,
+    video,
+    audio,
+    iframe {
+      max-width: 100%;
+      width: 200px;
+      height: auto;
+      object-fit: contain;
+      cursor: pointer;
+    }
+  }
+}

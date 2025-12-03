@@ -28,8 +28,12 @@ export class WikiTitleService extends Service {
   }
   private readonly logger = this.ctx.logger('WikiTitleService')
 
-  newTitle(title: string, namespace?: number) {
-    return new this.Title(title, namespace)
+  newTitle(title: string | IWikiTitle, namespace?: number) {
+    if (typeof title === 'string') {
+      return new this.Title(title, namespace)
+    } else {
+      return title
+    }
   }
   newMainPageTitle() {
     return this.newTitle(this.ctx.wiki.mainPageName)

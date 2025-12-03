@@ -14,6 +14,7 @@ declare global {
   const Endpoints: typeof import('./constants/endpoints')['Endpoints']
   const IPEInjectKey: typeof import('./utils/vueHooks')['IPEInjectKey']
   const IconEdit: typeof import('./components/Icon/IconEdit')['IconEdit']
+  const IconQuickDiff: typeof import('./components/Icon/IconQuickDiff')['IconQuickDiff']
   const IconQuickEdit: typeof import('./components/Icon/IconQuickEdit')['IconQuickEdit']
   const InputBox: typeof import('./components/InputBox')['InputBox']
   const MBox: typeof import('./components/MBox/index')['MBox']
@@ -33,18 +34,23 @@ declare global {
   const deepToRaw: typeof import('./utils/vueReactivity')['deepToRaw']
   const defineAsyncPlugin: typeof import('./utils/defineAsyncPlugin')['defineAsyncPlugin']
   const ensureSlash: typeof import('./utils/string')['ensureSlash']
+  const hmacSHA1: typeof import('./utils/hash')['hmacSHA1']
   const injectIPE: typeof import('./utils/vueHooks')['injectIPE']
   const makeCallable: typeof import('./utils/makeCallable')['makeCallable']
   const makeSearchParams: typeof import('./utils/url')['makeSearchParams']
   const makeURL: typeof import('./utils/url')['makeURL']
+  const md5: typeof import('./utils/hash')['md5']
   const noop: typeof import('./utils/noop')['noop']
   const paramCase: typeof import('./utils/string')['paramCase']
   const promiseWithResolvers: typeof import('./polyfills/Promise.withResolvers')['promiseWithResolvers']
   const qs: typeof import('./components/utils')['qs']
   const qsa: typeof import('./components/utils')['qsa']
   const setStyles: typeof import('./components/utils')['setStyles']
+  const sha1: typeof import('./utils/hash')['sha1']
   const sleep: typeof import('./utils/sleep')['sleep']
   const snakeCase: typeof import('./utils/string')['snakeCase']
+  const toBase64: typeof import('./utils/hash')['toBase64']
+  const toHex: typeof import('./utils/hash')['toHex']
   const trimSlash: typeof import('./utils/string')['trimSlash']
   const uncapitalize: typeof import('./utils/string')['uncapitalize']
   const useIPE: typeof import('./utils/vueHooks')['useIPE']
@@ -78,6 +84,9 @@ declare global {
   // @ts-ignore
   export type { ComputeAble, ComputeAbleSync } from './utils/computeable'
   import('./utils/computeable')
+  // @ts-ignore
+  export type { InputLike } from './utils/hash'
+  import('./utils/hash')
   // @ts-ignore
   export type { PreferenceAugmented } from './decorators/Preferences'
   import('./decorators/Preferences')

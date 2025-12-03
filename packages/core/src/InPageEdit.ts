@@ -77,6 +77,7 @@ export class InPageEdit extends Context {
     this.plugin(ModalService)
     this.plugin(PreferencesService)
     this.plugin(StorageService, { dbName: this.config.storageNamespace })
+    this.plugin(WikiFileService)
     this.plugin(WikiMetadataService)
     this.plugin(WikiPageService)
     this.plugin(WikiTitleService)
@@ -133,6 +134,8 @@ export class InPageEdit extends Context {
       import('@/plugins/quick-redirect/index.js').then(
         ({ PluginQuickRedirect }) => PluginQuickRedirect
       ),
+      import('@/plugins/quick-upload/index.js').then(({ PluginQuickUpload }) => PluginQuickUpload),
+      import('@/plugins/quick-usage/index.js').then(({ PluginQuickUsage }) => PluginQuickUsage),
       import('@/plugins/toolbox/index.js').then(({ PluginToolbox }) => PluginToolbox),
     ]
     plugins.forEach(async (plugin) => {
@@ -189,6 +192,7 @@ import {
   Registry as CordisRegistry,
 } from '@cordisjs/core'
 import { I18nService } from './services/i18n/index.js'
+import { WikiFileService } from './services/WikiFileService.js'
 export interface Events<C extends InPageEdit = InPageEdit> extends CordisEvents<C> {}
 export type IPEPlugin<C = any> = CordisPlugin<InPageEdit, C>
 export type IPERegistry = CordisRegistry<InPageEdit>
