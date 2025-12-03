@@ -132,6 +132,8 @@ export class PluginQuickPreview extends BasePlugin {
     return modal
   }
 
+  previewFile() {}
+
   private async injectQuickEdit({ options, modal, wikiPage }: QuickEditEventPayload) {
     const $ = this.ctx.$
     let latestPreviewModal: IPEModal | undefined = undefined

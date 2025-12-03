@@ -4,6 +4,7 @@ import { IPEModal, IPEModalOptions } from '@inpageedit/modal'
 import { DiffTable, DiffTableEvent } from './components/DiffTable'
 import { MwApiResponse } from 'wiki-saikou'
 import { IWikiPage } from '@/models/WikiPage/index.js'
+import { ReactNode } from 'jsx-dom'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -336,5 +337,35 @@ export class PluginQuickDiff extends BasePlugin {
       })
 
     return modal.show()
+  }
+
+  createQuickDiffButton(
+    payload: Partial<CompareApiRequestOptions>,
+    options?: {
+      label?: ReactNode
+      icon?: ReactNode
+    }
+  ) {
+    const $ = this.ctx.$
+    const icon = options?.icon ?? <IconQuickDiff />
+    const label = options?.label ?? $`Quick Diff`
+    return (
+      <a
+        href={`#ipe://quick-diff/`}
+        dataset={payload as any}
+        className={`ipe-quick-diff`}
+        style={{
+          userSelect: 'none',
+          marginLeft: '0.2em',
+        }}
+        onClick={(e) => {
+          e.preventDefault()
+          this.comparePages(payload)
+        }}
+      >
+        {icon}
+        {label}
+      </a>
+    ) as HTMLAnchorElement
   }
 }

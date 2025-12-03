@@ -597,4 +597,34 @@ export class PluginQuickEdit extends BasePlugin {
   protected removeToolbox(ctx: InPageEdit) {
     ctx.toolbox.removeButton('quick-edit')
   }
+
+  createQuickEditButton(
+    payload: Partial<QuickEditOptions>,
+    options?: {
+      icon?: ReactNode
+      label?: ReactNode
+    }
+  ) {
+    const $ = this.ctx.$
+    const icon = options?.icon ?? <IconQuickEdit className="ipe-icon" />
+    const label = options?.label ?? $`Quick Edit`
+    return (
+      <a
+        href={`#ipe://quick-edit/`}
+        dataset={payload as any}
+        className={`ipe-quick-edit ${payload.createOnly ? 'ipe-quick-edit--create-only' : ''}`}
+        style={{
+          userSelect: 'none',
+          marginLeft: '0.2em',
+        }}
+        onClick={(e) => {
+          e.preventDefault()
+          this.showModal(payload)
+        }}
+      >
+        {icon}
+        {label}
+      </a>
+    ) as HTMLAnchorElement
+  }
 }

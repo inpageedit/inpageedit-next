@@ -226,30 +226,17 @@ export class PluginInArticleLinks extends BasePlugin<{
             createOnly,
           }
 
-          const link = (
-            <a
-              href={`#ipe://quick-edit/`}
-              dataset={payload as any}
-              className={`${this.config.linkClassName} ipe-quick-edit ${createOnly ? 'ipe-quick-edit--create-only' : ''}`}
-              style={{
-                userSelect: 'none',
-                marginLeft: '0.2em',
-              }}
-              onClick={(e) => {
-                e.preventDefault()
-                this.ctx.emit('in-article-links/anchor-clicked', {
-                  ctx: this.ctx,
-                  anchor: $el,
-                  info,
-                  event: e,
-                  action: 'quickEdit',
-                })
-                ctx.quickEdit.showModal(payload)
-              }}
-            >
-              <IconQuickEdit className="ipe-icon" />
-            </a>
-          )
+          const link = ctx.quickEdit.createQuickEditButton(payload, { label: '' })
+          link.classList.add(this.config.linkClassName)
+          link.addEventListener('click', (e) => {
+            this.ctx.emit('in-article-links/anchor-clicked', {
+              ctx: this.ctx,
+              anchor: $el,
+              info,
+              event: e,
+              action: 'quickEdit',
+            })
+          })
 
           $el.insertAdjacentElement('afterend', link)
         })
@@ -307,48 +294,17 @@ export class PluginInArticleLinks extends BasePlugin<{
             compare.torev = parseInt(diff)
           }
 
-          const link = (
-            <a
-              href={`#ipe://quick-diff/`}
-              dataset={compare as any}
-              className={`${this.config.linkClassName} ipe-quick-diff`}
-              style={{
-                userSelect: 'none',
-                marginLeft: '0.2em',
-              }}
-              onClick={(e) => {
-                e.preventDefault()
-                this.ctx.emit('in-article-links/anchor-clicked', {
-                  ctx: this.ctx,
-                  anchor: $el,
-                  info,
-                  event: e,
-                  action: 'quickDiff',
-                })
-                ctx.quickDiff.comparePages(compare)
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-file-diff ipe-icon"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
-                <path d="M12 10l0 4" />
-                <path d="M10 12l4 0" />
-                <path d="M10 17l4 0" />
-              </svg>
-            </a>
-          )
+          const link = this.ctx.quickDiff.createQuickDiffButton(compare, { label: '' })
+          link.classList.add(this.config.linkClassName)
+          link.addEventListener('click', (e) => {
+            this.ctx.emit('in-article-links/anchor-clicked', {
+              ctx: this.ctx,
+              anchor: $el,
+              info,
+              event: e,
+              action: 'quickDiff',
+            })
+          })
 
           $el.insertAdjacentElement('afterend', link)
         })
