@@ -96,7 +96,7 @@ export class WikiFileService extends Service {
     }
 
     if (!params.file && !params.url && !params.chunk && !params.filekey) {
-      throw new Error('None of file, url, chunk, or filekey is provided')
+      throw new Error('At least one of "file", "url", "chunk", or "filekey" is required')
     }
 
     const api = this.ctx.apiService.getClientByFileRepo(repo)

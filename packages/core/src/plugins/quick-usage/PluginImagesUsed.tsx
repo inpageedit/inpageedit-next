@@ -28,6 +28,7 @@ export class PluginImagesUsed extends BasePlugin {
   injectQuickEdit(payload: QuickEditEventPayload) {
     const $ = this.ctx.$
     const { wikiPage, modal } = payload
+    if (!wikiPage || !wikiPage.pageid) return
     const wrapper = this.ctx.quickUsage.getWrapperForQuickEdit(modal)
     const link = (
       <a
@@ -57,9 +58,46 @@ export class PluginImagesUsed extends BasePlugin {
       content: (
         <section className="ipe-quickUsage__images">
           <ol>
-            {/* {wikiPage.images.map((image) => {
-              return <li key={image}>{image}</li>
-            })} */}
+            {wikiPage.images.map((image) => {
+              return (
+                <li key={image.title}>
+                  <a
+                    href={this.ctx.wiki.getUrl(image.title)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {image.title}
+                  </a>{' '}
+                  (
+                  <a
+                    href={this.ctx.wikiFile.getFileUrl(image.title)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      this.ctx.modal.dialog({
+                        title: image.title,
+                        content: (
+                          <img
+                            src={this.ctx.wikiFile.getFileUrl(image.title)}
+                            alt={image.title}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              maxWidth: '100%',
+                              maxHeight: '75vh',
+                              objectFit: 'contain',
+                            }}
+                          />
+                        ),
+                        sizeClass: 'mediumToLarge',
+                      })
+                    }}
+                  >{$`Preview`}</a>
+                  )
+                </li>
+              )
+            })}
           </ol>
         </section>
       ),
