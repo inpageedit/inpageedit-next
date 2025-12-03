@@ -50,16 +50,16 @@ export class ApiService {
       const isSameOrigin = endpointUrl.origin === location.origin
       const initConfig: WikiSaikouInitConfig = {
         baseURL: endpointUrl.toString(),
-        fexiosConfigs: {
-          headers: {
-            'x-api-user-agent': `InPageEdit-NEXT ${this.ctx.version} FileRepoClient`,
-            ...this.options.headers,
-          },
-          ...this.options,
-        },
         throwOnApiError: true,
       }
       const client = isSameOrigin ? new MwApi(initConfig) : new ForeignApi(initConfig)
+      // FIXME: CORS request should not set custom headers
+      client.request.on('beforeRequest', (ctx) => {
+        ctx.headers = client.request.mergeHeaders(ctx.headers, {
+          'x-api-user-agent': null,
+          'x-mw-token-name': null,
+        })
+      })
       this._apiClients.set(endpointHref, client)
     }
     return this._apiClients.get(endpointHref)!

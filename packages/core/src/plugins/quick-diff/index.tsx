@@ -347,7 +347,7 @@ export class PluginQuickDiff extends BasePlugin {
     }
   ) {
     const $ = this.ctx.$
-    const icon = options?.icon ?? <IconQuickDiff />
+    const icon = options?.icon ?? <IconQuickDiff className="ipe-icon" />
     const label = options?.label ?? $`Quick Diff`
     return (
       <a

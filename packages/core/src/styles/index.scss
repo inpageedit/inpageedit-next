@@ -140,6 +140,9 @@
       font-size: 0.875rem;
       margin-bottom: 0.5em;
       font-weight: 500;
+      .required {
+        color: var(--color-danger);
+      }
     }
     input[type='text'],
     input[type='number'],

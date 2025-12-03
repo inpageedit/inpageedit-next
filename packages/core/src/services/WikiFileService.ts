@@ -8,6 +8,38 @@ declare module '@/InPageEdit.js' {
   }
 }
 
+/**
+ * @see https://www.mediawiki.org/wiki/API:Upload
+ */
+export interface UploadFileParams {
+  file: File
+  filekey: string
+  url: string
+  filename: string
+  comment: string
+  text: string
+  tags: string[] | string
+  watchlist: WatchlistAction
+  ignorewarnings: boolean
+  filesize: number
+  offset: number
+  chunk: File
+  stash: boolean
+  checkstatus: boolean
+}
+
+export interface UploadFileResult {
+  filekey: string
+  result: 'Success' | 'Failure' | 'Warning'
+  sessionkey?: string
+  warnings?: {
+    /** same as stored file with this filekey */
+    exists?: string
+    /** same as stored file with this timestamp */
+    nochange?: { timestamp: string }
+  }
+}
+
 @Inject(['wiki', 'wikiTitle', 'wikiPage'])
 export class WikiFileService extends Service {
   constructor(public ctx: InPageEdit) {
@@ -55,29 +87,36 @@ export class WikiFileService extends Service {
     return url.toString()
   }
 
-  async uploadFile(
-    title: string | IWikiTitle,
-    file: File,
-    params?: {
-      comment?: string
-      text?: string
-      tags?: string[] | string
-      watchlist?: WatchlistAction
-      ignorewarnings?: boolean
-    },
-    repo?: WikiFileRepo
-  ) {
+  async doUpload(params: Partial<UploadFileParams>, repo?: WikiFileRepo) {
     repo = repo || this.writableFileRepo
-    title = this.ctx.wikiTitle.newTitle(title, 6)
     if (!repo?.canUpload) {
       throw new Error('No writable file repository found')
     }
+
+    if (!params.file && !params.url && !params.chunk && !params.filekey) {
+      throw new Error('None of file, url, chunk, or filekey is provided')
+    }
+
     const api = this.ctx.apiService.getClientByFileRepo(repo)
-    return api.postWithToken('csrf', {
+    return api.postWithToken<{ upload: UploadFileResult }>('csrf', {
       action: 'upload',
-      file,
-      filename: title.getMainDBKey(),
       ...params,
     })
+  }
+
+  async uploadFile(
+    filename: string,
+    file: File,
+    params?: Omit<Partial<UploadFileParams>, 'file' | 'filename'>,
+    repo?: WikiFileRepo
+  ) {
+    return this.doUpload(
+      {
+        file,
+        filename,
+        ...params,
+      },
+      repo
+    )
   }
 }

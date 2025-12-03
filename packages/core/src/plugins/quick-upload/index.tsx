@@ -1,4 +1,4 @@
-import { Inject, InPageEdit } from '@/InPageEdit'
+import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 
 import './style.scss'
 
@@ -6,8 +6,18 @@ declare module '@/InPageEdit' {
   interface InPageEdit {
     quickUpload: PluginQuickUpload
   }
+  interface Preferences {
+    'quickUpload.summary': string
+  }
 }
 
+@RegisterPreferences(
+  Schema.object({
+    'quickUpload.summary': Schema.string()
+      .description('Default summary of the quick upload')
+      .default('[IPE-NEXT] Quick upload'),
+  })
+)
 @Inject(['modal', '$', 'wikiTitle', 'wikiFile'])
 export class PluginQuickUpload extends BasePlugin {
   constructor(public ctx: InPageEdit) {
@@ -28,7 +38,7 @@ export class PluginQuickUpload extends BasePlugin {
         id: 'quick-upload',
         group: 'group2',
         index: 2,
-        icon: 'UP',
+        icon: <IconUpload />,
         tooltip: () => $`Quick Upload`,
         onClick: (e) => {
           e.preventDefault()
@@ -72,22 +82,44 @@ export class PluginQuickUpload extends BasePlugin {
     return `${formatter.format(size)} ${units[index]}`
   }
 
-  showModal() {
+  private getDefaultPreviewPlaceholder() {
+    const $ = this.ctx.$
+    return (
+      <div className="ipe-quickUpload__preview-placeholder">
+        <span>
+          <IconUpload />
+          <p>{$`Drag & drop a file here`}</p>
+        </span>
+      </div>
+    )
+  }
+
+  async showModal() {
     const $ = this.ctx.$
 
     const modal = this.ctx.modal.show({
-      className: 'ipe-quickUpload',
-      sizeClass: 'dialog',
+      className: 'ipe-quickUpload compact-buttons',
+      sizeClass: 'smallToMedium',
       center: false,
       title: $`Quick Upload`,
       content: $`Quick Upload`,
+      outSideClose: false,
     })
 
-    const handlePreview = async (file: File) => {
-      if (!manualChangedFileName) {
-        form.querySelector<HTMLInputElement>('input[name="filename"]')!.value = file.name
+    let isUploading = false
+    const resetForm = () => {
+      formEl.reset()
+      handlePreview()
+    }
+    const handlePreview = async (file?: File) => {
+      previewEl.innerHTML = ''
+      if (!file) {
+        previewEl.appendChild(this.getDefaultPreviewPlaceholder())
+        return
       }
-      preview.textContent = ''
+      if (!manualChangedFileName) {
+        formEl.querySelector<HTMLInputElement>('input[name="filename"]')!.value = file.name
+      }
       const objUrl = this.getObjectUrl(file)
       let fileType = file.type.split('/')[0]
       if (file.type.includes('svg')) {
@@ -95,23 +127,37 @@ export class PluginQuickUpload extends BasePlugin {
       }
       switch (fileType) {
         case 'image':
-          preview.appendChild(<img src={objUrl} alt={file.name} />)
+          previewEl.appendChild(<img src={objUrl} alt={file.name} />)
           break
         case 'video':
-          preview.appendChild(<video src={objUrl} controls={true} />)
+          previewEl.appendChild(<video src={objUrl} controls={true} />)
           break
         case 'audio':
-          preview.appendChild(<audio src={objUrl} controls={true} />)
+          previewEl.appendChild(<audio src={objUrl} controls={true} />)
           break
         default:
-          preview.appendChild(
+          previewEl.appendChild(
             <div className="ipe-quickUpload__preview-placeholder">
-              <span>N/A</span>
+              <span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="icon icon-tabler icons-tabler-filled icon-tabler-file-unknown"
+                >
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 -2.995l.176 -.005zm0 15a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 -.127a1 1 0 0 0 -1 -1m1.136 -5.727a2.5 2.5 0 0 0 -3.037 .604a1 1 0 0 0 1.434 1.389l.088 -.09a.5 .5 0 1 1 .379 .824a1 1 0 0 0 -.002 2a2.5 2.5 0 0 0 1.137 -4.727" />
+                  <path d="M19 7h-4l-.001 -4.001z" />
+                </svg>
+                <p>{$`No preview available`}</p>
+              </span>
             </div>
           )
           break
       }
-      preview.appendChild(
+      previewEl.appendChild(
         <section className="ipe-quickUpload__preview-info">
           <ul>
             <li>
@@ -127,43 +173,111 @@ export class PluginQuickUpload extends BasePlugin {
     }
     const handleSubmit = async (e: Event) => {
       e.preventDefault()
-      const formData = new FormData(form)
-      const file = formData.get('file') as File
-      const filename = formData.get('filename') as string
-
-      if (!file?.size || !filename) {
-        this.ctx.modal.notify('warning', {
-          title: $`Failed to upload`,
-          content: $`File and filename are required.`,
-        })
+      if (isUploading) {
         return false
       }
 
+      const formData = new FormData(formEl)
+      const body = Object.fromEntries(formData.entries())
+
+      isUploading = true
+      modal.setLoadingState(true)
+
       try {
-        const result = await this.ctx.wikiFile.uploadFile(filename, file)
-        console.info(result)
+        const result = await this.ctx.wikiFile.doUpload(body)
+        this.logger.debug(result)
+
+        if (result.data?.upload?.result !== 'Success') {
+          throw result
+        }
+
         this.ctx.modal.notify('success', {
           title: $`Upload successful`,
           content: $`File has been uploaded successfully.`,
         })
+        resetForm()
         return true
       } catch (e) {
         this.ctx.logger.error(e)
-        this.ctx.modal.notify('error', {
+        this.ctx.modal.dialog({
           title: $`Upload failed`,
-          content: $`File has not been uploaded.`,
+          content: e instanceof Error ? e.message : $`File has not been uploaded.`,
         })
         return false
+      } finally {
+        modal.setLoadingState(false)
+        isUploading = false
       }
+    }
+    const isFileAccepted = (file: File, accept: string): boolean => {
+      if (!accept) return true
+      const rules = accept
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      if (!rules.length) return true
+      const fileType = file.type || ''
+      const fileName = file.name || ''
+      return rules.some((rule) => {
+        // extension: .png .pdf
+        if (rule.startsWith('.')) {
+          return fileName.toLowerCase().endsWith(rule.toLowerCase())
+        }
+        // image/*, video/* ...
+        if (rule.endsWith('/*')) {
+          const prefix = rule.slice(0, -1) // keep the trailing slash
+          return fileType.startsWith(prefix)
+        }
+        // exact mime
+        return fileType === rule
+      })
+    }
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const container = e.currentTarget as HTMLElement
+      container?.classList.remove('is-dragover')
+      const fileInput = formEl.querySelector<HTMLInputElement>('input[type="file"]')
+      if (!fileInput) return
+      const files = Array.from(e.dataTransfer?.files || [])
+      if (!files.length) return
+      const accept = fileInput.accept || ''
+      const picked = files.find((f) => isFileAccepted(f, accept)) || null
+      if (!picked) {
+        // 不符合 accept 的文件，不做处理
+        return
+      }
+      const dt = new DataTransfer()
+      dt.items.add(picked)
+      fileInput.files = dt.files
+      // 触发原有 onChange 逻辑（包含预览）
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const container = e.currentTarget as HTMLElement
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'copy'
+      }
+      container?.classList.add('is-dragover')
+    }
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const container = e.currentTarget as HTMLElement
+      container?.classList.remove('is-dragover')
     }
 
     let manualChangedFileName = false
-    const form = (
+    const formEl = (
       <form onSubmit={handleSubmit} className="ipe-quickUpload__form">
         <InputBox
           label={$`File name`}
           name="filename"
           id="filename"
+          placeholder="Example.jpg"
+          required={true}
           inputProps={{
             onInput: () => {
               manualChangedFileName = true
@@ -171,7 +285,9 @@ export class PluginQuickUpload extends BasePlugin {
           }}
         />
         <div className="ipe-input-box">
-          <label htmlFor="file">{$`File`}</label>
+          <label htmlFor="file">
+            {$`File`} <span className="required">*</span>
+          </label>
           <input
             onChange={(e: Event) => {
               const file = (e.target as HTMLInputElement)?.files?.[0]
@@ -185,10 +301,27 @@ export class PluginQuickUpload extends BasePlugin {
             accept="image/*,video/*,audio/*,application/pdf"
           />
         </div>
+        <InputBox
+          label={$`Summary`}
+          id="summary"
+          // DO NOT CHANGE:
+          // 虽然文案是 summary，但其实 API 里是 comment
+          name="comment"
+          placeholder="Upload file from ..."
+          value={(await this.ctx.preferences.get('quickUpload.summary')) || ''}
+        />
+        <div className="ipe-input-box">
+          <label htmlFor="text">{$`File description`}</label>
+          <textarea
+            name="text"
+            id="text"
+            placeholder={'This file is for...\n[[Category:XXX]]'}
+          ></textarea>
+        </div>
       </form>
     ) as HTMLFormElement
 
-    const preview = (
+    const previewEl = (
       <div
         className="ipe-quickUpload__preview"
         onClick={(e) => {
@@ -198,27 +331,41 @@ export class PluginQuickUpload extends BasePlugin {
             (target as HTMLElement).closest('img, .ipe-quickUpload__preview-placeholder')
           ) {
             e.preventDefault()
-            form.querySelector<HTMLInputElement>('input[type="file"]')!.click()
+            formEl.querySelector<HTMLInputElement>('input[type="file"]')!.click()
           }
         }}
       >
-        <div className="ipe-quickUpload__preview-placeholder"></div>
+        {this.getDefaultPreviewPlaceholder()}
       </div>
     )
 
-    modal.setContent(
-      <section>
-        {preview}
-        {form}
+    const containerEl = (
+      <section
+        className="ipe-quickUpload__container"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
+        {previewEl}
+        {formEl}
       </section>
-    )
+    ) as HTMLElement
+
+    modal.setContent(containerEl)
 
     modal.setButtons([
+      {
+        label: $`Cancel`,
+        className: 'is-danger is-text',
+        method: (e) => {
+          modal.close()
+        },
+      },
       {
         label: $`Upload`,
         className: 'is-primary is-text',
         method: (e) => {
-          form.dispatchEvent(new Event('submit'))
+          formEl.requestSubmit()
         },
       },
     ])

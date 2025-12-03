@@ -16,6 +16,7 @@ declare global {
   const IconEdit: typeof import('./components/Icon/IconEdit')['IconEdit']
   const IconQuickDiff: typeof import('./components/Icon/IconQuickDiff')['IconQuickDiff']
   const IconQuickEdit: typeof import('./components/Icon/IconQuickEdit')['IconQuickEdit']
+  const IconUpload: typeof import('./components/Icon/IconUpload')['IconUpload']
   const InputBox: typeof import('./components/InputBox')['InputBox']
   const MBox: typeof import('./components/MBox/index')['MBox']
   const MwUserLinks: typeof import('./components/MwUserLinks')['MwUserLinks']
