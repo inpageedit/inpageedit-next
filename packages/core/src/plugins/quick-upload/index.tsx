@@ -1,6 +1,7 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 
 import './style.scss'
+import { UploadFileResult } from '@/services/WikiFileService'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -184,24 +185,53 @@ export class PluginQuickUpload extends BasePlugin {
       modal.setLoadingState(true)
 
       try {
-        const result = await this.ctx.wikiFile.doUpload(body)
+        const result = await this.ctx.wikiFile.upload(body)
         this.logger.debug(result)
 
-        if (result.data?.upload?.result !== 'Success') {
-          throw result
+        if (result.data?.upload?.result === 'Success') {
+          this.ctx.modal.notify('success', {
+            title: $`Upload successful`,
+            content: $`File has been uploaded successfully.`,
+          })
+          resetForm()
+          return true
         }
 
-        this.ctx.modal.notify('success', {
-          title: $`Upload successful`,
-          content: $`File has been uploaded successfully.`,
-        })
-        resetForm()
-        return true
+        // Handle errors
+        throw result
       } catch (e) {
         this.ctx.logger.error(e)
+
+        if ((e as any)?.data?.upload) {
+          const uploadResult = (e as any).data.upload as UploadFileResult
+          if (
+            Array.isArray(uploadResult.warnings?.duplicate) &&
+            uploadResult.warnings.duplicate.length > 0
+          ) {
+            this.ctx.modal.dialog({
+              title: $`File duplicated`,
+              content: (
+                <span
+                  innerHTML={$({
+                    title: `File:${uploadResult.warnings.duplicate[0]}`,
+                  })`This file is duplicated with {{ getWikiLink(title, title, true) }}.`}
+                ></span>
+              ),
+            })
+            return false
+          }
+          if (uploadResult.warnings?.exists) {
+            this.ctx.modal.dialog({
+              title: $`File already exists`,
+              content: $`There is a file with the same name already exists.`,
+            })
+            return false
+          }
+        }
+
         this.ctx.modal.dialog({
           title: $`Upload failed`,
-          content: e instanceof Error ? e.message : $`File has not been uploaded.`,
+          content: e instanceof Error ? e.message : $`Upload failed with unknown error.`,
         })
         return false
       } finally {
@@ -318,6 +348,7 @@ export class PluginQuickUpload extends BasePlugin {
             placeholder={'This file is for...\n[[Category:XXX]]'}
           ></textarea>
         </div>
+        <CheckBox name="ignorewarnings" label={$`Ignore warnings`} />
       </form>
     ) as HTMLFormElement
 

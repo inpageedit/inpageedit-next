@@ -33,10 +33,12 @@ export interface UploadFileResult {
   result: 'Success' | 'Failure' | 'Warning'
   sessionkey?: string
   warnings?: {
-    /** same as stored file with this filekey */
+    /** file with this filekey already exists */
     exists?: string
-    /** same as stored file with this timestamp */
+    /** uploaded file is the same as stored file with this timestamp */
     nochange?: { timestamp: string }
+    /** uploaded file is duplicated with these files */
+    duplicate?: string[]
   }
 }
 
@@ -87,7 +89,7 @@ export class WikiFileService extends Service {
     return url.toString()
   }
 
-  async doUpload(params: Partial<UploadFileParams>, repo?: WikiFileRepo) {
+  async upload(params: Partial<UploadFileParams>, repo?: WikiFileRepo) {
     repo = repo || this.writableFileRepo
     if (!repo?.canUpload) {
       throw new Error('No writable file repository found')
@@ -102,21 +104,5 @@ export class WikiFileService extends Service {
       action: 'upload',
       ...params,
     })
-  }
-
-  async uploadFile(
-    filename: string,
-    file: File,
-    params?: Omit<Partial<UploadFileParams>, 'file' | 'filename'>,
-    repo?: WikiFileRepo
-  ) {
-    return this.doUpload(
-      {
-        file,
-        filename,
-        ...params,
-      },
-      repo
-    )
   }
 }

@@ -138,6 +138,13 @@ export class I18nService extends Service {
         language: '',
         globals: {
           getUrl: (...args: Parameters<InPageEdit['wiki']['getUrl']>) => ctx.wiki.getUrl(...args),
+          getWikiLink: (pageName: string, text?: string, isExternal = false, isNew = false) => {
+            const href = ctx.wiki.getUrl(pageName)
+            const classNames: string[] = []
+            if (isExternal) classNames.push('external')
+            if (isNew) classNames.push('new')
+            return `<a href="${href}" class="${classNames.join(' ')}"${isExternal ? ' target="_blank" rel="noopener noreferrer"' : ''}>${text || pageName}</a>`
+          },
         },
       }
     )
