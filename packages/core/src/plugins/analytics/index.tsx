@@ -5,6 +5,9 @@ declare module '@/InPageEdit' {
   interface InPageEdit {
     analytics: PluginAnalytics
   }
+  interface Events {
+    'analytics/event'(payload: { feature: string; subtype?: string; page?: string }): void
+  }
 }
 
 export interface IPEBeaconPayload {
@@ -184,6 +187,10 @@ export class PluginAnalytics extends BasePlugin {
 
   private _initPluginListeners() {
     const ctx = this.ctx
+    ctx.on('analytics/event', (payload) => {
+      if (!payload) return
+      this.addEvent(payload.feature, payload.subtype, payload.page)
+    })
     ctx.on('in-article-links/anchor-clicked', (payload) => {
       this.addEvent('in-article-links', paramCase(payload.action))
     })
@@ -210,15 +217,16 @@ export class PluginAnalytics extends BasePlugin {
     })
     ctx.on('plugin-store/plugin-installed', ({ registry, id, by }) => {
       if (by === 'new-added') {
-        this.addEvent('plugin-store', 'plugin-installed', `${registry.name}#${id}`)
+        this.addEvent('plugin-store', 'plugin-installed', `${id}@${registry.name}`)
       }
     })
     ctx.on('plugin-store/plugin-uninstalled', ({ registry, id }) => {
-      this.addEvent('plugin-store', 'plugin-uninstalled', `${registry.name}#${id}`)
+      this.addEvent('plugin-store', 'plugin-uninstalled', `${id}@${registry.name}`)
     })
   }
 
   public addEvent(feature: string, subtype?: string, page?: string) {
+    if (!feature) return
     const usage: IPEBeaconUsage = {
       ts: Date.now(),
       feature,
