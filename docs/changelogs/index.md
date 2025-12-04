@@ -23,6 +23,21 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.15.0'>
+
+<template #title>0.15.0 <Badge type='rainbow'>重量级</Badge></template>
+
+此版本复刻了 v2 的“使用的模板”、“使用的图片”功能，并添加了全新功能“快速上传文件”。
+
+- feat: + PluginUsage, + PluginUpload, + PluginPreview.previewFile (#16)
+  - 新功能：页面使用情况统计、快速上传文件、快速预览文件
+- fix(quick-preview): update default key shortcut to avoid conflic (close #7)
+  - 将快速预览的默认快捷键从 `Ctrl + P` 修改为 `Ctrl + I`，以避免与浏览器默认快捷键冲突
+- fix: should throw error when api returns error with http 200 (close #13) (#14)
+- fix(quick-upload): improve warning messages for duplicate files and upload confirmation
+
+</ChangeLog>
+
 <ChangeLog version='0.14.5'>
 
 - fix(in-article-links): checks for quick-edit hook to attach reliably (#12 by @t7ru)
