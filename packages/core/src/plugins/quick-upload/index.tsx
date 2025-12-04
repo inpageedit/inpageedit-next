@@ -237,7 +237,7 @@ export class PluginQuickUpload extends BasePlugin {
               title: $`File duplicated`,
               content: (
                 <div>
-                  {$`This file is duplicated of:`}
+                  {$`This file is a duplicate of the following file:`}
                   <ol>
                     {uploadResult.warnings.duplicate.map((fname) => (
                       <li key={fname}>
@@ -375,7 +375,7 @@ export class PluginQuickUpload extends BasePlugin {
             placeholder={'This file is for...\n[[Category:XXX]]'}
           ></textarea>
         </div>
-        <CheckBox name="ignorewarnings" label={$`Ignore warnings`} />
+        <CheckBox name="ignorewarnings" label={$`Ignore warnings and upload anyway`} />
       </form>
     ) as HTMLFormElement
 
