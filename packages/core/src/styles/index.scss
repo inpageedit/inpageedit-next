@@ -267,6 +267,13 @@
   .ipe-action-button {
     color: var(--text-color);
   }
+
+  // fix for narrow screens
+  .ipe-modal-modal__footer {
+    white-space: nowrap;
+    overflow-x: auto;
+    gap: 1.5em;
+  }
 }
 
 .theme-ipe-prose {

@@ -334,7 +334,7 @@ export class PluginQuickEdit extends BasePlugin {
             <label htmlFor="watchlist" style={{ display: 'block' }}>
               {$`Watchlist`}
             </label>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', whiteSpace: 'nowrap', overflowX: 'auto' }}>
               {[
                 WatchlistAction.preferences,
                 WatchlistAction.nochange,
@@ -345,7 +345,16 @@ export class PluginQuickEdit extends BasePlugin {
                   key={action}
                   name="watchlist"
                   value={action}
-                  inputProps={{ checked: watchList === action }}
+                  inputProps={{
+                    checked: watchList === action,
+                    onChange: (e) => {
+                      e.target &&
+                        (e.target as HTMLElement).closest('label')?.scrollIntoView({
+                          behavior: 'smooth',
+                          inline: 'center',
+                        })
+                    },
+                  }}
                 >
                   {$`watchlist.${action}`}
                 </RadioBox>

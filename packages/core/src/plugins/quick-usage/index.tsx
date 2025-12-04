@@ -19,6 +19,21 @@ export class PluginQuickUsage extends BasePlugin {
     import('./PluginImagesUsed.js').then(({ PluginImagesUsed }) =>
       this.ctx.plugin(PluginImagesUsed)
     )
+    this.ctx.inject(['quickUpload', '$'], (ctx) => {
+      ctx.on('quick-edit/wiki-page', ({ modal }) => {
+        const { $ } = ctx
+        const wrapper = this.getWrapperForQuickEdit(modal)
+        wrapper.appendChild(
+          <a
+            href="#ipe:quick-upload"
+            onClick={(e) => {
+              e.preventDefault()
+              ctx.quickUpload.showModal()
+            }}
+          >{$`Quick Upload`}</a>
+        )
+      })
+    })
   }
   getWrapperForQuickEdit(modal: IPEModal) {
     const wrapper = modal.get$content().querySelector('.ipe-quickEdit__usages') || (
