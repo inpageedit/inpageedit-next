@@ -106,6 +106,30 @@ export class PluginQuickUpload extends BasePlugin {
     )
   }
 
+  private isFileAccepted(file: File, accept: string): boolean {
+    if (!accept) return true
+    const rules = accept
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    if (!rules.length) return true
+    const fileType = file.type || ''
+    const fileName = file.name || ''
+    return rules.some((rule) => {
+      // extension: .png .pdf
+      if (rule.startsWith('.')) {
+        return fileName.toLowerCase().endsWith(rule.toLowerCase())
+      }
+      // image/*, video/* ...
+      if (rule.endsWith('/*')) {
+        const prefix = rule.slice(0, -1) // keep the trailing slash
+        return fileType.startsWith(prefix)
+      }
+      // exact mime
+      return fileType === rule
+    })
+  }
+
   async showModal() {
     const $ = this.ctx.$
 
@@ -172,7 +196,23 @@ export class PluginQuickUpload extends BasePlugin {
         if (result.data?.upload?.result === 'Success') {
           this.ctx.modal.notify('success', {
             title: $`Upload successful`,
-            content: $`File has been uploaded successfully.`,
+            content: (
+              <div>
+                <p>
+                  <strong>{$`File has been uploaded successfully.`}</strong>
+                </p>
+                <p>
+                  <a
+                    href={this.ctx.wikiFile.getFileUrl(`File:${result.data.upload.filename}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {result.data.upload.filename}
+                  </a>
+                </p>
+              </div>
+            ),
+            closeAfter: 10 * 1000,
           })
           resetForm()
           return true
@@ -185,6 +225,10 @@ export class PluginQuickUpload extends BasePlugin {
 
         if ((e as any)?.data?.upload) {
           const uploadResult = (e as any).data.upload as UploadFileResult
+          if (uploadResult.result === 'Success') {
+            // 理论上不会走到这里，只是为了类型体操
+            return true
+          }
           if (
             Array.isArray(uploadResult.warnings?.duplicate) &&
             uploadResult.warnings.duplicate.length > 0
@@ -192,11 +236,22 @@ export class PluginQuickUpload extends BasePlugin {
             this.ctx.modal.dialog({
               title: $`File duplicated`,
               content: (
-                <span
-                  innerHTML={$({
-                    title: `File:${uploadResult.warnings.duplicate[0]}`,
-                  })`This file is duplicated with {{ getWikiLink(title, title, true) }}.`}
-                ></span>
+                <div>
+                  {$`This file is duplicated of:`}
+                  <ol>
+                    {uploadResult.warnings.duplicate.map((fname) => (
+                      <li key={fname}>
+                        <a
+                          href={this.ctx.wikiFile.getFileUrl(`File:${fname}`)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {fname}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               ),
             })
             return false
@@ -210,38 +265,31 @@ export class PluginQuickUpload extends BasePlugin {
           }
         }
 
+        let msg = []
+        if (e instanceof Error) {
+          msg.push(e.message)
+          let cur = e
+          while ((cur as any).cause) {
+            cur = (cur as any).cause
+            if (cur instanceof Error) {
+              msg.push(cur.message)
+            } else {
+              break
+            }
+          }
+        } else {
+          msg.push($`Upload failed with unknown error.`)
+        }
+
         this.ctx.modal.dialog({
           title: $`Upload failed`,
-          content: e instanceof Error ? e.message : $`Upload failed with unknown error.`,
+          content: <div style={{ whiteSpace: 'pre-wrap' }}>{msg.join('\n')}</div>,
         })
         return false
       } finally {
         modal.setLoadingState(false)
         isUploading = false
       }
-    }
-    const isFileAccepted = (file: File, accept: string): boolean => {
-      if (!accept) return true
-      const rules = accept
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
-      if (!rules.length) return true
-      const fileType = file.type || ''
-      const fileName = file.name || ''
-      return rules.some((rule) => {
-        // extension: .png .pdf
-        if (rule.startsWith('.')) {
-          return fileName.toLowerCase().endsWith(rule.toLowerCase())
-        }
-        // image/*, video/* ...
-        if (rule.endsWith('/*')) {
-          const prefix = rule.slice(0, -1) // keep the trailing slash
-          return fileType.startsWith(prefix)
-        }
-        // exact mime
-        return fileType === rule
-      })
     }
     const handleDrop = (e: DragEvent) => {
       e.preventDefault()
@@ -253,7 +301,7 @@ export class PluginQuickUpload extends BasePlugin {
       const files = Array.from(e.dataTransfer?.files || [])
       if (!files.length) return
       const accept = fileInput.accept || ''
-      const picked = files.find((f) => isFileAccepted(f, accept)) || null
+      const picked = files.find((f) => this.isFileAccepted(f, accept)) || null
       if (!picked) {
         // 不符合 accept 的文件，不做处理
         return
