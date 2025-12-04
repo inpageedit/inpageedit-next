@@ -100,7 +100,7 @@ export class PluginQuickMove extends BasePlugin {
   }
 
   async showModal(options?: Partial<QuickMoveOptions>) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const reason = await this.ctx.preferences.get('quickMove.reason')
     const modal = this.ctx.modal
       .createObject({

@@ -106,7 +106,7 @@ export class PluginQuickDiff extends BasePlugin {
   protected stop(): Promise<void> | void {}
 
   private injectHistoryPage() {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const mwCompareForm = qs<HTMLFormElement>('#mw-history-compare')
     if (!mwCompareForm) {
       return
@@ -142,7 +142,7 @@ export class PluginQuickDiff extends BasePlugin {
       // User is creating a new page, no need to show diff button
       return
     }
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     let latestDiffModal: IPEModal | undefined = undefined
     modal.addButton(
       {
@@ -213,7 +213,7 @@ export class PluginQuickDiff extends BasePlugin {
     modal?: IPEModal,
     modalOptions?: Partial<IPEModalOptions>
   ) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     if (!modal || modal.isDestroyed) {
       modal = this.ctx.modal
         .createObject({
@@ -346,7 +346,7 @@ export class PluginQuickDiff extends BasePlugin {
       icon?: ReactNode
     }
   ) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const icon = options?.icon ?? <IconQuickDiff className="ipe-icon" />
     const label = options?.label ?? $`Quick Diff`
     return (

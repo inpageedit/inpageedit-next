@@ -367,7 +367,7 @@ export class PluginPrefSync extends BasePlugin {
   }
 
   private notifyImportSuccess(configs?: Record<string, unknown>) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const keys = Object.keys(configs ?? {})
     const count = keys.length
     return this.ctx.modal.notify('success', {

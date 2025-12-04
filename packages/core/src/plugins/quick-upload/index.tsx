@@ -53,7 +53,7 @@ export class PluginQuickUpload extends BasePlugin {
 
   private injectQuickEdit() {}
   private injectToolbox() {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     this.ctx.inject(['toolbox'], (ctx) => {
       ctx.toolbox.addButton({
         id: 'quick-upload',
@@ -95,7 +95,7 @@ export class PluginQuickUpload extends BasePlugin {
   }
 
   private getDefaultPreviewPlaceholder() {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     return (
       <div className="ipe-quickUpload__preview-placeholder">
         <span>
@@ -131,7 +131,7 @@ export class PluginQuickUpload extends BasePlugin {
   }
 
   async showModal() {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
 
     const modal = this.ctx.modal.show({
       className: 'ipe-quickUpload compact-buttons',

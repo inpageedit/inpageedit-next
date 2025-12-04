@@ -63,7 +63,7 @@ export class PluginQuickPreview extends BasePlugin {
     modal?: IPEModal,
     modalOptions?: Partial<IPEModalOptions>
   ) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
 
     wikiPage ||= this.ctx.wikiPage.newBlankPage({
       title: 'API',
@@ -135,7 +135,7 @@ export class PluginQuickPreview extends BasePlugin {
   }
 
   private async injectQuickEdit({ options, modal, wikiPage }: QuickEditEventPayload) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     let latestPreviewModal: IPEModal | undefined = undefined
     modal.addButton(
       {

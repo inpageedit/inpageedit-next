@@ -66,7 +66,7 @@ export class PluginInArticleLinks extends BasePlugin<{
       'InArticleLinks'
     )
     this.ctx.set('inArticleLinks', this)
-    const $ = this.ctx.$
+    const { $ } = this.ctx
 
     this.ctx.preferences.defineCategory({
       name: 'in-article-links',

@@ -40,7 +40,7 @@ export class PluginQuickRedirect extends BasePlugin {
 
   protected start(): Promise<void> | void {
     this.ctx.set('quickRedirect', this)
-    const $ = this.ctx.$
+    const { $ } = this.ctx
 
     const curPageName = window.mw?.config.get('wgPageName') || ''
     const canEdit = window.mw?.config.get('wgIsProbablyEditable')
@@ -90,7 +90,7 @@ export class PluginQuickRedirect extends BasePlugin {
   protected stop(): Promise<void> | void {}
 
   async showModal(options?: Partial<QuickRedirectOptions>) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const reason = await this.ctx.preferences.get('quickRedirect.reason')
     if (!options) {
       options = {}

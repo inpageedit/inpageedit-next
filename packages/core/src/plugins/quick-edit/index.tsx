@@ -126,7 +126,7 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   async showModal(payload?: string | Partial<QuickEditOptions>) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     if (typeof payload === 'undefined') {
       payload = {}
     } else if (typeof payload === 'string') {
@@ -554,7 +554,7 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   private async injectToolbox(ctx: InPageEdit) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const title = this.ctx.currentPage.wikiTitle
     const canEdit = title && title.getNamespaceId() >= 0
     ctx.toolbox.addButton({
@@ -605,7 +605,7 @@ export class PluginQuickEdit extends BasePlugin {
       label?: ReactNode
     }
   ) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const icon = options?.icon ?? <IconQuickEdit className="ipe-icon" />
     const label = options?.label ?? $`Quick Edit`
     return (

@@ -132,7 +132,7 @@ export class PluginAnalytics extends BasePlugin {
   }
 
   private async _showConfirmNotify() {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     this.ctx.inject(['modal', 'storage'], async (ctx) => {
       const key = 'analytics/confirm-shown'
       const shown = await ctx.storage.simpleKV.get(key)

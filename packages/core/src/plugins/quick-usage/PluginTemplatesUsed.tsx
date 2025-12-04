@@ -27,7 +27,7 @@ export class PluginTemplatesUsed extends BasePlugin {
   }
 
   private _injectQuickEdit(payload: QuickEditEventPayload) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const { wikiPage, modal } = payload
     if (!wikiPage || !wikiPage.pageid) return
     const wrapper = this.ctx.quickUsage.getWrapperForQuickEdit(modal)
@@ -49,7 +49,7 @@ export class PluginTemplatesUsed extends BasePlugin {
   }
 
   async showModal(options: PluginTemplatesUsedOptions = {}) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
 
     const wikiPage = options.wikiPage || (await this.ctx.wikiPage.WikiPage.newFromAnyKind(options))
     if (!wikiPage || !wikiPage.pageid) return
