@@ -13,20 +13,18 @@ export class PluginQuickUsage extends BasePlugin {
     ctx.set('quickUsage', this)
   }
   protected async start() {
-    this.ctx.plugin(
-      await import('./PluginTemplatesUsed.js').then(
-        ({ PluginTemplatesUsed }) => PluginTemplatesUsed
-      )
+    import('./PluginTemplatesUsed.js').then(({ PluginTemplatesUsed }) =>
+      this.ctx.plugin(PluginTemplatesUsed)
     )
-    this.ctx.plugin(
-      await import('./PluginImagesUsed.js').then(({ PluginImagesUsed }) => PluginImagesUsed)
+    import('./PluginImagesUsed.js').then(({ PluginImagesUsed }) =>
+      this.ctx.plugin(PluginImagesUsed)
     )
   }
   getWrapperForQuickEdit(modal: IPEModal) {
     const wrapper = modal.get$content().querySelector('.ipe-quickEdit__usages') || (
       <div
         className="ipe-quickEdit__usages"
-        style={{ display: 'flex', gap: '1em', flexWrap: true }}
+        style={{ display: 'flex', gap: '1em', flexWrap: 'wrap' }}
       ></div>
     )
     modal
