@@ -137,7 +137,9 @@ export class I18nService extends Service {
       {
         language: '',
         globals: {
-          getUrl: (...args: Parameters<InPageEdit['wiki']['getUrl']>) => ctx.wiki.getUrl(...args),
+          userName: this.ctx.wiki.userInfo.name || '',
+          userId: this.ctx.wiki.userInfo.id || 0,
+          siteName: this.ctx.wiki.siteInfo.general.sitename || '',
         },
       }
     )

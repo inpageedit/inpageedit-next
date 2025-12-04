@@ -140,6 +140,9 @@
       font-size: 0.875rem;
       margin-bottom: 0.5em;
       font-weight: 500;
+      .required {
+        color: var(--color-danger);
+      }
     }
     input[type='text'],
     input[type='number'],
@@ -263,6 +266,13 @@
   // shamefully fix
   .ipe-action-button {
     color: var(--text-color);
+  }
+
+  // fix for narrow screens
+  .ipe-modal-modal__footer {
+    white-space: nowrap;
+    overflow-x: auto;
+    gap: 1.5em;
   }
 }
 

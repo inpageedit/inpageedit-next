@@ -126,7 +126,7 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   async showModal(payload?: string | Partial<QuickEditOptions>) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     if (typeof payload === 'undefined') {
       payload = {}
     } else if (typeof payload === 'string') {
@@ -334,7 +334,7 @@ export class PluginQuickEdit extends BasePlugin {
             <label htmlFor="watchlist" style={{ display: 'block' }}>
               {$`Watchlist`}
             </label>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', whiteSpace: 'nowrap', overflowX: 'auto' }}>
               {[
                 WatchlistAction.preferences,
                 WatchlistAction.nochange,
@@ -345,7 +345,16 @@ export class PluginQuickEdit extends BasePlugin {
                   key={action}
                   name="watchlist"
                   value={action}
-                  inputProps={{ checked: watchList === action }}
+                  inputProps={{
+                    checked: watchList === action,
+                    onChange: (e) => {
+                      e.target &&
+                        (e.target as HTMLElement).closest('label')?.scrollIntoView({
+                          behavior: 'smooth',
+                          inline: 'center',
+                        })
+                    },
+                  }}
                 >
                   {$`watchlist.${action}`}
                 </RadioBox>
@@ -554,7 +563,7 @@ export class PluginQuickEdit extends BasePlugin {
   }
 
   private async injectToolbox(ctx: InPageEdit) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const title = this.ctx.currentPage.wikiTitle
     const canEdit = title && title.getNamespaceId() >= 0
     ctx.toolbox.addButton({
@@ -596,5 +605,35 @@ export class PluginQuickEdit extends BasePlugin {
 
   protected removeToolbox(ctx: InPageEdit) {
     ctx.toolbox.removeButton('quick-edit')
+  }
+
+  createQuickEditButton(
+    payload: Partial<QuickEditOptions>,
+    options?: {
+      icon?: ReactNode
+      label?: ReactNode
+    }
+  ) {
+    const { $ } = this.ctx
+    const icon = options?.icon ?? <IconQuickEdit className="ipe-icon" />
+    const label = options?.label ?? $`Quick Edit`
+    return (
+      <a
+        href={`#ipe://quick-edit/`}
+        dataset={payload as any}
+        className={`ipe-quick-edit ${payload.createOnly ? 'ipe-quick-edit--create-only' : ''}`}
+        style={{
+          userSelect: 'none',
+          marginLeft: '0.2em',
+        }}
+        onClick={(e) => {
+          e.preventDefault()
+          this.showModal(payload)
+        }}
+      >
+        {icon}
+        {label}
+      </a>
+    ) as HTMLAnchorElement
   }
 }

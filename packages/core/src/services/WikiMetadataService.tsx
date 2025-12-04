@@ -27,15 +27,16 @@ interface WikiMetadataKindMap {
 @Inject(['api', 'storage'])
 export class WikiMetadataService extends Service {
   private readonly _data: WikiMetadataKindMap = {} as any
-  private readonly CACHE_VERSION = 3
+  private readonly CACHE_VERSION = 4
   private readonly CACHE_TTL: Readonly<Record<keyof WikiMetadataKindMap, number>> = {
     siteinfo: 1000 * 60 * 60 * 24 * 3, // 3 days
     userinfo: 1000 * 60 * 30, // 30 minutes
   }
   private readonly QUERY_DATA: Readonly<Record<keyof WikiMetadataKindMap, MwApiParams>> = {
     siteinfo: {
-      meta: 'siteinfo',
+      meta: 'siteinfo|filerepoinfo',
       siprop: 'general|specialpagealiases|namespacealiases|namespaces|magicwords',
+      friprop: 'canUpload|displayname|initialCapital|local|name|rootUrl|scriptDirUrl|thumbUrl|url',
     },
     userinfo: { meta: 'userinfo', uiprop: 'groups|rights|blockinfo|options' },
   }
@@ -250,6 +251,12 @@ export class WikiMetadataService extends Service {
   get userRights() {
     return this.userInfo.rights
   }
+
+  // fileRepoInfo
+  get fileRepos() {
+    return this.siteInfo.repos || []
+  }
+
   /**
    * Base URL, without trailing slash
    * @example "https://mediawiki.org"

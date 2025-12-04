@@ -4,6 +4,7 @@ import { IPEModal, IPEModalOptions } from '@inpageedit/modal'
 import { DiffTable, DiffTableEvent } from './components/DiffTable'
 import { MwApiResponse } from 'wiki-saikou'
 import { IWikiPage } from '@/models/WikiPage/index.js'
+import { ReactNode } from 'jsx-dom'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -105,7 +106,7 @@ export class PluginQuickDiff extends BasePlugin {
   protected stop(): Promise<void> | void {}
 
   private injectHistoryPage() {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     const mwCompareForm = qs<HTMLFormElement>('#mw-history-compare')
     if (!mwCompareForm) {
       return
@@ -141,7 +142,7 @@ export class PluginQuickDiff extends BasePlugin {
       // User is creating a new page, no need to show diff button
       return
     }
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     let latestDiffModal: IPEModal | undefined = undefined
     modal.addButton(
       {
@@ -212,7 +213,7 @@ export class PluginQuickDiff extends BasePlugin {
     modal?: IPEModal,
     modalOptions?: Partial<IPEModalOptions>
   ) {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     if (!modal || modal.isDestroyed) {
       modal = this.ctx.modal
         .createObject({
@@ -336,5 +337,35 @@ export class PluginQuickDiff extends BasePlugin {
       })
 
     return modal.show()
+  }
+
+  createQuickDiffButton(
+    payload: Partial<CompareApiRequestOptions>,
+    options?: {
+      label?: ReactNode
+      icon?: ReactNode
+    }
+  ) {
+    const { $ } = this.ctx
+    const icon = options?.icon ?? <IconQuickDiff className="ipe-icon" />
+    const label = options?.label ?? $`Quick Diff`
+    return (
+      <a
+        href={`#ipe://quick-diff/`}
+        dataset={payload as any}
+        className={`ipe-quick-diff`}
+        style={{
+          userSelect: 'none',
+          marginLeft: '0.2em',
+        }}
+        onClick={(e) => {
+          e.preventDefault()
+          this.comparePages(payload)
+        }}
+      >
+        {icon}
+        {label}
+      </a>
+    ) as HTMLAnchorElement
   }
 }

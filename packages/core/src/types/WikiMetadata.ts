@@ -4,6 +4,7 @@ export interface WikiSiteInfo {
   namespacealiases: WikiNameSpaceAlias[]
   magicwords: WikiMagicWord[]
   namespaces: Record<string, WikiNamespace>
+  repos: WikiFileRepo[]
 }
 
 export interface WikiSiteGeneralInfo {
@@ -132,4 +133,16 @@ export interface WikiUserOptions {
   watchmoves: IntBool
   language: string
   [key: string]: unknown
+}
+
+export interface WikiFileRepo {
+  name: string
+  displayname: string
+  rootUrl: string
+  local: boolean
+  url: string
+  thumbUrl: string
+  initialCapital: boolean
+  scriptDirUrl: string
+  canUpload: boolean
 }

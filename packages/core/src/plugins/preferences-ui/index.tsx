@@ -141,7 +141,7 @@ export class PluginPreferencesUI extends BasePlugin {
   _modal: CustomIPEModal | null = null
   _form: InstanceType<typeof PreferencesApp> | null = null
   showModal() {
-    const $ = this.ctx.$
+    const { $ } = this.ctx
     if (this._modal && !this._modal.isDestroyed) {
       return this._modal
     }
