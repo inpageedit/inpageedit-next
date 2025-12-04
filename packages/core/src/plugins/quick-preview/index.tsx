@@ -5,6 +5,8 @@ import { MwApiParams } from 'wiki-saikou'
 import { PageParseData } from '@/models/WikiPage/types/PageParseData'
 import { IPEModal, IPEModalOptions } from '@inpageedit/modal'
 
+import './style.scss'
+
 interface QuickPreviewEventPayload {
   ctx: InPageEdit
   modal: IPEModal
@@ -132,8 +134,6 @@ export class PluginQuickPreview extends BasePlugin {
     return modal
   }
 
-  previewFile() {}
-
   private async injectQuickEdit({ options, modal, wikiPage }: QuickEditEventPayload) {
     const $ = this.ctx.$
     let latestPreviewModal: IPEModal | undefined = undefined
@@ -175,5 +175,96 @@ export class PluginQuickPreview extends BasePlugin {
       latestPreviewModal?.destroy()
       latestPreviewModal = undefined
     })
+  }
+
+  private _contentTypeCache = new Map<string, Promise<string>>()
+  private fetchContentType(url: string) {
+    const cached = this._contentTypeCache.get(url)
+    if (cached) return cached
+    const promise = fetch(url, { method: 'HEAD' })
+      .then((res) => res.headers.get('content-type') || '')
+      .catch(() => {
+        this._contentTypeCache.delete(url)
+        return ''
+      })
+    this._contentTypeCache.set(url, promise)
+    return promise
+  }
+  async getPreviewType(fileOrUrl: File | string) {
+    if (!fileOrUrl) return 'unknown'
+    let contentType: string
+    let ext: string
+    if (fileOrUrl instanceof File) {
+      contentType = fileOrUrl.type
+      ext = fileOrUrl.name.split('.').pop()?.toLowerCase() || ''
+    } else {
+      const url = new URL(fileOrUrl, location.origin)
+      if (url.protocol === 'data:' || url.protocol === 'blob:' || url.protocol.startsWith('http')) {
+        contentType = await this.fetchContentType(url.href)
+      } else {
+        contentType = ''
+      }
+      ext = url.pathname.split('.').pop()?.toLowerCase() || ''
+    }
+    if (
+      contentType.startsWith('image/') &&
+      /** Windows provide PDFs as image/pdf */ !contentType.includes('pdf')
+    ) {
+      return 'image'
+    }
+    if (contentType.startsWith('video/')) return 'video'
+    if (contentType.startsWith('audio/')) return 'audio'
+    if (contentType.startsWith('text/html')) return 'html'
+    if (ext === 'md') return 'markdown'
+    if (contentType.startsWith('text/')) return 'text'
+    // detect by file extension
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'ico', 'webp'].includes(ext)) return 'image'
+    if (['mp4', 'webm', 'ogg', 'flv', 'avi', 'mov', 'wmv', 'mkv'].includes(ext)) return 'video'
+    if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].includes(ext)) return 'audio'
+    if (['html', 'htm'].includes(ext)) return 'html'
+    if (['json', 'yml', 'yaml', 'toml', 'py'].includes(ext)) return 'text'
+    if (['pdf'].includes(ext)) return 'pdf'
+    return 'unknown'
+  }
+  async previewFile(fileOrUrl: File | string, alt?: string) {
+    const previewElement = await this.getPreviewElement(fileOrUrl, alt)
+    if (!previewElement) return
+    const modal = this.ctx.modal.dialog({
+      className: 'in-page-edit ipe-quickPreview',
+      sizeClass: 'mediumToLarge',
+      center: true,
+      title: alt ?? (fileOrUrl instanceof File ? fileOrUrl.name : fileOrUrl),
+      content: <section className="ipe-quickPreview__content">{previewElement}</section>,
+    })
+    return modal
+  }
+  private _objectUrls = new WeakMap<File, string>()
+  private getObjectUrl(file: File) {
+    if (!this._objectUrls.has(file)) {
+      const objUrl = URL.createObjectURL(file)
+      this._objectUrls.set(file, objUrl)
+    }
+    return this._objectUrls.get(file)!
+  }
+  async getPreviewElement(fileOrUrl: File | string, alt?: string) {
+    const previewType = await this.getPreviewType(fileOrUrl)
+    const url = fileOrUrl instanceof File ? this.getObjectUrl(fileOrUrl) : fileOrUrl
+    switch (previewType) {
+      case 'image':
+        return (
+          <img src={url} alt={alt ?? (fileOrUrl instanceof File ? fileOrUrl.name : fileOrUrl)} />
+        )
+      case 'video':
+        return <video src={url} controls={true} aria-label={alt} />
+      case 'audio':
+        return <audio src={url} controls={true} aria-label={alt} />
+      case 'pdf':
+        return <embed type="application/pdf" src={url} aria-label={alt} />
+    }
+    return null
+  }
+
+  previewWikiPage(title: string) {
+    throw new Error('Not implemented')
   }
 }

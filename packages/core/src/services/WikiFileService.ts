@@ -30,7 +30,7 @@ export interface UploadFileParams {
 
 export interface UploadFileResult {
   filekey: string
-  result: 'Success' | 'Failure' | 'Warning'
+  result: 'Success' | 'Failure' | 'Warning' | 'Continue' | 'Poll'
   sessionkey?: string
   warnings?: {
     /** file with this filekey already exists */
@@ -100,9 +100,13 @@ export class WikiFileService extends Service {
     }
 
     const api = this.ctx.apiService.getClientByFileRepo(repo)
-    return api.postWithToken<{ upload: UploadFileResult }>('csrf', {
-      action: 'upload',
-      ...params,
-    })
+    return api.postWithToken<{ upload: UploadFileResult }>(
+      'csrf',
+      {
+        action: 'upload',
+        ...params,
+      },
+      { fexiosOptions: { timeout: 3e10 } }
+    )
   }
 }

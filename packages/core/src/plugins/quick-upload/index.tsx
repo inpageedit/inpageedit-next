@@ -12,6 +12,26 @@ declare module '@/InPageEdit' {
   }
 }
 
+const PreviewPlaceholderNA = ({ $ }: { $: (strings: TemplateStringsArray) => string }) => (
+  <div className="ipe-quickUpload__preview-placeholder is-na">
+    <span>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        class="icon icon-tabler icons-tabler-filled icon-tabler-file-unknown"
+      >
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 -2.995l.176 -.005zm0 15a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 -.127a1 1 0 0 0 -1 -1m1.136 -5.727a2.5 2.5 0 0 0 -3.037 .604a1 1 0 0 0 1.434 1.389l.088 -.09a.5 .5 0 1 1 .379 .824a1 1 0 0 0 -.002 2a2.5 2.5 0 0 0 1.137 -4.727" />
+        <path d="M19 7h-4l-.001 -4.001z" />
+      </svg>
+      <p>{$`No preview available`}</p>
+    </span>
+  </div>
+)
+
 @RegisterPreferences(
   Schema.object({
     'quickUpload.summary': Schema.string()
@@ -19,7 +39,7 @@ declare module '@/InPageEdit' {
       .default('[IPE-NEXT] Quick upload'),
   })
 )
-@Inject(['modal', '$', 'wikiTitle', 'wikiFile'])
+@Inject(['modal', '$', 'wikiTitle', 'wikiFile', 'quickPreview', 'preferences'])
 export class PluginQuickUpload extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-upload')
@@ -50,15 +70,6 @@ export class PluginQuickUpload extends BasePlugin {
         ctx.toolbox.removeButton('quick-upload')
       })
     })
-  }
-
-  private _objectUrls = new WeakMap<File, string>()
-  private getObjectUrl(file: File) {
-    if (!this._objectUrls.has(file)) {
-      const objUrl = URL.createObjectURL(file)
-      this._objectUrls.set(file, objUrl)
-    }
-    return this._objectUrls.get(file)!
   }
 
   private formatFileSize(size: number = 0) {
@@ -111,54 +122,24 @@ export class PluginQuickUpload extends BasePlugin {
     const resetForm = () => {
       formEl.reset()
       handlePreview()
+      isInputFileName = false
     }
     const handlePreview = async (file?: File) => {
-      previewEl.innerHTML = ''
+      previewWrapper.innerHTML = ''
       if (!file) {
-        previewEl.appendChild(this.getDefaultPreviewPlaceholder())
+        previewWrapper.appendChild(this.getDefaultPreviewPlaceholder())
         return
       }
-      if (!manualChangedFileName) {
+      if (!isInputFileName) {
         formEl.querySelector<HTMLInputElement>('input[name="filename"]')!.value = file.name
       }
-      const objUrl = this.getObjectUrl(file)
-      let fileType = file.type.split('/')[0]
-      if (file.type.includes('svg')) {
-        fileType = 'image'
-      }
-      switch (fileType) {
-        case 'image':
-          previewEl.appendChild(<img src={objUrl} alt={file.name} />)
-          break
-        case 'video':
-          previewEl.appendChild(<video src={objUrl} controls={true} />)
-          break
-        case 'audio':
-          previewEl.appendChild(<audio src={objUrl} controls={true} />)
-          break
-        default:
-          previewEl.appendChild(
-            <div className="ipe-quickUpload__preview-placeholder">
-              <span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  class="icon icon-tabler icons-tabler-filled icon-tabler-file-unknown"
-                >
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                  <path d="M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 -2.995l.176 -.005zm0 15a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 -.127a1 1 0 0 0 -1 -1m1.136 -5.727a2.5 2.5 0 0 0 -3.037 .604a1 1 0 0 0 1.434 1.389l.088 -.09a.5 .5 0 1 1 .379 .824a1 1 0 0 0 -.002 2a2.5 2.5 0 0 0 1.137 -4.727" />
-                  <path d="M19 7h-4l-.001 -4.001z" />
-                </svg>
-                <p>{$`No preview available`}</p>
-              </span>
-            </div>
-          )
-          break
-      }
-      previewEl.appendChild(
+      const previewEl = (await this.ctx.quickPreview.getPreviewElement(file)) || (
+        <PreviewPlaceholderNA $={$} />
+      )
+      previewWrapper.appendChild(
+        <div className="ipe-quickUpload__preview-content">{previewEl}</div>
+      )
+      previewWrapper.appendChild(
         <section className="ipe-quickUpload__preview-info">
           <ul>
             <li>
@@ -299,7 +280,7 @@ export class PluginQuickUpload extends BasePlugin {
       container?.classList.remove('is-dragover')
     }
 
-    let manualChangedFileName = false
+    let isInputFileName = false
     const formEl = (
       <form onSubmit={handleSubmit} className="ipe-quickUpload__form">
         <InputBox
@@ -310,27 +291,25 @@ export class PluginQuickUpload extends BasePlugin {
           required={true}
           inputProps={{
             onInput: () => {
-              manualChangedFileName = true
+              isInputFileName = true
             },
           }}
         />
-        <div className="ipe-input-box">
-          <label htmlFor="file">
-            {$`File`} <span className="required">*</span>
-          </label>
+        <InputBox label={$`File`} name="file" id="file" required>
           <input
+            required
+            type="file"
+            name="file"
+            id="file"
+            accept="image/*,video/*,audio/*,application/pdf"
             onChange={(e: Event) => {
               const file = (e.target as HTMLInputElement)?.files?.[0]
               if (file?.size) {
                 handlePreview(file)
               }
             }}
-            type="file"
-            name="file"
-            id="file"
-            accept="image/*,video/*,audio/*,application/pdf"
           />
-        </div>
+        </InputBox>
         <InputBox
           label={$`Summary`}
           id="summary"
@@ -352,7 +331,7 @@ export class PluginQuickUpload extends BasePlugin {
       </form>
     ) as HTMLFormElement
 
-    const previewEl = (
+    const previewWrapper = (
       <div
         className="ipe-quickUpload__preview"
         onClick={(e) => {
@@ -377,7 +356,7 @@ export class PluginQuickUpload extends BasePlugin {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
       >
-        {previewEl}
+        {previewWrapper}
         {formEl}
       </section>
     ) as HTMLElement

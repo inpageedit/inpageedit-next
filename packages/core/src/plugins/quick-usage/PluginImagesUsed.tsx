@@ -59,6 +59,7 @@ export class PluginImagesUsed extends BasePlugin {
         <section className="ipe-quickUsage__images">
           <ol>
             {wikiPage.images.map((image) => {
+              const src = this.ctx.wikiFile.getFileUrl(image.title)
               return (
                 <li key={image.title}>
                   <a
@@ -70,28 +71,12 @@ export class PluginImagesUsed extends BasePlugin {
                   </a>{' '}
                   (
                   <a
-                    href={this.ctx.wikiFile.getFileUrl(image.title)}
+                    href={src}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => {
                       e.preventDefault()
-                      this.ctx.modal.dialog({
-                        title: image.title,
-                        content: (
-                          <img
-                            src={this.ctx.wikiFile.getFileUrl(image.title)}
-                            alt={image.title}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              maxWidth: '100%',
-                              maxHeight: '75vh',
-                              objectFit: 'contain',
-                            }}
-                          />
-                        ),
-                        sizeClass: 'mediumToLarge',
-                      })
+                      this.ctx.quickPreview.previewFile(src, image.title)
                     }}
                   >{$`Preview`}</a>
                   )

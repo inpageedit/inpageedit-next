@@ -58,15 +58,23 @@
       text-align: start;
     }
 
-    img,
-    video,
-    audio,
-    iframe {
-      max-width: 100%;
-      width: 400px;
-      height: auto;
-      object-fit: contain;
-      cursor: pointer;
+    &-content {
+      img,
+      video {
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: 40lvh;
+        object-fit: contain;
+        cursor: pointer;
+        background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTTAgMGg4djE2aDhWOEgweiIgb3BhY2l0eT0iLjA3Ii8+PC9zdmc+');
+        background-repeat: repeat;
+      }
+      iframe,
+      embed {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+      }
     }
   }
 
