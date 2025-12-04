@@ -189,6 +189,11 @@ export class PluginQuickUpload extends BasePlugin {
       isUploading = true
       modal.setLoadingState(true)
 
+      this.ctx.emit('analytics/event', {
+        feature: 'quick-upload',
+        page: body.filename?.toString() || undefined,
+      })
+
       try {
         const result = await this.ctx.wikiFile.upload(body)
         this.logger.debug(result)

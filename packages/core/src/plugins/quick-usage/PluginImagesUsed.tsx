@@ -91,6 +91,8 @@ export class PluginImagesUsed extends BasePlugin {
       backdrop: false,
     })
 
+    this.ctx.emit('analytics/event', { feature: 'quick-usage', subtype: 'images-used' })
+
     return modal
   }
 }

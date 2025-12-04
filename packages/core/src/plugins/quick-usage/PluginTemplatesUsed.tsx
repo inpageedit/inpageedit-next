@@ -84,6 +84,8 @@ export class PluginTemplatesUsed extends BasePlugin {
       backdrop: false,
     })
 
+    this.ctx.emit('analytics/event', { feature: 'quick-usage', subtype: 'templates-used' })
+
     return modal
   }
 }

@@ -29,6 +29,7 @@ export class PluginQuickUsage extends BasePlugin {
             onClick={(e) => {
               e.preventDefault()
               ctx.quickUpload.showModal()
+              ctx.emit('analytics/event', { feature: 'quick-usage', subtype: 'quick-upload' })
             }}
           >{$`Quick Upload`}</a>
         )
