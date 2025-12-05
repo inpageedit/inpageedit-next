@@ -192,7 +192,16 @@ export class PluginInArticleLinks extends BasePlugin<{
           }
           return false
         })
+
+        // Handle deduplicate anchors within the same .mw-editsection container
+        const uniqueAnchors = new Map<Element | null, InArticleWikiAnchorMetadata>()
         anchors.forEach((info) => {
+          const { $el } = info
+          const container = $el.closest('.mw-editsection')
+          uniqueAnchors.set(container, info)
+        })
+
+        uniqueAnchors.forEach((info) => {
           const { $el, title, pageId, params } = info
           if ($el.dataset.ipeEditMounted) {
             return
