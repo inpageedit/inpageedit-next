@@ -192,7 +192,21 @@ export class PluginInArticleLinks extends BasePlugin<{
           }
           return false
         })
+
+        // Handle deduplicate anchors (keep the last one)
+        const uniqueAnchors = new Map<string, InArticleWikiAnchorMetadata>()
         anchors.forEach((info) => {
+          const { title, params } = info
+          const titleText = title?.getPrefixedDBKey() || ''
+          const sectionRaw = params.get('section')?.replace(/^T-/, '') || undefined
+          const isNewSection =
+            sectionRaw === 'new' || title?.isSpecial('newsection')
+          const section = isNewSection ? 'new' : sectionRaw
+          const key = `${titleText}#${section || ''}`
+          uniqueAnchors.set(key, info)
+        })
+
+        uniqueAnchors.forEach((info) => {
           const { $el, title, pageId, params } = info
           if ($el.dataset.ipeEditMounted) {
             return
