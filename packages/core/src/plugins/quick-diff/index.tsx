@@ -97,6 +97,8 @@ export class PluginQuickDiff extends BasePlugin {
     super(ctx, {}, 'quick-diff')
   }
 
+  private diffCache = new Map<string, CompareApiResponse['compare']>()
+
   protected start(): Promise<void> | void {
     this.ctx.set('quickDiff', this)
     this.ctx.on('quick-edit/wiki-page', this.injectQuickEdit.bind(this))
@@ -224,6 +226,9 @@ export class PluginQuickDiff extends BasePlugin {
           ...modalOptions,
         })
         .init()
+      modal.on(modal.Event.Close, () => {
+        this.diffCache.clear()
+      })
     } else {
       modal.removeButton('*')
     }
@@ -246,14 +251,19 @@ export class PluginQuickDiff extends BasePlugin {
       mw.loader.load(['mediawiki.diff.styles'])
     }
 
-    this.ctx.api
-      .post<MwApiResponse<CompareApiResponse>>({
-        ...this.COMPARE_API_DEFAULT_OPTIONS,
-        ...options,
-        action: 'compare',
-        format: 'json',
-        formatversion: 2,
-      })
+    const apiOptions = {
+      ...this.COMPARE_API_DEFAULT_OPTIONS,
+      ...options,
+      action: 'compare',
+      format: 'json',
+      formatversion: 2,
+    }
+    const cacheKey = JSON.stringify(apiOptions)
+
+    ;(this.diffCache.has(cacheKey)
+      ? Promise.resolve({ data: { compare: this.diffCache.get(cacheKey)! } })
+      : this.ctx.api.post<MwApiResponse<CompareApiResponse>>(apiOptions)
+    )
       .then((res) => {
         if (!res.data.compare) {
           throw new Error('No compare data received', { cause: res })
@@ -261,6 +271,7 @@ export class PluginQuickDiff extends BasePlugin {
         const {
           data: { compare },
         } = res
+        this.diffCache.set(cacheKey, compare)
         modal.setTitle(
           compare.fromtitle && compare.totitle
             ? `${compare.fromtitle}${compare.fromrevid ? ` (${compare.fromrevid})` : ''} ⇔ ${compare.totitle}${compare.torevid ? ` (${compare.torevid})` : ''}`
