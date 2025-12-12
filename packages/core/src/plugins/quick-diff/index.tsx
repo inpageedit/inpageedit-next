@@ -98,6 +98,7 @@ export class PluginQuickDiff extends BasePlugin {
   }
 
   private diffCache = new Map<string, CompareApiResponse['compare']>()
+  private activeDiffTableCount = 0
 
   protected start(): Promise<void> | void {
     this.ctx.set('quickDiff', this)
@@ -226,8 +227,12 @@ export class PluginQuickDiff extends BasePlugin {
           ...modalOptions,
         })
         .init()
+      this.activeDiffTableCount++
       modal.on(modal.Event.Close, () => {
-        this.diffCache.clear()
+        this.activeDiffTableCount--
+        if (this.activeDiffTableCount === 0) {
+          this.diffCache.clear()
+        }
       })
     } else {
       modal.removeButton('*')
@@ -251,27 +256,41 @@ export class PluginQuickDiff extends BasePlugin {
       mw.loader.load(['mediawiki.diff.styles'])
     }
 
-    const apiOptions = {
-      ...this.COMPARE_API_DEFAULT_OPTIONS,
-      ...options,
-      action: 'compare',
-      format: 'json',
-      formatversion: 2,
-    }
-    const cacheKey = JSON.stringify(apiOptions)
+    // Determine cache key
+    const fromrev = options.fromrev
+    const torev = options.torev
+    const cacheKey = fromrev && torev ? `${fromrev}-${torev}` : null
 
-    ;(this.diffCache.has(cacheKey)
-      ? Promise.resolve({ data: { compare: this.diffCache.get(cacheKey)! } })
-      : this.ctx.api.post<MwApiResponse<CompareApiResponse>>(apiOptions)
-    )
-      .then((res) => {
-        if (!res.data.compare) {
-          throw new Error('No compare data received', { cause: res })
-        }
-        const {
-          data: { compare },
-        } = res
+    const fetchCompare = async (): Promise<CompareApiResponse['compare']> => {
+      if (cacheKey && this.diffCache.has(cacheKey)) {
+        return this.diffCache.get(cacheKey)!
+      }
+
+      const apiOptions = {
+        ...this.COMPARE_API_DEFAULT_OPTIONS,
+        ...options,
+        action: 'compare',
+        format: 'json',
+        formatversion: 2,
+      }
+      const res = await this.ctx.api.post<MwApiResponse<CompareApiResponse>>(apiOptions)
+
+      if (!res.data.compare) {
+        throw new Error('No compare data received', { cause: res })
+      }
+
+      const compare = res.data.compare
+
+      // Cache only if this is a revision-based diff
+      if (cacheKey) {
         this.diffCache.set(cacheKey, compare)
+      }
+
+      return compare
+    }
+
+    fetchCompare()
+      .then((compare) => {
         modal.setTitle(
           compare.fromtitle && compare.totitle
             ? `${compare.fromtitle}${compare.fromrevid ? ` (${compare.fromrevid})` : ''} ⇔ ${compare.totitle}${compare.torevid ? ` (${compare.torevid})` : ''}`
