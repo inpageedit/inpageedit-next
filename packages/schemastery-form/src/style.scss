@@ -61,6 +61,7 @@ textarea {
   background: var(--schema-btn-bg, #f8fafc);
   border-radius: 8px;
   cursor: pointer;
+  color: var(--schema-color-fg);
   &.primary {
     background: var(--schema-color-primary, #2563eb);
     color: #fff;

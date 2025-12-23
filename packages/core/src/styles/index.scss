@@ -1,3 +1,5 @@
+@use './theme-dark.scss' as *;
+
 // TODO: 这里的样式很乱，需要逐步拆分到组件里
 .theme-ipe {
   // ===== 颜色变量 =====
@@ -107,6 +109,7 @@
     line-height: var(--line-height-input);
     padding: var(--padding-input-y) var(--padding-input-x);
     outline: none;
+    color: var(--color-text-dark);
     &[name='text'] {
       height: var(--textarea-height);
       min-height: var(--textarea-min-height);
@@ -163,6 +166,8 @@
     transition: border var(--transition-slow);
     line-height: var(--line-height-input);
     outline: none;
+    background-color: var(--color-bg-lighter);
+    color: var(--color-text-dark);
   }
 
   input:focus {

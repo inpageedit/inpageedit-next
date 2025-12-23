@@ -158,7 +158,7 @@ watch(
     --active-color: #3366bb;
     display: flex;
     gap: 0.5em;
-    border-bottom: 1px solid #efefef;
+    border-bottom: 1px solid var(--border-color);
     margin-bottom: 1em;
     white-space: nowrap;
     overflow-x: auto;

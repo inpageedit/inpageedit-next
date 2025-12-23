@@ -8,6 +8,7 @@ import { ResourceLoaderService } from '@/services/ResourceLoaderService.js'
 import { ModalService } from '@/services/ModalService.js'
 import { WikiMetadataService } from '@/services/WikiMetadataService.js'
 import { StorageService } from '@/services/storage/index.js'
+import { ThemeService } from '@/services/ThemeService.js'
 import { WikiPageService } from '@/services/WikiPageService.js'
 import { WikiTitleService } from '@/services/WikiTitleService.js'
 import '@/styles/index.scss'
@@ -77,6 +78,7 @@ export class InPageEdit extends Context {
     this.plugin(ModalService)
     this.plugin(PreferencesService)
     this.plugin(StorageService, { dbName: this.config.storageNamespace })
+    this.plugin(ThemeService)
     this.plugin(WikiFileService)
     this.plugin(WikiMetadataService)
     this.plugin(WikiPageService)
@@ -93,6 +95,7 @@ export class InPageEdit extends Context {
       'modal',
       'preferences',
       'storage',
+      'theme',
       'wikiPage',
       'wikiTitle',
       // WikiMetadataService
