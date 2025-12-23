@@ -32,14 +32,17 @@ export class ThemeService extends Service {
   private _mediaQueryList: MediaQueryList | null = null
   private _observer: MutationObserver | null = null
 
+  private readonly _handleSystemThemeChange = this._onSystemThemeChange.bind(this)
+  private readonly _handleBodyClassChange = this._onBodyClassChange.bind(this)
+
   constructor(public ctx: InPageEdit) {
     super(ctx, 'theme', false)
   }
 
   protected async start() {
     this._mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)')
-    this._mediaQueryList.addEventListener('change', this._onSystemThemeChange.bind(this))
-    this._observer = new MutationObserver(this._onBodyClassChange.bind(this))
+    this._mediaQueryList.addEventListener('change', this._handleSystemThemeChange)
+    this._observer = new MutationObserver(this._handleBodyClassChange)
 
     await this.applyTheme()
 
@@ -52,29 +55,31 @@ export class ThemeService extends Service {
 
   protected stop() {
     if (this._mediaQueryList) {
-      this._mediaQueryList.removeEventListener('change', this._onSystemThemeChange.bind(this))
+      this._mediaQueryList.removeEventListener('change', this._handleSystemThemeChange)
     }
     this._observer?.disconnect()
   }
 
   private async _onSystemThemeChange() {
-    const pref = await this.ctx.preferences.get('theme')
-    if (pref === 'auto') {
-      this.applyTheme()
-    }
+    await this.applyTheme()
   }
 
   private async _onBodyClassChange() {
-    const pref = await this.ctx.preferences.get('theme')
-    if (pref === 'fandom') {
-      this.applyTheme()
-    }
+    await this.applyTheme()
   }
 
   async applyTheme() {
     const pref = (await this.ctx.preferences.get('theme')) || 'auto'
 
-    // don't run observer unless using fandom option
+    this.updateFandomObserver(pref)
+
+    const theme = this.getTheme(pref)
+    this.applyThemeClass(theme)
+    this.ctx.emit('theme/changed', { ctx: this.ctx, theme })
+  }
+
+  // don't run observer unless using fandom option
+  private updateFandomObserver(pref: 'light' | 'dark' | 'auto' | 'fandom') {
     if (pref === 'fandom') {
       this._observer?.observe(document.body, {
         attributes: true,
@@ -83,25 +88,25 @@ export class ThemeService extends Service {
     } else {
       this._observer?.disconnect()
     }
+  }
 
-    let theme: 'light' | 'dark' = 'light'
-
+  private getTheme(pref: 'light' | 'dark' | 'auto' | 'fandom'): 'light' | 'dark' {
     if (pref === 'auto') {
-      theme = this._mediaQueryList?.matches ? 'dark' : 'light'
-    } else if (pref === 'fandom') {
-      const body = document.body
-      if (
-        body.classList.contains('theme-fandomdesktop-dark') ||
-        body.classList.contains('theme-fandommobile-dark')
-      ) {
-        theme = 'dark'
-      } else {
-        theme = 'light'
-      }
-    } else {
-      theme = pref
+      return this._mediaQueryList?.matches ? 'dark' : 'light'
     }
 
+    if (pref === 'fandom') {
+      const body = document.body
+      return body.classList.contains('theme-fandomdesktop-dark') ||
+        body.classList.contains('theme-fandommobile-dark')
+        ? 'dark'
+        : 'light'
+    }
+
+    return pref
+  }
+
+  private applyThemeClass(theme: 'light' | 'dark') {
     const root = document.body
     if (theme === 'dark') {
       root.classList.add('ipe-theme-dark')
@@ -110,8 +115,6 @@ export class ThemeService extends Service {
       root.classList.remove('ipe-theme-dark')
       root.setAttribute('data-ipe-theme', 'light')
     }
-
-    this.ctx.emit('theme/changed', { ctx: this.ctx, theme })
   }
 
   get currentTheme(): 'light' | 'dark' {
