@@ -1,15 +1,18 @@
 import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit'
 import { RegisterPreferences } from '@/decorators/Preferences'
 
+type ThemePreference = 'light' | 'dark' | 'auto' | 'fandom'
+type ThemeMode = 'light' | 'dark'
+
 declare module '@/InPageEdit' {
   interface InPageEdit {
     theme: ThemeService
   }
   interface Events {
-    'theme/changed'(payload: { ctx: InPageEdit; theme: 'light' | 'dark' }): void
+    'theme/changed'(payload: { ctx: InPageEdit; theme: ThemeMode }): void
   }
   interface PreferencesMap {
-    theme: 'light' | 'dark' | 'auto' | 'fandom'
+    theme: ThemePreference
   }
 }
 
@@ -79,7 +82,7 @@ export class ThemeService extends Service {
   }
 
   // don't run observer unless using fandom option
-  private updateFandomObserver(pref: 'light' | 'dark' | 'auto' | 'fandom') {
+  private updateFandomObserver(pref: ThemePreference) {
     if (pref === 'fandom') {
       this._observer?.observe(document.body, {
         attributes: true,
@@ -90,7 +93,7 @@ export class ThemeService extends Service {
     }
   }
 
-  private getTheme(pref: 'light' | 'dark' | 'auto' | 'fandom'): 'light' | 'dark' {
+  private getTheme(pref: ThemePreference): ThemeMode {
     if (pref === 'auto') {
       return this._mediaQueryList?.matches ? 'dark' : 'light'
     }
@@ -106,7 +109,7 @@ export class ThemeService extends Service {
     return pref
   }
 
-  private applyThemeClass(theme: 'light' | 'dark') {
+  private applyThemeClass(theme: ThemeMode) {
     const root = document.body
     if (theme === 'dark') {
       root.classList.add('ipe-theme-dark')
@@ -117,7 +120,7 @@ export class ThemeService extends Service {
     }
   }
 
-  get currentTheme(): 'light' | 'dark' {
+  get currentTheme(): ThemeMode {
     return document.body.classList.contains('ipe-theme-dark') ? 'dark' : 'light'
   }
 }
