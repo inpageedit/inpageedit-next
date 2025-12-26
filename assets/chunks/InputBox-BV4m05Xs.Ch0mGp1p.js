@@ -1,0 +1,1 @@
+import{A as e}from"./mockInPageEdit.ClTvjmtP.js";const b=i=>{const{label:a,id:l,name:t,value:s,disabled:d,labelProps:n,inputProps:o,...p}=i;return e("div",{className:"theme-ipe ipe-input-box",...p,children:[e("label",{htmlFor:l,style:{display:"block"},...n,children:a}),e("input",{id:l,name:t,value:s,disabled:d,style:{width:"100%"},...o})]})};export{b};
