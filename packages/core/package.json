@@ -15,9 +15,16 @@
     "./package.json": "./package.json",
     "./style.css": "./dist/style.css",
     ".": {
-      "source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js"
+    },
+    ".InPageEdit": {
+      "types": "./dist/InPageEdit.d.ts",
+      "import": "./dist/InPageEdit.js"
     },
     "./components": {
       "types": "./dist/index.d.ts",
@@ -36,7 +43,9 @@
       "import": "./dist/services/index.js"
     }
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/index.js"
+  ],
   "scripts": {
     "start": "zx dev/scripts/setup-dev.ts",
     "dev": "vite",
@@ -98,7 +107,7 @@
     "schemastery": "^3.17.1",
     "schemastery-form": "workspace:^",
     "vue": "^3.5.24",
-    "wiki-saikou": "^7.3.0"
+    "wiki-saikou": "^7.4.0"
   },
   "keywords": [
     "mediawiki",

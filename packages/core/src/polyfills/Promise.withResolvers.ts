@@ -7,7 +7,3 @@ export const promiseWithResolvers = <T extends unknown = any>() => {
   })
   return { promise, resolve, reject }
 }
-
-if (!Promise.withResolvers) {
-  Promise.withResolvers = promiseWithResolvers
-}

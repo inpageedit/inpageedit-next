@@ -46,7 +46,7 @@ export const MBox = (props: MBoxProps) => {
     if (!box) {
       return Promise.resolve()
     }
-    const { promise, resolve } = Promise.withResolvers<void>()
+    const { promise, resolve } = promiseWithResolvers<void>()
 
     const animation = box.animate(
       [

@@ -73,6 +73,8 @@ export default defineConfig(() => {
         lib: {
           entry: {
             index: 'src/index.ts',
+            core: 'src/core.ts',
+            InPageEdit: 'src/InPageEdit.ts',
             'components/index': 'src/components/index.ts',
             'models/index': 'src/models/index.ts',
             'plugins/index': 'src/plugins/index.ts',

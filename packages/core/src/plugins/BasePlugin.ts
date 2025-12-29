@@ -24,7 +24,7 @@ export default class BasePlugin<ConfigType extends unknown = any> {
   ) {
     this.name = name || ''
     this.config = config || ({} as ConfigType)
-    const { promise, resolve, reject } = Promise.withResolvers<void>()
+    const { promise, resolve, reject } = promiseWithResolvers<void>()
     queueMicrotask(() => {
       if (!this.name) {
         this.name = this.constructor.name

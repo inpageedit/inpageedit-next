@@ -36,7 +36,6 @@ export default defineConfig({
     {
       name: 'shamefully-fix-dts-index',
       async generateBundle(_, bundle) {
-        console.info(bundle)
         const dts = Object.values(bundle).find(
           (v) => v.type === 'chunk' && v.fileName === 'index.d.ts'
         ) as OutputChunk

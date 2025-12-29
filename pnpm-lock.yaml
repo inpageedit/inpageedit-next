@@ -184,8 +184,8 @@ importers:
         specifier: ^3.5.24
         version: 3.5.24(typescript@5.9.3)
       wiki-saikou:
-        specifier: ^7.3.0
-        version: 7.3.0
+        specifier: ^7.4.0
+        version: 7.4.0
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.1
@@ -2801,6 +2801,10 @@ packages:
     resolution: {integrity: sha512-ImvFUH2ToO2rS8XqQeQyhYoAkqwPDwN36hjky9hJI2gTJNt0x/GsbnithuGfPrIEWT9015Ssm+psPEuMby80lw==}
     engines: {node: ^16.15.0 || >=18.0.0}
 
+  fexios@5.2.0:
+    resolution: {integrity: sha512-GwwDAQQols1qyIRDGfYLX6cJrpx5V6jSTTYW6xVLepIyXx1OGhsFyd4Ln3/G27yhYD9YBgZc8km2fP05iwjuLQ==}
+    engines: {node: ^16.15.0 || >=18.0.0}
+
   figures@6.1.0:
     resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
     engines: {node: '>=18'}
@@ -4993,6 +4997,9 @@ packages:
   wiki-saikou@7.3.0:
     resolution: {integrity: sha512-yyaDtvz9AusB7KoItKP85+1rw/tto16+lhACs7aqxgotYUrk4eD9HugxVpil642ASxVley+G3cazD9Ogw4eqdg==}
 
+  wiki-saikou@7.4.0:
+    resolution: {integrity: sha512-bF1D9Jeahwt084glJFG0QmcKYu9wEUPt2CrIg4DT1Y6II84Qf3PxSFZIhLVpjYcLG3tZAHq8C+MqJfMtgQ6FvA==}
+
   with@7.0.2:
     resolution: {integrity: sha512-RNGKj82nUPg3g5ygxkQl0R937xLyho1J24ItRCBTr/m1YnZkzJy1hUiHUJrc/VlsDQzsCnInEGSg3bci0Lmd4w==}
     engines: {node: '>= 10.0.0'}
@@ -5420,7 +5427,7 @@ snapshots:
       schemastery: 3.17.1
       schemastery-form: 0.2.1(schemastery@3.17.1)(vue@3.5.22(typescript@5.9.3))
       vue: 3.5.22(typescript@5.9.3)
-      wiki-saikou: 7.1.2
+      wiki-saikou: 7.3.0
     transitivePeerDependencies:
       - typescript
 
@@ -7572,6 +7579,8 @@ snapshots:
   fexios@4.3.1: {}
 
   fexios@5.0.1: {}
+
+  fexios@5.2.0: {}
 
   figures@6.1.0:
     dependencies:
@@ -9971,10 +9980,16 @@ snapshots:
     dependencies:
       fexios: 4.3.1
       tslib: 2.8.1
+      wiki-saikou: 7.3.0
 
   wiki-saikou@7.3.0:
     dependencies:
       fexios: 5.0.1
+      tslib: 2.8.1
+
+  wiki-saikou@7.4.0:
+    dependencies:
+      fexios: 5.2.0
       tslib: 2.8.1
 
   with@7.0.2:

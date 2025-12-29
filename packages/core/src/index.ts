@@ -1,12 +1,14 @@
-import './polyfills/index.js'
-import { InPageEdit } from './InPageEdit.js'
-import { Endpoints } from './constants/endpoints.js'
+/**
+ * Web-autoloader entry point
+ *
+ * For forward compatibility, do not change the file name
+ * If you are building a library, please use the `@inpageedit/core/core` entry point
+ */
 
-// 模块重导出
-export * from './InPageEdit.js'
-export { default as BasePlugin } from './plugins/BasePlugin.js'
-export { Endpoints }
-export { RegisterPreferences } from './decorators/Preferences.js'
+import { InPageEdit } from './core.js'
+
+// re-export all
+export * from './core.js'
 
 // Safe guard
 window.RLQ ||= []
@@ -171,12 +173,3 @@ declare global {
     function hook(name: 'InPageEdit.ready'): Hook<[InPageEdit]>
   }
 }
-
-// 类型重导出
-
-// expose all types
-export type * from './components/index.js'
-export type * from './models/index.js'
-export type * from './plugins/index.js'
-export type * from './services/index.js'
-export type * from './types/index.js'
