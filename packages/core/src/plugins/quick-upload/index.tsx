@@ -1,7 +1,12 @@
 import { Inject, InPageEdit, Schema } from '@/InPageEdit'
 
 import './style.scss'
-import { UploadFileResult } from '@/services/WikiFileService'
+
+import BasePlugin from '@/plugins/BasePlugin'
+import { RegisterPreferences } from '@/decorators/Preferences'
+import { IconUpload } from '@/components/Icon'
+import { CheckBox } from '@/components'
+import type { UploadFileResult } from '@/services/WikiFileService'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -10,6 +15,18 @@ declare module '@/InPageEdit' {
   interface Preferences {
     'quickUpload.summary': string
   }
+}
+
+type UploadItem = {
+  id: string
+  file: File
+  filename: string
+  text: string
+  status: 'queued' | 'uploading' | 'success' | 'warning' | 'error' | 'paused'
+  message?: string
+  retryable?: boolean
+  fileUrl?: string
+  result?: UploadFileResult
 }
 
 const PreviewPlaceholderNA = ({ $ }: { $: (strings: TemplateStringsArray) => string }) => (
@@ -44,14 +61,14 @@ export class PluginQuickUpload extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-upload')
   }
+
   protected async start() {
-    this.injectQuickEdit()
     this.injectToolbox()
     this.ctx.set('quickUpload', this)
   }
+
   protected async stop() {}
 
-  private injectQuickEdit() {}
   private injectToolbox() {
     const { $ } = this.ctx
     this.ctx.inject(['toolbox'], (ctx) => {
@@ -74,36 +91,18 @@ export class PluginQuickUpload extends BasePlugin {
 
   private formatFileSize(size: number = 0) {
     size = Number(size)
-    if (!Number.isFinite(size) || size < 0) {
-      return '0 B'
-    }
+    if (!Number.isFinite(size) || size < 0) return '0 B'
 
     const units = ['B', 'KB', 'MB', 'GB', 'TB']
     let index = 0
-
     while (size >= 1024 && index < units.length - 1) {
       size /= 1024
       index++
     }
 
     // 使用 Intl 来格式化数字（自动处理千分位、小数等）
-    const formatter = new Intl.NumberFormat(undefined, {
-      maximumFractionDigits: 2,
-    })
-
+    const formatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 })
     return `${formatter.format(size)} ${units[index]}`
-  }
-
-  private getDefaultPreviewPlaceholder() {
-    const { $ } = this.ctx
-    return (
-      <div className="ipe-quickUpload__preview-placeholder">
-        <span>
-          <IconUpload />
-          <p>{$`Drag & drop a file here`}</p>
-        </span>
-      </div>
-    )
   }
 
   private isFileAccepted(file: File, accept: string): boolean {
@@ -130,12 +129,28 @@ export class PluginQuickUpload extends BasePlugin {
     })
   }
 
+  private getDefaultPreviewPlaceholder() {
+    const { $ } = this.ctx
+    return (
+      <div className="ipe-quickUpload__preview-placeholder">
+        <span>
+          <IconUpload />
+          <p>{$`You can drag & drop files to this modal`}</p>
+        </span>
+      </div>
+    )
+  }
+
+  private safeId() {
+    return `mu_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`
+  }
+
   async showModal() {
     const { $ } = this.ctx
 
     const modal = this.ctx.modal.show({
       className: 'ipe-quickUpload compact-buttons',
-      sizeClass: 'smallToMedium',
+      sizeClass: 'mediumToLarge',
       center: false,
       title: $`Quick Upload`,
       content: $`Quick Upload`,
@@ -143,51 +158,382 @@ export class PluginQuickUpload extends BasePlugin {
     })
 
     let isUploading = false
-    const resetForm = () => {
-      formEl.reset()
-      handlePreview()
-      isInputFileName = false
+
+    const defaultSummary = (await this.ctx.preferences.get('quickUpload.summary')) || ''
+    const accept = 'image/*,video/*,audio/*,application/pdf'
+    const confirmThreshold = 20
+
+    let items: UploadItem[] = []
+    let selectedId: string | null = null
+
+    const ui = {
+      fileInput: null as HTMLInputElement | null,
+      listEl: null as HTMLElement | null,
+      previewWrapper: null as HTMLElement | null,
+      progressEl: null as HTMLElement | null,
+      progressTextEl: null as HTMLElement | null,
+      pauseBtn: null as HTMLButtonElement | null,
+      summaryInput: null as HTMLTextAreaElement | null,
+      ignoreWarnings: null as HTMLInputElement | null,
     }
-    const handlePreview = async (file?: File) => {
-      previewWrapper.innerHTML = ''
-      if (!file) {
-        previewWrapper.appendChild(this.getDefaultPreviewPlaceholder())
+
+    const classifyRetryableFromMessage = (msg: string) => {
+      const m = (msg || '').toLowerCase()
+      if (
+        m.includes('file is larger') ||
+        m.includes('files larger than') ||
+        m.includes('maximum upload size')
+      ) {
+        return { retryable: false, reason: 'File too large' as const }
+      }
+      if (m.includes('network') || m.includes('timeout') || m.includes('timed out')) {
+        return { retryable: true, reason: 'Network issue' as const }
+      }
+      return { retryable: true as const }
+    }
+
+    const summarizeApiErrors = (e: any) => {
+      const out: string[] = []
+      const s = (v: any) => (v == null ? '' : String(v))
+      if (e instanceof Error) {
+        out.push(e.message)
+        let cur: any = e
+        while (cur?.cause) {
+          cur = cur.cause
+          if (cur instanceof Error) out.push(cur.message)
+          else break
+        }
+      } else if (e?.data?.error?.info) {
+        out.push(s(e.data.error.info))
+      } else if (e?.error?.info) {
+        out.push(s(e.error.info))
+      } else if (e?.message) {
+        out.push(s(e.message))
+      }
+      return out.filter(Boolean)
+    }
+
+    const shouldRetryItem = (it: UploadItem) => {
+      if (it.status === 'warning') return true
+      if (it.status === 'error') return it.retryable !== false
+      return false
+    }
+
+    const getSelected = () => {
+      return items.find((x) => x.id === selectedId) || null
+    }
+
+    const setSelected = (id: string | null) => {
+      selectedId = id
+      void renderPreview()
+    }
+
+    const countByStatus = () => {
+      const out = { ok: 0, warn: 0, err: 0, paused: 0 }
+      for (const it of items) {
+        if (it.status === 'success') out.ok++
+        else if (it.status === 'warning') out.warn++
+        else if (it.status === 'error') out.err++
+        else if (it.status === 'paused') out.paused++
+      }
+      return out
+    }
+
+    const setProgress = (done: number, total: number) => {
+      const pct = total > 0 ? Math.floor((done / total) * 100) : 0
+      if (ui.progressTextEl) ui.progressTextEl.textContent = `${done}/${total} (${pct}%)`
+      if (ui.progressEl) ui.progressEl.style.width = `${Math.max(0, Math.min(100, pct))}%`
+    }
+
+    const showMessage = (type: 'success' | 'warning' | 'error', title: string, content: any) => {
+      this.ctx.modal.notify(type, {
+        title,
+        content,
+        closeAfter: type === 'success' ? 10_000 : 15_000,
+      })
+    }
+
+    const sanitizeFilename = (name: string) => {
+      return (name || '').replace(/\s+/g, ' ').trim()
+    }
+
+    const resetAll = () => {
+      items = []
+      selectedId = null
+      setProgress(0, 0)
+      if (ui.summaryInput) ui.summaryInput.value = String(defaultSummary || '')
+      if (ui.ignoreWarnings) ui.ignoreWarnings.checked = false
+      renderList()
+      void renderPreview()
+    }
+
+    const addFiles = (files: File[]) => {
+      const accepted = files.filter((f) => this.isFileAccepted(f, String(accept || '')))
+      if (!accepted.length) return
+
+      const newItems: UploadItem[] = accepted.map((file) => ({
+        id: this.safeId(),
+        file,
+        filename: sanitizeFilename(file.name),
+        text: '',
+        status: 'queued',
+        retryable: true,
+      }))
+
+      items = [...items, ...newItems]
+      if (!selectedId && items.length) {
+        selectedId = items[0].id
+      }
+      renderList()
+      void renderPreview()
+    }
+
+    const buildUploadBody = (item: UploadItem) => {
+      const body: Record<string, any> = {}
+
+      body.filename = sanitizeFilename(item.filename || item.file.name)
+      body.file = item.file
+
+      const summary = (ui.summaryInput?.value || '').trim() || ''
+      body.comment = summary
+
+      body.text = item.text || ''
+
+      if (ui.ignoreWarnings?.checked) {
+        body.ignorewarnings = '1'
+      }
+
+      return body
+    }
+
+    const getStatusLabel = (status: UploadItem['status']) => {
+      switch (status) {
+        case 'queued':
+          return 'Queued'
+        case 'uploading':
+          return 'Uploading'
+        case 'success':
+          return 'Uploaded'
+        case 'warning':
+          return 'Warning'
+        case 'error':
+          return 'Failed'
+        case 'paused':
+          return 'Paused'
+        default:
+          return status
+      }
+    }
+
+    const renderList = () => {
+      if (!ui.listEl) return
+      ui.listEl.innerHTML = ''
+
+      if (!items.length) {
+        ui.listEl.appendChild(
+          <div style={{ opacity: 0.75, padding: '8px 0' }}>
+            <p>No files selected.</p>
+          </div>
+        )
         return
       }
-      if (!isInputFileName) {
-        formEl.querySelector<HTMLInputElement>('input[name="filename"]')!.value = file.name
+
+      const list = (
+        <ul
+          style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0,
+            display: 'grid',
+            gap: '6px',
+          }}
+        />
+      ) as HTMLUListElement
+
+      items.forEach((item) => {
+        const isActive = item.id === selectedId
+        const row = (
+          <li
+            style={{
+              border: '1px solid var(--ipe-border-color, rgba(0,0,0,.12))',
+              borderRadius: '8px',
+              padding: '8px',
+              cursor: 'pointer',
+              background: isActive ? 'rgba(59,130,246,.08)' : 'transparent',
+              minWidth: 0,
+            }}
+            onClick={() => setSelected(item.id)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    textOverflow: 'ellipsis',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    wordBreak: 'break-word',
+                    fontSize: '13px',
+                  }}
+                >
+                  <strong style={{ fontWeight: 600 }}>{item.filename}</strong>
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.75 }}>{getStatusLabel(item.status)}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  type="button"
+                  className="ipe-btn is-text"
+                  title={'Remove'}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    const id = item.id
+                    items = items.filter((x) => x.id !== id)
+                    if (selectedId === id) {
+                      selectedId = items[0]?.id || null
+                    }
+                    renderList()
+                    void renderPreview()
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {item.message ? (
+              <div
+                style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px', whiteSpace: 'pre-wrap' }}
+              >
+                {item.message}
+              </div>
+            ) : null}
+          </li>
+        ) as HTMLLIElement
+
+        list.appendChild(row)
+      })
+
+      ui.listEl.appendChild(list)
+    }
+
+    const renderPreview = async () => {
+      if (!ui.previewWrapper) return
+      ui.previewWrapper.innerHTML = ''
+
+      const item = getSelected()
+      if (!item) {
+        ui.previewWrapper.appendChild(this.getDefaultPreviewPlaceholder())
+        return
       }
+
+      const file = item.file
+
+      const header = (
+        <section style={{ display: 'grid', gap: '6px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              gap: '12px',
+            }}
+          >
+            <strong style={{ wordBreak: 'break-word' }}>{file.name}</strong>
+            <span style={{ fontSize: '12px', opacity: 0.8 }}>{this.formatFileSize(file.size)}</span>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '12px', opacity: 0.8 }}>{file.type || $`Unknown type`}</span>
+            {item.fileUrl ? (
+              <a
+                href={item.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: '12px' }}
+              >
+                {$`Open file page`}
+              </a>
+            ) : null}
+          </div>
+        </section>
+      ) as HTMLElement
+
       const previewEl = (await this.ctx.quickPreview.getPreviewElement(file)) || (
         <PreviewPlaceholderNA $={$} />
       )
-      previewWrapper.appendChild(
-        <div className="ipe-quickUpload__preview-content">{previewEl}</div>
-      )
-      previewWrapper.appendChild(
-        <section className="ipe-quickUpload__preview-info">
-          <ul>
-            <li>
-              <strong>{file.name}</strong>
-            </li>
-            <li>
-              <i>{file.type}</i>
-            </li>
-            <li>{this.formatFileSize(file.size)}</li>
-          </ul>
-        </section>
-      )
+
+      const previewBox = (
+        <div className="ipe-quickUpload__preview-content" style={{ marginTop: '10px' }}>
+          {previewEl}
+        </div>
+      ) as HTMLElement
+
+      const isLocked = item.status === 'success'
+      const filenameEditor = (
+        <div
+          className="ipe-input-box"
+          style={{
+            marginTop: '8px',
+            opacity: isLocked ? 0.55 : 1,
+            filter: isLocked ? 'grayscale(1)' : undefined,
+            pointerEvents: isLocked ? 'none' : undefined,
+          }}
+        >
+          <label htmlFor="mu_filename">{$`Target filename`}</label>
+          <input
+            id="mu_filename"
+            name="mu_filename"
+            type="text"
+            value={item.filename}
+            disabled={isUploading || isLocked}
+            onInput={(e: Event) => {
+              const v = (e.target as HTMLInputElement).value
+              items = items.map((x) => (x.id === item.id ? { ...x, filename: v } : x))
+              renderList()
+            }}
+          />
+        </div>
+      ) as HTMLElement
+
+      const descEditor = (
+        <div
+          className="ipe-input-box"
+          style={{
+            marginTop: '8px',
+            opacity: isLocked ? 0.55 : 1,
+            filter: isLocked ? 'grayscale(1)' : undefined,
+            pointerEvents: isLocked ? 'none' : undefined,
+          }}
+        >
+          <label htmlFor="mu_text">File description</label>
+          <textarea
+            id="mu_text"
+            placeholder={'This file is for...\n[[Category:XXX]]'}
+            disabled={isUploading || isLocked}
+            value={item.text || ''}
+            onInput={(e: Event) => {
+              const v = (e.target as HTMLTextAreaElement).value
+              items = items.map((x) => (x.id === item.id ? { ...x, text: v } : x))
+              renderList()
+            }}
+          ></textarea>
+        </div>
+      ) as HTMLElement
+
+      ui.previewWrapper.appendChild(header)
+      ui.previewWrapper.appendChild(previewBox)
+      ui.previewWrapper.appendChild(filenameEditor)
+      ui.previewWrapper.appendChild(descEditor)
     }
-    const handleSubmit = async (e: Event) => {
-      e.preventDefault()
-      if (isUploading) {
-        return false
-      }
 
-      const formData = new FormData(formEl)
-      const body = Object.fromEntries(formData.entries())
+    const uploadOne = async (item: UploadItem) => {
+      items = items.map((x) =>
+        x.id === item.id ? { ...x, status: 'uploading', message: undefined } : x
+      )
+      renderList()
+      await renderPreview()
 
-      isUploading = true
-      modal.setLoadingState(true)
+      const body = buildUploadBody(item)
 
       this.ctx.emit('analytics/event', {
         feature: 'quick-upload',
@@ -196,136 +542,291 @@ export class PluginQuickUpload extends BasePlugin {
 
       try {
         const result = await this.ctx.wikiFile.upload(body)
-        this.logger.debug(result)
 
         if (result.data?.upload?.result === 'Success') {
-          this.ctx.modal.notify('success', {
-            title: $`Upload successful`,
-            content: (
-              <div>
-                <p>
-                  <strong>{$`File has been uploaded successfully.`}</strong>
-                </p>
-                <p>
-                  <a
-                    href={this.ctx.wikiFile.getFileUrl(`File:${result.data.upload.filename}`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {result.data.upload.filename}
-                  </a>
-                </p>
-              </div>
-            ),
-            closeAfter: 10 * 1000,
-          })
-          resetForm()
-          return true
+          const fileUrl = this.ctx.wikiFile.getFileUrl(`File:${result.data.upload.filename}`)
+          items = items.map((x) =>
+            x.id === item.id
+              ? {
+                  ...x,
+                  status: 'success',
+                  fileUrl,
+                  result: result.data.upload as any,
+                  retryable: true,
+                }
+              : x
+          )
+          renderList()
+          await renderPreview()
+          return
         }
 
-        // Handle errors
         throw result
       } catch (e) {
-        this.ctx.logger.error(e)
+        let reasons: string[] = []
 
         if ((e as any)?.data?.upload) {
           const uploadResult = (e as any).data.upload as UploadFileResult
+
           if (uploadResult.result === 'Success') {
-            // 理论上不会走到这里，只是为了类型体操
-            return true
+            const fname = (uploadResult as any).filename || body.filename
+            const fileUrl = this.ctx.wikiFile.getFileUrl(`File:${fname}`)
+            items = items.map((x) =>
+              x.id === item.id
+                ? { ...x, status: 'success', fileUrl, result: uploadResult, retryable: true }
+                : x
+            )
+            renderList()
+            await renderPreview()
+            return
           }
+
           if (
             Array.isArray(uploadResult.warnings?.duplicate) &&
             uploadResult.warnings.duplicate.length > 0
           ) {
-            this.ctx.modal.dialog({
-              title: $`File duplicated`,
-              content: (
-                <div>
-                  {$`This file is a duplicate of the following file:`}
-                  <ol>
-                    {uploadResult.warnings.duplicate.map((fname) => (
-                      <li key={fname}>
-                        <a
-                          href={this.ctx.wikiFile.getFileUrl(`File:${fname}`)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {fname}
-                        </a>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              ),
-            })
-            return false
+            reasons.push(`Duplicate of: ${uploadResult.warnings.duplicate.join(', ')}`)
+            items = items.map((x) =>
+              x.id === item.id
+                ? {
+                    ...x,
+                    status: 'warning',
+                    message: reasons.join('\n'),
+                    result: uploadResult,
+                    retryable: true,
+                  }
+                : x
+            )
+            renderList()
+            await renderPreview()
+            return
           }
+
           if (uploadResult.warnings?.exists) {
-            this.ctx.modal.dialog({
-              title: $`File already exists`,
-              content: $`There is a file with the same name already exists.`,
-            })
-            return false
+            reasons.push('A file with the same name already exists.')
+            items = items.map((x) =>
+              x.id === item.id
+                ? {
+                    ...x,
+                    status: 'warning',
+                    message: reasons.join('\n'),
+                    result: uploadResult,
+                    retryable: true,
+                  }
+                : x
+            )
+            renderList()
+            await renderPreview()
+            return
           }
-        }
 
-        let msg = []
-        if (e instanceof Error) {
-          msg.push(e.message)
-          let cur = e
-          while ((cur as any).cause) {
-            cur = (cur as any).cause
-            if (cur instanceof Error) {
-              msg.push(cur.message)
-            } else {
-              break
-            }
-          }
+          reasons.push(...summarizeApiErrors(e))
         } else {
-          msg.push($`Upload failed with unknown error.`)
+          reasons.push(...summarizeApiErrors(e))
         }
 
-        this.ctx.modal.dialog({
-          title: $`Upload failed`,
-          content: <div style={{ whiteSpace: 'pre-wrap' }}>{msg.join('\n')}</div>,
-        })
-        return false
-      } finally {
-        modal.setLoadingState(false)
-        isUploading = false
+        if (reasons.length === 0) reasons = ['Upload failed with unknown error.']
+
+        const combined = reasons.join('\n')
+        const classification = classifyRetryableFromMessage(combined)
+
+        items = items.map((x) =>
+          x.id === item.id
+            ? {
+                ...x,
+                status: 'error',
+                message: classification.reason ? `${classification.reason}\n${combined}` : combined,
+                retryable: classification.retryable,
+              }
+            : x
+        )
+        renderList()
+        await renderPreview()
       }
     }
+
+    const uploadAll = async (mode: 'all' | 'resume' | 'retry' = 'all') => {
+      if (isUploading) return
+
+      let candidates: UploadItem[] =
+        mode === 'retry'
+          ? items.filter((it) => shouldRetryItem(it))
+          : mode === 'resume'
+            ? items.filter(
+                (it) => (it.status === 'queued' || it.status === 'paused') && it.retryable !== false
+              )
+            : items.slice()
+
+      if (mode === 'retry') {
+        if (candidates.length === 0) {
+          showMessage(
+            'warning',
+            'Nothing to retry',
+            <div>There are no retryable failed/warning items.</div>
+          )
+          return
+        }
+      } else if (mode === 'resume') {
+        if (candidates.length === 0) {
+          showMessage(
+            'warning',
+            'Nothing to resume',
+            <div>There are no queued paused items to continue.</div>
+          )
+          return
+        }
+      } else {
+        if (items.length === 0) {
+          showMessage(
+            'warning',
+            $`No files selected`,
+            <div>{$`Please select one or more files.`}</div>
+          )
+          return
+        }
+        if (items.length > confirmThreshold) {
+          const ok = window.confirm(
+            `You are about to upload ${items.length} files at once. Are you sure?`
+          )
+          if (!ok) return
+        }
+      }
+
+      if (mode === 'retry') {
+        const idset = new Set(candidates.map((c) => c.id))
+        items = items.map((x) => {
+          if (!idset.has(x.id)) return x
+          if (x.retryable === false) return { ...x, status: x.status, message: x.message }
+          return { ...x, status: 'queued', message: undefined }
+        })
+        renderList()
+        await renderPreview()
+        candidates = items.filter((x) => idset.has(x.id))
+      }
+
+      isUploading = true
+      let pauseRequested = false
+
+      const requestPauseAfterCurrent = () => {
+        pauseRequested = true
+      }
+
+      if (ui.pauseBtn) {
+        ui.pauseBtn.disabled = false
+        ui.pauseBtn.onclick = (e) => {
+          e?.preventDefault?.()
+          requestPauseAfterCurrent()
+        }
+      }
+
+      try {
+        const total = candidates.length
+        let done = 0
+        setProgress(0, total)
+
+        for (const item of candidates) {
+          if (pauseRequested) {
+            const remainingIds = new Set(candidates.slice(done).map((x) => x.id))
+            items = items.map((x) => {
+              if (remainingIds.has(x.id) && (x.status === 'queued' || x.status === 'uploading')) {
+                return { ...x, status: 'paused', message: 'Paused by user', retryable: true }
+              }
+              return x
+            })
+            renderList()
+            await renderPreview()
+            break
+          }
+
+          const current = items.find((x) => x.id === item.id)
+          if (!current) {
+            done++
+            setProgress(done, total)
+            continue
+          }
+
+          await uploadOne(current)
+          done++
+          setProgress(done, total)
+        }
+
+        const { ok, warn, err, paused } = countByStatus()
+        if (paused > 0) {
+          showMessage(
+            'warning',
+            'Upload paused',
+            <div>
+              <div>
+                Uploaded: <strong>{ok}</strong>
+              </div>
+              <div>
+                Warnings: <strong>{warn}</strong>
+              </div>
+              <div>
+                Errors: <strong>{err}</strong>
+              </div>
+              <div>
+                Paused: <strong>{paused}</strong>
+              </div>
+            </div>
+          )
+        } else if (err === 0 && warn === 0) {
+          showMessage(
+            'success',
+            'Upload completed',
+            <div>
+              <strong>All files uploaded successfully.</strong>
+              <div>
+                Uploaded: <strong>{ok}</strong>
+              </div>
+            </div>
+          )
+        } else {
+          showMessage(
+            'warning',
+            'Upload completed with issues',
+            <div>
+              <div>
+                Uploaded: <strong>{ok}</strong>
+              </div>
+              {warn ? (
+                <div>
+                  Warnings: <strong>{warn}</strong>
+                </div>
+              ) : null}
+              {err ? (
+                <div>
+                  Errors: <strong>{err}</strong>
+                </div>
+              ) : null}
+            </div>
+          )
+        }
+      } finally {
+        isUploading = false
+        if (ui.pauseBtn) ui.pauseBtn.disabled = true
+      }
+    }
+
     const handleDrop = (e: DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
       const container = e.currentTarget as HTMLElement
       container?.classList.remove('is-dragover')
-      const fileInput = formEl.querySelector<HTMLInputElement>('input[type="file"]')
-      if (!fileInput) return
+
       const files = Array.from(e.dataTransfer?.files || [])
       if (!files.length) return
-      const accept = fileInput.accept || ''
-      const picked = files.find((f) => this.isFileAccepted(f, accept)) || null
-      if (!picked) {
-        // 不符合 accept 的文件，不做处理
-        return
-      }
-      const dt = new DataTransfer()
-      dt.items.add(picked)
-      fileInput.files = dt.files
-      // 触发原有 onChange 逻辑（包含预览）
-      fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+      addFiles(files)
     }
+
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
       const container = e.currentTarget as HTMLElement
-      if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = 'copy'
-      }
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
       container?.classList.add('is-dragover')
     }
+
     const handleDragLeave = (e: DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
@@ -333,74 +834,173 @@ export class PluginQuickUpload extends BasePlugin {
       container?.classList.remove('is-dragover')
     }
 
-    let isInputFileName = false
-    const formEl = (
-      <form onSubmit={handleSubmit} className="ipe-quickUpload__form">
-        <InputBox
-          label={$`File name`}
-          name="filename"
-          id="filename"
-          placeholder="Example.jpg"
-          required={true}
-          inputProps={{
-            onInput: () => {
-              isInputFileName = true
-            },
+    const progressBar = (
+      <div style={{ marginBottom: '10px' }}>
+        <div
+          style={{
+            height: '8px',
+            borderRadius: '999px',
+            background: 'rgba(0,0,0,.08)',
+            overflow: 'hidden',
           }}
-        />
-        <InputBox label={$`File`} name="file" id="file" required>
-          <input
-            required
-            type="file"
-            name="file"
-            id="file"
-            accept="image/*,video/*,audio/*,application/pdf"
-            onChange={(e: Event) => {
-              const file = (e.target as HTMLInputElement)?.files?.[0]
-              if (file?.size) {
-                handlePreview(file)
-              }
+        >
+          <div
+            ref={(el: any) => {
+              ui.progressEl = el
+            }}
+            style={{
+              height: '100%',
+              width: '0%',
+              background: 'var(--ipe-primary, #3b82f6)',
+              transition: 'width .2s ease',
             }}
           />
-        </InputBox>
-        <InputBox
-          label={$`Summary`}
-          id="summary"
-          // DO NOT CHANGE:
-          // 虽然文案是 summary，但其实 API 里是 comment
-          name="comment"
-          placeholder="Upload file from ..."
-          value={(await this.ctx.preferences.get('quickUpload.summary')) || ''}
-        />
-        <div className="ipe-input-box">
-          <label htmlFor="text">{$`File description`}</label>
-          <textarea
-            name="text"
-            id="text"
-            placeholder={'This file is for...\n[[Category:XXX]]'}
-          ></textarea>
         </div>
-        <CheckBox name="ignorewarnings" label={$`Ignore warnings and upload anyway`} />
-      </form>
-    ) as HTMLFormElement
-
-    const previewWrapper = (
-      <div
-        className="ipe-quickUpload__preview"
-        onClick={(e) => {
-          const target = e.target
-          if (
-            target &&
-            (target as HTMLElement).closest('img, .ipe-quickUpload__preview-placeholder')
-          ) {
-            e.preventDefault()
-            formEl.querySelector<HTMLInputElement>('input[type="file"]')!.click()
-          }
-        }}
-      >
-        {this.getDefaultPreviewPlaceholder()}
+        <div
+          style={{
+            marginTop: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+          }}
+        >
+          <div
+            ref={(el: any) => {
+              ui.progressTextEl = el
+            }}
+            style={{ fontSize: '12px', opacity: 0.8 }}
+          >
+            0/0 (0%)
+          </div>
+        </div>
       </div>
-    )
+    ) as HTMLElement
+
+    const leftPanel = (
+      <section style={{ display: 'grid', gap: '10px', minWidth: 0 }}>
+        <div className="ipe-input-box">
+          <label htmlFor="mu_files">
+            Files{' '}
+            {items.length > 0 ? (
+              <span style={{ opacity: 0.85 }}>({items.length} selected)</span>
+            ) : null}
+          </label>
+          <input
+            id="mu_files"
+            type="file"
+            multiple
+            accept={String(accept || '')}
+            disabled={isUploading}
+            ref={(el: any) => {
+              ui.fileInput = el
+            }}
+            onChange={(e: Event) => {
+              const files = Array.from((e.target as HTMLInputElement).files || [])
+              addFiles(files)
+              ;(e.target as HTMLInputElement).value = ''
+            }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="ipe-btn is-text is-primary"
+            disabled={isUploading}
+            onClick={() => {
+              void uploadAll('all')
+            }}
+          >
+            Upload all
+          </button>
+
+          <button
+            type="button"
+            className="ipe-btn is-text is-danger"
+            disabled={true}
+            ref={(el: any) => {
+              ui.pauseBtn = el
+            }}
+            onClick={() => {}}
+          >
+            Pause after current
+          </button>
+
+          <button
+            type="button"
+            className="ipe-btn is-text"
+            disabled={isUploading}
+            onClick={() => {
+              void uploadAll('resume')
+            }}
+          >
+            Resume
+          </button>
+
+          <button
+            type="button"
+            className="ipe-btn is-text"
+            disabled={isUploading}
+            onClick={() => {
+              void uploadAll('retry')
+            }}
+          >
+            Retry failed/warnings
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {items.length > 0 ? (
+            <div style={{ fontSize: '12px', opacity: 0.85 }}>
+              <span>
+                Selected: <strong>{items.length}</strong>
+              </span>
+            </div>
+          ) : null}
+          {items.length > 0 ? (
+            <div style={{ fontSize: '12px', opacity: 0.85 }}>
+              <span>
+                Ready: <strong>{items.filter((x) => x.status === 'queued').length}</strong>
+              </span>
+            </div>
+          ) : null}
+        </div>
+
+        <div
+          ref={(el: any) => {
+            ui.listEl = el
+          }}
+        />
+      </section>
+    ) as HTMLElement
+
+    const rightPanel = (
+      <section style={{ display: 'grid', gap: '10px' }}>
+        <div
+          className="ipe-quickUpload__preview"
+          ref={(el: any) => {
+            ui.previewWrapper = el
+          }}
+          onClick={(e) => {
+            const target = e.target
+            if (
+              target &&
+              (target as HTMLElement).closest('img, .ipe-quickUpload__preview-placeholder')
+            ) {
+              e.preventDefault()
+              ui.fileInput?.click()
+            }
+          }}
+          style={{
+            border: '1px solid var(--ipe-border-color, rgba(0,0,0,.12))',
+            borderRadius: '8px',
+            padding: '10px',
+            minWidth: 0,
+          }}
+        />
+      </section>
+    ) as HTMLElement
 
     const containerEl = (
       <section
@@ -408,27 +1008,82 @@ export class PluginQuickUpload extends BasePlugin {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
+        style={{ display: 'grid', gap: '12px' }}
       >
-        {previewWrapper}
-        {formEl}
+        {progressBar}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 40%) minmax(0, 1fr)',
+            gap: '12px',
+            alignItems: 'start',
+            minWidth: 0,
+          }}
+        >
+          {leftPanel}
+          {rightPanel}
+        </div>
+
+        <div
+          style={{
+            borderTop: '1px solid var(--ipe-border-color, rgba(0,0,0,.12))',
+            paddingTop: '10px',
+            display: 'grid',
+            gap: '10px',
+          }}
+        >
+          <div className="ipe-input-box">
+            <label htmlFor="mu_summary">Summary (applies to all files)</label>
+            <textarea
+              id="mu_summary"
+              disabled={isUploading}
+              ref={(el: any) => {
+                ui.summaryInput = el
+              }}
+              value={String(defaultSummary || '')}
+              onInput={() => {}}
+            />
+          </div>
+
+          <CheckBox
+            name="ignorewarnings"
+            label={$`Ignore warnings and upload anyway`}
+            inputProps={{
+              disabled: isUploading,
+              ref: (el: any) => {
+                ui.ignoreWarnings = el
+              },
+            }}
+          />
+        </div>
       </section>
     ) as HTMLElement
 
     modal.setContent(containerEl)
 
+    if (ui.summaryInput) ui.summaryInput.value = String(defaultSummary || '')
+    renderList()
+    await renderPreview()
+
     modal.setButtons([
       {
         label: $`Cancel`,
         className: 'is-danger is-text',
-        method: (e) => {
-          modal.close()
+        method: () => modal.close(),
+      },
+      {
+        label: 'Reset',
+        className: 'is-text',
+        method: () => {
+          if (isUploading) return
+          resetAll()
         },
       },
       {
         label: $`Upload`,
         className: 'is-primary is-text',
-        method: (e) => {
-          formEl.requestSubmit()
+        method: () => {
+          void uploadAll('all')
         },
       },
     ])
