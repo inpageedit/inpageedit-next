@@ -35,13 +35,13 @@
     "access": "public"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.53.1",
+    "@microsoft/api-extractor": "^7.55.2",
     "cross-env": "^10.1.0",
     "npm-run-all2": "^8.0.4",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.2",
     "typescript": "^5.9.3",
     "unplugin-dts": "1.0.0-beta.6",
-    "vite": "^7.1.11"
+    "vite": "^7.3.0"
   },
   "keywords": [
     "logger",
