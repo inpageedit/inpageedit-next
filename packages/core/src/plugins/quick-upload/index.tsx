@@ -175,6 +175,8 @@ export class PluginQuickUpload extends BasePlugin {
       pauseBtn: null as HTMLButtonElement | null,
       summaryInput: null as HTMLTextAreaElement | null,
       ignoreWarnings: null as HTMLInputElement | null,
+      selectedCountEl: null as HTMLElement | null,
+      readyCountEl: null as HTMLElement | null,
     }
 
     const updateItem = (id: string, patch: Partial<UploadItem>) => {
@@ -369,6 +371,11 @@ export class PluginQuickUpload extends BasePlugin {
     const renderList = () => {
       if (!ui.listEl) return
       ui.listEl.innerHTML = ''
+
+      if (ui.selectedCountEl) ui.selectedCountEl.textContent = String(items.length)
+      if (ui.readyCountEl) {
+        ui.readyCountEl.textContent = String(items.filter((x) => x.status === 'queued').length)
+      }
 
       if (!items.length) {
         ui.listEl.appendChild(
@@ -951,14 +958,28 @@ export class PluginQuickUpload extends BasePlugin {
           {items.length > 0 ? (
             <div style={{ fontSize: '12px', opacity: 0.85 }}>
               <span>
-                Selected: <strong>{items.length}</strong>
+                Selected:{' '}
+                <strong
+                  ref={(el: any) => {
+                    ui.selectedCountEl = el
+                  }}
+                >
+                  {items.length}
+                </strong>
               </span>
             </div>
           ) : null}
           {items.length > 0 ? (
             <div style={{ fontSize: '12px', opacity: 0.85 }}>
               <span>
-                Ready: <strong>{items.filter((x) => x.status === 'queued').length}</strong>
+                Ready:{' '}
+                <strong
+                  ref={(el: any) => {
+                    ui.readyCountEl = el
+                  }}
+                >
+                  {items.filter((x) => x.status === 'queued').length}
+                </strong>
               </span>
             </div>
           ) : null}
