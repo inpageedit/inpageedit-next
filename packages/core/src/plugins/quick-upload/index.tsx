@@ -380,9 +380,8 @@ export class PluginQuickUpload extends BasePlugin {
       if (!ui.listEl) return
       ui.listEl.innerHTML = ''
 
-      if (ui.selectedCountEl) ui.selectedCountEl.textContent = String(items.length)
-      if (ui.readyCountEl) {
-        ui.readyCountEl.textContent = String(items.filter((x) => x.status === 'queued').length)
+      if (!isUploading) {
+        setProgress(0, items.length)
       }
 
       if (!items.length) {
@@ -391,6 +390,8 @@ export class PluginQuickUpload extends BasePlugin {
             <p>No files selected.</p>
           </div>
         )
+        updateFooter()
+        return
       } else {
         const list = (
           <ul
@@ -929,36 +930,7 @@ export class PluginQuickUpload extends BasePlugin {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {items.length > 0 ? (
-            <div style={{ fontSize: '12px', opacity: 0.85 }}>
-              <span>
-                Selected:{' '}
-                <strong
-                  ref={(el: any) => {
-                    ui.selectedCountEl = el
-                  }}
-                >
-                  {items.length}
-                </strong>
-              </span>
-            </div>
-          ) : null}
-          {items.length > 0 ? (
-            <div style={{ fontSize: '12px', opacity: 0.85 }}>
-              <span>
-                Ready:{' '}
-                <strong
-                  ref={(el: any) => {
-                    ui.readyCountEl = el
-                  }}
-                >
-                  {items.filter((x) => x.status === 'queued').length}
-                </strong>
-              </span>
-            </div>
-          ) : null}
-        </div>
+        <div style={{ height: 0 }} />
 
         <div
           ref={(el: any) => {
@@ -1057,7 +1029,7 @@ export class PluginQuickUpload extends BasePlugin {
     if (ui.summaryInput) ui.summaryInput.value = String(defaultSummary || '')
 
     const updateFooter = () => {
-      const { ok, warn, err, paused } = countByStatus()
+      const { warn, err, paused } = countByStatus()
       const hasFailed = err > 0 || warn > 0
       const hasPaused = paused > 0
 
