@@ -148,6 +148,9 @@ export class PluginQuickUpload extends BasePlugin {
   async showModal() {
     const { $ } = this.ctx
 
+    let isUploading = false
+    let pauseRequested = false
+
     const modal = this.ctx.modal.show({
       className: 'ipe-quickUpload compact-buttons',
       sizeClass: 'mediumToLarge',
@@ -155,10 +158,18 @@ export class PluginQuickUpload extends BasePlugin {
       title: $`Quick Upload`,
       content: $`Quick Upload`,
       outSideClose: false,
+      beforeClose: () => {
+        if (isUploading) {
+          this.ctx.modal.notify('warning', {
+            title: $`Upload in progress`,
+            content: $`Please pause or wait for it to finish.`,
+            closeAfter: 3000,
+          })
+          return false
+        }
+        return true
+      },
     })
-
-    let isUploading = false
-    let pauseRequested = false
 
     const defaultSummary = (await this.ctx.preferences.get('quickUpload.summary')) || ''
     const accept = 'image/*,video/*,audio/*,application/pdf'
@@ -293,7 +304,7 @@ export class PluginQuickUpload extends BasePlugin {
       this.ctx.modal.notify(type, {
         title,
         content,
-        closeAfter: type === 'success' ? 10_000 : 15_000,
+        closeAfter: type === 'success' ? 3000 : 8000,
       })
     }
 
