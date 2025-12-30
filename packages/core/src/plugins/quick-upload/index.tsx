@@ -151,6 +151,14 @@ export class PluginQuickUpload extends BasePlugin {
     let isUploading = false
     let pauseRequested = false
 
+    const showMessage = (type: 'success' | 'warning' | 'error', title: string, content: any) => {
+      this.ctx.modal.notify(type, {
+        title,
+        content,
+        closeAfter: type === 'success' ? 3000 : 8000,
+      })
+    }
+
     const modal = this.ctx.modal.show({
       className: 'ipe-quickUpload compact-buttons',
       sizeClass: 'mediumToLarge',
@@ -160,11 +168,7 @@ export class PluginQuickUpload extends BasePlugin {
       outSideClose: false,
       beforeClose: () => {
         if (isUploading) {
-          this.ctx.modal.notify('warning', {
-            title: $`Upload in progress`,
-            content: $`Please pause or wait for it to finish.`,
-            closeAfter: 3000,
-          })
+          showMessage('warning', $`Upload in progress`, $`Please pause or wait for it to finish.`)
           return false
         }
         return true
@@ -300,14 +304,6 @@ export class PluginQuickUpload extends BasePlugin {
       if (ui.progressEl) ui.progressEl.style.width = `${Math.max(0, Math.min(100, pct))}%`
     }
 
-    const showMessage = (type: 'success' | 'warning' | 'error', title: string, content: any) => {
-      this.ctx.modal.notify(type, {
-        title,
-        content,
-        closeAfter: type === 'success' ? 3000 : 8000,
-      })
-    }
-
     const sanitizeFilename = (name: string) => {
       return (name || '').replace(/\s+/g, ' ').trim()
     }
@@ -395,83 +391,89 @@ export class PluginQuickUpload extends BasePlugin {
             <p>No files selected.</p>
           </div>
         )
-        updateFooter()
-        return
-      }
-
-      const list = (
-        <ul
-          style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: 0,
-            display: 'grid',
-            gap: '6px',
-          }}
-        />
-      ) as HTMLUListElement
-
-      items.forEach((item) => {
-        const isActive = item.id === selectedId
-        const row = (
-          <li
+      } else {
+        const list = (
+          <ul
             style={{
-              border: '1px solid var(--ipe-border-color, rgba(0,0,0,.12))',
-              borderRadius: '8px',
-              padding: '8px',
-              cursor: 'pointer',
-              background: isActive ? 'rgba(59,130,246,.08)' : 'transparent',
-              minWidth: 0,
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
+              display: 'grid',
+              gap: '6px',
             }}
-            onClick={() => setSelected(item.id)}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          />
+        ) as HTMLUListElement
+
+        items.forEach((item) => {
+          const isActive = item.id === selectedId
+          const row = (
+            <li
+              style={{
+                border: '1px solid var(--ipe-border-color, rgba(0,0,0,.12))',
+                borderRadius: '8px',
+                padding: '8px',
+                cursor: 'pointer',
+                background: isActive ? 'rgba(59,130,246,.08)' : 'transparent',
+                minWidth: 0,
+              }}
+              onClick={() => setSelected(item.id)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      wordBreak: 'break-word',
+                      fontSize: '13px',
+                    }}
+                  >
+                    <strong style={{ fontWeight: 600 }}>{item.filename}</strong>
+                  </div>
+                  <div style={{ fontSize: '12px', opacity: 0.75 }}>
+                    {getStatusLabel(item.status)}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    type="button"
+                    className="ipe-btn is-text"
+                    title={'Remove'}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      removeItem(item.id)
+                      renderList()
+                      void renderPreview()
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              {item.message ? (
                 <div
                   style={{
-                    textOverflow: 'ellipsis',
-                    overflow: 'hidden',
-                    whiteSpace: 'nowrap',
-                    wordBreak: 'break-word',
-                    fontSize: '13px',
+                    fontSize: '12px',
+                    opacity: 0.8,
+                    marginTop: '4px',
+                    whiteSpace: 'pre-wrap',
                   }}
                 >
-                  <strong style={{ fontWeight: 600 }}>{item.filename}</strong>
+                  {item.message}
                 </div>
-                <div style={{ fontSize: '12px', opacity: 0.75 }}>{getStatusLabel(item.status)}</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button
-                  type="button"
-                  className="ipe-btn is-text"
-                  title={'Remove'}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    removeItem(item.id)
-                    renderList()
-                    void renderPreview()
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            </div>
+              ) : null}
+            </li>
+          ) as HTMLLIElement
 
-            {item.message ? (
-              <div
-                style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px', whiteSpace: 'pre-wrap' }}
-              >
-                {item.message}
-              </div>
-            ) : null}
-          </li>
-        ) as HTMLLIElement
+          list.appendChild(row)
+        })
 
-        list.appendChild(row)
-      })
+        ui.listEl.appendChild(list)
+      }
 
-      ui.listEl.appendChild(list)
       updateFooter()
     }
 
