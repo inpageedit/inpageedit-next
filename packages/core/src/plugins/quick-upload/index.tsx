@@ -325,7 +325,7 @@ export class PluginQuickUpload extends BasePlugin {
       const newItems: UploadItem[] = accepted.map((file) => ({
         id: this.safeId(),
         file,
-        filename: sanitizeFilename(file.name),
+        filename: file.name,
         text: '',
         status: 'queued',
         retryable: true,
@@ -930,8 +930,6 @@ export class PluginQuickUpload extends BasePlugin {
           />
         </div>
 
-        <div style={{ height: 0 }} />
-
         <div
           ref={(el: any) => {
             ui.listEl = el
@@ -1005,7 +1003,6 @@ export class PluginQuickUpload extends BasePlugin {
               ref={(el: any) => {
                 ui.summaryInput = el
               }}
-              value={String(defaultSummary || '')}
               onInput={() => {}}
             />
           </div>
