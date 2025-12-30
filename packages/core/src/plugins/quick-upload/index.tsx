@@ -267,7 +267,7 @@ export class PluginQuickUpload extends BasePlugin {
           (it) => (it.status === 'queued' || it.status === 'paused') && it.retryable !== false
         )
       }
-      return list.slice()
+      return list.filter((it) => it.status === 'queued' || it.status === 'paused')
     }
 
     const prepareRetryState = (candidates: UploadItem[]) => {
@@ -711,10 +711,27 @@ export class PluginQuickUpload extends BasePlugin {
           return
         }
         if (items.length > confirmThreshold) {
-          const ok = window.confirm(
-            `You are about to upload ${items.length} files at once. Are you sure?`
+          this.ctx.modal.confirm(
+            {
+              title: $`Confirm bulk upload`,
+              content: (
+                <div>
+                  {$`You are about to upload`} <strong>{items.length}</strong>{' '}
+                  {$`files at once. Are you sure?`}
+                </div>
+              ),
+              center: true,
+              okBtn: { label: $`Upload`, className: 'is-primary is-ghost' },
+              cancelBtn: { label: $`Cancel`, className: 'is-danger is-ghost' },
+            },
+            (confirmed) => {
+              if (confirmed) {
+                void uploadAll('all')
+              }
+              return true
+            }
           )
-          if (!ok) return
+          return
         }
       }
 
