@@ -177,19 +177,19 @@ export class PluginQuickUpload extends BasePlugin {
       ignoreWarnings: null as HTMLInputElement | null,
     }
 
-    const classifyRetryableFromMessage = (msg: string) => {
-      const m = (msg || '').toLowerCase()
-      if (
-        m.includes('file is larger') ||
-        m.includes('files larger than') ||
-        m.includes('maximum upload size')
-      ) {
-        return { retryable: false, reason: 'File too large' as const }
+    const updateItem = (id: string, patch: Partial<UploadItem>) => {
+      items = items.map((x) => (x.id === id ? { ...x, ...patch } : x))
+    }
+
+    const removeItem = (id: string) => {
+      items = items.filter((x) => x.id !== id)
+      if (selectedId === id) {
+        selectedId = items[0]?.id ?? null
       }
-      if (m.includes('network') || m.includes('timeout') || m.includes('timed out')) {
-        return { retryable: true, reason: 'Network issue' as const }
-      }
-      return { retryable: true as const }
+    }
+
+    const updateMany = (ids: Set<string>, fn: (it: UploadItem) => UploadItem) => {
+      items = items.map((x) => (ids.has(x.id) ? fn(x) : x))
     }
 
     const summarizeApiErrors = (e: any) => {
@@ -213,10 +213,51 @@ export class PluginQuickUpload extends BasePlugin {
       return out.filter(Boolean)
     }
 
+    const formatUploadError = (e: any): { message: string; retryable: boolean } => {
+      let reasons = summarizeApiErrors(e)
+      if (reasons.length === 0) reasons = ['Upload failed with unknown error.']
+
+      const combined = reasons.join('\n')
+      const lower = combined.toLowerCase()
+
+      if (
+        lower.includes('file is larger') ||
+        lower.includes('files larger than') ||
+        lower.includes('maximum upload size')
+      ) {
+        return { message: `File too large\n${combined}`, retryable: false }
+      }
+
+      if (lower.includes('network') || lower.includes('timeout') || lower.includes('timed out')) {
+        return { message: `Network issue\n${combined}`, retryable: true }
+      }
+
+      return { message: combined, retryable: true }
+    }
+
     const shouldRetryItem = (it: UploadItem) => {
       if (it.status === 'warning') return true
       if (it.status === 'error') return it.retryable !== false
       return false
+    }
+
+    type UploadMode = 'all' | 'resume' | 'retry'
+
+    const getUploadCandidates = (mode: UploadMode, list: UploadItem[]) => {
+      if (mode === 'retry') return list.filter((it) => shouldRetryItem(it))
+      if (mode === 'resume') {
+        return list.filter(
+          (it) => (it.status === 'queued' || it.status === 'paused') && it.retryable !== false
+        )
+      }
+      return list.slice()
+    }
+
+    const prepareRetryState = (candidates: UploadItem[]) => {
+      const idset = new Set(candidates.map((c) => c.id))
+      updateMany(idset, (x) =>
+        x.retryable === false ? x : { ...x, status: 'queued', message: undefined }
+      )
     }
 
     const getSelected = () => {
@@ -387,11 +428,7 @@ export class PluginQuickUpload extends BasePlugin {
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    const id = item.id
-                    items = items.filter((x) => x.id !== id)
-                    if (selectedId === id) {
-                      selectedId = items[0]?.id || null
-                    }
+                    removeItem(item.id)
                     renderList()
                     void renderPreview()
                   }}
@@ -488,7 +525,7 @@ export class PluginQuickUpload extends BasePlugin {
             disabled={isUploading || isLocked}
             onInput={(e: Event) => {
               const v = (e.target as HTMLInputElement).value
-              items = items.map((x) => (x.id === item.id ? { ...x, filename: v } : x))
+              updateItem(item.id, { filename: v })
               renderList()
             }}
           />
@@ -513,7 +550,7 @@ export class PluginQuickUpload extends BasePlugin {
             value={item.text || ''}
             onInput={(e: Event) => {
               const v = (e.target as HTMLTextAreaElement).value
-              items = items.map((x) => (x.id === item.id ? { ...x, text: v } : x))
+              updateItem(item.id, { text: v })
               renderList()
             }}
           ></textarea>
@@ -527,9 +564,7 @@ export class PluginQuickUpload extends BasePlugin {
     }
 
     const uploadOne = async (item: UploadItem) => {
-      items = items.map((x) =>
-        x.id === item.id ? { ...x, status: 'uploading', message: undefined } : x
-      )
+      updateItem(item.id, { status: 'uploading', message: undefined })
       renderList()
       await renderPreview()
 
@@ -545,17 +580,12 @@ export class PluginQuickUpload extends BasePlugin {
 
         if (result.data?.upload?.result === 'Success') {
           const fileUrl = this.ctx.wikiFile.getFileUrl(`File:${result.data.upload.filename}`)
-          items = items.map((x) =>
-            x.id === item.id
-              ? {
-                  ...x,
-                  status: 'success',
-                  fileUrl,
-                  result: result.data.upload as any,
-                  retryable: true,
-                }
-              : x
-          )
+          updateItem(item.id, {
+            status: 'success',
+            fileUrl,
+            result: result.data.upload as any,
+            retryable: true,
+          })
           renderList()
           await renderPreview()
           return
@@ -571,11 +601,12 @@ export class PluginQuickUpload extends BasePlugin {
           if (uploadResult.result === 'Success') {
             const fname = (uploadResult as any).filename || body.filename
             const fileUrl = this.ctx.wikiFile.getFileUrl(`File:${fname}`)
-            items = items.map((x) =>
-              x.id === item.id
-                ? { ...x, status: 'success', fileUrl, result: uploadResult, retryable: true }
-                : x
-            )
+            updateItem(item.id, {
+              status: 'success',
+              fileUrl,
+              result: uploadResult,
+              retryable: true,
+            })
             renderList()
             await renderPreview()
             return
@@ -586,17 +617,12 @@ export class PluginQuickUpload extends BasePlugin {
             uploadResult.warnings.duplicate.length > 0
           ) {
             reasons.push(`Duplicate of: ${uploadResult.warnings.duplicate.join(', ')}`)
-            items = items.map((x) =>
-              x.id === item.id
-                ? {
-                    ...x,
-                    status: 'warning',
-                    message: reasons.join('\n'),
-                    result: uploadResult,
-                    retryable: true,
-                  }
-                : x
-            )
+            updateItem(item.id, {
+              status: 'warning',
+              message: reasons.join('\n'),
+              result: uploadResult,
+              retryable: true,
+            })
             renderList()
             await renderPreview()
             return
@@ -604,58 +630,35 @@ export class PluginQuickUpload extends BasePlugin {
 
           if (uploadResult.warnings?.exists) {
             reasons.push('A file with the same name already exists.')
-            items = items.map((x) =>
-              x.id === item.id
-                ? {
-                    ...x,
-                    status: 'warning',
-                    message: reasons.join('\n'),
-                    result: uploadResult,
-                    retryable: true,
-                  }
-                : x
-            )
+            updateItem(item.id, {
+              status: 'warning',
+              message: reasons.join('\n'),
+              result: uploadResult,
+              retryable: true,
+            })
             renderList()
             await renderPreview()
             return
           }
 
-          reasons.push(...summarizeApiErrors(e))
-        } else {
-          reasons.push(...summarizeApiErrors(e))
+          const { message, retryable } = formatUploadError(e)
+          updateItem(item.id, { status: 'error', message, retryable })
+          renderList()
+          await renderPreview()
+          return
         }
 
-        if (reasons.length === 0) reasons = ['Upload failed with unknown error.']
-
-        const combined = reasons.join('\n')
-        const classification = classifyRetryableFromMessage(combined)
-
-        items = items.map((x) =>
-          x.id === item.id
-            ? {
-                ...x,
-                status: 'error',
-                message: classification.reason ? `${classification.reason}\n${combined}` : combined,
-                retryable: classification.retryable,
-              }
-            : x
-        )
+        const { message, retryable } = formatUploadError(e)
+        updateItem(item.id, { status: 'error', message, retryable })
         renderList()
         await renderPreview()
       }
     }
 
-    const uploadAll = async (mode: 'all' | 'resume' | 'retry' = 'all') => {
+    const uploadAll = async (mode: UploadMode = 'all') => {
       if (isUploading) return
 
-      let candidates: UploadItem[] =
-        mode === 'retry'
-          ? items.filter((it) => shouldRetryItem(it))
-          : mode === 'resume'
-            ? items.filter(
-                (it) => (it.status === 'queued' || it.status === 'paused') && it.retryable !== false
-              )
-            : items.slice()
+      let candidates = getUploadCandidates(mode, items)
 
       if (mode === 'retry') {
         if (candidates.length === 0) {
@@ -693,15 +696,10 @@ export class PluginQuickUpload extends BasePlugin {
       }
 
       if (mode === 'retry') {
-        const idset = new Set(candidates.map((c) => c.id))
-        items = items.map((x) => {
-          if (!idset.has(x.id)) return x
-          if (x.retryable === false) return { ...x, status: x.status, message: x.message }
-          return { ...x, status: 'queued', message: undefined }
-        })
+        prepareRetryState(candidates)
         renderList()
         await renderPreview()
-        candidates = items.filter((x) => idset.has(x.id))
+        candidates = getUploadCandidates('retry', items)
       }
 
       isUploading = true
@@ -727,12 +725,11 @@ export class PluginQuickUpload extends BasePlugin {
         for (const item of candidates) {
           if (pauseRequested) {
             const remainingIds = new Set(candidates.slice(done).map((x) => x.id))
-            items = items.map((x) => {
-              if (remainingIds.has(x.id) && (x.status === 'queued' || x.status === 'uploading')) {
-                return { ...x, status: 'paused', message: 'Paused by user', retryable: true }
-              }
-              return x
-            })
+            updateMany(remainingIds, (x) =>
+              x.status === 'queued' || x.status === 'uploading'
+                ? { ...x, status: 'paused', message: 'Paused by user', retryable: true }
+                : x
+            )
             renderList()
             await renderPreview()
             break
