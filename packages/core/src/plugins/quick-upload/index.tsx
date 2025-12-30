@@ -158,6 +158,7 @@ export class PluginQuickUpload extends BasePlugin {
     })
 
     let isUploading = false
+    let pauseRequested = false
 
     const defaultSummary = (await this.ctx.preferences.get('quickUpload.summary')) || ''
     const accept = 'image/*,video/*,audio/*,application/pdf'
@@ -172,7 +173,6 @@ export class PluginQuickUpload extends BasePlugin {
       previewWrapper: null as HTMLElement | null,
       progressEl: null as HTMLElement | null,
       progressTextEl: null as HTMLElement | null,
-      pauseBtn: null as HTMLButtonElement | null,
       summaryInput: null as HTMLTextAreaElement | null,
       ignoreWarnings: null as HTMLInputElement | null,
       selectedCountEl: null as HTMLElement | null,
@@ -268,6 +268,7 @@ export class PluginQuickUpload extends BasePlugin {
 
     const setSelected = (id: string | null) => {
       selectedId = id
+      renderList()
       void renderPreview()
     }
 
@@ -383,6 +384,7 @@ export class PluginQuickUpload extends BasePlugin {
             <p>No files selected.</p>
           </div>
         )
+        updateFooter()
         return
       }
 
@@ -459,6 +461,7 @@ export class PluginQuickUpload extends BasePlugin {
       })
 
       ui.listEl.appendChild(list)
+      updateFooter()
     }
 
     const renderPreview = async () => {
@@ -710,19 +713,8 @@ export class PluginQuickUpload extends BasePlugin {
       }
 
       isUploading = true
-      let pauseRequested = false
-
-      const requestPauseAfterCurrent = () => {
-        pauseRequested = true
-      }
-
-      if (ui.pauseBtn) {
-        ui.pauseBtn.disabled = false
-        ui.pauseBtn.onclick = (e) => {
-          e?.preventDefault?.()
-          requestPauseAfterCurrent()
-        }
-      }
+      pauseRequested = false
+      updateFooter()
 
       try {
         const total = candidates.length
@@ -808,7 +800,7 @@ export class PluginQuickUpload extends BasePlugin {
         }
       } finally {
         isUploading = false
-        if (ui.pauseBtn) ui.pauseBtn.disabled = true
+        updateFooter()
       }
     }
 
@@ -905,53 +897,6 @@ export class PluginQuickUpload extends BasePlugin {
               ;(e.target as HTMLInputElement).value = ''
             }}
           />
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="ipe-btn is-text is-primary"
-            disabled={isUploading}
-            onClick={() => {
-              void uploadAll('all')
-            }}
-          >
-            Upload all
-          </button>
-
-          <button
-            type="button"
-            className="ipe-btn is-text is-danger"
-            disabled={true}
-            ref={(el: any) => {
-              ui.pauseBtn = el
-            }}
-            onClick={() => {}}
-          >
-            Pause after current
-          </button>
-
-          <button
-            type="button"
-            className="ipe-btn is-text"
-            disabled={isUploading}
-            onClick={() => {
-              void uploadAll('resume')
-            }}
-          >
-            Resume
-          </button>
-
-          <button
-            type="button"
-            className="ipe-btn is-text"
-            disabled={isUploading}
-            onClick={() => {
-              void uploadAll('retry')
-            }}
-          >
-            Retry failed/warnings
-          </button>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1080,31 +1025,54 @@ export class PluginQuickUpload extends BasePlugin {
     modal.setContent(containerEl)
 
     if (ui.summaryInput) ui.summaryInput.value = String(defaultSummary || '')
+
+    const updateFooter = () => {
+      const { ok, warn, err, paused } = countByStatus()
+      const hasFailed = err > 0 || warn > 0
+      const hasPaused = paused > 0
+
+      let label = $`Upload`
+      let action = () => void uploadAll('all')
+      let className = 'is-primary is-text'
+
+      if (isUploading) {
+        label = pauseRequested ? 'Pausing...' : 'Pause after current'
+        action = () => {
+          pauseRequested = true
+          updateFooter()
+        }
+      } else if (hasPaused) {
+        label = 'Resume'
+        action = () => void uploadAll('resume')
+      } else if (hasFailed) {
+        label = 'Retry failed/warnings'
+        action = () => void uploadAll('retry')
+      }
+
+      modal.setButtons([
+        {
+          label: $`Cancel`,
+          className: 'is-danger is-text',
+          method: () => modal.close(),
+        },
+        {
+          label: 'Reset',
+          className: 'is-text',
+          method: () => {
+            if (isUploading) return
+            resetAll()
+          },
+        },
+        {
+          label,
+          className,
+          method: action,
+        },
+      ])
+    }
+
     renderList()
     await renderPreview()
-
-    modal.setButtons([
-      {
-        label: $`Cancel`,
-        className: 'is-danger is-text',
-        method: () => modal.close(),
-      },
-      {
-        label: 'Reset',
-        className: 'is-text',
-        method: () => {
-          if (isUploading) return
-          resetAll()
-        },
-      },
-      {
-        label: $`Upload`,
-        className: 'is-primary is-text',
-        method: () => {
-          void uploadAll('all')
-        },
-      },
-    ])
 
     return modal
   }
