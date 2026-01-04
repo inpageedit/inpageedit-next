@@ -8,6 +8,13 @@ declare module '@/InPageEdit.js' {
      */
     currentPage: CurrentPageService
   }
+  interface Events {
+    'current-page/override-wiki-title'(payload: {
+      ctx: InPageEdit
+    }): IWikiTitle | string | null | undefined
+    'current-page/override-is-main-page'(payload: { ctx: InPageEdit }): boolean | undefined
+    'current-page/override-wiki-action'(payload: { ctx: InPageEdit }): string | undefined
+  }
 }
 
 @Inject(['wiki', 'wikiTitle'])
@@ -91,6 +98,16 @@ export class CurrentPageService extends Service {
 
   readonly isMainPage!: boolean
   async #initIsMainPage() {
+    const overrideIsMainPage = await this.ctx.serial('current-page/override-is-main-page', {
+      ctx: this.ctx,
+    })
+    if (typeof overrideIsMainPage !== 'undefined') {
+      Reflect.defineProperty(this, 'isMainPage', {
+        get: () => !!overrideIsMainPage,
+      })
+      return overrideIsMainPage
+    }
+
     const title = this.wikiTitle
     const isMainPage = title?.getMainDBKey() === this.ctx.wiki.mainPageName
     Reflect.defineProperty(this, 'isMainPage', {
@@ -106,11 +123,20 @@ export class CurrentPageService extends Service {
   wikiTitle!: IWikiTitle | null
   async #initCurrentTitle(): Promise<IWikiTitle | null> {
     let title: IWikiTitle | null = null
-    if (this.canonicalUrl) {
-      title = await this.ctx.wikiTitle.newTitleFromUrl(this.canonicalUrl)
+
+    const overrideTitle = await this.ctx.serial('current-page/override-wiki-title', {
+      ctx: this.ctx,
+    })
+    if (typeof overrideTitle !== 'undefined') {
+      title = overrideTitle ? this.ctx.wikiTitle.newTitle(overrideTitle) : null
     } else {
-      title = await this.ctx.wikiTitle.newTitleFromUrl(this.url)
+      if (this.canonicalUrl) {
+        title = await this.ctx.wikiTitle.newTitleFromUrl(this.canonicalUrl)
+      } else {
+        title = await this.ctx.wikiTitle.newTitleFromUrl(this.url)
+      }
     }
+
     Object.freeze(title)
     Reflect.defineProperty(this, 'wikiTitle', {
       get: () => title,
@@ -119,6 +145,12 @@ export class CurrentPageService extends Service {
   }
 
   get wikiAction() {
+    const overrideAction = this.ctx.bail('current-page/override-wiki-action', {
+      ctx: this.ctx,
+    })
+    if (typeof overrideAction !== 'undefined') {
+      return overrideAction
+    }
     return this.params.get('action') || 'view'
   }
 }
