@@ -23,6 +23,27 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.16.0'>
+
+> [!WARNING]
+>
+> 此版本包含一些未完成的功能，将在后续版本中陆续优化和完善。
+
+- <Badge type='rainbow'>新功能</Badge> refactor(quick-upload): rewritten quick-upload with multiple uploads (#25) by @t7ru
+  - 由 Benjamin 带来的新功能，现在你可以通过 quick-upload 插件一次上传多个文件了！
+  - ⚠️ 目前移动设备体验不佳，将在后续版本中优化。
+- <Badge type='rainbow'>新功能</Badge> feat: ThemeService for dark mode support (#23) by @t7ru
+  - 由 Benjamin 带来的新功能，现在你可以通过偏好设置切换黑暗模式了！
+  - ⚠️ 目前尚未针对特定 wiki 进行特调，将在后续版本中优化，相关 API 接口可能产生不兼容变化。
+- feat(core): exports Icon component (#19) by @Suoerix
+  - 导出了一些图标组件，方便开发者使用
+  - ⚠️ 目前由于尚未针对 tree-shaking 进行优化，导入图标组件时可能会导致意料外的体积膨胀。
+- fix(in-article-links): handle empty content case in onContentReady check
+  - 暂时通过防御性编程，避免因 RevisionSlider 扩展在错误时机触发 `wikipage.content` 钩子导致的白屏问题
+  - 完整修复将在稍后版本中发布
+
+</ChangeLog>
+
 <ChangeLog version='0.15.0'>
 
 <template #title>0.15.0 <Badge type='rainbow'>重量级</Badge></template>
