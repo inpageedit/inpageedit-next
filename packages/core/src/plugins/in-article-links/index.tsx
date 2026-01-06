@@ -174,7 +174,7 @@ export class PluginInArticleLinks extends BasePlugin<{
       })
 
       this.onContentReady(($content) => {
-        if (!enable) {
+        if (!enable || !$content?.length) {
           return
         }
         const anchors = this.scanAnchors($content.get(0)!, ({ action, title, redlink }) => {
@@ -256,7 +256,7 @@ export class PluginInArticleLinks extends BasePlugin<{
       })
 
       this.onContentReady(($content) => {
-        if (!enable) {
+        if (!enable || !$content?.length) {
           return
         }
         const anchors = this.scanAnchors($content.get(0)!, ({ params, title }) => {
