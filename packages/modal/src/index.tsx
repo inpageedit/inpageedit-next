@@ -589,9 +589,9 @@ export class IPEModal {
       this.$window.classList.add('is-fixed-height')
     }
 
-    // interactions - backdrop close（使用 pointerdown 兼容触控）
+    // interactions - backdrop close
     if ($backdrop) {
-      $backdrop.addEventListener('pointerdown', (e) => {
+      $backdrop.addEventListener('pointerup', (e) => {
         if (!this.options.outSideClose) return
         if (e.target === $backdrop) this.close()
       })
