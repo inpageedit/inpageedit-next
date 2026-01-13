@@ -19,17 +19,29 @@ export class CurrentPageService extends Service {
     return this.ctx.logger('CURRENT_PAGE')
   }
 
+  static readonly HISTORY_CHANGE_EVENT = 'inpageedit:historychange'
+  static readonly POPSTATE_INJECTION_KEY: symbol = Symbol.for(
+    'InPageEdit.CurrentPageService.UrlChangeListenerInstalled'
+  )
+
+  readonly #boundOnPopState = (e: PopStateEvent) => this.#onPopState(e)
+  readonly #boundOnHistoryChange = () => this.#onLocationChange()
+
   protected async start() {
     await this.#init()
 
     this.#injectHistoryPopState()
-    window.addEventListener('popstate', this.#onPopState.bind(this))
+    window.addEventListener('popstate', this.#boundOnPopState)
+    // 用于监听 pushState/replaceState 触发的 SPA 路由变化（避免伪造 popstate 造成与 vue-router 等冲突）
+    window.addEventListener(CurrentPageService.HISTORY_CHANGE_EVENT, this.#boundOnHistoryChange)
 
     this.logger.info('initialized', this.wikiTitle)
   }
 
   protected stop(): void | Promise<void> {
-    window.removeEventListener('popstate', this.#onPopState.bind(this))
+    window.removeEventListener('popstate', this.#boundOnPopState)
+    window.removeEventListener(CurrentPageService.HISTORY_CHANGE_EVENT, this.#boundOnHistoryChange)
+    delete (window as any)[CurrentPageService.POPSTATE_INJECTION_KEY]
   }
 
   async #init() {
@@ -38,23 +50,28 @@ export class CurrentPageService extends Service {
   }
 
   #injectHistoryPopState() {
-    const injectKey = Symbol.for('InPageEdit.CurrentPageService.UrlChangeListenerInstalled')
-    if ((window as any)[injectKey]) {
+    const injectionKey = CurrentPageService.POPSTATE_INJECTION_KEY
+    if ((window as any)[injectionKey]) {
       return
     }
     const _pushState = history.pushState
     const _replaceState = history.replaceState
     history.pushState = function (data: any, title: string, url?: string | null) {
       _pushState.apply(this, [data, title, url])
-      window.dispatchEvent(new PopStateEvent('popstate', { state: data }))
+      // 不要伪造 popstate：这会和 vue-router 等路由库的 popstate 处理产生递归冲突
+      window.dispatchEvent(new Event(CurrentPageService.HISTORY_CHANGE_EVENT))
     }
     history.replaceState = function (data: any, title: string, url?: string | null) {
       _replaceState.apply(this, [data, title, url])
-      window.dispatchEvent(new PopStateEvent('popstate', { state: data }))
+      window.dispatchEvent(new Event(CurrentPageService.HISTORY_CHANGE_EVENT))
     }
-    ;(window as any)[injectKey] = true
+    ;(window as any)[injectionKey] = true
   }
   async #onPopState(e: PopStateEvent) {
+    await this.#onLocationChange()
+  }
+
+  async #onLocationChange() {
     const oldURL = this.url
     const newURL = new URL(window.location.href)
     this.url = newURL
@@ -67,6 +84,8 @@ export class CurrentPageService extends Service {
     ) {
       await this.#init()
       this.logger.info('location changed', newURL, this.wikiTitle)
+    } else {
+      this.logger.debug('location changed but no title/curid change', newURL, this.wikiTitle)
     }
   }
 
