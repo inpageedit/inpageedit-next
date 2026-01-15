@@ -23,6 +23,15 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.16.1'>
+
+- fix(CurrentPageService): update event handling for history changes and prevent conflicts with SPA frameworks
+  - 修复了一个可能导致与 SPA 框架（如 Vue Router）冲突的小问题
+- chore(modal): change backdrop event from pointerdown to pointerup for closing behavior
+  - 将模态框的背景点击事件从 `pointerdown` 修改为 `pointerup`，以避免移动版 Safari 的点击穿透问题
+
+</ChangeLog>
+
 <ChangeLog version='0.16.0'>
 
 > [!WARNING]
