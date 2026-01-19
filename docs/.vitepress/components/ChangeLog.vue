@@ -19,7 +19,7 @@
         </a>
         <a
           v-if="prevVersionInfo"
-          :href="`https://github.com/inpageedit/inpageedit-next/compare/${prevVersionInfo.version}...${version}`"
+          :href="`https://github.com/inpageedit/inpageedit-next/compare/${gitTagPrefix ?? 'core/'}${prevVersionInfo.version}...${gitTagPrefix ?? 'core/'}${version}`"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -52,6 +52,7 @@ const props = defineProps<{
   info?: string
   title?: string
   time?: string
+  gitTagPrefix?: string
 }>()
 
 const npm = ref<NpmPackage | null>(null)
