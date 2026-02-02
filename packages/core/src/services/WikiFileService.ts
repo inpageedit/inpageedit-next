@@ -82,7 +82,7 @@ export class WikiFileService extends Service {
     return this.ctx.wiki.fileRepos || []
   }
   get defaultFileRepo(): WikiFileRepo | undefined {
-    return this.fileRepos[0]
+    return this.localFileRepo || this.fileRepos[0]
   }
   get localFileRepo(): WikiFileRepo | undefined {
     return this.fileRepos.find((repo) => repo.local)
