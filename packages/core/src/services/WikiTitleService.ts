@@ -212,7 +212,13 @@ export class WikiTitleService extends Service {
     }
     const params = url.searchParams
     const hash = url.hash.replace('#', '')
-    const action = params.get('action') || 'view'
+    let action = params.get('action') || 'view'
+    if (
+      params.get('veaction') === 'edit' ||
+      params.get('veaction') === 'editsource'
+    ) {
+      action = 'edit'
+    }
     const titleParam = params.get('title') || ''
     const curid = parseInt(params.get('curid') || '0', 10)
     const oldid = parseInt(params.get('oldid') || '0', 10)
