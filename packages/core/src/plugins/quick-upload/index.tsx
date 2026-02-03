@@ -974,15 +974,7 @@ export class PluginQuickUpload extends BasePlugin {
         style={{ display: 'grid', gap: '12px' }}
       >
         {progressBar}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 40%) minmax(0, 1fr)',
-            gap: '12px',
-            alignItems: 'start',
-            minWidth: 0,
-          }}
-        >
+        <div className="ipe-quickUpload__layout">
           {leftPanel}
           {rightPanel}
         </div>
