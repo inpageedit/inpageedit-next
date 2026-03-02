@@ -11,7 +11,7 @@ export const useMockInPageEdit = () => {
   window.mw = window.mw || {}
   ;(window.mw as any).config = useMockMwConfig()
   ;(window.mw as any).hook = (name: string) => {
-    return MockMwHook.create(name)
+    return new MockMwHook(name)
   }
   // @ts-ignore fake hook add method
   window.mw.hook('InPageEdit.ready').add = (...handlers) => {

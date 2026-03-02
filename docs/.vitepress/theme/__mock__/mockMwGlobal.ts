@@ -14,20 +14,21 @@ export class MockMwMap<T extends Record<string, any> = any> {
 }
 
 export class MockMwHook<T extends any[] = any[]> {
-  private static readonly _hookHandlers = new Map<string, MockMwHook<any[]>>()
-  static create<T extends any[] = any[]>(name: string) {
-    if (this._hookHandlers.has(name)) {
-      return this._hookHandlers.get(name)!
+  private static readonly _hookRegistry = new Map<string, MockMwHook<any[]>>()
+  constructor(private readonly name: string) {
+    if (MockMwHook._hookRegistry.has(name)) {
+      return MockMwHook._hookRegistry.get(name)! as MockMwHook<T>
     }
-    const hook = new MockMwHook<T>(name)
-    this._hookHandlers.set(name, hook)
-    return hook
+    MockMwHook._hookRegistry.set(name, this)
+  }
+  /** @deprecated Use constructor instead */
+  static create<T extends any[] = any[]>(name: string) {
+    return new MockMwHook<T>(name)
   }
 
   private _handlers: Array<(...data: T) => any> = []
   private _lastFiredContext: T | undefined = undefined
 
-  constructor(public name: string) {}
   add(...handler: Array<(...data: T) => any>): this {
     console.info('hook:', this.name, 'add', handler)
     this._handlers.push(...handler)
