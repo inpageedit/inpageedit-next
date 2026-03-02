@@ -34,6 +34,8 @@ declare module '@/InPageEdit' {
 export class ThemeService extends Service {
   private _mediaQueryList: MediaQueryList | null = null
   private _observer: MutationObserver | null = null
+  private _fandomObserverEnabled = false
+  private _lastAppliedTheme: ThemeMode | null = null
 
   private readonly _handleSystemThemeChange = this._onSystemThemeChange.bind(this)
   private readonly _handleBodyClassChange = this._onBodyClassChange.bind(this)
@@ -61,6 +63,7 @@ export class ThemeService extends Service {
       this._mediaQueryList.removeEventListener('change', this._handleSystemThemeChange)
     }
     this._observer?.disconnect()
+    this._fandomObserverEnabled = false
   }
 
   private async _onSystemThemeChange() {
@@ -68,6 +71,9 @@ export class ThemeService extends Service {
   }
 
   private async _onBodyClassChange() {
+    if (!this._fandomObserverEnabled) return
+    const fandomTheme = this.getTheme('fandom')
+    if (fandomTheme === this._lastAppliedTheme && fandomTheme === this.currentTheme) return
     await this.applyTheme()
   }
 
@@ -77,19 +83,25 @@ export class ThemeService extends Service {
     this.updateFandomObserver(pref)
 
     const theme = this.getTheme(pref)
+    if (theme === this._lastAppliedTheme && theme === this.currentTheme) return
     this.applyThemeClass(theme)
+    this._lastAppliedTheme = theme
     this.ctx.emit('theme/changed', { ctx: this.ctx, theme })
   }
 
   // don't run observer unless using fandom option
   private updateFandomObserver(pref: ThemePreference) {
     if (pref === 'fandom') {
+      if (this._fandomObserverEnabled) return
       this._observer?.observe(document.body, {
         attributes: true,
         attributeFilter: ['class'],
       })
+      this._fandomObserverEnabled = true
     } else {
+      if (!this._fandomObserverEnabled) return
       this._observer?.disconnect()
+      this._fandomObserverEnabled = false
     }
   }
 
