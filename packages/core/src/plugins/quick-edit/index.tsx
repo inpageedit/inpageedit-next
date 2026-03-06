@@ -638,7 +638,17 @@ export class PluginQuickEdit extends BasePlugin {
         }}
         onClick={(e) => {
           e.preventDefault()
-          this.showModal(JSON.parse(e.currentTarget.dataset.payload ?? '{}') ?? payload)
+          this.showModal((elPayload => {
+            if (!elPayload) {
+              return payload;
+            }
+            try {
+              return JSON.parse(elPayload);
+            } catch {
+              // 应该打个log提示一下
+              return payload;
+            }
+          })(e.currentTarget.dataset.payload));
         }}
       >
         {icon}
