@@ -89,8 +89,7 @@ export class ThemeService extends Service {
   }
 
   private resolveActiveAdapter() {
-    const hostname = location.hostname
-    this.activeAdapter = this.adapters.find((a) => a.match(hostname)) ?? null
+    this.activeAdapter = this.adapters.find((a) => a.match()) ?? null
   }
 
   private async _onSystemThemeChange() {
