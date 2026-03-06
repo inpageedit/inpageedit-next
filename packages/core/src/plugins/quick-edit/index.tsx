@@ -41,6 +41,8 @@ export interface QuickEditOptions {
   section: number | 'new' | undefined
   editMinor: boolean
   editSummary: string
+  /** JSON string */
+  editSummaryPayload: string
   createOnly: boolean
   reloadAfterSave: boolean
 }
@@ -107,6 +109,7 @@ export class PluginQuickEdit extends BasePlugin {
     section: undefined,
     editMinor: false,
     editSummary: '',
+    editSummaryPayload: '{}',
     createOnly: false,
     reloadAfterSave: true,
   }
@@ -124,7 +127,21 @@ export class PluginQuickEdit extends BasePlugin {
       })
     })
   }
-
+  buildSummary(template: string, summaryPayload?: string): string {
+    const datas: Record<string, string> = ((s) => {
+      if (!s || typeof s != "string") {
+        return {};
+      }
+      try {
+        return JSON.parse(s);
+      } catch {
+        return {};
+      }
+    })(summaryPayload);
+    return template.replace(/\$\{(\w*)\}/g, (_, k: string) => {
+      return datas[k] ?? "";
+    })
+  }
   async showModal(payload?: string | Partial<QuickEditOptions>) {
     const { $ } = this.ctx
     if (typeof payload === 'undefined') {
@@ -165,10 +182,11 @@ export class PluginQuickEdit extends BasePlugin {
 
     const outSideClose = (await this.ctx.preferences.get('quickEdit.outSideClose'))!
     const watchList = (await this.ctx.preferences.get('quickEdit.watchList'))!
+
     const editSummary =
       typeof payload.editSummary === 'string'
         ? payload.editSummary
-        : (await this.ctx.preferences.get('quickEdit.editSummary'))!
+        : this.buildSummary((await this.ctx.preferences.get('quickEdit.editSummary'))!, payload.editSummaryPayload)
     const editMinor =
       typeof payload.editMinor === 'boolean'
         ? payload.editMinor
@@ -183,6 +201,7 @@ export class PluginQuickEdit extends BasePlugin {
     }
     if (!options.editSummary) {
       options.editSummary = (await this.ctx.preferences.get('quickEdit.editSummary')) || ''
+      options.editSummary = this.buildSummary(options.editSummary, options.editSummaryPayload);
     }
     this.ctx.emit('quick-edit/init-options', { ctx: this.ctx, options })
 
@@ -483,7 +502,7 @@ export class PluginQuickEdit extends BasePlugin {
                 className: 'is-primary is-ghost',
               },
             },
-            (confirmed) => {
+            (confirmed: boolean) => {
               if (confirmed) {
                 modal.setOptions({
                   beforeClose: noop,
@@ -628,7 +647,7 @@ export class PluginQuickEdit extends BasePlugin {
         }}
         onClick={(e) => {
           e.preventDefault()
-          this.showModal(payload)
+          this.showModal({ ...e.currentTarget.dataset })
         }}
       >
         {icon}
