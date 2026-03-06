@@ -28,6 +28,10 @@ export const useMockInPageEdit = () => {
     },
   })
 
+  ipe.on('current-page/resolve-title', () => {
+    return ipe.wikiTitle.newTitle('Example')
+  })
+
   ipe.on('quick-edit/edit-notice', ({ editNotices }) => {
     const notice = document.createElement('div')
     notice.innerHTML =
