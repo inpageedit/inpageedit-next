@@ -1,8 +1,13 @@
 import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit'
 import { RegisterPreferences } from '@/decorators/Preferences'
+import {
+  BUILTIN_SITE_ADAPTERS,
+  createClassBasedAdapter,
+  type SiteThemeAdapter,
+  type ThemeMode,
+} from './SiteThemeAdapter'
 
-type ThemePreference = 'light' | 'dark' | 'auto' | 'fandom'
-type ThemeMode = 'light' | 'dark'
+type ThemePreference = 'light' | 'dark' | 'auto' | 'site'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -23,7 +28,7 @@ declare module '@/InPageEdit' {
       Schema.const('auto').description('Follow system'),
       Schema.const('light').description('Light mode'),
       Schema.const('dark').description('Dark mode'),
-      Schema.const('fandom').description('Follow Fandom'),
+      Schema.const('site').description('Follow site theme'),
     ])
       .default('auto')
       .description('Theme preference'),
@@ -33,10 +38,10 @@ declare module '@/InPageEdit' {
 )
 export class ThemeService extends Service {
   private _mediaQueryList: MediaQueryList | null = null
-  private _observer: MutationObserver | null = null
+  private adapters: SiteThemeAdapter[] = []
+  private activeAdapter: SiteThemeAdapter | null = null
 
   private readonly _handleSystemThemeChange = this._onSystemThemeChange.bind(this)
-  private readonly _handleBodyClassChange = this._onBodyClassChange.bind(this)
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'theme', false)
@@ -45,7 +50,11 @@ export class ThemeService extends Service {
   protected async start() {
     this._mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)')
     this._mediaQueryList.addEventListener('change', this._handleSystemThemeChange)
-    this._observer = new MutationObserver(this._handleBodyClassChange)
+
+    // Register built-in site theme adapters
+    for (const config of BUILTIN_SITE_ADAPTERS) {
+      this.registerSiteThemeAdapter(createClassBasedAdapter(config))
+    }
 
     await this.applyTheme()
 
@@ -60,36 +69,49 @@ export class ThemeService extends Service {
     if (this._mediaQueryList) {
       this._mediaQueryList.removeEventListener('change', this._handleSystemThemeChange)
     }
-    this._observer?.disconnect()
+    this.activeAdapter?.stopObserving()
+  }
+
+  /**
+   * Register a site theme adapter. Returns a dispose function to unregister it.
+   */
+  registerSiteThemeAdapter(adapter: SiteThemeAdapter): () => void {
+    this.adapters.push(adapter)
+    this.resolveActiveAdapter()
+    return () => {
+      this.adapters = this.adapters.filter((a) => a !== adapter)
+      if (this.activeAdapter === adapter) {
+        adapter.stopObserving()
+        this.activeAdapter = null
+        this.resolveActiveAdapter()
+      }
+    }
+  }
+
+  private resolveActiveAdapter() {
+    const hostname = location.hostname
+    this.activeAdapter = this.adapters.find((a) => a.match(hostname)) ?? null
   }
 
   private async _onSystemThemeChange() {
     await this.applyTheme()
   }
 
-  private async _onBodyClassChange() {
-    await this.applyTheme()
-  }
-
   async applyTheme() {
     const pref = (await this.ctx.preferences.get('theme')) || 'auto'
 
-    this.updateFandomObserver(pref)
+    this.updateSiteObserver(pref)
 
     const theme = this.getTheme(pref)
     this.applyThemeClass(theme)
     this.ctx.emit('theme/changed', { ctx: this.ctx, theme })
   }
 
-  // don't run observer unless using fandom option
-  private updateFandomObserver(pref: ThemePreference) {
-    if (pref === 'fandom') {
-      this._observer?.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class'],
-      })
+  private updateSiteObserver(pref: ThemePreference) {
+    if (pref === 'site' && this.activeAdapter) {
+      this.activeAdapter.startObserving(() => this.applyTheme())
     } else {
-      this._observer?.disconnect()
+      this.activeAdapter?.stopObserving()
     }
   }
 
@@ -98,12 +120,12 @@ export class ThemeService extends Service {
       return this._mediaQueryList?.matches ? 'dark' : 'light'
     }
 
-    if (pref === 'fandom') {
-      const body = document.body
-      return body.classList.contains('theme-fandomdesktop-dark') ||
-        body.classList.contains('theme-fandommobile-dark')
-        ? 'dark'
-        : 'light'
+    if (pref === 'site') {
+      if (this.activeAdapter) {
+        return this.activeAdapter.getCurrentTheme()
+      }
+      // Fallback to auto when no adapter matches
+      return this._mediaQueryList?.matches ? 'dark' : 'light'
     }
 
     return pref
