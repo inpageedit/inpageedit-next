@@ -10,6 +10,9 @@ declare module '@/InPageEdit.js' {
   }
   interface Events {
     'current-page/popstate'(): void
+    'current-page/resolve-title'(title: IWikiTitle | null): IWikiTitle | void
+    'current-page/resolve-action'(action: string): string | void
+    'current-page/resolve-main-page'(isMainPage: boolean): boolean | void
   }
 }
 
@@ -109,7 +112,8 @@ export class CurrentPageService extends Service {
   readonly isMainPage!: boolean
   async #initIsMainPage() {
     const title = this.wikiTitle
-    const isMainPage = title?.getMainDBKey() === this.ctx.wiki.mainPageName
+    let isMainPage = title?.getMainDBKey() === this.ctx.wiki.mainPageName
+    isMainPage = this.ctx.bail('current-page/resolve-main-page', isMainPage) ?? isMainPage
     Reflect.defineProperty(this, 'isMainPage', {
       get: () => isMainPage,
     })
@@ -128,6 +132,7 @@ export class CurrentPageService extends Service {
     } else {
       title = await this.ctx.wikiTitle.newTitleFromUrl(this.url)
     }
+    title = this.ctx.bail('current-page/resolve-title', title) ?? title
     Object.freeze(title)
     Reflect.defineProperty(this, 'wikiTitle', {
       get: () => title,
@@ -136,6 +141,7 @@ export class CurrentPageService extends Service {
   }
 
   get wikiAction() {
-    return this.params.get('action') || 'view'
+    const action = this.params.get('action') || 'view'
+    return this.ctx.bail('current-page/resolve-action', action) ?? action
   }
 }
