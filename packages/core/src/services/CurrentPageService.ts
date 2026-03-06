@@ -10,7 +10,7 @@ declare module '@/InPageEdit.js' {
   }
   interface Events {
     'current-page/popstate'(): void
-    'current-page/resolve-title'(title: IWikiTitle | null): IWikiTitle | null | void
+    'current-page/resolve-title'(title: IWikiTitle | null): IWikiTitle | void
     'current-page/resolve-action'(action: string): string | void
     'current-page/resolve-main-page'(isMainPage: boolean): boolean | void
   }
