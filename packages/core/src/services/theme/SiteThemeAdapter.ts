@@ -19,6 +19,8 @@ export interface ClassBasedAdapterConfig {
   patterns: string[]
   /** CSS class names that indicate dark mode */
   darkClasses: string[]
+  /** CSS class names that indicate "follow system preference" mode */
+  systemClasses?: string[]
   /** Which element(s) to check for dark classes. Default: 'both' */
   target?: 'body' | 'html' | 'both'
 }
@@ -43,7 +45,10 @@ function hasDarkClass(elements: Element[], darkClasses: string[]): boolean {
 
 export function createClassBasedAdapter(config: ClassBasedAdapterConfig): SiteThemeAdapter {
   const target = config.target ?? 'both'
+  const systemClasses = config.systemClasses ?? []
   let observer: MutationObserver | null = null
+  let mediaQuery: MediaQueryList | null = null
+  let mediaQueryHandler: (() => void) | null = null
 
   return {
     name: config.name,
@@ -53,7 +58,13 @@ export function createClassBasedAdapter(config: ClassBasedAdapterConfig): SiteTh
     },
 
     getCurrentTheme(): ThemeMode {
-      return hasDarkClass(getTargetElements(target), config.darkClasses) ? 'dark' : 'light'
+      const elements = getTargetElements(target)
+      if (hasDarkClass(elements, config.darkClasses)) return 'dark'
+      // If a "follow system" class is present, delegate to prefers-color-scheme
+      if (systemClasses.length > 0 && hasDarkClass(elements, systemClasses)) {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      }
+      return 'light'
     },
 
     startObserving(onChange: () => void): void {
@@ -62,11 +73,22 @@ export function createClassBasedAdapter(config: ClassBasedAdapterConfig): SiteTh
       for (const el of getTargetElements(target)) {
         observer.observe(el, { attributes: true, attributeFilter: ['class'] })
       }
+      // Also listen to system preference changes for systemClasses support
+      if (systemClasses.length > 0) {
+        mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+        mediaQueryHandler = onChange
+        mediaQuery.addEventListener('change', mediaQueryHandler)
+      }
     },
 
     stopObserving(): void {
       observer?.disconnect()
       observer = null
+      if (mediaQuery && mediaQueryHandler) {
+        mediaQuery.removeEventListener('change', mediaQueryHandler)
+        mediaQuery = null
+        mediaQueryHandler = null
+      }
     },
   }
 }
@@ -80,6 +102,8 @@ export const BUILTIN_SITE_ADAPTERS: ClassBasedAdapterConfig[] = [
   {
     name: 'Moegirl',
     patterns: ['*.moegirl.org.cn'],
-    darkClasses: ['skin-citizen-dark'],
+    darkClasses: ['dark', 'skin-theme-clientpref-night'],
+    systemClasses: ['skin-theme-clientpref-os'],
+    target: 'html',
   },
 ]
