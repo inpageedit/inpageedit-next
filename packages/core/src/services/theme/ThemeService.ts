@@ -74,10 +74,12 @@ export class ThemeService extends Service {
 
   /**
    * Register a site theme adapter. Returns a dispose function to unregister it.
+   * Custom adapters take priority over previously registered (built-in) ones.
    */
   registerSiteThemeAdapter(adapter: SiteThemeAdapter): () => void {
-    this.adapters.push(adapter)
+    this.adapters.unshift(adapter)
     this.resolveActiveAdapter()
+    this.applyTheme()
     return () => {
       this.adapters = this.adapters.filter((a) => a !== adapter)
       if (this.activeAdapter === adapter) {
@@ -85,6 +87,7 @@ export class ThemeService extends Service {
         this.activeAdapter = null
         this.resolveActiveAdapter()
       }
+      this.applyTheme()
     }
   }
 
