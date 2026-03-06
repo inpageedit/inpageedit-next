@@ -1,9 +1,9 @@
 export type ThemeMode = 'light' | 'dark'
 
 export interface SiteThemeAdapter {
-  /** Display name, e.g. "Fandom", "Vector2022" */
+  /** Display name, e.g. "Fandom", "Vector 2022" */
   name: string
-  /** Whether this adapter can handle the current page (check hostname, DOM, etc.) */
+  /** Whether this adapter can handle the current page */
   match(): boolean
   /** Get current site theme */
   getCurrentTheme(): ThemeMode
@@ -15,27 +15,14 @@ export interface SiteThemeAdapter {
 
 export interface ClassBasedAdapterConfig {
   name: string
-  /** Glob patterns to match hostname, e.g. '*.fandom.com' */
-  hostnamePatterns?: string[]
-  /**
-   * CSS class names on html/body that indicate this adapter should activate.
-   * Useful for matching by skin rather than hostname.
-   */
-  matchClasses?: string[]
+  /** CSS class names on html/body that indicate this skin is active */
+  skinClasses: string[]
   /** CSS class names that indicate dark mode */
   darkClasses: string[]
   /** CSS class names that indicate "follow system preference" mode */
   systemClasses?: string[]
-  /** Which element(s) to check. Default: 'both' */
+  /** Which element(s) to check for darkClasses/systemClasses. Default: 'both' */
   target?: 'body' | 'html' | 'both'
-}
-
-function matchHostname(hostname: string, pattern: string): boolean {
-  if (pattern.startsWith('*.')) {
-    const suffix = pattern.slice(1) // '.fandom.com'
-    return hostname.endsWith(suffix) || hostname === pattern.slice(2)
-  }
-  return hostname === pattern
 }
 
 function getTargetElements(target: 'body' | 'html' | 'both'): Element[] {
@@ -59,22 +46,13 @@ export function createClassBasedAdapter(config: ClassBasedAdapterConfig): SiteTh
     name: config.name,
 
     match(): boolean {
-      const { hostnamePatterns, matchClasses } = config
-      const byHostname =
-        hostnamePatterns && hostnamePatterns.length > 0
-          ? hostnamePatterns.some((p) => matchHostname(location.hostname, p))
-          : false
-      const byClass =
-        matchClasses && matchClasses.length > 0
-          ? hasAnyClass(getTargetElements(target), matchClasses)
-          : false
-      return byHostname || byClass
+      // skinClasses are checked on both html and body regardless of target
+      return hasAnyClass([document.documentElement, document.body], config.skinClasses)
     },
 
     getCurrentTheme(): ThemeMode {
       const elements = getTargetElements(target)
       if (hasAnyClass(elements, config.darkClasses)) return 'dark'
-      // If a "follow system" class is present, delegate to prefers-color-scheme
       if (systemClasses.length > 0 && hasAnyClass(elements, systemClasses)) {
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
       }
@@ -87,7 +65,6 @@ export function createClassBasedAdapter(config: ClassBasedAdapterConfig): SiteTh
       for (const el of getTargetElements(target)) {
         observer.observe(el, { attributes: true, attributeFilter: ['class'] })
       }
-      // Also listen to system preference changes for systemClasses support
       if (systemClasses.length > 0) {
         mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
         mediaQueryHandler = onChange
@@ -107,31 +84,34 @@ export function createClassBasedAdapter(config: ClassBasedAdapterConfig): SiteTh
   }
 }
 
-/**
- * Built-in site theme adapters.
- * Ordered by specificity: site-specific adapters first, generic skin adapters last.
- */
+/** Built-in site theme adapters, ordered by specificity. */
 export const BUILTIN_SITE_ADAPTERS: ClassBasedAdapterConfig[] = [
-  // --- Site-specific adapters ---
-  {
-    name: 'Fandom',
-    hostnamePatterns: ['*.fandom.com'],
-    darkClasses: ['theme-fandomdesktop-dark', 'theme-fandommobile-dark'],
-  },
   {
     name: 'MoeSkin',
-    hostnamePatterns: ['*.moegirl.org.cn'],
+    skinClasses: ['skin-moeskin'],
     darkClasses: ['dark'],
     target: 'html',
   },
-  // --- Generic MediaWiki skin adapters (match by class, any wiki) ---
+  {
+    name: 'Fandom Desktop',
+    skinClasses: ['skin-fandomdesktop'],
+    darkClasses: ['theme-fandomdesktop-dark'],
+  },
+  {
+    name: 'Fandom Mobile',
+    skinClasses: ['skin-fandommobile'],
+    darkClasses: ['theme-fandommobile-dark'],
+  },
   {
     name: 'Vector 2022',
-    matchClasses: [
-      'skin-theme-clientpref-day',
-      'skin-theme-clientpref-night',
-      'skin-theme-clientpref-os',
-    ],
+    skinClasses: ['skin-vector-2022'],
+    darkClasses: ['skin-theme-clientpref-night'],
+    systemClasses: ['skin-theme-clientpref-os'],
+    target: 'html',
+  },
+  {
+    name: 'Citizen',
+    skinClasses: ['skin-citizen'],
     darkClasses: ['skin-theme-clientpref-night'],
     systemClasses: ['skin-theme-clientpref-os'],
     target: 'html',
