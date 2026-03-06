@@ -41,8 +41,7 @@ export interface QuickEditOptions {
   section: number | 'new' | undefined
   editMinor: boolean
   editSummary: string
-  /** JSON string */
-  editSummaryPayload: string
+  editSummaryPayload: Record<string, string>
   createOnly: boolean
   reloadAfterSave: boolean
 }
@@ -109,7 +108,7 @@ export class PluginQuickEdit extends BasePlugin {
     section: undefined,
     editMinor: false,
     editSummary: '',
-    editSummaryPayload: '{}',
+    editSummaryPayload: {},
     createOnly: false,
     reloadAfterSave: true,
   }
@@ -127,20 +126,13 @@ export class PluginQuickEdit extends BasePlugin {
       })
     })
   }
-  buildSummary(template: string, summaryPayload?: string): string {
-    const datas: Record<string, string> = ((s) => {
-      if (!s || typeof s != "string") {
-        return {};
-      }
-      try {
-        return JSON.parse(s);
-      } catch {
-        return {};
-      }
-    })(summaryPayload);
+  buildSummary(template: string, summaryPayload: Record<string, string>): string {
     return template.replace(/\$\{(\w*)\}/g, (_, k: string) => {
-      return datas[k] ?? "";
+      return summaryPayload[k] ?? "";
     })
+  }
+  async getEditSummaryFromPref(summaryPayload?: Record<string, string>) {
+    return this.buildSummary(await this.ctx.preferences.get('quickEdit.editSummary') || "", summaryPayload ?? {});
   }
   async showModal(payload?: string | Partial<QuickEditOptions>) {
     const { $ } = this.ctx
@@ -186,7 +178,7 @@ export class PluginQuickEdit extends BasePlugin {
     const editSummary =
       typeof payload.editSummary === 'string'
         ? payload.editSummary
-        : this.buildSummary((await this.ctx.preferences.get('quickEdit.editSummary'))!, payload.editSummaryPayload)
+        : await this.getEditSummaryFromPref(payload.editSummaryPayload)
     const editMinor =
       typeof payload.editMinor === 'boolean'
         ? payload.editMinor
@@ -200,8 +192,7 @@ export class PluginQuickEdit extends BasePlugin {
       ...payload,
     }
     if (!options.editSummary) {
-      options.editSummary = (await this.ctx.preferences.get('quickEdit.editSummary')) || ''
-      options.editSummary = this.buildSummary(options.editSummary, options.editSummaryPayload);
+      options.editSummary = await this.getEditSummaryFromPref(options.editSummaryPayload);
     }
     this.ctx.emit('quick-edit/init-options', { ctx: this.ctx, options })
 
@@ -639,7 +630,7 @@ export class PluginQuickEdit extends BasePlugin {
     return (
       <a
         href={`#ipe://quick-edit/`}
-        dataset={payload as any}
+        dataset={{ payload: JSON.stringify(payload) } as any}
         className={`ipe-quick-edit ${payload.createOnly ? 'ipe-quick-edit--create-only' : ''}`}
         style={{
           userSelect: 'none',
@@ -647,7 +638,7 @@ export class PluginQuickEdit extends BasePlugin {
         }}
         onClick={(e) => {
           e.preventDefault()
-          this.showModal({ ...e.currentTarget.dataset })
+          this.showModal(JSON.parse(e.currentTarget.dataset.payload ?? '{}') ?? payload)
         }}
       >
         {icon}
