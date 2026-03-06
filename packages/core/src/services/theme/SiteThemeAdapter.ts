@@ -103,7 +103,6 @@ export const BUILTIN_SITE_ADAPTERS: ClassBasedAdapterConfig[] = [
     name: 'Moegirl',
     patterns: ['*.moegirl.org.cn'],
     darkClasses: ['dark', 'skin-theme-clientpref-night'],
-    systemClasses: ['skin-theme-clientpref-os'],
     target: 'html',
   },
 ]
