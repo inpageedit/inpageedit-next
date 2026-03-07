@@ -23,6 +23,23 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.17.0'>
+
+- feat(current-page): add bail hooks for title/action/mainPage resolution
+  - 新增 `current-page/resolve-title`、`current-page/resolve-action`、`current-page/resolve-main-page` 三个 bail hooks
+  - 插件现在可以覆盖 InPageEdit 对当前页面标题、action 和是否为主页的判断，适用于非标准 URL 结构的 wiki
+- refactor(theme): replace hardcoded Fandom option with SiteThemeAdapter registry
+  - ThemeService 重构为可扩展的适配器注册表模式，告别硬编码
+  - 内置 5 个站点主题适配器：MoeSkin、Fandom Desktop/Mobile、Vector 2022、Citizen
+  - 新增 `theme.registerSiteThemeAdapter()` API，第三方插件可以注册自定义适配器
+  - 适配器基于 DOM class 匹配，比原来的 hostname 模式更可靠
+- fix: prefer local file repo on WikiFileService to get correct file urls on wiki farms
+  - 修复了在 wiki farm 环境下，文件 URL 可能指向错误仓库的问题
+- fix(quick-upload): media query for grid mobile support
+  - 快速上传在移动端不再挤成一团了，768px 以下自动切换为单列布局
+
+</ChangeLog>
+
 <ChangeLog version='0.16.1'>
 
 - fix(CurrentPageService): update event handling for history changes and prevent conflicts with SPA frameworks
