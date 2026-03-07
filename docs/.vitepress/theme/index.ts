@@ -4,6 +4,7 @@ import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 
 import IpeVersion from '../components/IpeVersion.vue'
+import PluginRegistryList from '../components/PluginRegistryList.vue'
 
 import 'virtual:group-icons.css'
 
@@ -40,6 +41,7 @@ export default {
   async enhanceApp({ app, router, siteData }) {
     app.component('IpeVersion', IpeVersion)
     app.component('DateFormat', DateFormat)
+    app.component('PluginRegistryList', PluginRegistryList)
 
     app.use(TwoslashFloatingVue)
 
