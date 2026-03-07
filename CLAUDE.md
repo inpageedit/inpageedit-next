@@ -111,7 +111,7 @@ Type augmentation via `declare module '@/InPageEdit'` extends `InPageEdit`, `Eve
 - **Formatting**: Prettier — no semicolons, single quotes, trailing commas (es5), 100 char width, 2-space indent
 - **Comments**: English for new code comments; preserve existing language when updating
 - **Commit messages**: Conventional commits (`fix(scope):`, `feat:`, `refactor:`, `docs:`, etc.)
-- **Branches**: Main development on `dev`, releases from `master`
+- **Branches**: Main branch is `master`
 - **MediaWiki globals**: `mw`, `$` (jQuery) exist in the runtime environment (not in tests)
 - **Test naming**: Both `.test.ts` and `.spec.ts` are used; test descriptions in Chinese
 - **ESLint**: Currently disabled (`eslint.config.disabled.mjs`), Prettier is the active linter
