@@ -4,8 +4,9 @@ import { MOCK_API_ENDPOINT_URL, mockFetch } from './mockMwApi.ts'
 import { useMockMwConfig } from './mockMwConfig.ts'
 import { MockMwHook } from './mockMwGlobal.ts'
 
-import type {} from '@inpageedit/core/plugins/quick-edit/index'
-import type {} from '@inpageedit/core/plugins/toolbox/index'
+import { PluginAnalytics } from '@inpageedit/core/plugins'
+
+import type {} from '@inpageedit/core/plugins'
 
 export const useMockInPageEdit = () => {
   window.mw = window.mw || {}
@@ -41,10 +42,10 @@ export const useMockInPageEdit = () => {
     editNotices.unshift(notice)
   })
 
-  // Block analytics from sending data in docs site
-  ipe.inject(['preferences', 'storage'], async (ctx) => {
-    await ctx.preferences.set('analytics.enabled', false)
+  // Dispose analytics plugin to prevent sending data in docs site
+  ipe.inject(['analytics', 'storage'], async (ctx) => {
     await ctx.storage.simpleKV.set('analytics/confirm-shown', 1)
+    ctx.analytics.ctx.scope.dispose()
   })
 
   ipe.start().then(() => {
