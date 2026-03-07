@@ -3283,6 +3283,19 @@ export const MOCK_MW_METADATA: WikiMetadata = {
     },
   ],
   userinfo: MOCK_MW_USER_INFO,
+  repos: [
+    {
+      name: 'local',
+      displayname: 'Local',
+      rootUrl: 'https://fake.ipe.wiki/images',
+      local: true,
+      url: 'https://fake.ipe.wiki/images',
+      thumbUrl: 'https://fake.ipe.wiki/images/thumb',
+      initialCapital: true,
+      scriptDirUrl: 'https://fake.ipe.wiki',
+      canUpload: true,
+    },
+  ],
 }
 export const MOCK_MW_PAGEINFO = {
   pages: [
@@ -3380,6 +3393,8 @@ mockApi.all('/api.php', async (c) => {
       return handleParse(data)
     case 'edit':
       return handleEdit(data, c)
+    case 'upload':
+      return handleUpload(data, c)
     default:
       return c.json(
         defineMwResponse({ error: { code: 'not_implemented', info: 'Not implemented' } }),
@@ -3456,6 +3471,40 @@ const handleEdit = (data: Record<string, any>, c: Context) => {
       title: page.title,
       newrevid: newRevId,
       oldrevid: page.revisions.length > 1 ? page.revisions[page.revisions.length - 2].revid : 0,
+    },
+  })
+}
+
+const handleUpload = (data: Record<string, any>, c: Context) => {
+  const filename = data.filename || 'Uploaded_file.png'
+  const ts = new Date().toISOString()
+
+  return Response.json({
+    upload: {
+      result: 'Success',
+      filename,
+      imageinfo: {
+        timestamp: ts,
+        user: MOCK_MW_USER_INFO.name,
+        userid: MOCK_MW_USER_INFO.id,
+        size: 12345,
+        width: 800,
+        height: 600,
+        duration: 0,
+        parsedcomment: '',
+        comment: data.comment || '',
+        html: '',
+        canonicaltitle: `File:${filename}`,
+        url: `https://fake.ipe.wiki/images/${filename}`,
+        descriptionurl: `https://fake.ipe.wiki/wiki/File:${filename}`,
+        sha1: 'mock-sha1-hash',
+        metadata: [],
+        commonmetadata: [],
+        extmetadata: {},
+        mime: 'image/png',
+        mediatype: 'BITMAP',
+        bitdepth: 8,
+      },
     },
   })
 }

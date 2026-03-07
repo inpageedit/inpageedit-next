@@ -165,6 +165,7 @@ export default withMermaid(
       publicDir: resolve(import.meta.dirname, '../public'),
       server: {
         port: 1225,
+        host: true,
       },
     },
   })

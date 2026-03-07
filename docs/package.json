@@ -17,7 +17,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@inpageedit/core": "^0.10.0",
+    "@inpageedit/core": "^0.17.0",
     "@nolebase/vitepress-plugin-git-changelog": "^2.18.2",
     "@nolebase/vitepress-plugin-inline-link-preview": "^2.18.2",
     "@nolebase/vitepress-plugin-page-properties": "^2.18.2",
@@ -34,7 +34,7 @@
     "@vue/language-plugin-pug": "^3.1.1",
     "cross-env": "^10.1.0",
     "eslint": "^9.38.0",
-    "fexios": "^4.3.1",
+    "fexios": "^6.2.2",
     "hono": "^4.10.2",
     "jsx-dom": "^8.1.6",
     "markdown-it-footnote": "^4.0.0",
@@ -54,7 +54,7 @@
     "vitepress-plugin-group-icons": "^1.6.4",
     "vitepress-plugin-mermaid": "^2.0.17",
     "vitepress-sidebar": "^1.33.0",
-    "wiki-saikou": "^7.1.2"
+    "wiki-saikou": "^7.6.0"
   },
   "dependencies": {
     "naive-ui": "^2.43.1",

@@ -41,6 +41,12 @@ export const useMockInPageEdit = () => {
     editNotices.unshift(notice)
   })
 
+  // Block analytics from sending data in docs site
+  ipe.inject(['preferences', 'storage'], async (ctx) => {
+    await ctx.preferences.set('analytics.enabled', false)
+    await ctx.storage.simpleKV.set('analytics/confirm-shown', 1)
+  })
+
   ipe.start().then(() => {
     ipe
       .logger('AUTOLOAD')

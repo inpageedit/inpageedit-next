@@ -46,8 +46,8 @@ importers:
         version: 3.5.22(typescript@5.9.3)
     devDependencies:
       '@inpageedit/core':
-        specifier: ^0.10.0
-        version: 0.10.0(typescript@5.9.3)
+        specifier: ^0.17.0
+        version: 0.17.0(typescript@5.9.3)
       '@nolebase/vitepress-plugin-git-changelog':
         specifier: ^2.18.2
         version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3))(vue@3.5.22(typescript@5.9.3))
@@ -97,8 +97,8 @@ importers:
         specifier: ^9.38.0
         version: 9.38.0(jiti@2.6.1)
       fexios:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^6.2.2
+        version: 6.2.2
       hono:
         specifier: ^4.10.2
         version: 4.10.2
@@ -157,8 +157,8 @@ importers:
         specifier: ^1.33.0
         version: 1.33.0
       wiki-saikou:
-        specifier: ^7.1.2
-        version: 7.1.2
+        specifier: ^7.6.0
+        version: 7.6.0
 
   packages/core:
     dependencies:
@@ -1100,8 +1100,8 @@ packages:
   '@iconify/utils@3.0.2':
     resolution: {integrity: sha512-EfJS0rLfVuRuJRn4psJHtK2A9TqVnkxPpHY6lYHiB9+8eSuudsxbwMiavocG45ujOo6FJ+CIRlRnlOGinzkaGQ==}
 
-  '@inpageedit/core@0.10.0':
-    resolution: {integrity: sha512-w/sZTPSZJRppXegpdRH4uOc/WNdaMbPgwq38P9JjUjcMt28AzOd9Hjmgvc7rIc6xsco6u7g2xdPq60CGzhCzAQ==}
+  '@inpageedit/core@0.17.0':
+    resolution: {integrity: sha512-/lamPOjbA0kNIcxMgCx4m/3nH6SNBiej6t/+qH9NXmt/gDi0/6PLwSYOOidOnBUzzBN/Ytn+Mu4xvzRlGSUAJQ==}
 
   '@inpageedit/logger@0.1.0':
     resolution: {integrity: sha512-6QwdbtkH/Bwg/P/+s0uVPzxbMpk8GSPzJmafyJKCEtUdgbNXSm22mqltCbN8k2EuSV45Dn+nwouHKTSqFY1A1A==}
@@ -2964,16 +2964,12 @@ packages:
       picomatch:
         optional: true
 
-  fexios@4.3.1:
-    resolution: {integrity: sha512-Z2mSiBhLZPdj4p1W/bvI2LmtYX21wMA0SwpqtMmvW5vLBbFHByW87GhPumtqtUJIRnNvRTAwYP0UW0C46+zIGQ==}
-    engines: {node: ^16.15.0 || >=18.0.0}
-
-  fexios@5.2.0:
-    resolution: {integrity: sha512-GwwDAQQols1qyIRDGfYLX6cJrpx5V6jSTTYW6xVLepIyXx1OGhsFyd4Ln3/G27yhYD9YBgZc8km2fP05iwjuLQ==}
-    engines: {node: ^16.15.0 || >=18.0.0}
-
   fexios@6.1.1:
     resolution: {integrity: sha512-tQVIJoDovBiyqNZCJDG0w7ybtxcx34tslAREW/bCM2s/f/quSK4wJOjdSFR1kYGQz2gCqoDAwbO5xwqsCsf1Pw==}
+    engines: {node: ^16.15.0 || >=18.0.0}
+
+  fexios@6.2.2:
+    resolution: {integrity: sha512-jpcSleAlZoQnfskR50VX6pgPYFNNt9zPUckJv6MQMcs3OnS0C6RtKy/PFcm49wlFjMF488cJVuTPuDSVm4klhA==}
     engines: {node: ^16.15.0 || >=18.0.0}
 
   figures@6.1.0:
@@ -3155,9 +3151,6 @@ packages:
 
   idb-keyval@6.2.2:
     resolution: {integrity: sha512-yjD9nARJ/jb1g+CvD0tlhUHOrJ9Sy0P8T9MF3YaLlHnSRpwPfpTX0XIvpmw3gAJUmEu3FiICLBDPXVwyEvrleg==}
-
-  idb-plus@0.1.0:
-    resolution: {integrity: sha512-dzzCdzyZxrgSCqeRldKLZp0JJY67xzEyNcXcDUjYyNZFTHi6bJ9nw31r+mWA2uQO/roqMpExqJY+kChi+3fMFw==}
 
   idb-plus@0.2.0:
     resolution: {integrity: sha512-ZOPVlIn9uq2JS9xuRY7cxIp4jYiTPM1s+IIDfVSbNGmgegc0Qa/BHvBlFcauy0mwLb9wKjYH0beABXHK2AKCfw==}
@@ -5326,14 +5319,11 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
-  wiki-saikou@7.1.2:
-    resolution: {integrity: sha512-fbjDI5xUNxnpsxJxAY1KB9KDjHmx2D1NVfMAEti79Y1HhigmR/8Kx40qI00Y3qgNCy+gVLZVZcU64AXjh+Ec3g==}
-
-  wiki-saikou@7.4.1:
-    resolution: {integrity: sha512-AizHfx7QMUA5fMFZpV26e6ngl03Csu+tOWDKt1cHV3AO1JeAJ7X7of/gU8WAkmv95IWCzPG1bQ9KZMkUHsh0Ww==}
-
   wiki-saikou@7.5.0:
     resolution: {integrity: sha512-q2OHcUuW0Zxd2/Ng5SVIC6oF5oKZ2xVOGp/OB05da1DtyLl+a4TplunYr0iL09LTELlHZxHDJlDYjRbuEv93XA==}
+
+  wiki-saikou@7.6.0:
+    resolution: {integrity: sha512-KErr1fgLYuP6JuD6pPrg3huo5WW4q30Tw4a2YOIwAJzVm6MUf/UnEerU73F3+HgvXZwZ8161zuQo1DvKjqTJjg==}
 
   with@7.0.2:
     resolution: {integrity: sha512-RNGKj82nUPg3g5ygxkQl0R937xLyho1J24ItRCBTr/m1YnZkzJy1hUiHUJrc/VlsDQzsCnInEGSg3bci0Lmd4w==}
@@ -5852,16 +5842,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@inpageedit/core@0.10.0(typescript@5.9.3)':
+  '@inpageedit/core@0.17.0(typescript@5.9.3)':
     dependencies:
       '@cordisjs/core': 3.18.1
       '@inpageedit/logger': 0.1.0
       '@inpageedit/modal': 1.0.1
-      idb-plus: 0.1.0
-      schemastery: 3.17.1
-      schemastery-form: 0.2.1(schemastery@3.17.1)(vue@3.5.22(typescript@5.9.3))
-      vue: 3.5.22(typescript@5.9.3)
-      wiki-saikou: 7.4.1
+      idb-plus: 0.2.0
+      schemastery: 3.17.2
+      schemastery-form: 0.2.1(schemastery@3.17.2)(vue@3.5.26(typescript@5.9.3))
+      vue: 3.5.26(typescript@5.9.3)
+      wiki-saikou: 7.6.0
     transitivePeerDependencies:
       - typescript
 
@@ -8057,11 +8047,9 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.3
 
-  fexios@4.3.1: {}
-
-  fexios@5.2.0: {}
-
   fexios@6.1.1: {}
+
+  fexios@6.2.2: {}
 
   figures@6.1.0:
     dependencies:
@@ -8262,8 +8250,6 @@ snapshots:
 
   idb-keyval@6.2.2:
     optional: true
-
-  idb-plus@0.1.0: {}
 
   idb-plus@0.2.0: {}
 
@@ -9788,6 +9774,11 @@ snapshots:
       schemastery: 3.17.1
       vue: 3.5.22(typescript@5.9.3)
 
+  schemastery-form@0.2.1(schemastery@3.17.2)(vue@3.5.26(typescript@5.9.3)):
+    dependencies:
+      schemastery: 3.17.2
+      vue: 3.5.26(typescript@5.9.3)
+
   schemastery@3.17.1:
     dependencies:
       cosmokit: 1.8.0
@@ -10571,19 +10562,13 @@ snapshots:
       siginfo: 2.0.0
       stackback: 0.0.2
 
-  wiki-saikou@7.1.2:
-    dependencies:
-      fexios: 4.3.1
-      tslib: 2.8.1
-      wiki-saikou: 7.4.1
-
-  wiki-saikou@7.4.1:
-    dependencies:
-      fexios: 5.2.0
-
   wiki-saikou@7.5.0:
     dependencies:
       fexios: 6.1.1
+
+  wiki-saikou@7.6.0:
+    dependencies:
+      fexios: 6.2.2
 
   with@7.0.2:
     dependencies:
