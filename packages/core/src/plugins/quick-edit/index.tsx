@@ -85,6 +85,7 @@ export interface QuickEditSubmitPayload {
       .default(WatchlistAction.preferences),
     'quickEdit.keyshortcut.save': Schema.string()
       .default('ctrl-s')
+      .role('keyshortcut')
       .description('save button key shortcut (blank to disable)'),
     'quickEdit.editFont': Schema.union([
       Schema.const('preferences').description('Follow MW preferences'),

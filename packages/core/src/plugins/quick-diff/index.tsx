@@ -87,6 +87,7 @@ export interface CompareApiResponse {
   Schema.object({
     'quickDiff.keyshortcut': Schema.string()
       .default('ctrl-d')
+      .role('keyshortcut')
       .description('Key shortcut to open quick diff in quick edit modal'),
   })
     .description('Quick diff options')
