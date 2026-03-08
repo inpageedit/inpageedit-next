@@ -464,7 +464,12 @@ class SchemaFormString extends BaseFieldElement<string | undefined> {
           parts.push(key)
           const combo = parts.join('-')
           const prev = $input.value.trimEnd()
-          if (!prev.split(/\s*,\s*/).includes(combo)) {
+          if (
+            !prev
+              .toLowerCase()
+              .split(/\s*,\s*/)
+              .includes(combo)
+          ) {
             $input.value = prev ? prev.replace(/,+$/, '') + ', ' + combo : combo
             this.emitChange($input.value as any)
           }
