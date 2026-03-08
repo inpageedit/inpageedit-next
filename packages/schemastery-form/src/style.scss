@@ -130,3 +130,29 @@ textarea {
 .field.schema-type-array .group .row {
   position: relative;
 }
+
+.keyshortcut-wrap {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+}
+.keyshortcut-btn {
+  padding: 6px 8px;
+  font-size: 1em;
+
+  &.recording {
+    background: var(--schema-color-primary, #2563eb);
+    color: #fff;
+    border-color: transparent;
+    animation: keyshortcut-pulse 0.5s ease-in-out infinite;
+  }
+}
+@keyframes keyshortcut-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
