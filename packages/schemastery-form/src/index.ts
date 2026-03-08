@@ -380,6 +380,7 @@ abstract class BaseFieldElement<T = any> extends HTMLElement {
 // 具体字段实现：string / number / boolean / date / const —— 泛型绑定
 // ---------------------------------------------------------------------------
 class SchemaFormString extends BaseFieldElement<string | undefined> {
+  private static recEnd: (() => void) | null = null
   private $input?: HTMLInputElement
 
   protected render() {
@@ -429,6 +430,7 @@ class SchemaFormString extends BaseFieldElement<string | undefined> {
         stopListening = null
         $btn.classList.remove('recording')
         $btn.title = 'Record shortcut'
+        if (SchemaFormString.recEnd === endCapture) SchemaFormString.recEnd = null
       }
 
       $btn.onclick = () => {
@@ -436,6 +438,8 @@ class SchemaFormString extends BaseFieldElement<string | undefined> {
           endCapture()
           return
         }
+        SchemaFormString.recEnd?.()
+        SchemaFormString.recEnd = endCapture
 
         $btn.classList.add('recording')
         $btn.title = 'Press your keys! (Esc to cancel)'
