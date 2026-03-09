@@ -380,6 +380,7 @@ abstract class BaseFieldElement<T = any> extends HTMLElement {
 // 具体字段实现：string / number / boolean / date / const —— 泛型绑定
 // ---------------------------------------------------------------------------
 class SchemaFormString extends BaseFieldElement<string | undefined> {
+  private static recEnd: (() => void) | null = null
   private $input?: HTMLInputElement
 
   protected render() {
@@ -411,7 +412,81 @@ class SchemaFormString extends BaseFieldElement<string | undefined> {
     $input.oninput = () => this.emitChange(castToType('string', $input.value) as any)
     const $label = $field.querySelector('label.label') as HTMLLabelElement | null
     if ($label) $label.htmlFor = $input.id
-    $field.appendChild($input)
+
+    if (meta.role === 'keyshortcut') {
+      const $wrap = document.createElement('div')
+      $wrap.className = 'keyshortcut-wrap'
+      const $btn = document.createElement('button')
+      $btn.type = 'button'
+      $btn.className = 'btn keyshortcut-btn'
+      $btn.title = 'Record shortcut'
+      $btn.textContent = '⌨'
+
+      let stopListening: (() => void) | null = null
+
+      const endCapture = () => {
+        if (!stopListening) return
+        stopListening()
+        stopListening = null
+        $btn.classList.remove('recording')
+        $btn.title = 'Record shortcut'
+        if (SchemaFormString.recEnd === endCapture) SchemaFormString.recEnd = null
+      }
+
+      $btn.onclick = () => {
+        if (stopListening) {
+          endCapture()
+          return
+        }
+        SchemaFormString.recEnd?.()
+        SchemaFormString.recEnd = endCapture
+
+        $btn.classList.add('recording')
+        $btn.title = 'Press your keys! (Esc to cancel)'
+
+        const onKeyDown = (e: KeyboardEvent) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (e.key === 'Escape') {
+            endCapture()
+            return
+          }
+
+          const parts: string[] = []
+          if (e.ctrlKey) parts.push('ctrl')
+          if (e.metaKey) parts.push('meta')
+          if (e.altKey) parts.push('alt')
+          if (e.shiftKey) parts.push('shift')
+
+          const key = e.key.toLowerCase()
+          if (['control', 'meta', 'alt', 'shift'].includes(key)) return
+
+          parts.push(key)
+          const combo = parts.join('-')
+          const prev = $input.value.trimEnd()
+          if (
+            !prev
+              .toLowerCase()
+              .split(/\s*,\s*/)
+              .includes(combo)
+          ) {
+            $input.value = prev ? prev.replace(/,+$/, '') + ', ' + combo : combo
+            this.emitChange($input.value as any)
+          }
+          endCapture()
+        }
+
+        document.addEventListener('keydown', onKeyDown, { capture: true })
+        stopListening = () => document.removeEventListener('keydown', onKeyDown, { capture: true })
+      }
+
+      $wrap.appendChild($input)
+      $wrap.appendChild($btn)
+      $field.appendChild($wrap)
+    } else {
+      $field.appendChild($input)
+    }
+
     this.$root.appendChild($field)
   }
 }
