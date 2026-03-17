@@ -60,7 +60,9 @@ export function createClassBasedAdapter(config: ClassBasedAdapterConfig): SiteTh
     },
 
     startObserving(onChange: () => void): void {
-      this.stopObserving()
+      // Reuse existing observer if already active
+      if (observer) return
+
       observer = new MutationObserver(onChange)
       for (const el of getTargetElements(target)) {
         observer.observe(el, { attributes: true, attributeFilter: ['class'] })

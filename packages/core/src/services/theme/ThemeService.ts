@@ -40,6 +40,8 @@ export class ThemeService extends Service {
   private _mediaQueryList: MediaQueryList | null = null
   private adapters: SiteThemeAdapter[] = []
   private activeAdapter: SiteThemeAdapter | null = null
+  private _applyingTheme = false
+  private _applyThemeQueued = false
 
   private readonly _handleSystemThemeChange = this._onSystemThemeChange.bind(this)
 
@@ -100,13 +102,33 @@ export class ThemeService extends Service {
   }
 
   async applyTheme() {
-    const pref = (await this.ctx.preferences.get('theme')) || 'auto'
+    // Reentrancy guard: on sites like Fandom, modifying body classList can trigger
+    // third-party MutationObservers (e.g. ext.fandom.Thumbnails.js) which may mutate
+    // body class again, re-triggering our own site-theme observer. Combined with the
+    // async yield at `await preferences.get()`, this creates a cascading feedback loop
+    // that spawns thousands of concurrent applyTheme calls and listener registrations.
+    // To avoid dropping meaningful theme changes, we queue a single rerun instead of
+    // discarding the call entirely.
+    if (this._applyingTheme) {
+      this._applyThemeQueued = true
+      return
+    }
+    this._applyingTheme = true
+    try {
+      const pref = (await this.ctx.preferences.get('theme')) || 'auto'
 
-    this.updateSiteObserver(pref)
+      this.updateSiteObserver(pref)
 
-    const theme = this.getTheme(pref)
-    this.applyThemeClass(theme)
-    this.ctx.emit('theme/changed', { ctx: this.ctx, theme })
+      const theme = this.getTheme(pref)
+      this.applyThemeClass(theme)
+      this.ctx.emit('theme/changed', { ctx: this.ctx, theme })
+    } finally {
+      this._applyingTheme = false
+      if (this._applyThemeQueued) {
+        this._applyThemeQueued = false
+        void this.applyTheme()
+      }
+    }
   }
 
   private updateSiteObserver(pref: ThemePreference) {
@@ -135,6 +157,10 @@ export class ThemeService extends Service {
 
   private applyThemeClass(theme: ThemeMode) {
     const root = document.body
+    // Skip redundant DOM writes to avoid triggering MutationObservers unnecessarily
+    const current = root.getAttribute('data-ipe-theme')
+    if (current === theme) return
+
     if (theme === 'dark') {
       root.classList.add('ipe-theme-dark')
       root.setAttribute('data-ipe-theme', 'dark')
