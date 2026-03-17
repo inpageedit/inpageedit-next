@@ -47,6 +47,7 @@ import type {
   InPageEditPreferenceUIRegistryItem,
   InPageEditPreferenceUICategory,
 } from '../../../services/PreferencesService'
+import { resolvePreferenceI18n } from '@/utils/resolvePreferenceI18n'
 import SchemaFormVue from 'schemastery-form/vue'
 import Schema from 'schemastery'
 
@@ -59,12 +60,21 @@ const activeCategoryName = ref('')
 const activeCategory = computed(() => {
   return tabs.value.find((tab) => tab.name === activeCategoryName.value) || null
 })
+// Reactive dependency on language changes for i18n description resolution
+const i18nVersion = ref(0)
+
 const activeSchema = computed(() => {
+  void i18nVersion.value
   const filtered = registries.value
     .filter((reg) => reg.category === activeCategoryName.value)
     .map((reg) => reg.schema)
   if (filtered.length === 0) return null
-  return Schema.intersect(filtered)
+  const merged = Schema.intersect(filtered)
+  // Guard: skip i18n resolution if I18nService is not yet available
+  const manager = ctx.root['i18n']?.manager
+  if (!manager) return merged
+  const lookup = (key: string) => manager.peek(key)
+  return resolvePreferenceI18n(merged, lookup)
 })
 
 const autoGenerateForm = computed(() => {
@@ -93,6 +103,9 @@ defineExpose({
 })
 
 onMounted(async () => {
+  ctx.on('i18n/changed', () => {
+    i18nVersion.value++
+  })
   ctx.inject(['preferences'], async (ctx) => {
     const all = await ctx.preferences.getAll()
     value.value = all

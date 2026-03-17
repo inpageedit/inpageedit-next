@@ -34,17 +34,11 @@ async function getSubtle(): Promise<SubtleCrypto> {
 
 export async function sha1(input: InputLike): Promise<Uint8Array> {
   const subtle = await getSubtle()
-  const digest = await subtle.digest(
-    'SHA-1',
-    toBytes(input) as unknown as BufferSource
-  )
+  const digest = await subtle.digest('SHA-1', toBytes(input) as unknown as BufferSource)
   return new Uint8Array(digest)
 }
 
-export async function hmacSHA1(
-  message: InputLike,
-  key: InputLike
-): Promise<Uint8Array> {
+export async function hmacSHA1(message: InputLike, key: InputLike): Promise<Uint8Array> {
   const subtle = await getSubtle()
   const keyData = toBytes(key)
   const cryptoKey = await subtle.importKey(
@@ -67,10 +61,9 @@ function rotl(x: number, n: number): number {
 }
 
 const S: number[] = [
-  7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5,
-  9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11,
-  16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15,
-  21,
+  7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14,
+  20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6,
+  10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 ]
 
 const K: number[] = new Array(64)

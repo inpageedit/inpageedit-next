@@ -66,9 +66,7 @@
       "loader": {
         "kind": "styles",
         "entry": null,
-        "styles": [
-          "sample/style.css"
-        ],
+        "styles": ["sample/style.css"],
         "main_export": "InPageEditPluginSample"
       }
     }

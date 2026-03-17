@@ -84,7 +84,7 @@ const resolveResourceUrl = (resourcePath: string, baseUrl: string, registryUrl: 
   return new URL(resourcePath, resolvedBaseUrl).href
 }
 
-@Inject(['storage', 'preferences', 'resourceLoader', '$'])
+@Inject(['storage', 'preferences', 'resourceLoader', '$', '$$'])
 export class PluginPluginStore extends BasePlugin {
   // re-export for external usage
   static readonly PluginStoreSchemas = PluginStoreSchemas
@@ -128,12 +128,11 @@ export class PluginPluginStore extends BasePlugin {
 
   private async _injectPreferenceUI() {
     const ctx = this.ctx
-    const $ = ctx.$
+    const $$ = ctx.$$
 
     ctx.preferences.defineCategory({
       name: 'plugin-store',
-      label: $`Plugin Store`,
-      description: $`Plugin Store`,
+      label: $$`prefs.$category.plugin-store`,
       index: 90,
       autoGenerateForm: false,
       customRenderer: async ({ onUnmount }) => {

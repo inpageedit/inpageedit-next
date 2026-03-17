@@ -35,10 +35,8 @@ interface ToolboxButton {
 
 @RegisterPreferences(
   Schema.object({
-    toolboxAlwaysShow: Schema.boolean()
-      .description('Make the toolbox opened by default')
-      .default(false),
-  }).description('Toolbox preferences')
+    toolboxAlwaysShow: Schema.boolean().default(false),
+  })
 )
 @Inject(['preferences'])
 export class PluginToolbox extends Service {

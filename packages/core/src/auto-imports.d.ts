@@ -46,6 +46,7 @@ declare global {
   const promiseWithResolvers: typeof import('./polyfills/Promise.withResolvers').promiseWithResolvers
   const qs: typeof import('./components/utils').qs
   const qsa: typeof import('./components/utils').qsa
+  const resolvePreferenceI18n: typeof import('./utils/resolvePreferenceI18n').resolvePreferenceI18n
   const setStyles: typeof import('./components/utils').setStyles
   const sha1: typeof import('./utils/hash').sha1
   const sleep: typeof import('./utils/sleep').sleep

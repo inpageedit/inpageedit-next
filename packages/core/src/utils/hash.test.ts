@@ -77,9 +77,7 @@ describe('Hash 函数测试', () => {
 
       // 验证十六进制输出
       const hexResult = toHex(result)
-      const expectedHex = CryptoJS.HmacSHA1(message, key).toString(
-        CryptoJS.enc.Hex
-      )
+      const expectedHex = CryptoJS.HmacSHA1(message, key).toString(CryptoJS.enc.Hex)
       expect(hexResult).toBe(expectedHex)
     })
 
@@ -96,9 +94,7 @@ describe('Hash 函数测试', () => {
       const longKey = 'b'.repeat(100)
       const result = await hmacSHA1(longMessage, longKey)
       const hexResult = toHex(result)
-      const expectedHex = CryptoJS.HmacSHA1(longMessage, longKey).toString(
-        CryptoJS.enc.Hex
-      )
+      const expectedHex = CryptoJS.HmacSHA1(longMessage, longKey).toString(CryptoJS.enc.Hex)
       expect(hexResult).toBe(expectedHex)
     })
   })
@@ -139,9 +135,7 @@ describe('Hash 函数测试', () => {
       const key = 'test key'
       const result = await hmacSHA1(message, key)
       const hexResult = toHex(result)
-      const expectedHex = CryptoJS.HmacSHA1(message, key).toString(
-        CryptoJS.enc.Hex
-      )
+      const expectedHex = CryptoJS.HmacSHA1(message, key).toString(CryptoJS.enc.Hex)
       expect(hexResult).toBe(expectedHex)
     })
 

@@ -66,39 +66,24 @@ export interface QuickEditSubmitPayload {
 @Inject(['api', 'wikiPage', 'wikiTitle', 'currentPage', 'wiki', 'modal', 'preferences', '$'])
 @RegisterPreferences(
   Schema.object({
-    'quickEdit.editSummary': Schema.string()
-      .description('Default edit summary for quick edits')
-      .default('[IPE-NEXT] Quick edit'),
-    'quickEdit.editMinor': Schema.boolean()
-      .description('Default to checking "minor edit" option')
-      .default(false),
-    'quickEdit.outSideClose': Schema.boolean()
-      .description('Close editor modal by clicking outside')
-      .default(true),
+    'quickEdit.editSummary': Schema.string().default('[IPE-NEXT] Quick edit'),
+    'quickEdit.editMinor': Schema.boolean().default(false),
+    'quickEdit.outSideClose': Schema.boolean().default(true),
     'quickEdit.watchList': Schema.union([
-      Schema.const(WatchlistAction.preferences).description('Follow MW preferences'),
-      Schema.const(WatchlistAction.nochange).description('Keep the current watchlist status'),
-      Schema.const(WatchlistAction.watch).description('Add the page to watchlist'),
-      Schema.const(WatchlistAction.unwatch).description('Remove the page from watchlist'),
-    ])
-      .description('Watchlist options')
-      .default(WatchlistAction.preferences),
-    'quickEdit.keyshortcut.save': Schema.string()
-      .default('ctrl-s')
-      .role('keyshortcut')
-      .description('save button key shortcut (blank to disable)'),
+      Schema.const(WatchlistAction.preferences),
+      Schema.const(WatchlistAction.nochange),
+      Schema.const(WatchlistAction.watch),
+      Schema.const(WatchlistAction.unwatch),
+    ]).default(WatchlistAction.preferences),
+    'quickEdit.keyshortcut.save': Schema.string().default('ctrl-s').role('keyshortcut'),
     'quickEdit.editFont': Schema.union([
-      Schema.const('preferences').description('Follow MW preferences'),
-      Schema.const('monospace').description('Monospace'),
-      Schema.const('sans-serif').description('Sans-serif'),
-      Schema.const('serif').description('Serif'),
-      Schema.string().description('Custom font (same as CSS `font-family` property)').default(''),
-    ])
-      .description("Font to use in quick edit's textarea")
-      .default('preferences'),
-  })
-    .description('Quick edit options')
-    .extra('category', 'editor')
+      Schema.const('preferences'),
+      Schema.const('monospace'),
+      Schema.const('sans-serif'),
+      Schema.const('serif'),
+      Schema.string().default(''),
+    ]).default('preferences'),
+  }).extra('category', 'editor')
 )
 export class PluginQuickEdit extends BasePlugin {
   private readonly DEFAULT_OPTIONS: QuickEditOptions = {

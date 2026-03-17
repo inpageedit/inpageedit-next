@@ -37,22 +37,19 @@ export class PluginPreferencesUI extends BasePlugin {
 
     ctx.preferences.defineCategory({
       name: 'general',
-      label: $`prefs.general.label`,
-      description: $`prefs.general.description`,
+      label: $$`prefs.$category.general`,
       autoGenerateForm: true,
     })
 
     ctx.preferences.defineCategory({
       name: 'editor',
-      label: $`prefs.editor.label`,
-      description: $`prefs.editor.description`,
+      label: $$`prefs.$category.editor`,
       autoGenerateForm: true,
     })
 
     ctx.preferences.defineCategory({
       name: 'about',
-      label: $$`prefs.about.label`,
-      description: $$`prefs.about.description`,
+      label: $$`prefs.$category.about`,
       index: 99,
       customRenderer: () => {
         return (

@@ -38,9 +38,7 @@ export interface QuickMoveOptions extends Partial<MovePageOptions> {
 @RegisterPreferences(
   Schema.object({
     'quickMove.reason': Schema.string().default('[IPE-NEXT] Quick move'),
-  })
-    .description('Quick move options')
-    .extra('category', 'editor')
+  }).extra('category', 'editor')
 )
 @Inject(['modal', 'wiki', '$'])
 export class PluginQuickMove extends BasePlugin {

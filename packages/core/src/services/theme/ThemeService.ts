@@ -25,16 +25,12 @@ declare module '@/InPageEdit' {
 @RegisterPreferences(
   Schema.object({
     theme: Schema.union([
-      Schema.const('auto').description('Follow system'),
-      Schema.const('light').description('Light mode'),
-      Schema.const('dark').description('Dark mode'),
-      Schema.const('site').description('Follow site theme'),
-    ])
-      .default('auto')
-      .description('Theme preference'),
-  })
-    .description('Theme settings')
-    .extra('category', 'general')
+      Schema.const('auto'),
+      Schema.const('light'),
+      Schema.const('dark'),
+      Schema.const('site'),
+    ]).default('auto'),
+  }).extra('category', 'general')
 )
 export class ThemeService extends Service {
   private _mediaQueryList: MediaQueryList | null = null
