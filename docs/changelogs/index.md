@@ -23,6 +23,15 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 -->
 
+<ChangeLog version='0.17.1'>
+
+- feat(schemastery-form): keyshortcut recorder (#41) by @t7ru
+  - 新增了快捷键录制功能，允许配置多个快捷键组合
+- fix(theme): prevent applyTheme feedback loop on Fandom sites (#42, close #34)
+  - 修复了 ThemeService 在 Fandom 站点上因 MutationObserver 反馈循环导致的高 CPU 占用问题
+
+</ChangeLog>
+
 <ChangeLog version='0.17.0'>
 
 - feat(current-page): add bail hooks for title/action/mainPage resolution
