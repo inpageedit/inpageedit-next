@@ -41,6 +41,7 @@ export class ThemeService extends Service {
   private adapters: SiteThemeAdapter[] = []
   private activeAdapter: SiteThemeAdapter | null = null
   private _applyingTheme = false
+  private _applyThemeQueued = false
 
   private readonly _handleSystemThemeChange = this._onSystemThemeChange.bind(this)
 
@@ -106,7 +107,12 @@ export class ThemeService extends Service {
     // body class again, re-triggering our own site-theme observer. Combined with the
     // async yield at `await preferences.get()`, this creates a cascading feedback loop
     // that spawns thousands of concurrent applyTheme calls and listener registrations.
-    if (this._applyingTheme) return
+    // To avoid dropping meaningful theme changes, we queue a single rerun instead of
+    // discarding the call entirely.
+    if (this._applyingTheme) {
+      this._applyThemeQueued = true
+      return
+    }
     this._applyingTheme = true
     try {
       const pref = (await this.ctx.preferences.get('theme')) || 'auto'
@@ -118,6 +124,10 @@ export class ThemeService extends Service {
       this.ctx.emit('theme/changed', { ctx: this.ctx, theme })
     } finally {
       this._applyingTheme = false
+      if (this._applyThemeQueued) {
+        this._applyThemeQueued = false
+        void this.applyTheme()
+      }
     }
   }
 
