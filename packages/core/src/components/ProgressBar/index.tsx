@@ -1,4 +1,4 @@
-import { JSX } from 'vue/jsx-runtime'
+import { JSX } from 'jsx-dom'
 import styles from './styles.module.sass'
 
 export const ProgressBar = (
