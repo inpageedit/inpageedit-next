@@ -37,13 +37,8 @@ declare module '@/InPageEdit' {
 @Inject(['api', 'wikiPage', 'modal', 'preferences', '$'])
 @RegisterPreferences(
   Schema.object({
-    'quickPreview.keyshortcut': Schema.string()
-      .default('ctrl-i')
-      .role('keyshortcut')
-      .description('Key shortcut to open quick preview in quick edit modal'),
-  })
-    .extra('category', 'editor')
-    .description('Quick preview options')
+    'quickPreview.keyshortcut': Schema.string().default('ctrl-i').role('keyshortcut'),
+  }).extra('category', 'editor')
 )
 export class PluginQuickPreview extends BasePlugin {
   constructor(public ctx: InPageEdit) {

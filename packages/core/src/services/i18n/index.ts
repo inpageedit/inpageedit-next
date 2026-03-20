@@ -104,16 +104,12 @@ declare module '@/InPageEdit' {
 @Inject(['wiki', 'preferences'])
 @RegisterPreferences(
   Schema.object({
-    'i18n.index_url': Schema.string()
-      .description('I18n index URL (DO NOT CHANGE THIS) ')
-      .default(
-        import.meta.env.PROD
-          ? Endpoints.I18N_INDEX_URL
-          : import.meta.resolve('/src/__mock__/i18n/index.json')
-      ),
-  })
-    .description('')
-    .extra('category', 'general')
+    'i18n.index_url': Schema.string().default(
+      import.meta.env.PROD
+        ? Endpoints.I18N_INDEX_URL
+        : import.meta.resolve('/src/__mock__/i18n/index.json')
+    ),
+  }).extra('category', 'general')
 )
 export class I18nService extends Service {
   private readonly logger: Logger
@@ -162,18 +158,12 @@ export class I18nService extends Service {
   }
 
   protected async start(): Promise<void> {
-    // pre-register
+    // Pre-register with minimal schema; rewritten after i18n index loads
     this.ctx.preferences.registerCustomConfig(
       'language',
       Schema.object({
-        language: Schema.union([
-          '@user',
-          '@site',
-          Schema.string().description('Custom language code'),
-        ])
-          .description('UI language')
-          .default('@user'),
-      }).description('UI language')
+        language: Schema.union(['@user', '@site', Schema.string()]).default('@user'),
+      })
     )
 
     this.ctx.on('clear-cache', this.onClearCache.bind(this))
@@ -213,18 +203,19 @@ export class I18nService extends Service {
       this.manager.setLanguage('en')
     }
 
-    // rewrite-schema
+    // Rewrite schema with full language list; @user/@site descriptions come from i18n convention,
+    // language endonyms are data (not translatable) so they stay in .description()
     this.ctx.preferences.registerCustomConfig(
       'language',
       Schema.object({
         language: Schema.union([
-          Schema.const('@user').description(this.$`Same as your personal language`),
-          Schema.const('@site').description(this.$`Same as the site language`),
+          Schema.const('@user'),
+          Schema.const('@site'),
           ...this.getAvailableLanguageCodes().map(({ code, endonym, iso_name }) =>
             Schema.const(code).description(endonym || iso_name || code)
           ),
         ]).default('@user'),
-      }).description(this.$`InPageEdit UI language`)
+      })
     )
 
     this.setupShortcuts()

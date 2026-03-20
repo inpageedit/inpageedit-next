@@ -113,6 +113,20 @@ export class I18nManager {
     return false
   }
 
+  /**
+   * Like get(), but does not record missing keys.
+   * Use this for speculative lookups (e.g. fallback chains) where misses are expected.
+   */
+  peek(key: string): string | undefined {
+    const langs = this.resolveLanguageOrder(this.currentLanguage)
+    for (const lg of langs) {
+      const dict = this.languages.get(lg)
+      const val = dict?.get(key)
+      if (typeof val !== 'undefined') return val
+    }
+    return undefined
+  }
+
   get(key: string) {
     this.recordUsedKey(key)
     const langs = this.resolveLanguageOrder(this.currentLanguage)
@@ -121,7 +135,12 @@ export class I18nManager {
       const dict = this.languages.get(lg)
       const val = dict?.get(key)
       if (typeof val !== 'undefined') {
-        if (missing.length) this.recordMissing(key, missing)
+        if (missing.length) {
+          this.recordMissing(key, missing)
+        } else {
+          // Key found in the first language — no longer missing, remove from report
+          this.missingKeys.delete(key)
+        }
         return val
       }
       missing.push(lg)

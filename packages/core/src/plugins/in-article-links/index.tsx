@@ -35,24 +35,14 @@ export interface InArticleWikiAnchorMetadata extends WikiLinkMetadata {
   redlink: boolean
 }
 
-@Inject(['wiki', 'wikiTitle', 'preferences', '$'])
+@Inject(['wiki', 'wikiTitle', 'preferences', '$', '$$'])
 @RegisterPreferences(
   Schema.object({
-    'inArticleLinks.enable': Schema.boolean()
-      .description('Whether to enable in-article links')
-      .default(true),
-    'inArticleLinks.quickDiff.enable': Schema.boolean()
-      .description('Whether to enable in-article links for quick diff')
-      .default(true),
-    'inArticleLinks.quickEdit.enable': Schema.boolean()
-      .description('Whether to enable in-article links for quick edit')
-      .default(true),
-    'inArticleLinks.quickEdit.redlinks': Schema.boolean()
-      .description('Whether to show quick edit button for redlinks')
-      .default(true),
-  })
-    .description('In-article links preferences')
-    .extra('category', 'in-article-links')
+    'inArticleLinks.enable': Schema.boolean().default(true),
+    'inArticleLinks.quickDiff.enable': Schema.boolean().default(true),
+    'inArticleLinks.quickEdit.enable': Schema.boolean().default(true),
+    'inArticleLinks.quickEdit.redlinks': Schema.boolean().default(true),
+  }).extra('category', 'in-article-links')
 )
 export class PluginInArticleLinks extends BasePlugin<{
   linkClassName: string
@@ -66,12 +56,11 @@ export class PluginInArticleLinks extends BasePlugin<{
       'InArticleLinks'
     )
     this.ctx.set('inArticleLinks', this)
-    const { $ } = this.ctx
+    const { $$ } = this.ctx
 
     this.ctx.preferences.defineCategory({
       name: 'in-article-links',
-      label: $`prefs.inArticleLinks.label`,
-      description: $`prefs.inArticleLinks.$`,
+      label: $$`prefs.$category.in-article-links`,
       index: 9,
     })
   }

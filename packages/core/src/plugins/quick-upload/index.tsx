@@ -51,9 +51,7 @@ const PreviewPlaceholderNA = ({ $ }: { $: (strings: TemplateStringsArray) => str
 
 @RegisterPreferences(
   Schema.object({
-    'quickUpload.summary': Schema.string()
-      .description('Default summary of the quick upload')
-      .default('[IPE-NEXT] Quick upload'),
+    'quickUpload.summary': Schema.string().default('[IPE-NEXT] Quick upload'),
   })
 )
 @Inject(['modal', '$', 'wikiTitle', 'wikiFile', 'quickPreview', 'preferences'])

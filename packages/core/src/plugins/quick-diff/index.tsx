@@ -85,13 +85,8 @@ export interface CompareApiResponse {
 @Inject(['wiki', 'getUrl', 'preferences', '$'])
 @RegisterPreferences(
   Schema.object({
-    'quickDiff.keyshortcut': Schema.string()
-      .default('ctrl-d')
-      .role('keyshortcut')
-      .description('Key shortcut to open quick diff in quick edit modal'),
-  })
-    .description('Quick diff options')
-    .extra('category', 'editor')
+    'quickDiff.keyshortcut': Schema.string().default('ctrl-d').role('keyshortcut'),
+  }).extra('category', 'editor')
 )
 export class PluginQuickDiff extends BasePlugin {
   constructor(public ctx: InPageEdit) {

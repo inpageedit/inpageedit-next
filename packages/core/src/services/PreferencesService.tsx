@@ -54,6 +54,9 @@ export class PreferencesService extends Service {
   public customRegistries: InPageEditPreferenceUIRegistryItem[] = []
   public categoryDefinitions: InPageEditPreferenceUICategory[] = []
   private _defaultPreferences: Record<string, any> = {}
+  private _registryCache: InPageEditPreferenceUIRegistryItem[] | null = null
+  private _registryCacheVersion = 0
+  private _defaultConfigsCache: PreferencesMap | null = null
 
   constructor(public ctx: InPageEdit) {
     super(ctx, 'preferences', true)
@@ -176,10 +179,17 @@ export class PreferencesService extends Service {
     return out
   }
 
+  private invalidateCache() {
+    this._registryCache = null
+    this._defaultConfigsCache = null
+    this._defaultPreferences = {}
+  }
+
   private loadDefaultConfigs() {
+    if (this._defaultConfigsCache) return this._defaultConfigsCache
+
     const data = {} as any
     this.getConfigRegistries().forEach((item) => {
-      // 首先读取 schema 上的默认值
       try {
         const defaultValues = item.schema({}) as any
         Object.entries(defaultValues).forEach(([key, val]) => {
@@ -192,7 +202,8 @@ export class PreferencesService extends Service {
       this._defaultPreferences[key] = val
     })
 
-    return data as PreferencesMap
+    this._defaultConfigsCache = data as PreferencesMap
+    return this._defaultConfigsCache
   }
 
   registerCustomConfig(id: string, schema: Schema, category?: string) {
@@ -207,36 +218,44 @@ export class PreferencesService extends Service {
     } else {
       this.customRegistries.push(config)
     }
+    this.invalidateCache()
     return this
   }
 
   getConfigRegistries(category?: string): InPageEditPreferenceUIRegistryItem[] {
-    return Array.from(this.ctx.registry.entries())
-      .map<{
-        name: string
-        schema: Schema
-      }>(([plugin]) => {
-        if (plugin === null) {
-          return {
-            name: '@root',
-            schema: (InPageEdit as any)?.PreferencesSchema || null,
+    const registrySize = this.ctx.registry.size
+    if (!this._registryCache || registrySize !== this._registryCacheVersion) {
+      this._registryCache = Array.from(this.ctx.registry.entries())
+        .map<{
+          name: string
+          schema: Schema
+        }>(([plugin]) => {
+          if (plugin === null) {
+            return {
+              name: '@root',
+              schema: (InPageEdit as any)?.PreferencesSchema || null,
+            }
+          } else {
+            return {
+              name: plugin.name,
+              schema: (plugin as any)?.PreferencesSchema || null,
+            }
           }
-        } else {
+        })
+        .filter((item) => item.schema !== null)
+        .map((item) => {
           return {
-            name: plugin.name,
-            schema: (plugin as any)?.PreferencesSchema || null,
+            ...item,
+            category: item.schema.meta.category || 'general',
           }
-        }
-      })
-      .filter((item) => item.schema !== null)
-      .map((item) => {
-        return {
-          ...item,
-          category: item.schema.meta.category || 'general',
-        }
-      })
-      .concat(this.customRegistries)
-      .filter((item) => !category || item.category === category)
+        })
+        .concat(this.customRegistries)
+      this._registryCacheVersion = registrySize
+      this._defaultConfigsCache = null
+    }
+    return category
+      ? this._registryCache.filter((item) => item.category === category)
+      : this._registryCache
   }
   getAllSchema() {
     return new Schema<PreferencesMap>(

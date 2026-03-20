@@ -30,9 +30,7 @@ export class PluginQuickRedirect extends BasePlugin {
   static readonly inject = ['api', 'wikiPage', 'modal', '$']
   static readonly PreferencesSchema = Schema.object({
     'quickRedirect.reason': Schema.string().default('[IPE-NEXT] Quick redirect'),
-  })
-    .description('Quick redirect options')
-    .extra('category', 'editor')
+  }).extra('category', 'editor')
 
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-redirect')

@@ -8,7 +8,7 @@ declare module '@/InPageEdit' {
   }
 }
 
-@Inject(['preferences', 'wiki', 'wikiPage', 'wikiTitle', 'modal', 'preferencesUI', '$'])
+@Inject(['preferences', 'wiki', 'wikiPage', 'wikiTitle', 'modal', 'preferencesUI', '$', '$$'])
 export class PluginPrefSync extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'pref-sync')
@@ -17,11 +17,10 @@ export class PluginPrefSync extends BasePlugin {
 
   protected start(): Promise<void> | void {
     const ctx = this.ctx
-    const $ = ctx.$
+    const $$ = ctx.$$
     ctx.preferences.defineCategory({
       name: 'pref-sync',
-      label: $`Sync`,
-      description: $`Import and export preferences`,
+      label: $$`prefs.$category.pref-sync`,
       index: 98,
       customRenderer: () => {
         const userPageTitle = this.getUserPrefsPageTitle()
