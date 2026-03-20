@@ -1,37 +1,11 @@
 import { InPageEdit } from '@inpageedit/core'
 import '@inpageedit/core/style.css'
-import { MOCK_API_ENDPOINT_URL, mockFetch } from './mockMwApi.ts'
-import { useMockMwConfig } from './mockMwConfig.ts'
-import { MockMwHook } from './mockMwGlobal.ts'
-
-import { PluginAnalytics } from '@inpageedit/core/plugins'
+import { createMockIPE } from '../../../../packages/core/dev/__mock__/createMockIPE.js'
 
 import type {} from '@inpageedit/core/plugins'
 
 export const useMockInPageEdit = () => {
-  window.mw = window.mw || {}
-  ;(window.mw as any).config = useMockMwConfig()
-  ;(window.mw as any).hook = (name: string) => {
-    return new MockMwHook(name)
-  }
-  // @ts-ignore fake hook add method
-  window.mw.hook('InPageEdit.ready').add = (...handlers) => {
-    handlers.forEach((fn) => {
-      fn(ipe)
-    })
-  }
-
-  const ipe = new InPageEdit({
-    autoloadStyles: false,
-    apiConfigs: {
-      baseURL: MOCK_API_ENDPOINT_URL.toString(),
-      fetch: mockFetch,
-    },
-  })
-
-  ipe.on('current-page/resolve-title', () => {
-    return ipe.wikiTitle.newTitle('Example')
-  })
+  const ipe = createMockIPE(InPageEdit)
 
   ipe.on('quick-edit/edit-notice', ({ editNotices }) => {
     const notice = document.createElement('div')
