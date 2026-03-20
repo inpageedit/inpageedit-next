@@ -1,4 +1,6 @@
 import { Context, Hono } from 'hono'
+// Type-only import — erased at compile time, safe for both core dev and docs.
+// Core resolves via workspace, docs resolves via installed package.
 import type {
   WikiSiteInfo,
   WikiMetadata,

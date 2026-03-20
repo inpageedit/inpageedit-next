@@ -235,6 +235,9 @@ importers:
       globals:
         specifier: ^17.0.0
         version: 17.0.0
+      hono:
+        specifier: ^4.10.2
+        version: 4.10.2
       jsx-dom:
         specifier: ^8.1.6
         version: 8.1.6
