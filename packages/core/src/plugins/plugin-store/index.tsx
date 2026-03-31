@@ -120,16 +120,20 @@ export class PluginPluginStore extends BasePlugin {
     if (now.getMonth() !== 3 || now.getDate() !== 1) return
 
     const year = now.getFullYear()
-    const storageKey = `april-fool-auto-installed-${year}`
+    const storageKey = `InPageEdit:april-fool-auto/${year}`
     if (localStorage.getItem(storageKey)) return
-
-    // Mark immediately to prevent repeated attempts on the same day
-    localStorage.setItem(storageKey, '1')
 
     const officialRegistry = Endpoints.PLUGIN_REGISTRY_URL
     const pluginId = `april-fool-${year}`
 
     try {
+      // Force a no-cache fetch so a stale cached registry won't hide a newly published plugin
+      const registryInfo = await this.getRegistryInfo(officialRegistry, 'online_manifest', true)
+      if (!registryInfo?.packages?.some((p) => p.id === pluginId)) {
+        this.logger.debug('No april fool plugin found in the official registry')
+        return
+      }
+
       const fork = await this.installAndSetPreference(
         officialRegistry,
         pluginId,
@@ -137,14 +141,15 @@ export class PluginPluginStore extends BasePlugin {
         'new-added'
       )
 
-      if (fork) {
-        this.logger.info(`🎉 April Fool! Auto-installing ${pluginId}`)
-      } else {
-        this.logger.debug('No april fool plugin found in the official registry')
-      }
+      // Set a flag to avoid re-triggering within the same year,
+      // even if the plugin is later uninstalled by the user,
+      // or installation fails for some reason (e.g. network issue), it's good enough for the spirit of April Fool
+      localStorage.setItem(storageKey, '1')
+
+      console.info(`April Fool plugin "${pluginId}" status: ${fork ? 'installed' : 'failed'}`) // will be dropped by bundler
     } catch (e) {
-      // Silent fail — not critical
-      console.error('Failed to auto-install april fool plugin', e)
+      // Silent fail — not critical; will retry on next page load
+      console.error('Failed to auto-install april fool plugin', e) // will be dropped by bundler
     }
   }
 
