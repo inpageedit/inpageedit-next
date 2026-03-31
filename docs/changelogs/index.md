@@ -32,6 +32,15 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 <!-- LATEST_CHANGELOG_HERE -->
 
+<ChangeLog version='0.17.2'>
+
+- feat(plugin-store): auto-install April Fool plugin on April 1st
+  - 每年 4 月 1 日自动从官方插件仓库安装当年的愚人节插件（每年仅触发一次）
+- fix(progress-bar): update JSX import from 'vue/jsx-runtime' to 'jsx-dom'
+  - 修复了进度条组件的 JSX 运行时导入
+
+</ChangeLog>
+
 <ChangeLog version='0.17.1'>
 
 - feat(schemastery-form): keyshortcut recorder (#41) by @t7ru
