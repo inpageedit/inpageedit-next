@@ -74,4 +74,5 @@ function setupMwGlobals() {
   ;(window.mw as any).hook = (name: string) => {
     return new MockMwHook(name)
   }
+  window.RLQ = window.RLQ || []
 }

@@ -128,6 +128,7 @@ export class PluginPluginStore extends BasePlugin {
 
   private async _injectPreferenceUI() {
     const ctx = this.ctx
+    const $ = ctx.$
     const $$ = ctx.$$
 
     ctx.preferences.defineCategory({
