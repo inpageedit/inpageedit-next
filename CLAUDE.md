@@ -106,6 +106,10 @@ Type augmentation via `declare module '@/InPageEdit'` extends `InPageEdit`, `Eve
 
 `unplugin-auto-import` is configured — utilities from `components/`, `constants/`, `utils/`, `polyfills/`, `decorators/` are auto-imported. Check `auto-imports.d.ts` when something seems to come from nowhere.
 
+## Release
+
+See [docs/development/release.md](docs/development/release.md) for the release process of each package.
+
 ## Code Conventions
 
 - **Formatting**: Prettier — no semicolons, single quotes, trailing commas (es5), 100 char width, 2-space indent

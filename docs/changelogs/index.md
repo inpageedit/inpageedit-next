@@ -4,6 +4,14 @@ title: 更新日志
 
 # InPageEdit NEXT 更新日志
 
+<!-- 
+For agents:
+- 推送新版本日志时，复制下文提供的模板，并替换版本号、更新内容等信息后，添加到合适的位置（新版通常放在顶部）。
+- 只有非常亮眼的新功能或者重大变更才需要添加 <Badge type='rainbow'>重量级</Badge> 标签，其他更新只需列出变更内容即可。
+- 有时候多个 commit 是为了了同一个功能或者修复同一个问题，这时候可以合并成一个更新条目，保持日志的简洁和可读性。
+- 这个日志可能会很长，超过模型的输入限制，因此建议只读取前 ~250 行，然后使用替换文本功能替换下面的 LATEST_CHANGELOG_HERE 标记为最新版本日志，替换时不要删除标记，以便下次更新时继续使用。
+ -->
+
 <script setup lang="ts">
 import Timeline from '@/.vitepress/components/Timeline/Timeline.vue'
 import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
@@ -22,6 +30,8 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 </ChangeLog>
 
 -->
+
+<!-- LATEST_CHANGELOG_HERE -->
 
 <ChangeLog version='0.17.1'>
 
