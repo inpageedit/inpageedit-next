@@ -32,6 +32,14 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 <!-- LATEST_CHANGELOG_HERE -->
 
+<ChangeLog version='0.17.3'>
+
+- fix(plugin-store): enhance installAndSetPreference logic, save april fools plugin
+  - 优化了 installAndSetPreference 逻辑
+  - 愚人节插件将保持安装状态，而不是仅安装一次（不影响正常卸载）
+
+</ChangeLog>
+
 <ChangeLog version='0.17.2'>
 
 - feat(plugin-store): auto-install April Fool plugin on April 1st
