@@ -8,3 +8,5 @@
    - Example: `"version": "0.17.2"` → `git tag core/0.17.2`
 4. Push commits and tag — GitHub Actions will handle publishing automatically
    - **The git tag must match the version in package.json exactly, otherwise CI validation will fail**
+
+> **@agents:** After step 2, stop and ask the user to review the version number and changelog before proceeding to step 3. Do NOT create tags or push without explicit human approval.
