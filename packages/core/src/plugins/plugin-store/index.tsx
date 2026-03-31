@@ -106,7 +106,39 @@ export class PluginPluginStore extends BasePlugin {
 
   protected async start() {
     this._installUserPlugins()
+    this._checkAprilFool()
     this._injectPreferenceUI()
+  }
+
+  /**
+   * On April 1st each year, auto-install the official April Fool plugin
+   * named `april-fool-{year}` if it exists in the official registry.
+   * Only triggers once per year, only from the official registry.
+   */
+  private async _checkAprilFool() {
+    const now = new Date()
+    if (now.getMonth() !== 3 || now.getDate() !== 1) return
+
+    const year = now.getFullYear()
+    const storageKey = `april-fool-auto-installed-${year}`
+    if (localStorage.getItem(storageKey)) return
+
+    // Mark immediately to prevent repeated attempts on the same day
+    localStorage.setItem(storageKey, '1')
+
+    const officialRegistry = Endpoints.PLUGIN_REGISTRY_URL
+    const pluginId = `april-fool-${year}`
+
+    try {
+      const registryInfo = await this.getRegistryInfo(officialRegistry)
+      const pkg = registryInfo.packages?.find((p) => p.id === pluginId)
+      if (!pkg) return
+
+      this.logger.info(`🎉 April Fool! Auto-installing ${pluginId}`)
+      this.install(officialRegistry, pluginId, 'online_manifest', 'new-added')
+    } catch {
+      // Silent fail — not critical
+    }
   }
 
   private async _installUserPlugins() {
