@@ -130,14 +130,21 @@ export class PluginPluginStore extends BasePlugin {
     const pluginId = `april-fool-${year}`
 
     try {
-      const registryInfo = await this.getRegistryInfo(officialRegistry)
-      const pkg = registryInfo.packages?.find((p) => p.id === pluginId)
-      if (!pkg) return
+      const fork = await this.installAndSetPreference(
+        officialRegistry,
+        pluginId,
+        'online_manifest',
+        'new-added'
+      )
 
-      this.logger.info(`🎉 April Fool! Auto-installing ${pluginId}`)
-      this.install(officialRegistry, pluginId, 'online_manifest', 'new-added')
-    } catch {
+      if (fork) {
+        this.logger.info(`🎉 April Fool! Auto-installing ${pluginId}`)
+      } else {
+        this.logger.debug('No april fool plugin found in the official registry')
+      }
+    } catch (e) {
       // Silent fail — not critical
+      console.error('Failed to auto-install april fool plugin', e)
     }
   }
 
@@ -314,9 +321,17 @@ export class PluginPluginStore extends BasePlugin {
     return true
   }
 
-  async installAndSetPreference(registry: string, id: string) {
-    await this.addToPreferences(registry, id)
-    return this.install(registry, id, 'online_manifest', 'new-added')
+  async installAndSetPreference(
+    registry: string,
+    id: string,
+    source: PluginStoreRegistrySource = 'online_manifest',
+    by: 'new-added' | 'user-preference' = 'new-added'
+  ) {
+    const fork = await this.install(registry, id, source, by)
+    if (fork) {
+      await this.addToPreferences(registry, id)
+    }
+    return fork
   }
   async uninstallAndRemovePreference(registry: string, id: string) {
     await this.removeFromPreferences(registry, id)
