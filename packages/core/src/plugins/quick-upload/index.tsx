@@ -506,14 +506,24 @@ export class PluginQuickUpload extends BasePlugin {
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '12px', opacity: 0.8 }}>{file.type || $`Unknown type`}</span>
             {item.fileUrl ? (
-              <a
-                href={item.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: '12px' }}
-              >
-                {$`Open file page`}
-              </a>
+              <>
+                <a
+                  href={item.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '12px' }}
+                >
+                  {$`Open file URL`}
+                </a>
+                <a
+                  href={this.ctx.wiki.getUrl(`File:${item.filename}`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '12px' }}
+                >
+                  {$`Open file page`}
+                </a>
+              </>
             ) : null}
           </div>
         </section>
