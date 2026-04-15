@@ -324,6 +324,16 @@ export class PluginQuickUpload extends BasePlugin {
 
     const addFiles = (files: File[]) => {
       const accepted = files.filter((f) => this.isFileAccepted(f, String(accept || '')))
+
+      const rejectedCount = files.length - accepted.length
+      if (rejectedCount > 0) {
+        showMessage(
+          'warning',
+          $`File type not allowed`,
+          $`${rejectedCount} file(s) skipped! Only ${accept} are allowed by this wiki.`
+        )
+      }
+
       if (!accepted.length) return
 
       const newItems: UploadItem[] = accepted.map((file) => ({
