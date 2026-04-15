@@ -176,7 +176,11 @@ export class PluginQuickUpload extends BasePlugin {
     })
 
     const defaultSummary = (await this.ctx.preferences.get('quickUpload.summary')) || ''
-    const accept = 'image/*,video/*,audio/*,application/pdf'
+    const exts = this.ctx.wiki.allowedFileExtensions
+    const accept =
+      exts.length > 0
+        ? exts.map((e) => `.${e}`).join(',')
+        : 'image/*,video/*,audio/*,application/pdf,application/ogg'
     const confirmThreshold = 20
 
     let items: UploadItem[] = []
