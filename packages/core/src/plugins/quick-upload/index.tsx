@@ -330,7 +330,7 @@ export class PluginQuickUpload extends BasePlugin {
         showMessage(
           'warning',
           $`File type not allowed`,
-          <span>
+          <span style={{ wordWrap: 'break-word' }}>
             {rejectedCount === 1
               ? $`1 file skipped! Only ${accept} are allowed by this wiki.`
               : $`${rejectedCount} files skipped! Only ${accept} are allowed by this wiki.`}
