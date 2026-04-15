@@ -27,7 +27,7 @@ interface WikiMetadataKindMap {
 @Inject(['api', 'storage'])
 export class WikiMetadataService extends Service {
   private readonly _data: WikiMetadataKindMap = {} as any
-  private readonly CACHE_VERSION = 4
+  private readonly CACHE_VERSION = 5
   private readonly CACHE_TTL: Readonly<Record<keyof WikiMetadataKindMap, number>> = {
     siteinfo: 1000 * 60 * 60 * 24 * 3, // 3 days
     userinfo: 1000 * 60 * 30, // 30 minutes
@@ -231,7 +231,7 @@ export class WikiMetadataService extends Service {
     return this.siteInfo.magicwords
   }
   get allowedFileExtensions(): string[] {
-    return (this.siteInfo.fileextensions ?? []).map((e) => e.ext)
+    return this.siteInfo.fileextensions.map((e) => e.ext)
   }
 
   // userInfo
