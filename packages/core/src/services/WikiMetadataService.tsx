@@ -35,7 +35,7 @@ export class WikiMetadataService extends Service {
   private readonly QUERY_DATA: Readonly<Record<keyof WikiMetadataKindMap, MwApiParams>> = {
     siteinfo: {
       meta: 'siteinfo|filerepoinfo',
-      siprop: 'general|specialpagealiases|namespacealiases|namespaces|magicwords',
+      siprop: 'general|specialpagealiases|namespacealiases|namespaces|magicwords|fileextensions',
       friprop: 'canUpload|displayname|initialCapital|local|name|rootUrl|scriptDirUrl|thumbUrl|url',
     },
     userinfo: { meta: 'userinfo', uiprop: 'groups|rights|blockinfo|options' },
@@ -229,6 +229,9 @@ export class WikiMetadataService extends Service {
   }
   get magicWords() {
     return this.siteInfo.magicwords
+  }
+  get allowedFileExtensions(): string[] {
+    return (this.siteInfo.fileextensions ?? []).map((e) => e.ext)
   }
 
   // userInfo

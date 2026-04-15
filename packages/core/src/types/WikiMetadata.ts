@@ -5,6 +5,7 @@ export interface WikiSiteInfo {
   magicwords: WikiMagicWord[]
   namespaces: Record<string, WikiNamespace>
   repos: WikiFileRepo[]
+  fileextensions?: { ext: string }[]
 }
 
 export interface WikiSiteGeneralInfo {
