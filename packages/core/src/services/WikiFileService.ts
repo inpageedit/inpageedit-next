@@ -88,7 +88,15 @@ export class WikiFileService extends Service {
     return this.fileRepos.find((repo) => repo.local)
   }
   get writableFileRepo(): WikiFileRepo | undefined {
-    return this.fileRepos.find((repo) => repo.canUpload)
+    const repos = this.fileRepos
+    const canUpload = (r: WikiFileRepo) => r.canUpload === true || (r.canUpload as any) === ''
+    const explicit = repos.find(canUpload)
+    if (explicit) return explicit
+    const local = repos.find((r) => r.local)
+    if (!local || !canUpload(local)) {
+      return repos.find((r) => !r.local && r.scriptDirUrl)
+    }
+    return undefined
   }
 
   getFileName(title: string | IWikiTitle) {
