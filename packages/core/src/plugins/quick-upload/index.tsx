@@ -56,7 +56,16 @@ const PreviewPlaceholderNA = ({ $ }: { $: (strings: TemplateStringsArray) => str
       .default('[IPE-NEXT] Quick upload'),
   })
 )
-@Inject(['modal', '$', 'wikiTitle', 'wikiFile', 'quickPreview', 'preferences'])
+@Inject([
+  'modal',
+  '$',
+  'wikiTitle',
+  'wikiFile',
+  'quickPreview',
+  'preferences',
+  'wiki',
+  'apiService',
+])
 export class PluginQuickUpload extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-upload')
@@ -176,7 +185,10 @@ export class PluginQuickUpload extends BasePlugin {
     })
 
     const defaultSummary = (await this.ctx.preferences.get('quickUpload.summary')) || ''
-    const exts = this.ctx.wiki.allowedFileExtensions
+    const repo = this.ctx.wikiFile.writableFileRepo
+    const targetApi = repo ? this.ctx.apiService.getClientByFileRepo(repo) : undefined
+    const exts = await this.ctx.wiki.getAllowedFileExtensions(targetApi)
+
     const accept = exts.map((e) => `.${e}`).join(',')
     const confirmThreshold = 20
 
