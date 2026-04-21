@@ -89,7 +89,7 @@ export class WikiFileService extends Service {
   }
   get writableFileRepo(): WikiFileRepo | undefined {
     const repos = this.fileRepos
-    const canUpload = (r: WikiFileRepo) => r.canUpload === true || (r.canUpload as any) === ''
+    const canUpload = (r: WikiFileRepo) => !!r.canUpload
     const explicit = repos.find(canUpload)
     if (explicit) return explicit
     const local = repos.find((r) => r.local)
@@ -129,7 +129,7 @@ export class WikiFileService extends Service {
 
   async upload(params: Partial<UploadFileParams>, repo?: WikiFileRepo) {
     repo = repo || this.writableFileRepo
-    if (!repo?.canUpload) {
+    if (!repo) {
       throw new Error('No writable file repository found')
     }
 
