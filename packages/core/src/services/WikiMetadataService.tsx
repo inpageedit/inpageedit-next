@@ -27,7 +27,7 @@ interface WikiMetadataKindMap {
 @Inject(['api', 'storage'])
 export class WikiMetadataService extends Service {
   private readonly _data: WikiMetadataKindMap = {} as any
-  private readonly CACHE_VERSION = 4
+  private readonly CACHE_VERSION = 5
   private readonly CACHE_TTL: Readonly<Record<keyof WikiMetadataKindMap, number>> = {
     siteinfo: 1000 * 60 * 60 * 24 * 3, // 3 days
     userinfo: 1000 * 60 * 30, // 30 minutes
@@ -35,7 +35,7 @@ export class WikiMetadataService extends Service {
   private readonly QUERY_DATA: Readonly<Record<keyof WikiMetadataKindMap, MwApiParams>> = {
     siteinfo: {
       meta: 'siteinfo|filerepoinfo',
-      siprop: 'general|specialpagealiases|namespacealiases|namespaces|magicwords',
+      siprop: 'general|specialpagealiases|namespacealiases|namespaces|magicwords|fileextensions',
       friprop: 'canUpload|displayname|initialCapital|local|name|rootUrl|scriptDirUrl|thumbUrl|url',
     },
     userinfo: { meta: 'userinfo', uiprop: 'groups|rights|blockinfo|options' },
@@ -144,14 +144,16 @@ export class WikiMetadataService extends Service {
     }
   }
 
-  private getCacheKey<T extends keyof WikiMetadataKindMap>(kind: T): string {
-    return `${kind}:${new URL(this.ctx.api.config.baseURL).pathname.replace(/^\//, '')}`
+  private getCacheKey<T extends keyof WikiMetadataKindMap>(kind: T, api = this.api): string {
+    const url = new URL(api.config.baseURL, window.location.origin)
+    return `${kind}:${url.host}/${url.pathname.replace(/^\//, '')}`
   }
 
-  async fetchFromApi<T extends keyof WikiMetadataKindMap>(
-    kind: T
+  private async fetchFromApi<T extends keyof WikiMetadataKindMap>(
+    kind: T,
+    api = this.api
   ): Promise<WikiMetadataKindMap[T]> {
-    return this.api
+    return api
       .get({
         action: 'query',
         ...this.QUERY_DATA[kind],
@@ -173,18 +175,23 @@ export class WikiMetadataService extends Service {
   }
 
   async fetchFromCache<T extends keyof WikiMetadataKindMap>(
-    kind: T
+    kind: T,
+    api = this.api
   ): Promise<WikiMetadataKindMap[T] | null> {
-    const key = this.getCacheKey(kind)
+    const key = this.getCacheKey(kind, api)
     const data = await this.CACHE_DB.get(key, this.CACHE_TTL[kind])
     return data as WikiMetadataKindMap[T] | null
   }
-  async saveToCache<T extends keyof WikiMetadataKindMap>(kind: T, data: WikiMetadataKindMap[T]) {
-    const key = this.getCacheKey(kind)
+  async saveToCache<T extends keyof WikiMetadataKindMap>(
+    kind: T,
+    data: WikiMetadataKindMap[T],
+    api = this.api
+  ) {
+    const key = this.getCacheKey(kind, api)
     return this.CACHE_DB.set(key, data)
   }
-  async invalidateCache<T extends keyof WikiMetadataKindMap>(kind: T) {
-    const key = this.getCacheKey(kind)
+  async invalidateCache<T extends keyof WikiMetadataKindMap>(kind: T, api = this.api) {
+    const key = this.getCacheKey(kind, api)
     return this.CACHE_DB.delete(key)
   }
   private async onClearCache() {
@@ -229,6 +236,19 @@ export class WikiMetadataService extends Service {
   }
   get magicWords() {
     return this.siteInfo.magicwords
+  }
+  get allowedFileExtensions(): string[] {
+    return this.siteInfo.fileextensions.map((e) => e.ext)
+  }
+  async getAllowedFileExtensions(targetApi?: any): Promise<string[]> {
+    if (!targetApi) {
+      return this.allowedFileExtensions
+    }
+
+    const cached = await this.fetchFromCache('siteinfo', targetApi)
+    const siteinfo = cached ?? (await this.fetchFromApi('siteinfo', targetApi))
+    if (!cached) this.saveToCache('siteinfo', siteinfo, targetApi)
+    return siteinfo.fileextensions.map((e: { ext: string }) => e.ext)
   }
 
   // userInfo
