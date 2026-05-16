@@ -207,7 +207,7 @@ export class PluginQuickMove extends BasePlugin {
         label: $`Move`,
         className: 'is-primary is-ghost',
         method: () => {
-          formRef?.dispatchEvent(new Event('submit'))
+          formRef?.requestSubmit()
         },
       },
     ])
