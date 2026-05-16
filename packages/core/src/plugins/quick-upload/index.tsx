@@ -258,7 +258,7 @@ export class PluginQuickUpload extends BasePlugin {
       return false
     }
 
-    type UploadMode = 'all' | 'resume' | 'retry'
+    type UploadMode = 'all' | 'confirmed' | 'resume' | 'retry'
 
     const getUploadCandidates = (mode: UploadMode, list: UploadItem[]) => {
       if (mode === 'retry') return list.filter((it) => shouldRetryItem(it))
@@ -721,7 +721,7 @@ export class PluginQuickUpload extends BasePlugin {
           )
           return
         }
-        if (items.length > confirmThreshold) {
+        if (mode !== 'confirmed' && items.length > confirmThreshold) {
           this.ctx.modal.confirm(
             {
               title: $`Confirm bulk upload`,
@@ -737,7 +737,7 @@ export class PluginQuickUpload extends BasePlugin {
             },
             (confirmed) => {
               if (confirmed) {
-                void uploadAll('all')
+                void uploadAll('confirmed')
               }
               return true
             }
