@@ -3191,6 +3191,30 @@ export const MOCK_SITE_INFO: WikiSiteInfo = {
       'case-sensitive': true,
     },
   ],
+  repos: [
+    {
+      name: 'local',
+      displayname: 'Local File Repository',
+      rootUrl: 'https://example.com/images',
+      local: true,
+      url: 'https://example.com/images',
+      thumbUrl: 'https://example.com/images/thumb',
+      initialCapital: true,
+      scriptDirUrl: '',
+      canUpload: false,
+    },
+    {
+      name: 'remote',
+      displayname: 'Remote File Repository',
+      rootUrl: 'https://upload.example.com/images',
+      local: false,
+      url: 'https://upload.example.com/images',
+      thumbUrl: 'https://upload.example.com/images/thumb',
+      initialCapital: true,
+      scriptDirUrl: 'https://upload.example.com',
+      canUpload: true,
+    },
+  ],
 }
 
 export const MOCK_USER_INFO: WikiUserInfo = {
