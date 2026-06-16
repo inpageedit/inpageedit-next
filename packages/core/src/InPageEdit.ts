@@ -101,7 +101,7 @@ export class InPageEdit extends Context {
       // WikiMetadataService
       'wiki',
       'getUrl',
-      'getSciprtUrl',
+      'getScriptUrl',
       'getMainpageUrl',
     ])
   }

@@ -60,7 +60,7 @@ export class PreferencesService extends Service {
     ctx.set('prefs', this)
     this.db = ctx.storage.createDatabase<any>(`preferences:${ctx.wiki.userInfo.id}`, Infinity)
     try {
-      this._migrageFromLegacyMasterDB()
+      this._migrateFromLegacyMasterDB()
     } catch (e) {}
   }
 
@@ -261,7 +261,7 @@ export class PreferencesService extends Service {
     return this.categoryDefinitions
   }
 
-  private async _migrageFromLegacyMasterDB() {
+  private async _migrateFromLegacyMasterDB() {
     const legacyDB = this.ctx.storage.createDatabase<any>('preferences', Infinity)
     let count = 0
     for await (const [key, record] of legacyDB.entries()) {
