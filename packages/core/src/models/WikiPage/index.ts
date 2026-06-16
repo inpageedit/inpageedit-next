@@ -271,6 +271,8 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
       return this.edit(payload, { createonly: 1, recreate: payload.recreate, ...params })
     }
     async delete(reason?: string, params?: MwApiParams & { deletetalk?: boolean }) {
+      const title = this.pageInfo.title
+      const pageid = this.pageInfo.pageid
       return this.api.postWithEditToken<{
         delete: {
           title: string
@@ -279,8 +281,9 @@ export function createWikiPageModel(api: MediaWikiApi): WikiPageConstructor {
         }
       }>({
         action: 'delete',
-        title: this.pageInfo.title || undefined,
-        pageid: this.pageInfo.pageid || undefined,
+        // only one of title or pageid should be sent
+        title: pageid ? undefined : title,
+        pageid: pageid || undefined,
         reason,
         deletetalk: params?.deletetalk,
         ...params,
