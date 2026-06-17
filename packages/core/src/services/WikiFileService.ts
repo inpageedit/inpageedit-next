@@ -88,15 +88,12 @@ export class WikiFileService extends Service {
     return this.fileRepos.find((repo) => repo.local)
   }
   get writableFileRepo(): WikiFileRepo | undefined {
-    const repos = this.fileRepos
-    const canUpload = (r: WikiFileRepo) => !!r.canUpload
-    const explicit = repos.find(canUpload)
-    if (explicit) return explicit
-    const local = repos.find((r) => r.local)
-    if (!local || !canUpload(local)) {
-      return repos.find((r) => !r.local && r.scriptDirUrl)
-    }
-    return undefined
+    // Prefer a repo the user can upload to; otherwise fall back to a non-local
+    // repo that exposes its own api.php (e.g. a writable shared/foreign repo).
+    return (
+      this.fileRepos.find((repo) => repo.canUpload) ??
+      this.fileRepos.find((repo) => !repo.local && repo.scriptDirUrl)
+    )
   }
 
   getFileName(title: string | IWikiTitle) {
