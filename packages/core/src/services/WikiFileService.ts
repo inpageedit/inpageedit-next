@@ -88,7 +88,15 @@ export class WikiFileService extends Service {
     return this.fileRepos.find((repo) => repo.local)
   }
   get writableFileRepo(): WikiFileRepo | undefined {
-    return this.fileRepos.find((repo) => repo.canUpload)
+    const repos = this.fileRepos
+    const canUpload = (r: WikiFileRepo) => !!r.canUpload
+    const explicit = repos.find(canUpload)
+    if (explicit) return explicit
+    const local = repos.find((r) => r.local)
+    if (!local || !canUpload(local)) {
+      return repos.find((r) => !r.local && r.scriptDirUrl)
+    }
+    return undefined
   }
 
   getFileName(title: string | IWikiTitle) {
@@ -121,7 +129,7 @@ export class WikiFileService extends Service {
 
   async upload(params: Partial<UploadFileParams>, repo?: WikiFileRepo) {
     repo = repo || this.writableFileRepo
-    if (!repo?.canUpload) {
+    if (!repo) {
       throw new Error('No writable file repository found')
     }
 

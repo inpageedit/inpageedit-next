@@ -56,7 +56,16 @@ const PreviewPlaceholderNA = ({ $ }: { $: (strings: TemplateStringsArray) => str
       .default('[IPE-NEXT] Quick upload'),
   })
 )
-@Inject(['modal', '$', 'wikiTitle', 'wikiFile', 'quickPreview', 'preferences'])
+@Inject([
+  'modal',
+  '$',
+  'wikiTitle',
+  'wikiFile',
+  'quickPreview',
+  'preferences',
+  'wiki',
+  'apiService',
+])
 export class PluginQuickUpload extends BasePlugin {
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'quick-upload')
@@ -176,7 +185,11 @@ export class PluginQuickUpload extends BasePlugin {
     })
 
     const defaultSummary = (await this.ctx.preferences.get('quickUpload.summary')) || ''
-    const accept = 'image/*,video/*,audio/*,application/pdf'
+    const repo = this.ctx.wikiFile.writableFileRepo
+    const targetApi = repo ? this.ctx.apiService.getClientByFileRepo(repo) : undefined
+    const exts = await this.ctx.wiki.getAllowedFileExtensions(targetApi)
+
+    const accept = exts.map((e) => `.${e}`).join(',')
     const confirmThreshold = 20
 
     let items: UploadItem[] = []
@@ -320,6 +333,20 @@ export class PluginQuickUpload extends BasePlugin {
 
     const addFiles = (files: File[]) => {
       const accepted = files.filter((f) => this.isFileAccepted(f, String(accept || '')))
+
+      const rejectedCount = files.length - accepted.length
+      if (rejectedCount > 0) {
+        showMessage(
+          'warning',
+          $`File type not allowed`,
+          <span style={{ wordWrap: 'break-word' }}>
+            {rejectedCount === 1
+              ? $`1 file skipped! Only ${accept} are allowed by this wiki.`
+              : $`${rejectedCount} files skipped! Only ${accept} are allowed by this wiki.`}
+          </span>
+        )
+      }
+
       if (!accepted.length) return
 
       const newItems: UploadItem[] = accepted.map((file) => ({
