@@ -32,6 +32,33 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 <!-- LATEST_CHANGELOG_HERE -->
 
+<ChangeLog version='0.18.0'>
+
+- feat(quick-upload): use wiki's allowed file extensions for upload queue (by @t7ru)
+  - 上传队列现在会读取并使用 wiki 允许的文件扩展名，提前拦截不被允许的文件
+  - 被 wiki 拒绝的文件类型会通过 toast 提示，并对拒绝列表去重以防溢出
+  - 支持外部仓库（foreign repo）的扩展名检查
+  - 新增 core 的 `allowedFileExtensions` getter
+- feat(quick-upload): open file url / open file page (#45 by @t7ru)
+  - 上传完成后可直接打开文件 URL 或文件页
+- fix(quick-upload): bulk upload confirm infinite loop (#48 by @t7ru)
+  - 修复了批量上传超过确认阈值时，确认弹窗反复出现的无限循环问题
+- fix(quick-upload): guard against missing fileextensions (#50)
+  - 修复了在缺少 `fileextensions` 字段的外部仓库或旧版 MediaWiki 上，上传弹窗会报错的问题
+- fix(quick-move): untrusted form submission prevent move (#49 by @t7ru)
+  - 修复了在部分 wiki farm（如 wiki.gg）上，因合成的不可信提交事件被浏览器拦截，导致移动操作无法执行的问题
+- fix(WikiPage): ensure only one of title or pageid is sent on delete
+  - 修复了 `WikiPage.delete` 同时发送 `title` 和 `pageid` 可能导致的冲突
+
+</ChangeLog>
+
+<ChangeLog version='0.17.4'>
+
+- fix(plugin-store): update April Fool plugin installation logic and improve logging
+  - 优化了愚人节插件的安装逻辑与日志输出
+
+</ChangeLog>
+
 <ChangeLog version='0.17.3'>
 
 - fix(plugin-store): enhance installAndSetPreference logic, save april fools plugin
