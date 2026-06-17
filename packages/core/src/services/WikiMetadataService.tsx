@@ -2,6 +2,7 @@ import { Inject, InPageEdit, Schema, Service } from '@/InPageEdit'
 import { WikiSiteInfo, WikiUserBlockInfo, WikiUserInfo } from '@/types/WikiMetadata'
 import { AbstractIPEStorageManager } from './storage'
 import { MwApiParams } from 'wiki-saikou'
+import type { MwApi } from 'wiki-saikou/browser'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -238,9 +239,9 @@ export class WikiMetadataService extends Service {
     return this.siteInfo.magicwords
   }
   get allowedFileExtensions(): string[] {
-    return this.siteInfo.fileextensions.map((e) => e.ext)
+    return (this.siteInfo.fileextensions ?? []).map((e) => e.ext)
   }
-  async getAllowedFileExtensions(targetApi?: any): Promise<string[]> {
+  async getAllowedFileExtensions(targetApi?: MwApi): Promise<string[]> {
     if (!targetApi) {
       return this.allowedFileExtensions
     }
@@ -248,7 +249,7 @@ export class WikiMetadataService extends Service {
     const cached = await this.fetchFromCache('siteinfo', targetApi)
     const siteinfo = cached ?? (await this.fetchFromApi('siteinfo', targetApi))
     if (!cached) this.saveToCache('siteinfo', siteinfo, targetApi)
-    return siteinfo.fileextensions.map((e: { ext: string }) => e.ext)
+    return (siteinfo.fileextensions ?? []).map((e) => e.ext)
   }
 
   // userInfo

@@ -5,7 +5,8 @@ export interface WikiSiteInfo {
   magicwords: WikiMagicWord[]
   namespaces: Record<string, WikiNamespace>
   repos: WikiFileRepo[]
-  fileextensions: { ext: string }[]
+  /** Allowed upload file extensions. Optional: older MediaWiki / some foreign repos may omit it. */
+  fileextensions?: { ext: string }[]
 }
 
 export interface WikiSiteGeneralInfo {
