@@ -63,7 +63,17 @@ export interface QuickEditSubmitPayload {
   watchlist?: WatchlistAction
 }
 
-@Inject(['api', 'wikiPage', 'wikiTitle', 'currentPage', 'wiki', 'modal', 'preferences', '$'])
+@Inject([
+  'api',
+  'wikiPage',
+  'wikiTitle',
+  'currentPage',
+  'wiki',
+  'modal',
+  'preferences',
+  'store',
+  '$',
+])
 @RegisterPreferences(
   Schema.object({
     'quickEdit.editSummary': Schema.string()
@@ -128,6 +138,11 @@ export class PluginQuickEdit extends BasePlugin {
 
   async showModal(payload?: string | Partial<QuickEditOptions>) {
     const { $ } = this.ctx
+
+    if (this.ctx.store?.whenUserPluginsReady) {
+      await this.ctx.store.whenUserPluginsReady.catch(() => {})
+    }
+
     if (typeof payload === 'undefined') {
       payload = {}
     } else if (typeof payload === 'string') {
