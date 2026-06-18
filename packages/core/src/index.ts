@@ -53,9 +53,7 @@ async function autoload(
   await ipe.start()
 
   // Trigger the mw.hook
-  window.RLQ.push(() => {
-    mw.hook('InPageEdit.ready').fire(ipe)
-  })
+  mw.hook('InPageEdit.ready').fire(ipe)
 
   // Initialize global modules
   if (Array.isArray(window.__IPE_MODULES__)) {
