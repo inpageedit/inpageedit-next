@@ -140,7 +140,7 @@ export class PluginQuickEdit extends BasePlugin {
     const { $ } = this.ctx
 
     if (this.ctx.store?.whenUserPluginsReady) {
-      await this.ctx.store.whenUserPluginsReady.catch(() => {})
+      await this.ctx.store.whenUserPluginsReady
     }
 
     if (typeof payload === 'undefined') {
