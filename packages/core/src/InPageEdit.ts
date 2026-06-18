@@ -119,6 +119,8 @@ export class InPageEdit extends Context {
 
   // TODO: 这里不应该硬编码，暂时先这样
   async #initCorePlugins() {
+    await this.#waitForMediaWikiBase()
+
     const plugins = [
       import('@/plugins/analytics/index.js').then(({ PluginAnalytics }) => PluginAnalytics),
       import('@/plugins/in-article-links/index.js').then(
@@ -147,6 +149,18 @@ export class InPageEdit extends Context {
 
     if (import.meta.env.DEV) {
       this.plugin((await import('@/plugins/_debug/index.js')).default)
+    }
+  }
+
+  async #waitForMediaWikiBase() {
+    if (window.mw && mw.loader && typeof mw.loader.using === 'function') {
+      try {
+        await mw.loader.using('mediawiki.base')
+      } catch {}
+    } else if (window.RLQ) {
+      await new Promise<void>((resolve) => {
+        window.RLQ.push(['mediawiki.base', resolve])
+      })
     }
   }
 
