@@ -1,0 +1,1 @@
+import{A as e}from"./mockInPageEdit.yJyCV529.js";const t=c=>{const{id:a,name:n,label:p,checked:i,inputProps:l,labelProps:o,children:s,...h}=c;return e("label",{className:"theme-ipe ipe-checkbox",...h,children:[e("input",{type:"checkbox",id:a,name:n,checked:i,...l}),e("span",{className:"ipe-checkbox-box"}),e("span",{...o,children:p||s})]})};export{t as h};
