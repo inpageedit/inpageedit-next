@@ -20,7 +20,7 @@ document.body.append(
 ```
 
 ```wiki [MediaWiki:Gadget-IPE-NEXT]
-[InPageEdit-NEXT https://www.ipe.wiki] - 🚀 模块化、可扩展的 MediaWiki 超级增强插件(小编辑、重定向、页面历史)
+[https://www.ipe.wiki InPageEdit-NEXT] - 🚀 模块化、可扩展的 MediaWiki 超级增强插件(小编辑、重定向、页面历史)
 ```
 
 :::
