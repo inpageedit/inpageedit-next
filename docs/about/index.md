@@ -52,7 +52,7 @@ const communityMembers = [
 
 <VPTeamMembers size="small" :members="contributors" />
 
-[查看全部贡献者](https://github.com/inpageedit/inpageedit-next/graphs/contributors)
+[查看全部贡献者](https://github.com/inpageedit/inpageedit-next/graphs/contributors?all=1)
 
 ## 社区成员 Community Members
 
