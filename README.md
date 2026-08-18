@@ -56,7 +56,7 @@ This is a monorepo:
 | @inpageedit/modal  | Yet another lightweight, framework-free modal and toast notification utility     | [packages/modal](packages/modal)                       |
 | idb-plus           | 🗄️ Minimal Promise based IndexedDB Wrapper with Map-like API                     | [packages/idb-plus](packages/idb-plus)                 |
 | schemastery-form   | 🧩 WebComponent for Schemastery Form Generation                                  | [packages/schemastery-form](packages/schemastery-form) |
-| docs               | InPageEdit Documentation                                                         | [docs](docs)                                           |
+| website            | InPageEdit Portal Site (ipe.wiki)                                                | [website](website)                                     |
 | plugins            | Official Plugins                                                                 | [plugins](plugins)                                     |
 
 ---

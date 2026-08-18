@@ -15,5 +15,5 @@ pnpm core:build
 build command (for `GitChangelog`):
 
 ```bash
-(git fetch --depth=100 || git fetch --unshallow || true) && pnpm docs:build
+(git fetch --depth=100 || git fetch --unshallow || true) && pnpm website:build
 ```

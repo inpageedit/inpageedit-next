@@ -30,7 +30,7 @@ importers:
         specifier: ^8.8.5
         version: 8.8.5
 
-  docs:
+  website:
     dependencies:
       naive-ui:
         specifier: ^2.43.1

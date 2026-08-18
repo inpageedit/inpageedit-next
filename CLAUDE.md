@@ -17,7 +17,7 @@ pnpm workspace with ESM throughout (`"type": "module"`). Node >= 22.14.0.
 | `@inpageedit/logger` | `packages/logger` | Vite | Console logger |
 | `idb-plus` | `packages/idb-plus` | unbuild | IndexedDB wrapper |
 | `schemastery-form` | `packages/schemastery-form` | Vite | Schema-based form WebComponent |
-| docs | `docs` | VitePress | Documentation site |
+| `@inpageedit/website` | `website` | VitePress | ipe.wiki portal site |
 
 ## Common Commands
 
@@ -41,9 +41,9 @@ pnpm --filter core typecheck
 # Format (core)
 pnpm --filter core format
 
-# Docs dev/build
-pnpm docs:dev
-pnpm docs:build
+# Website dev/build
+pnpm website:dev
+pnpm website:build
 
 # Run a specific package script
 pnpm --filter <package-name> <script>
@@ -108,7 +108,7 @@ Type augmentation via `declare module '@/InPageEdit'` extends `InPageEdit`, `Eve
 
 ## Release
 
-See [docs/development/release.md](docs/development/release.md) for the release process of each package.
+See [website/development/release.md](website/development/release.md) for the release process of each package.
 
 ## Code Conventions
 

@@ -73,7 +73,7 @@ export default defineConfig({
     ],
     editLink: {
       text: '编辑此页',
-      pattern: 'https://github.com/inpageedit/inpageedit-next/edit/master/docs/:path',
+      pattern: 'https://github.com/inpageedit/inpageedit-next/edit/master/website/:path',
     },
   },
 })

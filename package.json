@@ -14,8 +14,8 @@
     "build": "npm run core:build",
     "core:dev": "pnpm --filter core dev",
     "core:build": "pnpm --filter core build",
-    "docs:dev": "pnpm --filter docs dev",
-    "docs:build": "pnpm --filter docs build"
+    "website:dev": "pnpm --filter website dev",
+    "website:build": "pnpm --filter website build"
   },
   "devDependencies": {
     "@prettier/plugin-pug": "^3.4.2",

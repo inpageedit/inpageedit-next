@@ -10,7 +10,7 @@ const SESS_NAME = 'inpageedit-next'
 const PROJECT_ROOT = resolve(import.meta.dirname, '../../')
 const DEV_COMMANDS: ((target: string) => ProcessPromise)[] = [
   (target) => $`tmux send-keys -t ${target} "pnpm --filter core dev" C-m`,
-  (target) => $`tmux send-keys -t ${target} "pnpm --filter docs dev" C-m`,
+  (target) => $`tmux send-keys -t ${target} "pnpm --filter website dev" C-m`,
 ] as const
 const DEFAULT_WINDOW = 0
 

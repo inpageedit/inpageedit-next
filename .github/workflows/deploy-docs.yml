@@ -30,13 +30,13 @@ jobs:
         env:
           DOCS_BASE_URL: /${{ github.event.repository.name }}/
         run: |
-          pnpm docs:build
+          pnpm website:build
 
       - name: Publish GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/.vitepress/dist
+          publish_dir: ./website/.vitepress/dist
           publish_branch: docs
           force_orphan: true
           # cname: ipe.js.org
