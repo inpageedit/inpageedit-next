@@ -148,19 +148,9 @@ export class PluginInArticleLinks extends BasePlugin<{
   }
 
   private onContentReady(callback: ($content: JQuery<HTMLElement>) => void) {
-    const register = () => {
-      if (!window.mw) return
-      window.mw.hook('wikipage.content').add(callback)
-      const $content = (window as any).$?.('#mw-content-text')
-      if ($content?.length) callback($content)
-    }
-
-    if (window.mw && typeof window.mw.hook === 'function') {
-      register()
-    } else {
-      window.RLQ = window.RLQ || ([] as any)
-      window.RLQ.push(['mediawiki.base', register])
-    }
+    window.mw.hook('wikipage.content').add(callback)
+    const $content = (window as any).$?.('#mw-content-text')
+    if ($content?.length) callback($content)
   }
 
   async handleQuickEdit() {

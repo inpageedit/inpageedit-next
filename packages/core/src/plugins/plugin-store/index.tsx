@@ -92,6 +92,7 @@ export class PluginPluginStore extends BasePlugin {
   static REGISTRY_INFO_STORAGE_NAME = 'plugin-store-registry'
   static REGISTRY_ETAG_STORAGE_NAME = 'psreg-etag'
   private regInfoDB: AbstractIPEStorageManager<PluginStoreRegistry>
+  public readonly whenUserPluginsReady: Promise<void>
 
   constructor(public ctx: InPageEdit) {
     super(ctx, {}, 'plugin-store')
@@ -102,10 +103,13 @@ export class PluginPluginStore extends BasePlugin {
       1,
       'indexedDB'
     )
+    this.whenUserPluginsReady = this._installUserPlugins().catch((e) => {
+      this.logger.warn('Failed to install some user plugins', e)
+    })
   }
 
   protected async start() {
-    this._installUserPlugins()
+    await this.whenUserPluginsReady
     this._checkAprilFool()
     this._injectPreferenceUI()
   }
@@ -158,9 +162,9 @@ export class PluginPluginStore extends BasePlugin {
     if (!prefs?.length) {
       return
     }
-    for (const pref of prefs) {
-      this.install(pref.registry, pref.id, pref.source, 'user-preference')
-    }
+    await Promise.allSettled(
+      prefs.map((pref) => this.install(pref.registry, pref.id, pref.source, 'user-preference'))
+    )
   }
 
   private async _createManagementApp() {
