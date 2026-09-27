@@ -206,7 +206,14 @@ export class WikiTitleService extends Service {
       return null
     }
 
-    const url = makeURL(link)
+    let url: URL
+    try {
+      url = makeURL(link)
+    } catch (e) {
+      this.logger.warn('parseWikiLink: invalid URL', link, e)
+      return null
+    }
+
     if (!this.isWikiLink(url.toString())) {
       return null
     }
