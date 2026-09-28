@@ -32,6 +32,17 @@ import ChangeLog from '@/.vitepress/components/ChangeLog.vue'
 
 <!-- LATEST_CHANGELOG_HERE -->
 
+<ChangeLog version='0.19.0'>
+
+- feat(quick-upload): add license picker (#56 by @t7ru)
+  - 快速上传新增许可证选择器，选项读取自目标 wiki 的 `MediaWiki:Licenses`，所选许可证会按 wiki 的格式以单独章节附加到文件描述中
+  - 上传到外部文件仓库（如 Commons）时，按目标仓库的语言获取许可证列表
+  - 许可证列表获取失败时不影响上传，仅隐藏选择器
+- fix(in-article-links): skip malformed URL anchors (#60 by @cchamish)
+  - 修复了页面中存在非法外链（如 `[http:// 描述]`）时，文内快速编辑按钮全部失效的问题
+
+</ChangeLog>
+
 <ChangeLog version='0.18.0'>
 
 - feat(quick-upload): use wiki's allowed file extensions for upload queue (by @t7ru)
