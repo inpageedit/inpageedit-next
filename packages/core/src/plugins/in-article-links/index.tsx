@@ -141,7 +141,14 @@ export class PluginInArticleLinks extends BasePlugin<{
   ): InArticleWikiAnchorMetadata[] {
     const anchors = parent.querySelectorAll<HTMLAnchorElement>('a[href]')
     return Array.from(anchors)
-      .map((anchor) => this.parseAnchor(anchor))
+      .map((anchor) => {
+        try {
+          return this.parseAnchor(anchor)
+        } catch (e) {
+          this.ctx.logger.error('scanAnchors', anchor, e)
+          return null
+        }
+      })
       .filter(
         (anchor) => anchor !== null && (!filter || filter(anchor))
       ) as InArticleWikiAnchorMetadata[]
