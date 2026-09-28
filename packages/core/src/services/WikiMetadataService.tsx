@@ -241,15 +241,24 @@ export class WikiMetadataService extends Service {
   get allowedFileExtensions(): string[] {
     return (this.siteInfo.fileextensions ?? []).map((e) => e.ext)
   }
-  async getAllowedFileExtensions(targetApi?: MwApi): Promise<string[]> {
+  private async getSiteInfo(targetApi?: MwApi): Promise<WikiSiteInfo> {
     if (!targetApi) {
-      return this.allowedFileExtensions
+      return this.siteInfo
     }
 
     const cached = await this.fetchFromCache('siteinfo', targetApi)
-    const siteinfo = cached ?? (await this.fetchFromApi('siteinfo', targetApi))
-    if (!cached) this.saveToCache('siteinfo', siteinfo, targetApi)
+    if (cached) return cached
+    const siteinfo = await this.fetchFromApi('siteinfo', targetApi)
+    await this.saveToCache('siteinfo', siteinfo, targetApi)
+    return siteinfo
+  }
+  async getAllowedFileExtensions(targetApi?: MwApi): Promise<string[]> {
+    const siteinfo = await this.getSiteInfo(targetApi)
     return (siteinfo.fileextensions ?? []).map((e) => e.ext)
+  }
+  async getContentLanguage(targetApi?: MwApi): Promise<string> {
+    const siteinfo = await this.getSiteInfo(targetApi)
+    return siteinfo.general.lang
   }
 
   // userInfo

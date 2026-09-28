@@ -22,11 +22,70 @@ type UploadItem = {
   file: File
   filename: string
   text: string
+  license: string
   status: 'queued' | 'uploading' | 'success' | 'warning' | 'error' | 'paused'
   message?: string
   retryable?: boolean
   fileUrl?: string
   result?: UploadFileResult
+}
+
+type LicenseOption = {
+  value: string
+  label: string
+  disabled?: boolean
+  depth: number
+}
+
+function parseLicenses(msg = ''): LicenseOption[] {
+  const text = msg.trim()
+  if (!text || text === '-') return []
+
+  const options: LicenseOption[] = []
+  const levels: string[] = []
+
+  for (const raw of text.split(/\r?\n/)) {
+    if (!raw.startsWith('*')) continue
+    let stars = 0
+    while (raw[stars] === '*') stars++
+    const line = raw.slice(stars).replace(/^ +/, '')
+    if (!line) continue
+
+    if (line.includes('|')) {
+      const pipe = line.lastIndexOf('|')
+      options.push({
+        value: line.slice(0, pipe),
+        label: line.slice(pipe + 1),
+        depth: levels.length,
+      })
+    } else {
+      if (stars < levels.length) levels.length = stars
+      if (stars === levels.length) levels[stars - 1] = line
+      else levels.push(line)
+      options.push({ value: '', label: line, disabled: true, depth: levels.length - 1 })
+    }
+  }
+
+  return options
+}
+
+/** @see https://doc.wikimedia.org/mediawiki-core/master/php/Licenses_8php_source.html */
+async function fetchUploadLicenses(
+  api: { get: (params: Record<string, any>) => Promise<{ data: any }> },
+  lang: string
+) {
+  const { data } = await api.get({
+    action: 'query',
+    meta: 'allmessages',
+    ammessages: 'licenses|license-header',
+    amlang: lang,
+  })
+  const msgs: Record<string, string> = {}
+  for (const m of data.query.allmessages) msgs[m.name] = m.content
+  return {
+    options: parseLicenses(msgs.licenses),
+    licenseHeader: msgs['license-header'],
+  }
 }
 
 const PreviewPlaceholderNA = ({ $ }: { $: (strings: TemplateStringsArray) => string }) => (
@@ -184,13 +243,23 @@ export class PluginQuickUpload extends BasePlugin {
       },
     })
 
-    const defaultSummary = (await this.ctx.preferences.get('quickUpload.summary')) || ''
     const repo = this.ctx.wikiFile.writableFileRepo
     const targetApi = repo ? this.ctx.apiService.getClientByFileRepo(repo) : undefined
+    const targetLang = await this.ctx.wiki.getContentLanguage(targetApi)
+    const licensesPromise = fetchUploadLicenses(targetApi || this.ctx.api, targetLang).catch(
+      (e) => {
+        this.logger.warn('Failed to fetch upload licenses', e)
+        return null
+      }
+    )
+    const defaultSummary = (await this.ctx.preferences.get('quickUpload.summary')) || ''
     const exts = await this.ctx.wiki.getAllowedFileExtensions(targetApi)
 
     const accept = exts.map((e) => `.${e}`).join(',')
     const confirmThreshold = 20
+
+    let licenseOptions: LicenseOption[] = []
+    let licenseHeader = ''
 
     let items: UploadItem[] = []
     let selectedId: string | null = null
@@ -354,6 +423,7 @@ export class PluginQuickUpload extends BasePlugin {
         file,
         filename: file.name,
         text: '',
+        license: '',
         status: 'queued',
         retryable: true,
       }))
@@ -375,7 +445,12 @@ export class PluginQuickUpload extends BasePlugin {
       const summary = (ui.summaryInput?.value || '').trim() || ''
       body.comment = summary
 
-      body.text = item.text || ''
+      const wrapped = item.license && `{{${item.license}}}`
+      const desc = item.text || ''
+      body.text =
+        wrapped && !desc.includes(wrapped)
+          ? `${desc}${desc ? '\n' : ''}== ${licenseHeader} ==\n${wrapped}\n`
+          : desc
 
       if (ui.ignoreWarnings?.checked) {
         body.ignorewarnings = '1'
@@ -413,57 +488,29 @@ export class PluginQuickUpload extends BasePlugin {
 
       if (!items.length) {
         ui.listEl.appendChild(
-          <div style={{ opacity: 0.75, padding: '8px 0' }}>
+          <div className="ipe-quickUpload__list-empty">
             <p>No files selected.</p>
           </div>
         )
         updateFooter()
         return
       } else {
-        const list = (
-          <ul
-            style={{
-              listStyle: 'none',
-              padding: 0,
-              margin: 0,
-              display: 'grid',
-              gap: '6px',
-            }}
-          />
-        ) as HTMLUListElement
+        const list = (<ul className="ipe-quickUpload__list" />) as HTMLUListElement
 
         items.forEach((item) => {
-          const isActive = item.id === selectedId
           const row = (
             <li
-              style={{
-                border: '1px solid var(--ipe-border-color, rgba(0,0,0,.12))',
-                borderRadius: '8px',
-                padding: '8px',
-                cursor: 'pointer',
-                background: isActive ? 'rgba(59,130,246,.08)' : 'transparent',
-                minWidth: 0,
-              }}
+              className={`ipe-quickUpload__item${item.id === selectedId ? ' is-active' : ''}`}
               onClick={() => setSelected(item.id)}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                  <div
-                    style={{
-                      textOverflow: 'ellipsis',
-                      overflow: 'hidden',
-                      whiteSpace: 'nowrap',
-                      wordBreak: 'break-word',
-                      fontSize: '13px',
-                    }}
-                  >
-                    <strong style={{ fontWeight: 600 }}>{item.filename}</strong>
+              <div className="ipe-quickUpload__item-row">
+                <div className="ipe-quickUpload__item-main">
+                  <div className="ipe-quickUpload__item-name">
+                    <strong>{item.filename}</strong>
                   </div>
-                  <div style={{ fontSize: '12px', opacity: 0.75 }}>
-                    {getStatusLabel(item.status)}
-                  </div>
+                  <div className="ipe-quickUpload__item-status">{getStatusLabel(item.status)}</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div className="ipe-quickUpload__item-actions">
                   <button
                     type="button"
                     className="ipe-btn is-text"
@@ -482,14 +529,7 @@ export class PluginQuickUpload extends BasePlugin {
               </div>
 
               {item.message ? (
-                <div
-                  style={{
-                    fontSize: '12px',
-                    opacity: 0.8,
-                    marginTop: '4px',
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
+                <div className="ipe-quickUpload__item-message ipe-quickUpload__muted">
                   {item.message}
                 </div>
               ) : null}
@@ -518,35 +558,22 @@ export class PluginQuickUpload extends BasePlugin {
       const file = item.file
 
       const header = (
-        <section style={{ display: 'grid', gap: '6px' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              justifyContent: 'space-between',
-              gap: '12px',
-            }}
-          >
-            <strong style={{ wordBreak: 'break-word' }}>{file.name}</strong>
-            <span style={{ fontSize: '12px', opacity: 0.8 }}>{this.formatFileSize(file.size)}</span>
+        <section className="ipe-quickUpload__preview-header">
+          <div className="ipe-quickUpload__preview-title">
+            <strong>{file.name}</strong>
+            <span className="ipe-quickUpload__muted">{this.formatFileSize(file.size)}</span>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', opacity: 0.8 }}>{file.type || $`Unknown type`}</span>
+          <div className="ipe-quickUpload__preview-meta">
+            <span className="ipe-quickUpload__muted">{file.type || $`Unknown type`}</span>
             {item.fileUrl ? (
               <>
-                <a
-                  href={item.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ fontSize: '12px' }}
-                >
+                <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
                   {$`Open file URL`}
                 </a>
                 <a
                   href={this.ctx.wiki.getUrl(`File:${item.filename}`)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ fontSize: '12px' }}
                 >
                   {$`Open file page`}
                 </a>
@@ -561,22 +588,13 @@ export class PluginQuickUpload extends BasePlugin {
       )
 
       const previewBox = (
-        <div className="ipe-quickUpload__preview-content" style={{ marginTop: '10px' }}>
-          {previewEl}
-        </div>
+        <div className="ipe-quickUpload__preview-content">{previewEl}</div>
       ) as HTMLElement
 
       const isLocked = item.status === 'success'
+      const fieldClass = `ipe-input-box${isLocked ? ' is-locked' : ''}`
       const filenameEditor = (
-        <div
-          className="ipe-input-box"
-          style={{
-            marginTop: '8px',
-            opacity: isLocked ? 0.55 : 1,
-            filter: isLocked ? 'grayscale(1)' : undefined,
-            pointerEvents: isLocked ? 'none' : undefined,
-          }}
-        >
+        <div className={fieldClass}>
           <label htmlFor="mu_filename">{$`Target filename`}</label>
           <input
             id="mu_filename"
@@ -594,18 +612,11 @@ export class PluginQuickUpload extends BasePlugin {
       ) as HTMLElement
 
       const descEditor = (
-        <div
-          className="ipe-input-box"
-          style={{
-            marginTop: '8px',
-            opacity: isLocked ? 0.55 : 1,
-            filter: isLocked ? 'grayscale(1)' : undefined,
-            pointerEvents: isLocked ? 'none' : undefined,
-          }}
-        >
+        <div className={fieldClass}>
           <label htmlFor="mu_text">File description</label>
           <textarea
             id="mu_text"
+            name="text"
             placeholder={'This file is for...\n[[Category:XXX]]'}
             disabled={isUploading || isLocked}
             value={item.text || ''}
@@ -618,9 +629,33 @@ export class PluginQuickUpload extends BasePlugin {
         </div>
       ) as HTMLElement
 
+      const licenseEditor =
+        licenseOptions.length > 0 ? (
+          <div className={fieldClass}>
+            <label htmlFor="mu_license">{$`Licensing`}</label>
+            <select
+              id="mu_license"
+              disabled={isUploading || isLocked}
+              value={item.license}
+              onChange={(e: Event) => {
+                updateItem(item.id, { license: (e.target as HTMLSelectElement).value })
+              }}
+            >
+              <option value="">{$`None selected`}</option>
+              {licenseOptions.map((opt) => (
+                <option value={opt.value} disabled={opt.disabled}>
+                  {'\u00A0'.repeat(opt.depth * 2)}
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null
+
       ui.previewWrapper.appendChild(header)
       ui.previewWrapper.appendChild(previewBox)
       ui.previewWrapper.appendChild(filenameEditor)
+      if (licenseEditor) ui.previewWrapper.appendChild(licenseEditor)
       ui.previewWrapper.appendChild(descEditor)
     }
 
@@ -899,41 +934,22 @@ export class PluginQuickUpload extends BasePlugin {
     }
 
     const progressBar = (
-      <div style={{ marginBottom: '10px' }}>
-        <div
-          style={{
-            height: '8px',
-            borderRadius: '999px',
-            background: 'rgba(0,0,0,.08)',
-            overflow: 'hidden',
-          }}
-        >
+      <div className="ipe-quickUpload__progress">
+        <div className="ipe-quickUpload__progress-track">
           <div
+            className="ipe-quickUpload__progress-fill"
             ref={(el: any) => {
               ui.progressEl = el
             }}
-            style={{
-              height: '100%',
-              width: '0%',
-              background: 'var(--ipe-primary, #3b82f6)',
-              transition: 'width .2s ease',
-            }}
+            style={{ width: '0%' }}
           />
         </div>
-        <div
-          style={{
-            marginTop: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '10px',
-          }}
-        >
+        <div className="ipe-quickUpload__progress-meta">
           <div
+            className="ipe-quickUpload__muted"
             ref={(el: any) => {
               ui.progressTextEl = el
             }}
-            style={{ fontSize: '12px', opacity: 0.8 }}
           >
             0/0 (0%)
           </div>
@@ -942,12 +958,12 @@ export class PluginQuickUpload extends BasePlugin {
     ) as HTMLElement
 
     const leftPanel = (
-      <section style={{ display: 'grid', gap: '10px', minWidth: 0 }}>
+      <section className="ipe-quickUpload__panel">
         <div className="ipe-input-box">
           <label htmlFor="mu_files">
             Files{' '}
             {items.length > 0 ? (
-              <span style={{ opacity: 0.85 }}>({items.length} selected)</span>
+              <span className="ipe-quickUpload__count">({items.length} selected)</span>
             ) : null}
           </label>
           <input
@@ -976,7 +992,7 @@ export class PluginQuickUpload extends BasePlugin {
     ) as HTMLElement
 
     const rightPanel = (
-      <section style={{ display: 'grid', gap: '10px' }}>
+      <section className="ipe-quickUpload__panel">
         <div
           className="ipe-quickUpload__preview"
           ref={(el: any) => {
@@ -992,12 +1008,6 @@ export class PluginQuickUpload extends BasePlugin {
               ui.fileInput?.click()
             }
           }}
-          style={{
-            border: '1px solid var(--ipe-border-color, rgba(0,0,0,.12))',
-            borderRadius: '8px',
-            padding: '10px',
-            minWidth: 0,
-          }}
         />
       </section>
     ) as HTMLElement
@@ -1008,7 +1018,6 @@ export class PluginQuickUpload extends BasePlugin {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        style={{ display: 'grid', gap: '12px' }}
       >
         {progressBar}
         <div className="ipe-quickUpload__layout">
@@ -1016,14 +1025,7 @@ export class PluginQuickUpload extends BasePlugin {
           {rightPanel}
         </div>
 
-        <div
-          style={{
-            borderTop: '1px solid var(--ipe-border-color, rgba(0,0,0,.12))',
-            paddingTop: '10px',
-            display: 'grid',
-            gap: '10px',
-          }}
-        >
+        <div className="ipe-quickUpload__footer">
           <div className="ipe-input-box">
             <label htmlFor="mu_summary">Summary (applies to all files)</label>
             <textarea
@@ -1098,6 +1100,13 @@ export class PluginQuickUpload extends BasePlugin {
         },
       ])
     }
+
+    void licensesPromise.then((data) => {
+      if (!data) return
+      licenseOptions = data.options
+      licenseHeader = data.licenseHeader
+      void renderPreview()
+    })
 
     renderList()
     await renderPreview()
