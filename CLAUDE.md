@@ -108,7 +108,7 @@ Type augmentation via `declare module '@/InPageEdit'` extends `InPageEdit`, `Eve
 
 ## Release
 
-See [website/development/release.md](website/development/release.md) for the release process of each package.
+To release `@inpageedit/core`, follow the `releasing-core` skill (`.agents/skills/releasing-core/SKILL.md`). Human-facing steps: [website/development/release.md](website/development/release.md).
 
 ## Code Conventions
 

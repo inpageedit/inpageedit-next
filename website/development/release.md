@@ -13,6 +13,4 @@
 5. Push commits and tag — GitHub Actions will handle publishing automatically
    - **The git tag must match the version in package.json exactly, otherwise CI validation will fail**
 
-> **@agents:**
-> - After step 3, stop and ask the user to review the version number and changelog before proceeding to step 4. Do NOT create tags or push without explicit human approval.
-> - Changelog scope: only include changes that affect `@inpageedit/core` behavior. Skip unrelated commits (e.g. docs-only). Changes in core's sub-packages (e.g. `@inpageedit/modal`) that affect core can be briefly mentioned.
+> AI agents: follow the `releasing-core` skill in `.agents/skills/releasing-core/SKILL.md`.
