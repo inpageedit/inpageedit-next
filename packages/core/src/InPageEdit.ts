@@ -65,7 +65,7 @@ export class InPageEdit extends Context {
   async #init() {
     await this.#initCoreServices()
     if (this.config.autoInstallCorePlugins) {
-      this.#initCorePlugins()
+      await this.#initCorePlugins()
     }
     this.#initCoreAssets()
   }
@@ -119,12 +119,15 @@ export class InPageEdit extends Context {
 
   // TODO: 这里不应该硬编码，暂时先这样
   async #initCorePlugins() {
+    const mwBaseReady = this.#waitForMediaWikiBase()
+    const { PluginPluginStore } = await import('@/plugins/plugin-store/index.js')
+    this.plugin(PluginPluginStore)
+
     const plugins = [
       import('@/plugins/analytics/index.js').then(({ PluginAnalytics }) => PluginAnalytics),
       import('@/plugins/in-article-links/index.js').then(
         ({ PluginInArticleLinks }) => PluginInArticleLinks
       ),
-      import('@/plugins/plugin-store/index.js').then(({ PluginPluginStore }) => PluginPluginStore),
       import('@/plugins/preferences-ui/index.js').then(
         ({ PluginPreferencesUI }) => PluginPreferencesUI
       ),
@@ -141,12 +144,24 @@ export class InPageEdit extends Context {
       import('@/plugins/quick-usage/index.js').then(({ PluginQuickUsage }) => PluginQuickUsage),
       import('@/plugins/toolbox/index.js').then(({ PluginToolbox }) => PluginToolbox),
     ]
-    plugins.forEach(async (plugin) => {
-      this.plugin(await plugin)
-    })
+    await Promise.all(plugins.map(async (p) => this.plugin(await p)))
+
+    await mwBaseReady
 
     if (import.meta.env.DEV) {
       this.plugin((await import('@/plugins/_debug/index.js')).default)
+    }
+  }
+
+  async #waitForMediaWikiBase() {
+    if (window.mw && mw.loader && typeof mw.loader.using === 'function') {
+      try {
+        await mw.loader.using('mediawiki.base')
+      } catch {}
+    } else if (window.RLQ) {
+      await new Promise<void>((resolve) => {
+        window.RLQ.push(['mediawiki.base', resolve])
+      })
     }
   }
 
