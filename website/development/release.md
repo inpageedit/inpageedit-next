@@ -13,4 +13,4 @@
 5. Push commits and tag — GitHub Actions will handle publishing automatically
    - **The git tag must match the version in package.json exactly, otherwise CI validation will fail**
 
-> AI agents: follow the `releasing-core` skill in `.agents/skills/releasing-core/SKILL.md`.
+> AI agents: follow the `releasing-core` skill in `skills/releasing-core/SKILL.md`.

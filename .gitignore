@@ -107,7 +107,8 @@ dist
 lib
 
 # Claude Code
-.claude/
+.claude/*
+!.claude/skills
 
 # Fuck you macOS
 .DS_Store
