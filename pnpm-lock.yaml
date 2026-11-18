@@ -30,144 +30,27 @@ importers:
         specifier: ^8.8.5
         version: 8.8.5
 
-  website:
-    dependencies:
-      naive-ui:
-        specifier: ^2.43.1
-        version: 2.43.1(vue@3.5.22(typescript@5.9.3))
-      schemastery:
-        specifier: ^3.17.1
-        version: 3.17.1
-      schemastery-form:
-        specifier: ^0.2.1
-        version: 0.2.1(schemastery@3.17.1)(vue@3.5.22(typescript@5.9.3))
-      vue:
-        specifier: ^3.5.22
-        version: 3.5.22(typescript@5.9.3)
-    devDependencies:
-      '@inpageedit/core':
-        specifier: ^0.17.0
-        version: 0.17.0(typescript@5.9.3)
-      '@nolebase/vitepress-plugin-git-changelog':
-        specifier: ^2.18.2
-        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3))(vue@3.5.22(typescript@5.9.3))
-      '@nolebase/vitepress-plugin-inline-link-preview':
-        specifier: ^2.18.2
-        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3))(vue@3.5.22(typescript@5.9.3))
-      '@nolebase/vitepress-plugin-page-properties':
-        specifier: ^2.18.2
-        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3))(vue@3.5.22(typescript@5.9.3))
-      '@prettier/plugin-pug':
-        specifier: ^3.4.2
-        version: 3.4.2(prettier@3.6.2)
-      '@shikijs/vitepress-twoslash':
-        specifier: ^3.13.0
-        version: 3.13.0(typescript@5.9.3)
-      '@tabler/icons-vue':
-        specifier: ^3.35.0
-        version: 3.35.0(vue@3.5.22(typescript@5.9.3))
-      '@types/jquery':
-        specifier: ^3.5.33
-        version: 3.5.33
-      '@types/markdown-it-footnote':
-        specifier: ^3.0.4
-        version: 3.0.4
-      '@types/node':
-        specifier: ^22.18.12
-        version: 22.18.12
-      '@types/ssi-modal':
-        specifier: ^1.0.0
-        version: 1.0.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^8.46.2
-        version: 8.46.2(@typescript-eslint/parser@8.46.2(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3))(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^8.46.2
-        version: 8.46.2(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3)
-      '@vitejs/plugin-vue':
-        specifier: ^6.0.1
-        version: 6.0.1(vite@7.1.11(@types/node@22.18.12)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6))(vue@3.5.22(typescript@5.9.3))
-      '@vue/language-plugin-pug':
-        specifier: ^3.1.1
-        version: 3.1.1
-      cross-env:
-        specifier: ^10.1.0
-        version: 10.1.0
-      eslint:
-        specifier: ^9.38.0
-        version: 9.38.0(jiti@2.6.1)
-      fexios:
-        specifier: ^6.2.2
-        version: 6.2.2
-      hono:
-        specifier: ^4.10.2
-        version: 4.10.2
-      jsx-dom:
-        specifier: ^8.1.6
-        version: 8.1.6
-      markdown-it-footnote:
-        specifier: ^4.0.0
-        version: 4.0.0
-      markdown-it-task-lists:
-        specifier: ^2.1.1
-        version: 2.1.1
-      mermaid:
-        specifier: ^11.12.0
-        version: 11.12.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      pug:
-        specifier: ^3.0.3
-        version: 3.0.3
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
-      sass-embedded:
-        specifier: ^1.93.2
-        version: 1.93.2
-      tsx:
-        specifier: ^4.20.6
-        version: 4.20.6
-      types-mediawiki:
-        specifier: ^2.0.0
-        version: 2.0.0(vue@3.5.22(typescript@5.9.3))
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vite:
-        specifier: ^7.1.11
-        version: 7.1.11(@types/node@22.18.12)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)
-      vitepress:
-        specifier: 2.0.0-alpha.12
-        version: 2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3)
-      vitepress-i18n:
-        specifier: ^1.3.4
-        version: 1.3.4
-      vitepress-markdown-timeline:
-        specifier: ^1.2.2
-        version: 1.2.2
-      vitepress-plugin-group-icons:
-        specifier: ^1.6.4
-        version: 1.6.4(markdown-it@14.1.0)(vite@7.1.11(@types/node@22.18.12)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6))
-      vitepress-plugin-mermaid:
-        specifier: ^2.0.17
-        version: 2.0.17(mermaid@11.12.0)(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3))
-      vitepress-sidebar:
-        specifier: ^1.33.0
-        version: 1.33.0
-      wiki-saikou:
-        specifier: ^7.6.0
-        version: 7.6.0
-
   packages/cli:
     dependencies:
       '@napi-rs/keyring':
         specifier: ^2.1.2
         version: 2.1.2
+      diff:
+        specifier: ^8.0.2
+        version: 8.0.2
       wiki-saikou:
         specifier: 7.5.0
         version: 7.5.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.18.12
+        version: 22.18.12
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/core:
     dependencies:
@@ -425,6 +308,136 @@ importers:
       vue:
         specifier: ^3.5.26
         version: 3.5.26(typescript@5.9.3)
+
+  website:
+    dependencies:
+      naive-ui:
+        specifier: ^2.43.1
+        version: 2.43.1(vue@3.5.22(typescript@5.9.3))
+      schemastery:
+        specifier: ^3.17.1
+        version: 3.17.1
+      schemastery-form:
+        specifier: ^0.2.1
+        version: 0.2.1(schemastery@3.17.1)(vue@3.5.22(typescript@5.9.3))
+      vue:
+        specifier: ^3.5.22
+        version: 3.5.22(typescript@5.9.3)
+    devDependencies:
+      '@inpageedit/core':
+        specifier: ^0.17.0
+        version: 0.17.0(typescript@5.9.3)
+      '@nolebase/vitepress-plugin-git-changelog':
+        specifier: ^2.18.2
+        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3))(vue@3.5.22(typescript@5.9.3))
+      '@nolebase/vitepress-plugin-inline-link-preview':
+        specifier: ^2.18.2
+        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3))(vue@3.5.22(typescript@5.9.3))
+      '@nolebase/vitepress-plugin-page-properties':
+        specifier: ^2.18.2
+        version: 2.18.2(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3))(vue@3.5.22(typescript@5.9.3))
+      '@prettier/plugin-pug':
+        specifier: ^3.4.2
+        version: 3.4.2(prettier@3.6.2)
+      '@shikijs/vitepress-twoslash':
+        specifier: ^3.13.0
+        version: 3.13.0(typescript@5.9.3)
+      '@tabler/icons-vue':
+        specifier: ^3.35.0
+        version: 3.35.0(vue@3.5.22(typescript@5.9.3))
+      '@types/jquery':
+        specifier: ^3.5.33
+        version: 3.5.33
+      '@types/markdown-it-footnote':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@types/node':
+        specifier: ^22.18.12
+        version: 22.18.12
+      '@types/ssi-modal':
+        specifier: ^1.0.0
+        version: 1.0.0
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^8.46.2
+        version: 8.46.2(@typescript-eslint/parser@8.46.2(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3))(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^8.46.2
+        version: 8.46.2(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3)
+      '@vitejs/plugin-vue':
+        specifier: ^6.0.1
+        version: 6.0.1(vite@7.1.11(@types/node@22.18.12)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6))(vue@3.5.22(typescript@5.9.3))
+      '@vue/language-plugin-pug':
+        specifier: ^3.1.1
+        version: 3.1.1
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      eslint:
+        specifier: ^9.38.0
+        version: 9.38.0(jiti@2.6.1)
+      fexios:
+        specifier: ^6.2.2
+        version: 6.2.2
+      hono:
+        specifier: ^4.10.2
+        version: 4.10.2
+      jsx-dom:
+        specifier: ^8.1.6
+        version: 8.1.6
+      markdown-it-footnote:
+        specifier: ^4.0.0
+        version: 4.0.0
+      markdown-it-task-lists:
+        specifier: ^2.1.1
+        version: 2.1.1
+      mermaid:
+        specifier: ^11.12.0
+        version: 11.12.0
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
+      pug:
+        specifier: ^3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      sass-embedded:
+        specifier: ^1.93.2
+        version: 1.93.2
+      tsx:
+        specifier: ^4.20.6
+        version: 4.20.6
+      types-mediawiki:
+        specifier: ^2.0.0
+        version: 2.0.0(vue@3.5.22(typescript@5.9.3))
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.1.11
+        version: 7.1.11(@types/node@22.18.12)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)
+      vitepress:
+        specifier: 2.0.0-alpha.12
+        version: 2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3)
+      vitepress-i18n:
+        specifier: ^1.3.4
+        version: 1.3.4
+      vitepress-markdown-timeline:
+        specifier: ^1.2.2
+        version: 1.2.2
+      vitepress-plugin-group-icons:
+        specifier: ^1.6.4
+        version: 1.6.4(markdown-it@14.1.0)(vite@7.1.11(@types/node@22.18.12)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6))
+      vitepress-plugin-mermaid:
+        specifier: ^2.0.17
+        version: 2.0.17(mermaid@11.12.0)(vitepress@2.0.0-alpha.12(@types/node@22.18.12)(async-validator@4.2.5)(idb-keyval@6.2.2)(jiti@2.6.1)(less@4.4.1)(lightningcss@1.30.2)(postcss@8.5.6)(sass-embedded@1.93.2)(sass@1.97.2)(tsx@4.20.6)(typescript@5.9.3))
+      vitepress-sidebar:
+        specifier: ^1.33.0
+        version: 1.33.0
+      wiki-saikou:
+        specifier: ^7.6.0
+        version: 7.6.0
 
 packages:
 

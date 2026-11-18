@@ -2,8 +2,9 @@ import { basename } from 'node:path'
 import { actionRequest, formFile } from './action-api.js'
 import { CliError } from './errors.js'
 import { pageText } from './pages.js'
+import type { Session, Values } from './types.js'
 
-export function prepareMove(from, to, values) {
+export function prepareMove(from: string, to: string, values: Values): FormData {
   if (
     !from.trim() ||
     from.includes('|') ||
@@ -23,7 +24,7 @@ export function prepareMove(from, to, values) {
   return form
 }
 
-export async function prepareUpload(path, values) {
+export async function prepareUpload(path: string, values: Values): Promise<FormData> {
   const filename = values.filename ?? basename(path)
   if (!filename.trim() || filename.includes('|')) {
     throw new CliError('usage_error', 'Specify a non-empty Wiki filename.')
@@ -40,7 +41,7 @@ export async function prepareUpload(path, values) {
   return form
 }
 
-export async function movePage(session, form) {
+export async function movePage(session: Session, form: FormData) {
   const data = await actionRequest(session, { method: 'POST', form, token: 'csrf' })
   const move = data?.move
   if (typeof move?.from !== 'string' || typeof move?.to !== 'string') {
@@ -49,7 +50,7 @@ export async function movePage(session, form) {
   return data.warnings ? { ...move, warnings: data.warnings } : move
 }
 
-export async function uploadFile(session, form) {
+export async function uploadFile(session: Session, form: FormData) {
   const data = await actionRequest(session, { method: 'POST', form, token: 'csrf' })
   const upload = data?.upload
   if (upload?.result === 'Warning') {

@@ -4,10 +4,17 @@ import { CliError } from './errors.js'
 const NOTICE_MS = 3_000
 const TIMEOUT_MS = 60_000
 
+export interface KeyringRequest {
+  op: 'getPassword' | 'getSecret' | 'setPassword' | 'setSecret'
+  service: string
+  account: string
+  value?: string | Uint8Array
+}
+
 let notify = () => {}
 
 /** Called when the credential store is slow, which on macOS means an access prompt is open. */
-export function onCredentialWait(callback) {
+export function onCredentialWait(callback: () => void) {
   notify = callback
 }
 
@@ -16,10 +23,10 @@ export function onCredentialWait(callback) {
  * access prompt (macOS asks again whenever a different binary reads an item), and a blocked
  * main thread could neither tell the caller nor give up.
  */
-export function keyring(op, service, account, value) {
+export function keyring(request: KeyringRequest): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./keyring-worker.js', import.meta.url), {
-      workerData: { op, service, account, value },
+      workerData: request,
     })
     const notice = setTimeout(() => notify(), NOTICE_MS)
     const timeout = setTimeout(() => {
@@ -38,7 +45,7 @@ export function keyring(op, service, account, value) {
       worker.unref()
       worker.terminate()
     }
-    worker.once('message', ({ ok, result }) => {
+    worker.once('message', ({ ok, result }: { ok: boolean; result?: unknown }) => {
       finish()
       if (ok) resolve(result)
       else reject(new Error('credential store call failed'))

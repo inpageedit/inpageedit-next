@@ -1,18 +1,20 @@
 import { MwApi, MediaWikiApiError, WikiSaikouErrorCode } from 'wiki-saikou'
 import { CliError, loginRequired } from './errors.js'
 import { apiEndpoint, savedPassword, savedSession, saveProfile, saveSession } from './profiles.js'
+import type { Identity, Profile, Session } from './types.js'
 
-function client(api) {
+function client(api: string): MwApi {
   const wiki = new MwApi({
     baseURL: api,
     throwOnApiError: true,
     fexiosConfigs: {
-      fetch: (request) => fetch(request, { redirect: 'error' }),
+      // Fexios passes a complete Request, so the redirect override is the only init needed.
+      fetch: (request: string | URL | Request) => fetch(request, { redirect: 'error' }),
       timeout: 15_000,
       headers: { 'user-agent': 'InPageEdit-CLI/0.1 (https://www.ipe.wiki/)' },
     },
   })
-  wiki.request.on('beforeRequest', (ctx) => {
+  wiki.request.on('beforeRequest', (ctx: any) => {
     const body = ctx.request.body
     if (
       body instanceof FormData &&
@@ -20,13 +22,13 @@ function client(api) {
       [...body.values()].every((value) => typeof value === 'string')
     ) {
       // Multipart form serialization converts line endings in text fields to CRLF.
-      ctx.request.body = new URLSearchParams(body)
+      ctx.request.body = new URLSearchParams(body as unknown as Record<string, string>)
     }
   })
   return wiki
 }
 
-async function queryIdentity(wiki, assertions) {
+async function queryIdentity(wiki: MwApi, assertions: Record<string, string>): Promise<Identity> {
   const { data } = await wiki.get({ action: 'query', meta: 'userinfo', ...assertions })
   const user = data?.query?.userinfo
   if (!user || !Number.isSafeInteger(user.id) || user.id <= 0 || typeof user.name !== 'string') {
@@ -35,19 +37,26 @@ async function queryIdentity(wiki, assertions) {
   return { username: user.name, userId: user.id }
 }
 
-function session(wiki, username, identity) {
+function session(wiki: MwApi, username: string, identity?: Identity): Session {
   return { wiki, assert: { assert: 'user', assertuser: username }, identity }
 }
 
-async function authenticate(api, loginName, password) {
+async function authenticate(
+  api: string,
+  loginName: string,
+  password: string
+): Promise<Session & { identity: Identity }> {
   const wiki = client(api)
   try {
     await wiki.login(loginName, password, undefined, { retry: 1 })
     const identity = await queryIdentity(wiki, { assert: 'user' })
-    return session(wiki, identity.username, identity)
+    return { ...session(wiki, identity.username), identity }
   } catch (error) {
     if (error instanceof CliError) throw error
-    if (error.code === WikiSaikouErrorCode.LOGIN_FAILED || error instanceof MediaWikiApiError) {
+    if (
+      (error as { code?: unknown }).code === WikiSaikouErrorCode.LOGIN_FAILED ||
+      error instanceof MediaWikiApiError
+    ) {
       throw new CliError(
         'login_failed',
         'MediaWiki refused the login. Check the Bot Password login name and password.'
@@ -61,7 +70,11 @@ async function authenticate(api, loginName, password) {
   }
 }
 
-export async function configureProfile(name, input, existing) {
+export async function configureProfile(
+  name: string,
+  input: { api: string; loginName: string; password: string | null },
+  existing?: Profile
+): Promise<Profile> {
   const api = apiEndpoint(input.api)
   const loginName = input.loginName.trim()
   if (!/^[^@]+@[^@]+$/.test(loginName) || !input.password) {
@@ -90,9 +103,13 @@ export async function configureProfile(name, input, existing) {
   return profile
 }
 
-async function cacheSession(profile, { wiki, identity }) {
+async function cacheSession(
+  profile: Profile,
+  { wiki, identity }: Session & { identity: Identity }
+) {
   const { hostname, pathname } = new URL(profile.api)
-  const cookies = wiki.request.cookieJar.getCookies(hostname, pathname).map((cookie) => {
+  const jar = (wiki.request as any).cookieJar
+  const cookies = jar.getCookies(hostname, pathname).map((cookie: any) => {
     const { maxAge, _createdAt, ...rest } = cookie
     // CookieJar.setCookie resets Max-Age on insert. Persist its original absolute expiry.
     const expires = maxAge === undefined ? rest.expires : new Date(+_createdAt + maxAge * 1000)
@@ -101,11 +118,13 @@ async function cacheSession(profile, { wiki, identity }) {
   await saveSession(profile, { username: identity.username, cookies })
 }
 
-async function restoreSession(profile) {
-  const cached = await savedSession(profile)
+async function restoreSession(profile: Profile): Promise<Session | undefined> {
+  const cached = (await savedSession(profile)) as
+    | { username?: unknown; cookies?: any[] }
+    | undefined
   if (typeof cached?.username !== 'string' || !Array.isArray(cached.cookies)) return
   const wiki = client(profile.api)
-  const jar = wiki.request.cookieJar
+  const jar = (wiki.request as any).cookieJar
   const now = Date.now()
   for (const cookie of cached.cookies) {
     if (typeof cookie?.name !== 'string' || typeof cookie.value !== 'string') return
@@ -117,11 +136,11 @@ async function restoreSession(profile) {
   if (jar.getCookies(hostname, pathname).length) return session(wiki, cached.username)
 }
 
-function apiErrorCode(error) {
+function apiErrorCode(error: unknown): string | undefined {
   if (error instanceof MediaWikiApiError) return error.errors?.[0]?.code
 }
 
-function checkIdentity(profile, identity) {
+function checkIdentity(profile: Profile, identity: Identity): Identity {
   if (identity.userId !== profile.userId) {
     throw new CliError(
       'identity_mismatch',
@@ -131,7 +150,10 @@ function checkIdentity(profile, identity) {
   return identity
 }
 
-export async function csrfQuery(session, query = {}) {
+export async function csrfQuery(
+  session: Session,
+  query: Record<string, string> = {}
+): Promise<any> {
   const { data } = await session.wiki.get({
     ...query,
     ...session.assert,
@@ -149,12 +171,15 @@ export async function csrfQuery(session, query = {}) {
   return data
 }
 
-export async function wikiIdentity(current, profile) {
+export async function wikiIdentity(current: Session, profile: Profile): Promise<Identity> {
   const identity = current.identity ?? (await queryIdentity(current.wiki, current.assert))
   return checkIdentity(profile, identity)
 }
 
-export async function withAnonymousSession(api, operate) {
+export async function withAnonymousSession<T>(
+  api: string,
+  operate: (session: Session) => Promise<T>
+): Promise<T> {
   try {
     return await operate({ wiki: client(api), assert: {} })
   } catch (error) {
@@ -162,7 +187,10 @@ export async function withAnonymousSession(api, operate) {
   }
 }
 
-export async function withWikiSession(profile, operate) {
+export async function withWikiSession<T>(
+  profile: Profile,
+  operate: (session: Session) => Promise<T>
+): Promise<T> {
   try {
     const cached = await restoreSession(profile)
     if (cached) {
@@ -172,7 +200,7 @@ export async function withWikiSession(profile, operate) {
         // These server responses reject the operation before executing it, including private Wikis.
         if (
           !['assertuserfailed', 'assertnameduserfailed', 'readapidenied'].includes(
-            apiErrorCode(error)
+            apiErrorCode(error) ?? ''
           )
         ) {
           throw error
@@ -191,12 +219,12 @@ export async function withWikiSession(profile, operate) {
   }
 }
 
-function wikiError(error, profile) {
-  if (error.code === 'login_failed' && profile) return loginRequired(profile.name)
+function wikiError(error: any, profile?: Profile): CliError {
+  if (error?.code === 'login_failed' && profile) return loginRequired(profile.name)
   if (error instanceof CliError) return error
   if (error instanceof MediaWikiApiError) {
     const { code, text } = error.firstError ?? {}
-    if (profile && ['assertuserfailed', 'assertnameduserfailed'].includes(code))
+    if (profile && ['assertuserfailed', 'assertnameduserfailed'].includes(code ?? ''))
       return loginRequired(profile.name)
     // Extensions can return codes such as internal_api_error_<PHP class>; keep the
     // server's own text so callers see why, but never the request that caused it.

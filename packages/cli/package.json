@@ -5,17 +5,30 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "ipe": "./src/cli.js"
+    "ipe": "./dist/cli.js"
   },
   "files": [
-    "src",
-    "assets"
+    "dist",
+    "assets",
+    "skill"
   ],
+  "scripts": {
+    "build": "tsc -p .",
+    "dev": "tsx src/cli.ts",
+    "typecheck": "tsc -p . --noEmit",
+    "prepublishOnly": "npm run build"
+  },
   "engines": {
     "node": ">=22.14.0"
   },
   "dependencies": {
     "@napi-rs/keyring": "^2.1.2",
+    "diff": "^8.0.2",
     "wiki-saikou": "7.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.12",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

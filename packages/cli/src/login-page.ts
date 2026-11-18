@@ -76,7 +76,25 @@ const styles = `
   }
 `
 
-const text = {
+interface PageText {
+  lang: string
+  title: string
+  heading: string
+  lead: (name: string) => string
+  api: string
+  loginName: string
+  password: string
+  submit: string
+  note: string
+  guide: string
+  steps: (link: string) => string[]
+  savedHeading: string
+  saved: (name: string, user: string) => string
+}
+
+export type Language = 'en' | 'zh'
+
+const text: Record<Language, PageText> = {
   en: {
     lang: 'en',
     title: 'Wiki login · InPageEdit CLI',
@@ -118,7 +136,7 @@ const text = {
 }
 
 /** Picks the page language from the browser's Accept-Language header. */
-export function pageLanguage(acceptLanguage = '') {
+export function pageLanguage(acceptLanguage = ''): Language {
   return /^\s*zh\b/i.test(acceptLanguage) ? 'zh' : 'en'
 }
 
@@ -132,11 +150,11 @@ function escapeHtml(value = '') {
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;',
-      })[character]
+      })[character]!
   )
 }
 
-function guideLink(api) {
+function guideLink(api?: string) {
   const endpoint = URL.parse(api || '')
   if (
     endpoint &&
@@ -150,9 +168,27 @@ function guideLink(api) {
   return 'https://www.mediawiki.org/wiki/Manual:Bot_passwords'
 }
 
-export function loginPage({ name, api, loginName, locked, error, saved, language = 'en' }) {
-  const t = text[language] ?? text.en
-  const pill = (value) => `<span class="pill">${escapeHtml(value)}</span>`
+export interface LoginPageState {
+  name: string
+  api?: string
+  loginName?: string
+  locked?: boolean
+  error?: string
+  saved?: { username: string }
+  language?: Language
+}
+
+export function loginPage({
+  name,
+  api,
+  loginName,
+  locked,
+  error,
+  saved,
+  language = 'en',
+}: LoginPageState) {
+  const t = text[language]
+  const pill = (value: string) => `<span class="pill">${escapeHtml(value)}</span>`
   const link = `<a href="${escapeHtml(guideLink(api))}" target="_blank" rel="noopener noreferrer">Special:BotPasswords</a>`
   const body = saved
     ? `

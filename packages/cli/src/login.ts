@@ -1,13 +1,24 @@
 import { randomBytes } from 'node:crypto'
-import { createServer } from 'node:http'
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { once } from 'node:events'
 import { createInterface } from 'node:readline/promises'
 import { Writable } from 'node:stream'
 import { CliError } from './errors.js'
-import { loginPage, pageLanguage } from './login-page.js'
+import { loginPage, pageLanguage, type LoginPageState } from './login-page.js'
+import type { Profile } from './types.js'
 import { configureProfile } from './wiki.js'
 
-export async function terminalLogin(name, defaults, existing) {
+interface LoginDefaults {
+  api?: string
+  loginName?: string
+}
+
+export async function terminalLogin(
+  name: string,
+  defaults: LoginDefaults,
+  existing?: Profile
+): Promise<Profile> {
   if (!process.stdin.isTTY || !process.stderr.isTTY) {
     throw new CliError('terminal_required', 'Run login in a user terminal or use --web.')
   }
@@ -19,12 +30,12 @@ export async function terminalLogin(name, defaults, existing) {
       else process.stderr.write(chunk, encoding, done)
     },
   })
-  output.columns = process.stderr.columns
+  Object.assign(output, { columns: process.stderr.columns })
   const terminal = createInterface({ input: process.stdin, output, terminal: true, historySize: 0 })
   const stop = new AbortController()
   terminal.on('SIGINT', () => stop.abort())
   terminal.on('close', () => stop.abort())
-  const question = (prompt) => terminal.question(prompt, { signal: stop.signal })
+  const question = (prompt: string) => terminal.question(prompt, { signal: stop.signal })
   try {
     const api = defaults.api || (await question('Wiki Action API URL: '))
     const loginName = defaults.loginName || (await question('Bot Password login name (User@Bot): '))
@@ -52,9 +63,9 @@ const headers = {
   'X-Content-Type-Options': 'nosniff',
 }
 
-async function formBody(request) {
+async function formBody(request: IncomingMessage) {
   let size = 0
-  const chunks = []
+  const chunks: Buffer[] = []
   for await (const chunk of request) {
     size += chunk.length
     if (size > 8192) throw new CliError('invalid_login', 'The login form exceeded the size limit.')
@@ -63,17 +74,27 @@ async function formBody(request) {
   return new URLSearchParams(Buffer.concat(chunks).toString('utf8'))
 }
 
-export async function webLogin(name, defaults, existing, announce) {
+export async function webLogin(
+  name: string,
+  defaults: LoginDefaults,
+  existing: Profile | undefined,
+  announce: (url: string) => void
+): Promise<Profile> {
   const host = '127.0.0.1'
   const path = `/login/${randomBytes(24).toString('base64url')}`
-  let address
+  let address: URL
   let busy = false
   let closing = false
-  let complete
-  const result = new Promise((resolve) => {
+  let complete!: (profile: Profile | undefined) => void
+  const result = new Promise<Profile | undefined>((resolve) => {
     complete = resolve
   })
-  const render = (request, response, status, values) => {
+  const render = (
+    request: IncomingMessage,
+    response: ServerResponse,
+    status: number,
+    values: Omit<LoginPageState, 'name'>
+  ) => {
     const language = pageLanguage(request.headers['accept-language'])
     response
       .writeHead(status, headers)
@@ -107,13 +128,11 @@ export async function webLogin(name, defaults, existing, announce) {
       let formValues = defaults
       try {
         const form = await formBody(request)
-        formValues = {
-          api: form.get('api') ?? '',
-          loginName: form.get('loginName') ?? '',
-        }
+        const input = { api: form.get('api') ?? '', loginName: form.get('loginName') ?? '' }
+        formValues = input
         const profile = await configureProfile(
           name,
-          { ...formValues, password: form.get('password') },
+          { ...input, password: form.get('password') },
           existing
         )
         closing = true
@@ -133,7 +152,7 @@ export async function webLogin(name, defaults, existing, announce) {
 
   server.listen(0, host)
   await once(server, 'listening')
-  address = new URL(`http://${host}:${server.address().port}${path}`)
+  address = new URL(`http://${host}:${(server.address() as AddressInfo).port}${path}`)
   const cancel = () => {
     closing = true
     if (!busy) complete(undefined)

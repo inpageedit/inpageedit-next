@@ -1,12 +1,14 @@
 export class CliError extends Error {
-  constructor(code, message, details) {
+  constructor(
+    readonly code: string,
+    message: string,
+    readonly details?: Record<string, unknown>
+  ) {
     super(message)
-    this.code = code
-    this.details = details
   }
 }
 
-export function loginRequired(name) {
+export function loginRequired(name: string) {
   const command = `ipe login --profile ${name} --web`
   return new CliError('login_required', `Ask the user to run ${command}.`, { command })
 }

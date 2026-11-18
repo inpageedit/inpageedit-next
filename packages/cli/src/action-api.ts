@@ -2,13 +2,21 @@ import { openAsBlob } from 'node:fs'
 import { basename } from 'node:path'
 import { CliError } from './errors.js'
 import { pageText } from './pages.js'
+import type { Session, Values } from './types.js'
 import { csrfQuery } from './wiki.js'
 
-function usage(message) {
+export interface ActionRequest {
+  method: 'GET' | 'POST'
+  query: Record<string, string>
+  form: FormData
+  token?: string
+}
+
+function usage(message: string) {
   return new CliError('usage_error', message)
 }
 
-function parameterPairs(values = []) {
+function parameterPairs(values: string[] = []): [string, string][] {
   return values.map((item) => {
     const separator = item.indexOf('=')
     if (separator < 1) throw usage('Expected an API parameter in KEY=VALUE form.')
@@ -16,8 +24,8 @@ function parameterPairs(values = []) {
   })
 }
 
-async function jsonBody(path) {
-  let value
+async function jsonBody(path: string): Promise<[string, string][]> {
+  let value: unknown
   try {
     value = JSON.parse(await pageText(path))
   } catch (error) {
@@ -27,7 +35,7 @@ async function jsonBody(path) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw usage('--body requires a JSON object.')
   }
-  return Object.entries(value).flatMap(([key, value]) => {
+  return Object.entries(value).flatMap(([key, value]): [string, string][] => {
     if (value === false || value === null) return []
     if (!['string', 'number', 'boolean'].includes(typeof value)) {
       throw usage('--body values must be strings, numbers, booleans, or null.')
@@ -36,7 +44,7 @@ async function jsonBody(path) {
   })
 }
 
-export async function formFile(form, field, path, name = basename(path)) {
+export async function formFile(form: FormData, field: string, path: string, name = basename(path)) {
   try {
     form.set(field, await openAsBlob(path), name)
   } catch {
@@ -44,9 +52,9 @@ export async function formFile(form, field, path, name = basename(path)) {
   }
 }
 
-export async function prepareActionRequest(values) {
+export async function prepareActionRequest(values: Values): Promise<ActionRequest> {
   const method = (values.method ?? 'GET').toUpperCase()
-  if (!['GET', 'POST'].includes(method)) throw usage('--method must be GET or POST.')
+  if (method !== 'GET' && method !== 'POST') throw usage('--method must be GET or POST.')
   if (method === 'GET' && (values.body !== undefined || values.form || values.token)) {
     throw usage('--body, --form, and --token require --method POST.')
   }
@@ -78,7 +86,10 @@ export async function prepareActionRequest(values) {
   return { method, query: Object.fromEntries(query), form, token: values.token }
 }
 
-export async function actionRequest(session, { method, query, form, token }) {
+export async function actionRequest(
+  session: Session,
+  { method, query, form, token }: Pick<ActionRequest, 'form'> & Partial<ActionRequest>
+): Promise<any> {
   if (method === 'GET') {
     return (await session.wiki.get({ ...query, ...session.assert })).data
   }
