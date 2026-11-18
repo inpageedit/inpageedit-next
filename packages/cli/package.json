@@ -1,0 +1,20 @@
+{
+  "name": "@inpageedit/cli",
+  "version": "0.1.0",
+  "description": "InPageEdit CLI for MediaWiki profiles and page editing",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "ipe": "./src/cli.js"
+  },
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "dependencies": {
+    "@napi-rs/keyring": "^2.1.2",
+    "wiki-saikou": "7.5.0"
+  }
+}
