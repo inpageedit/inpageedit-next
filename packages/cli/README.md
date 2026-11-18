@@ -27,14 +27,22 @@ ipe profile list
 ipe profile use docs-bot
 ipe whoami --json
 ipe page search "sandbox" --json
-ipe page get "Project:Sandbox" --json
-ipe --profile docs-bot page edit "Project:Sandbox" --file ./page.wiki --base-revid 123 --summary "Update example" --json
+ipe page get "Project:Sandbox" --section 2 --out ./sandbox.wiki --json
+ipe --profile docs-bot page diff "Project:Sandbox" --file ./sandbox.wiki --section 2 --base-revid 123
+ipe --profile docs-bot page preview "Project:Sandbox" --file ./sandbox.wiki --html ./preview.html
+ipe --profile docs-bot page edit "Project:Sandbox" --file ./sandbox.wiki --section 2 --base-revid 123 --summary "Update example" --json
 ipe --profile docs-bot page create "Project:New page" --file ./new-page.wiki --summary "Create test page" --json
 ```
 
-Use `--file -` to pipe page source in. Get the current `revisionId` with `page get --json` before editing. If MediaWiki returns `editconflict`, fetch the page again and reconcile the changes. Revision-based editing requires MediaWiki 1.35 or a server that exposes the `baserevid` edit parameter.
+`--section N` reads or replaces one section (0 is the lead). `page diff` compares a local file with the latest revision, or with `--base-revid`. `page preview` parses a local file as the Wiki would on save and lists parse warnings, categories, missing templates, and red links. Edits require the `revisionId` they are based on and fail with `editconflict` when the page has changed since. Revision-based editing requires MediaWiki 1.35 or a server that exposes the `baserevid` edit parameter.
 
-When scripting, pass `--profile` explicitly and use `--json`. MediaWiki errors keep the server's message. Codes that are not plain identifiers, such as extension exceptions, are reported as `mediawiki_error` with the original code in `apiCode`. Successful results go to stdout, errors go to stderr, and failures exit with a nonzero status. `login_required` includes a command to give the user. For `login --web --json`, stderr first emits a `login_url` event. Share that URL with the user and wait for the process to confirm the profile is saved. The user enters the password directly into the browser.
+## Use with an agent
+
+`ipe skill` prints a guide for agents: profiles, asking the user to log in through the web page, the fetch–edit–review–save workflow, the Action API, and error codes. It ships with each release, so it always matches the installed CLI. Point your agent at it, or save it as a skill:
+
+```sh
+ipe skill > ~/.agents/skills/ipe/SKILL.md
+```
 
 ## Read anonymously
 
@@ -71,5 +79,8 @@ The command uses the selected profile endpoint and its authenticated session. Th
 
 ```sh
 pnpm --filter @inpageedit/cli install --frozen-lockfile
-./packages/cli/src/cli.js --help
+pnpm --filter @inpageedit/cli build
+node packages/cli/dist/cli.js --help
 ```
+
+`pnpm --filter @inpageedit/cli dev -- <args>` runs the TypeScript source directly.
