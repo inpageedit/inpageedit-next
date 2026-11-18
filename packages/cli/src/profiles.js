@@ -4,7 +4,7 @@ import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { CliError } from './errors.js'
 
-const configDir = resolve(process.env.IPE_CONFIG_DIR || join(homedir(), '.inpageedit'))
+const configDir = resolve(process.env.IPE_CONFIG_DIR || join(homedir(), '.config', 'inpageedit'))
 const profileDir = join(configDir, 'profiles')
 const activeFile = join(configDir, 'active')
 

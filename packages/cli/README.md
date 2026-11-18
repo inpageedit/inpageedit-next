@@ -1,6 +1,6 @@
 # InPageEdit CLI
 
-`ipe` reads and edits MediaWiki pages using named bot profiles. It requires Node.js 22.14+ and an available system credential store (Secret Service on Linux).
+`ipe` reads and edits MediaWiki pages using named bot profiles. It requires Node.js 22.14+ and an available system credential store.
 
 ## Configure a profile
 
@@ -12,7 +12,9 @@ ipe login --profile docs-bot --api https://wiki.example.org/w/api.php --web
 
 The page shows the target API and how to create a credential at the Wiki's `Special:BotPasswords` page. Enter the generated login name (for example, `WikiUser@ipe`) and Bot Password, then select **Verify and save profile**. You can prefill the login name with `--login-name`. Omit `--web` to use a terminal prompt with hidden password input.
 
-Profiles are stored in `~/.inpageedit/profiles` by default. Set `IPE_CONFIG_DIR` to use a separate profile directory. Passwords are stored in the system credential store. To renew a saved credential, run `ipe login --profile docs-bot --web` again.
+Profiles are stored in `~/.config/inpageedit/profiles` by default. Set `IPE_CONFIG_DIR` to use a separate configuration directory. To renew a saved credential, run `ipe login --profile docs-bot --web` again.
+
+Bot Passwords are stored in macOS Keychain, Windows Credential Manager, or Linux Secret Service (for example, GNOME Keyring). Linux needs a running, accessible Secret Service provider. Systems without an available credential store return `credential_store_error`.
 
 ## Read and edit pages
 
