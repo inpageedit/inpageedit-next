@@ -4,7 +4,7 @@ import { once } from 'node:events'
 import { createInterface } from 'node:readline/promises'
 import { Writable } from 'node:stream'
 import { CliError } from './errors.js'
-import { loginPage } from './login-page.js'
+import { loginPage, pageLanguage } from './login-page.js'
 import { configureProfile } from './wiki.js'
 
 export async function terminalLogin(name, defaults, existing) {
@@ -47,7 +47,7 @@ const headers = {
   'Content-Type': 'text/html; charset=utf-8',
   'Cache-Control': 'no-store',
   'Content-Security-Policy':
-    "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+    "default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
   'Referrer-Policy': 'same-origin',
   'X-Content-Type-Options': 'nosniff',
 }
@@ -73,8 +73,11 @@ export async function webLogin(name, defaults, existing, announce) {
   const result = new Promise((resolve) => {
     complete = resolve
   })
-  const render = (response, status, values) => {
-    response.writeHead(status, headers).end(loginPage({ name, locked: !!existing, ...values }))
+  const render = (request, response, status, values) => {
+    const language = pageLanguage(request.headers['accept-language'])
+    response
+      .writeHead(status, headers)
+      .end(loginPage({ name, locked: !!existing, language, ...values }))
   }
   const server = createServer(
     { requestTimeout: 15_000, headersTimeout: 10_000 },
@@ -84,7 +87,7 @@ export async function webLogin(name, defaults, existing, announce) {
         return
       }
       if (request.method === 'GET') {
-        render(response, 200, defaults)
+        render(request, response, 200, defaults)
         return
       }
       if (
@@ -114,10 +117,10 @@ export async function webLogin(name, defaults, existing, announce) {
           existing
         )
         closing = true
-        render(response, 200, { saved: profile })
+        render(request, response, 200, { saved: profile })
         complete(profile)
       } catch (error) {
-        render(response, 400, {
+        render(request, response, 400, {
           ...formValues,
           error: error instanceof CliError ? error.message : 'Could not save the profile.',
         })
