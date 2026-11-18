@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { CliError } from './errors.js'
+import { csrfQuery } from './wiki.js'
 
 export async function searchPages(session, query, limit) {
   const { data } = await session.wiki.get({
@@ -72,18 +73,10 @@ export async function writePage(session, { title, text, summary, baseRevision })
     }
   }
 
-  const tokenParams = { ...session.assert, action: 'query', meta: 'tokens', type: 'csrf' }
-  const { data: tokenResponse } = await session.wiki.get({
-    ...tokenParams,
-    ...(baseRevision ? { prop: 'info', titles: title } : {}),
-  })
-  const token = tokenResponse?.query?.tokens?.csrftoken
-  if (typeof token !== 'string' || !token || token === '+\\') {
-    throw new CliError(
-      'unexpected_response',
-      'MediaWiki did not provide an authenticated edit token.'
-    )
-  }
+  const tokenResponse = await csrfQuery(
+    session,
+    baseRevision ? { prop: 'info', titles: title } : {}
+  )
 
   if (baseRevision) {
     const page = tokenResponse.query?.pages?.[0]

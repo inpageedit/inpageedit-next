@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util'
 import { readFileSync } from 'node:fs'
+import { actionRequest, prepareActionRequest } from './action-api.js'
 import { CliError } from './errors.js'
 import { terminalLogin, webLogin } from './login.js'
+import { movePage, prepareMove, prepareUpload, uploadFile } from './maintenance.js'
 import { getPage, pageText, searchPages, writePage } from './pages.js'
 import {
   activeProfile,
@@ -24,8 +26,12 @@ const help = `Usage: ipe [--profile NAME] [--json] <command>
   page get TITLE
   page edit TITLE --file PATH --base-revid ID --summary TEXT
   page create TITLE --file PATH --summary TEXT
+  page move FROM TO --reason TEXT [--move-talk] [--no-redirect]
+  file upload PATH [--filename NAME] [--summary TEXT] [--description-file PATH] [--ignore-warnings]
+  action-api [--method GET|POST] [--query KEY=VALUE]... [--form KEY=VALUE | --body PATH] [--token csrf]
 
 Use --file - to read page content from stdin. Use --json to get metadata with page source.
+Use --form KEY=@PATH to attach a file. --body reads a JSON object from a file or stdin (-).
 On login, --web prints a local URL for the user. Omit it for hidden terminal input.
 `
 
@@ -41,6 +47,17 @@ const options = {
   file: { type: 'string' },
   'base-revid': { type: 'string' },
   summary: { type: 'string' },
+  method: { type: 'string' },
+  query: { type: 'string', multiple: true },
+  form: { type: 'string', multiple: true },
+  body: { type: 'string' },
+  token: { type: 'string' },
+  filename: { type: 'string' },
+  'description-file': { type: 'string' },
+  'ignore-warnings': { type: 'boolean' },
+  reason: { type: 'string' },
+  'move-talk': { type: 'boolean' },
+  'no-redirect': { type: 'boolean' },
 }
 
 const commands = new Map([
@@ -52,6 +69,18 @@ const commands = new Map([
   ['page get', { positionals: 3, flags: ['profile'] }],
   ['page edit', { positionals: 3, flags: ['profile', 'file', 'base-revid', 'summary'] }],
   ['page create', { positionals: 3, flags: ['profile', 'file', 'summary'] }],
+  ['page move', { positionals: 4, flags: ['profile', 'reason', 'move-talk', 'no-redirect'] }],
+  [
+    'file upload',
+    {
+      positionals: 3,
+      flags: ['profile', 'filename', 'summary', 'description-file', 'ignore-warnings'],
+    },
+  ],
+  [
+    'action-api',
+    { positionals: 1, flags: ['profile', 'method', 'query', 'form', 'body', 'token'] },
+  ],
 ])
 
 function integer(value, flag, max = Number.MAX_SAFE_INTEGER) {
@@ -65,7 +94,7 @@ function output(data, json, human) {
   process.stdout.write(json || human === undefined ? `${JSON.stringify(data)}\n` : human)
 }
 
-async function run(command, values, operand) {
+async function run(command, values, operand, destination) {
   if (command === 'profile list') {
     const data = await listProfiles()
     const lines = data.profiles.map(
@@ -116,6 +145,7 @@ async function run(command, values, operand) {
   const isWriting = command === 'page edit' || command === 'page create'
   if (
     command.startsWith('page ') &&
+    command !== 'page move' &&
     (!operand.trim() || (command !== 'page search' && operand.includes('|')))
   ) {
     throw new CliError('usage_error', 'Specify one non-empty page title or search query.')
@@ -133,6 +163,9 @@ async function run(command, values, operand) {
     )
   }
   const text = isWriting ? await pageText(values.file) : undefined
+  const request = command === 'action-api' ? await prepareActionRequest(values) : undefined
+  const upload = command === 'file upload' ? await prepareUpload(operand, values) : undefined
+  const move = command === 'page move' ? prepareMove(operand, destination, values) : undefined
   await withWikiSession(profile, async (session) => {
     switch (command) {
       case 'whoami': {
@@ -153,6 +186,28 @@ async function run(command, values, operand) {
       case 'page get': {
         const page = await getPage(session, operand)
         output(page, values.json, page.text)
+        break
+      }
+      case 'action-api': {
+        output(await actionRequest(session, request), values.json)
+        break
+      }
+      case 'file upload': {
+        const result = await uploadFile(session, upload)
+        output(result, values.json, `Uploaded File:${result.filename}\n`)
+        break
+      }
+      case 'page move': {
+        const result = await movePage(session, move)
+        const talk = result.talkto ? `Talk page moved to ${result.talkto}\n` : ''
+        const warning = result['talkmove-error-info'] ?? result['talkmove-error-code']
+        const notices = warning ? `Talk page: ${warning}\n` : ''
+        const warnings = result.warnings ? `Warnings: ${JSON.stringify(result.warnings)}\n` : ''
+        output(
+          result,
+          values.json,
+          `Moved ${result.from} → ${result.to}\n${talk}${notices}${warnings}`
+        )
         break
       }
       case 'page edit':
@@ -183,7 +238,7 @@ try {
   const { values, positionals } = parsed
   json = values.json
   const [group, action] = positionals
-  const command = ['profile', 'page'].includes(group) ? `${group} ${action}` : group
+  const command = ['profile', 'page', 'file'].includes(group) ? `${group} ${action}` : group
   if (values.version) {
     const { version } = JSON.parse(
       readFileSync(new URL('../package.json', import.meta.url), 'utf8')
@@ -200,7 +255,7 @@ try {
     ) {
       throw new CliError('usage_error', 'Invalid command or arguments. See ipe --help.')
     }
-    await run(command, values, positionals.at(-1))
+    await run(command, values, positionals[2], positionals[3])
   }
 } catch (error) {
   const { code, message, details } =

@@ -34,6 +34,29 @@ Use `--file -` to pipe page source in. Get the current `revisionId` with `page g
 
 When scripting, pass `--profile` explicitly and use `--json`. Successful results go to stdout, errors go to stderr, and failures exit with a nonzero status. `login_required` includes a command to give the user. For `login --web --json`, stderr first emits a `login_url` event. Share that URL with the user and wait for the process to confirm the profile is saved. The user enters the password directly into the browser.
 
+## Move pages and upload files
+
+```sh
+ipe page move "Project:Old title" "Project:New title" --reason "Correct title" --move-talk
+ipe file upload ./diagram.png --filename Diagram.png --summary "Upload a diagram" --description-file ./description.wiki --json
+```
+
+A move leaves a redirect by default. Use `--no-redirect` to suppress it and `--move-talk` to request moving the talk page too. The result includes the actual destination and any reported talk-page warning.
+
+Uploads use the local basename by default and support a wikitext description from a file or stdin (`--description-file -`). MediaWiki warnings such as an existing filename return `upload_warning` with warning details and, when available, a stashed file key. Review the warnings before re-running with `--ignore-warnings`, which can allow an existing file to be replaced.
+
+## Send a direct Action API request
+
+```sh
+ipe action-api --query action=query --query list=categorymembers --query 'cmtitle=Category:Examples'
+ipe action-api --method POST --query action=query --form 'titles=Project:Sandbox' --form prop=info
+ipe action-api --method POST --query action=upload --form filename=Diagram.png --form file=@./diagram.png --token csrf
+```
+
+Use `--query KEY=VALUE` repeatedly for URL parameters and `--form KEY=VALUE` for POST fields. In a form, `KEY=@PATH` attaches a local file. Alternatively, `--body PATH` loads parameters from a JSON object in a file or from stdin with `--body -`. JSON values can be strings, numbers, booleans, or null. `true` becomes `1`, and `false` and null are omitted. The CLI sends these as form fields.
+
+The command uses the selected profile endpoint and its authenticated session. The CLI supplies `assert`, `assertuser`, and the JSON output format. With `--token csrf`, it obtains and adds the CSRF token. Successful requests print the MediaWiki response as JSON.
+
 ## Run from this repository
 
 ```sh

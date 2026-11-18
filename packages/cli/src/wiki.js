@@ -14,7 +14,11 @@ function client(api) {
   })
   wiki.request.on('beforeRequest', (ctx) => {
     const body = ctx.request.body
-    if (body instanceof FormData && body.get('action') === 'edit') {
+    if (
+      body instanceof FormData &&
+      body.get('action') === 'edit' &&
+      [...body.values()].every((value) => typeof value === 'string')
+    ) {
       // Multipart form serialization converts line endings in text fields to CRLF.
       ctx.request.body = new URLSearchParams(body)
     }
@@ -125,6 +129,24 @@ function checkIdentity(profile, identity) {
     )
   }
   return identity
+}
+
+export async function csrfQuery(session, query = {}) {
+  const { data } = await session.wiki.get({
+    ...query,
+    ...session.assert,
+    action: 'query',
+    meta: 'tokens',
+    type: 'csrf',
+  })
+  const token = data?.query?.tokens?.csrftoken
+  if (typeof token !== 'string' || !token || token === '+\\') {
+    throw new CliError(
+      'unexpected_response',
+      'MediaWiki did not provide an authenticated CSRF token.'
+    )
+  }
+  return data
 }
 
 export async function wikiIdentity(current, profile) {
