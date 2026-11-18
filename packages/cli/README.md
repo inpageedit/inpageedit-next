@@ -16,6 +16,8 @@ Profiles are stored in `~/.config/inpageedit/profiles` by default. Set `IPE_CONF
 
 Bot Passwords are stored in macOS Keychain, Windows Credential Manager, or Linux Secret Service (for example, GNOME Keyring). Linux needs a running, accessible Secret Service provider. Systems without an available credential store return `credential_store_error`.
 
+macOS asks before a different program reads a saved credential, for example after switching Node.js installations. While that prompt is open, the CLI writes a notice to stderr (a `credential_prompt` event with `--json`) and gives up with `credential_store_timeout` after 60 seconds.
+
 Verified session cookies are also stored in the system credential store, scoped to the profile. Subsequent commands reuse them and MediaWiki checks the expected username on every operation. When the session expires, the CLI attempts to log in once with the saved Bot Password. It returns `login_required` if the user needs to renew that password.
 
 ## Read and edit pages
@@ -32,7 +34,15 @@ ipe --profile docs-bot page create "Project:New page" --file ./new-page.wiki --s
 
 Use `--file -` to pipe page source in. Get the current `revisionId` with `page get --json` before editing. If MediaWiki returns `editconflict`, fetch the page again and reconcile the changes. Revision-based editing requires MediaWiki 1.35 or a server that exposes the `baserevid` edit parameter.
 
-When scripting, pass `--profile` explicitly and use `--json`. Successful results go to stdout, errors go to stderr, and failures exit with a nonzero status. `login_required` includes a command to give the user. For `login --web --json`, stderr first emits a `login_url` event. Share that URL with the user and wait for the process to confirm the profile is saved. The user enters the password directly into the browser.
+When scripting, pass `--profile` explicitly and use `--json`. MediaWiki errors keep the server's message. Codes that are not plain identifiers, such as extension exceptions, are reported as `mediawiki_error` with the original code in `apiCode`. Successful results go to stdout, errors go to stderr, and failures exit with a nonzero status. `login_required` includes a command to give the user. For `login --web --json`, stderr first emits a `login_url` event. Share that URL with the user and wait for the process to confirm the profile is saved. The user enters the password directly into the browser.
+
+## Read anonymously
+
+`page get`, `page search`, and `action-api` without `--token` accept `--api URL` in place of a profile. They send no credentials, so the Wiki applies its anonymous permissions.
+
+```sh
+ipe page get "Project:Sandbox" --api https://wiki.example.org/w/api.php --json
+```
 
 ## Move pages and upload files
 

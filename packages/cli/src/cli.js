@@ -3,6 +3,7 @@ import { parseArgs } from 'node:util'
 import { readFileSync } from 'node:fs'
 import { actionRequest, prepareActionRequest } from './action-api.js'
 import { CliError } from './errors.js'
+import { onCredentialWait } from './keyring.js'
 import { terminalLogin, webLogin } from './login.js'
 import { movePage, prepareMove, prepareUpload, uploadFile } from './maintenance.js'
 import { getPage, pageText, searchPages, writePage } from './pages.js'
@@ -14,7 +15,7 @@ import {
   readProfile,
   selectProfile,
 } from './profiles.js'
-import { wikiIdentity, withWikiSession } from './wiki.js'
+import { wikiIdentity, withAnonymousSession, withWikiSession } from './wiki.js'
 
 const help = `Usage: ipe [--profile NAME] [--json] <command>
 
@@ -29,6 +30,9 @@ const help = `Usage: ipe [--profile NAME] [--json] <command>
   page move FROM TO --reason TEXT [--move-talk] [--no-redirect]
   file upload PATH [--filename NAME] [--summary TEXT] [--description-file PATH] [--ignore-warnings]
   action-api [--method GET|POST] [--query KEY=VALUE]... [--form KEY=VALUE | --body PATH] [--token csrf]
+
+page search, page get, and action-api without --token also accept --api URL instead of a
+profile to read anonymously.
 
 Use --file - to read page content from stdin. Use --json to get metadata with page source.
 Use --form KEY=@PATH to attach a file. --body reads a JSON object from a file or stdin (-).
@@ -65,8 +69,8 @@ const commands = new Map([
   ['profile list', { positionals: 2, flags: [] }],
   ['profile use', { positionals: 3, flags: [] }],
   ['whoami', { positionals: 1, flags: ['profile'] }],
-  ['page search', { positionals: 3, flags: ['profile', 'limit'] }],
-  ['page get', { positionals: 3, flags: ['profile'] }],
+  ['page search', { positionals: 3, flags: ['profile', 'api', 'limit'] }],
+  ['page get', { positionals: 3, flags: ['profile', 'api'] }],
   ['page edit', { positionals: 3, flags: ['profile', 'file', 'base-revid', 'summary'] }],
   ['page create', { positionals: 3, flags: ['profile', 'file', 'summary'] }],
   ['page move', { positionals: 4, flags: ['profile', 'reason', 'move-talk', 'no-redirect'] }],
@@ -79,7 +83,7 @@ const commands = new Map([
   ],
   [
     'action-api',
-    { positionals: 1, flags: ['profile', 'method', 'query', 'form', 'body', 'token'] },
+    { positionals: 1, flags: ['profile', 'api', 'method', 'query', 'form', 'body', 'token'] },
   ],
 ])
 
@@ -92,6 +96,42 @@ function integer(value, flag, max = Number.MAX_SAFE_INTEGER) {
 
 function output(data, json, human) {
   process.stdout.write(json || human === undefined ? `${JSON.stringify(data)}\n` : human)
+}
+
+const anonymousCommands = ['page search', 'page get', 'action-api']
+
+async function anonymousRun(command, values, operand) {
+  if (!anonymousCommands.includes(command) || values.profile !== undefined || values.token) {
+    throw new CliError(
+      'usage_error',
+      '--api reads anonymously and cannot be combined with --profile or --token.'
+    )
+  }
+  if (command !== 'action-api' && (!operand.trim() || (command === 'page get' && operand.includes('|')))) {
+    throw new CliError('usage_error', 'Specify one non-empty page title or search query.')
+  }
+  const api = apiEndpoint(values.api)
+  const limit = command === 'page search' ? integer(values.limit ?? '10', '--limit', 50) : undefined
+  const request = command === 'action-api' ? await prepareActionRequest(values) : undefined
+  await withAnonymousSession(api, (session) => read(command, session, values, operand, limit, request))
+}
+
+async function read(command, session, values, operand, limit, request) {
+  switch (command) {
+    case 'page search': {
+      const results = await searchPages(session, operand, limit)
+      const lines = results.map(({ title }) => title)
+      output(results, values.json, lines.length ? `${lines.join('\n')}\n` : '')
+      return
+    }
+    case 'page get': {
+      const page = await getPage(session, operand)
+      output(page, values.json, page.text)
+      return
+    }
+    case 'action-api':
+      output(await actionRequest(session, request), values.json)
+  }
 }
 
 async function run(command, values, operand, destination) {
@@ -107,6 +147,11 @@ async function run(command, values, operand, destination) {
   if (command === 'profile use') {
     const profile = await selectProfile(operand)
     output(profile, values.json, `Default profile: ${profile.name}\n`)
+    return
+  }
+
+  if (command !== 'login' && values.api !== undefined) {
+    await anonymousRun(command, values, operand)
     return
   }
 
@@ -177,21 +222,11 @@ async function run(command, values, operand, destination) {
         output(identity, values.json, `${identity.username} (${name}) on ${identity.api}\n`)
         break
       }
-      case 'page search': {
-        const results = await searchPages(session, operand, limit)
-        const lines = results.map(({ title }) => title)
-        output(results, values.json, lines.length ? `${lines.join('\n')}\n` : '')
+      case 'page search':
+      case 'page get':
+      case 'action-api':
+        await read(command, session, values, operand, limit, request)
         break
-      }
-      case 'page get': {
-        const page = await getPage(session, operand)
-        output(page, values.json, page.text)
-        break
-      }
-      case 'action-api': {
-        output(await actionRequest(session, request), values.json)
-        break
-      }
       case 'file upload': {
         const result = await uploadFile(session, upload)
         output(result, values.json, `Uploaded File:${result.filename}\n`)
@@ -237,6 +272,13 @@ try {
 
   const { values, positionals } = parsed
   json = values.json
+  onCredentialWait(() =>
+    process.stderr.write(
+      json
+        ? `${JSON.stringify({ event: 'credential_prompt' })}\n`
+        : 'ipe: Waiting for the system credential store. Approve the access prompt on this computer if one is open.\n'
+    )
+  )
   const [group, action] = positionals
   const command = ['profile', 'page', 'file'].includes(group) ? `${group} ${action}` : group
   if (values.version) {

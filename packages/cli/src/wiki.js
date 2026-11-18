@@ -154,6 +154,14 @@ export async function wikiIdentity(current, profile) {
   return checkIdentity(profile, identity)
 }
 
+export async function withAnonymousSession(api, operate) {
+  try {
+    return await operate({ wiki: client(api), assert: {} })
+  } catch (error) {
+    throw wikiError(error)
+  }
+}
+
 export async function withWikiSession(profile, operate) {
   try {
     const cached = await restoreSession(profile)
@@ -184,15 +192,29 @@ export async function withWikiSession(profile, operate) {
 }
 
 function wikiError(error, profile) {
-  if (error.code === 'login_failed') return loginRequired(profile.name)
+  if (error.code === 'login_failed' && profile) return loginRequired(profile.name)
   if (error instanceof CliError) return error
   if (error instanceof MediaWikiApiError) {
-    const code = apiErrorCode(error)
-    if (['assertuserfailed', 'assertnameduserfailed'].includes(code))
+    const { code, text } = error.firstError ?? {}
+    if (profile && ['assertuserfailed', 'assertnameduserfailed'].includes(code))
       return loginRequired(profile.name)
-    if (typeof code === 'string' && /^[a-z0-9_-]{1,80}$/i.test(code)) {
-      return new CliError(code, `MediaWiki rejected the operation (${code}).`)
-    }
+    // Extensions can return codes such as internal_api_error_<PHP class>; keep the
+    // server's own text so callers see why, but never the request that caused it.
+    const known = typeof code === 'string' && /^[a-z0-9_-]{1,80}$/i.test(code)
+    return new CliError(
+      known ? code : 'mediawiki_error',
+      `MediaWiki rejected the operation${known ? ` (${code})` : ''}: ${text || code || 'no details'}`,
+      known ? undefined : { apiCode: code }
+    )
   }
-  return new CliError('wiki_request_failed', 'The MediaWiki request could not be completed.')
+  // SDK errors carry the request context, which holds the body and session cookies.
+  // Report only the transport-level code and HTTP status.
+  const status = error.cause?.response?.status
+  const cause = [error.code, error.cause?.code, status && `HTTP ${status}`].filter(
+    (part) => typeof part === 'string' && /^[A-Za-z0-9_ ]{1,40}$/.test(part)
+  )
+  return new CliError(
+    'wiki_request_failed',
+    `The MediaWiki request could not be completed${cause.length ? ` (${cause.join(', ')})` : ''}.`
+  )
 }

@@ -4,6 +4,7 @@ import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { gzipSync, gunzipSync } from 'node:zlib'
 import { CliError } from './errors.js'
+import { keyring } from './keyring.js'
 
 const configDir = resolve(process.env.IPE_CONFIG_DIR || join(homedir(), '.config', 'inpageedit'))
 const profileDir = join(configDir, 'profiles')
@@ -105,56 +106,55 @@ export async function listProfiles() {
   return { active: active ?? null, profiles: profiles.filter(Boolean) }
 }
 
-async function keyringEntry(profile, service = 'InPageEdit CLI') {
+function keyringAccount(profile) {
+  return createHash('sha256')
+    .update(JSON.stringify([configDir, profile.name, profile.api, profile.loginName, profile.userId]))
+    .digest('hex')
+}
+
+async function credential(op, profile, service, value) {
   try {
-    const { Entry } = await import('@napi-rs/keyring')
-    const key = createHash('sha256')
-      .update(
-        JSON.stringify([configDir, profile.name, profile.api, profile.loginName, profile.userId])
-      )
-      .digest('hex')
-    return new Entry(service, key, { linux: { store: 'secret-service' } })
-  } catch {
-    throw new CliError('credential_store_error', 'Could not open the system credential store.')
+    return await keyring(op, service, keyringAccount(profile), value)
+  } catch (error) {
+    if (error instanceof CliError) throw error
+    throw new CliError(
+      'credential_store_error',
+      op.startsWith('get')
+        ? 'Could not read from the system credential store.'
+        : 'Could not save to the system credential store.'
+    )
   }
 }
 
+const PASSWORD = 'InPageEdit CLI'
+const SESSION = 'InPageEdit CLI Session'
+
 export async function savedPassword(profile) {
-  const entry = await keyringEntry(profile)
-  try {
-    return entry.getPassword()
-  } catch {
-    throw new CliError('credential_store_error', 'Could not read from the system credential store.')
-  }
+  return credential('getPassword', profile, PASSWORD)
 }
 
 export async function savedSession(profile) {
   try {
-    const entry = await keyringEntry(profile, 'InPageEdit CLI Session')
-    const bytes = entry.getSecret()
+    const bytes = await credential('getSecret', profile, SESSION)
     if (bytes) return JSON.parse(gunzipSync(Buffer.from(bytes)).toString('utf8'))
-  } catch {
-    // An unreadable cache is equivalent to a cache miss.
+  } catch (error) {
+    // An unreadable cache is equivalent to a cache miss, but a pending prompt is not.
+    if (error.code === 'credential_store_timeout') throw error
   }
 }
 
 export async function saveSession(profile, session) {
   try {
-    const entry = await keyringEntry(profile, 'InPageEdit CLI Session')
-    entry.setSecret(gzipSync(JSON.stringify(session)))
-  } catch {
+    await credential('setSecret', profile, SESSION, gzipSync(JSON.stringify(session)))
+  } catch (error) {
     // A credential store can reject large entries. The verified session is still usable.
+    if (error.code === 'credential_store_timeout') throw error
   }
 }
 
 export async function saveProfile(profile, password, existing) {
   await mkdir(profileDir, { recursive: true, mode: 0o700 })
-  const entry = await keyringEntry(profile)
-  try {
-    entry.setPassword(password)
-  } catch {
-    throw new CliError('credential_store_error', 'Could not save to the system credential store.')
-  }
+  await credential('setPassword', profile, PASSWORD, password)
 
   const { name, ...metadata } = profile
   try {
