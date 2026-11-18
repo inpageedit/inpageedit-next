@@ -70,15 +70,23 @@ export async function writePage(session, { title, text, summary, baseRevision })
         'This Wiki does not support revision-based edit conflict checks.'
       )
     }
-    const current = await session.wiki.get({
-      ...session.assert,
-      action: 'query',
-      meta: 'tokens',
-      type: 'csrf',
-      prop: 'info',
-      titles: title,
-    })
-    const page = current.data?.query?.pages?.[0]
+  }
+
+  const tokenParams = { ...session.assert, action: 'query', meta: 'tokens', type: 'csrf' }
+  const { data: tokenResponse } = await session.wiki.get({
+    ...tokenParams,
+    ...(baseRevision ? { prop: 'info', titles: title } : {}),
+  })
+  const token = tokenResponse?.query?.tokens?.csrftoken
+  if (typeof token !== 'string' || !token || token === '+\\') {
+    throw new CliError(
+      'unexpected_response',
+      'MediaWiki did not provide an authenticated edit token.'
+    )
+  }
+
+  if (baseRevision) {
+    const page = tokenResponse.query?.pages?.[0]
     if (page?.missing) throw new CliError('page_not_found', 'The page does not exist.')
     if (page?.invalid) throw new CliError('invalid_title', 'MediaWiki rejected the page title.')
     if (!Number.isSafeInteger(page?.lastrevid)) {

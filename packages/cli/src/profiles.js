@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, readFile, readdir, rename, link, unlink, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { gzipSync, gunzipSync } from 'node:zlib'
 import { CliError } from './errors.js'
 
 const configDir = resolve(process.env.IPE_CONFIG_DIR || join(homedir(), '.config', 'inpageedit'))
@@ -104,7 +105,7 @@ export async function listProfiles() {
   return { active: active ?? null, profiles: profiles.filter(Boolean) }
 }
 
-async function keyringEntry(profile) {
+async function keyringEntry(profile, service = 'InPageEdit CLI') {
   try {
     const { Entry } = await import('@napi-rs/keyring')
     const key = createHash('sha256')
@@ -112,7 +113,7 @@ async function keyringEntry(profile) {
         JSON.stringify([configDir, profile.name, profile.api, profile.loginName, profile.userId])
       )
       .digest('hex')
-    return new Entry('InPageEdit CLI', key, { linux: { store: 'secret-service' } })
+    return new Entry(service, key, { linux: { store: 'secret-service' } })
   } catch {
     throw new CliError('credential_store_error', 'Could not open the system credential store.')
   }
@@ -124,6 +125,25 @@ export async function savedPassword(profile) {
     return entry.getPassword()
   } catch {
     throw new CliError('credential_store_error', 'Could not read from the system credential store.')
+  }
+}
+
+export async function savedSession(profile) {
+  try {
+    const entry = await keyringEntry(profile, 'InPageEdit CLI Session')
+    const bytes = entry.getSecret()
+    if (bytes) return JSON.parse(gunzipSync(Buffer.from(bytes)).toString('utf8'))
+  } catch {
+    // An unreadable cache is equivalent to a cache miss.
+  }
+}
+
+export async function saveSession(profile, session) {
+  try {
+    const entry = await keyringEntry(profile, 'InPageEdit CLI Session')
+    entry.setSecret(gzipSync(JSON.stringify(session)))
+  } catch {
+    // A credential store can reject large entries. The verified session is still usable.
   }
 }
 

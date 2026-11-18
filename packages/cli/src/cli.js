@@ -12,7 +12,7 @@ import {
   readProfile,
   selectProfile,
 } from './profiles.js'
-import { wikiError, wikiSession } from './wiki.js'
+import { wikiIdentity, withWikiSession } from './wiki.js'
 
 const help = `Usage: ipe [--profile NAME] [--json] <command>
 
@@ -133,15 +133,13 @@ async function run(command, values, operand) {
     )
   }
   const text = isWriting ? await pageText(values.file) : undefined
-  try {
-    const session = await wikiSession(profile)
+  await withWikiSession(profile, async (session) => {
     switch (command) {
       case 'whoami': {
         const identity = {
           profile: name,
           api: profile.api,
-          username: session.username,
-          userId: session.userId,
+          ...(await wikiIdentity(session, profile)),
         }
         output(identity, values.json, `${identity.username} (${name}) on ${identity.api}\n`)
         break
@@ -169,9 +167,7 @@ async function run(command, values, operand) {
         break
       }
     }
-  } catch (error) {
-    throw wikiError(error, profile)
-  }
+  })
 }
 
 const argv = process.argv.slice(2)

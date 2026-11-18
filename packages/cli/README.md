@@ -16,6 +16,8 @@ Profiles are stored in `~/.config/inpageedit/profiles` by default. Set `IPE_CONF
 
 Bot Passwords are stored in macOS Keychain, Windows Credential Manager, or Linux Secret Service (for example, GNOME Keyring). Linux needs a running, accessible Secret Service provider. Systems without an available credential store return `credential_store_error`.
 
+Verified session cookies are also stored in the system credential store, scoped to the profile. Subsequent commands reuse them and MediaWiki checks the expected username on every operation. When the session expires, the CLI attempts to log in once with the saved Bot Password. It returns `login_required` if the user needs to renew that password.
+
 ## Read and edit pages
 
 ```sh
