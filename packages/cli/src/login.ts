@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net'
 import { once } from 'node:events'
 import { createInterface } from 'node:readline/promises'
 import { Writable } from 'node:stream'
+import { finished } from 'node:stream/promises'
 import { CliError } from './errors.js'
 import { loginPage, pageLanguage, type LoginPageState } from './login-page.js'
 import type { Profile } from './types.js'
@@ -137,6 +138,8 @@ export async function webLogin(
         )
         closing = true
         render(request, response, 200, { saved: profile })
+        // Flush the success page before the shutdown below destroys its socket.
+        await finished(response).catch(() => {})
         complete(profile)
       } catch (error) {
         render(request, response, 400, {
@@ -169,6 +172,9 @@ export async function webLogin(
     clearTimeout(expiration)
     process.off('SIGINT', cancel)
     server.close()
-    server.closeIdleConnections()
+    // Browsers keep preconnected sockets that never send a request; closeIdleConnections
+    // skips them and server.close() stops their timeout checks, so they would keep the
+    // process alive after login. Destroy every connection so the CLI exits right away.
+    server.closeAllConnections()
   }
 }
