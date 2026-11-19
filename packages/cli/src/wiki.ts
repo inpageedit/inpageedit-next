@@ -1,15 +1,22 @@
+import { EnvHttpProxyAgent } from 'undici'
 import { MwApi, MediaWikiApiError, WikiSaikouErrorCode } from 'wiki-saikou'
 import { CliError, loginRequired } from './errors.js'
 import { apiEndpoint, savedPassword, savedSession, saveProfile, saveSession } from './profiles.js'
 import type { Identity, Profile, Session } from './types.js'
+
+// Node's fetch ignores http_proxy/https_proxy/no_proxy unless NODE_USE_ENV_PROXY is set;
+// this agent honours them so the CLI works behind a non-transparent proxy.
+const dispatcher = new EnvHttpProxyAgent()
 
 function client(api: string): MwApi {
   const wiki = new MwApi({
     baseURL: api,
     throwOnApiError: true,
     fexiosConfigs: {
-      // Fexios passes a complete Request, so the redirect override is the only init needed.
-      fetch: (request: string | URL | Request) => fetch(request, { redirect: 'error' }),
+      // Fexios passes a complete Request, so only redirect and dispatcher go in the init.
+      // The cast bridges @types/node's bundled undici-types and the undici package's types.
+      fetch: (request: string | URL | Request) =>
+        fetch(request, { redirect: 'error', dispatcher } as unknown as RequestInit),
       timeout: 15_000,
       headers: { 'user-agent': 'InPageEdit-CLI/0.1 (https://www.ipe.wiki/)' },
     },
