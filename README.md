@@ -52,6 +52,7 @@ This is a monorepo:
 | package            | description                                                                      | directory                                              |
 | ------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | @inpageedit/core   | 🚀 Modular, Extensible Supercharged Plugin for MediaWiki                         | [packages/core](packages/core)                         |
+| @inpageedit/cli    | 🤖 Let your AI agent read and edit MediaWiki safely                              | [packages/cli](packages/cli)                           |
 | @inpageedit/logger | Flexible, Extensible Console Logger with Colored Labels and Hierarchical Loggers | [packages/logger](packages/logger)                     |
 | @inpageedit/modal  | Yet another lightweight, framework-free modal and toast notification utility     | [packages/modal](packages/modal)                       |
 | idb-plus           | 🗄️ Minimal Promise based IndexedDB Wrapper with Map-like API                     | [packages/idb-plus](packages/idb-plus)                 |
