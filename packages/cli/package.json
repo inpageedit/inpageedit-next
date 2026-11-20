@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "InPageEdit CLI for MediaWiki profiles and page editing",
   "license": "MIT",
+  "homepage": "https://github.com/inpageedit/inpageedit-next/tree/master/packages/cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inpageedit/inpageedit-next.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/inpageedit/inpageedit-next/issues"
+  },
   "type": "module",
   "bin": {
     "ipe": "./dist/cli.js"
@@ -20,6 +29,10 @@
   },
   "engines": {
     "node": ">=22.14.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   },
   "dependencies": {
     "@napi-rs/keyring": "^2.1.2",
