@@ -46,7 +46,11 @@ Edit a local copy with your own file-editing tools. Rewriting a whole page on th
 
 - Reads: `ipe --profile P action-api --query action=query --query list=categorymembers --query "cmtitle=Category:X"`.
 - Writes: `--method POST --form key=value ... --token csrf`. Attach files with `--form file=@PATH`. For many fields, `--body PATH` (or `-` for stdin) takes a JSON object.
-- Check the module's parameters on the Wiki itself with `action-api --query action=paraminfo --query modules=NAME`.
+- Look up modules and their parameters on the Wiki itself with `action-api --query action=paraminfo`:
+  - `--query modules=main` lists every `action`. `--query modules=query` lists the `list=`, `prop=`, and `meta=` submodules.
+  - Name a submodule by its path: `modules=query+categorymembers`, not `categorymembers`. A wrong name only adds a `badmodule` warning and still exits 0, so check `warnings`.
+  - Parameter names are listed without the module prefix: `"prefix": "cm"` with `title` means you send `cmtitle`.
+  - Add `--query helpformat=wikitext` to include parameter descriptions.
 
 ## Errors
 

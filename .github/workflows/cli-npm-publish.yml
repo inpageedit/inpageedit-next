@@ -1,0 +1,113 @@
+name: Release @inpageedit/cli to npm
+
+on:
+  push:
+    tags:
+      - 'cli/*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The version to publish'
+        required: true
+      npm_tag:
+        description: 'The npm dist-tag to publish (e.g. latest, next, beta)'
+        required: false
+        default: 'latest'
+
+permissions:
+  contents: read
+  # npm trusted publishing (OIDC); this file name is registered on npmjs.com, do not rename it.
+  id-token: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      NPM_CONFIG_PROVENANCE: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: latest
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+          registry-url: https://registry.npmjs.org/
+
+      - name: Read package version
+        id: package-version
+        working-directory: packages/cli
+        run: echo "version=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Check version
+        shell: bash
+        run: |
+          PKG_VERSION='${{ steps.package-version.outputs.version }}'
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            WANT='${{ inputs.version }}'
+          else
+            WANT='${{ github.ref_name }}'
+            WANT="${WANT#cli/}"
+          fi
+          if [[ "$WANT" != "$PKG_VERSION" ]]; then
+            echo "Version mismatch: $WANT != $PKG_VERSION"
+            exit 1
+          fi
+
+      - name: Resolve npm dist-tag
+        id: npm-tag
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && -n "${{ inputs.npm_tag }}" ]]; then
+            TAG='${{ inputs.npm_tag }}'
+          else
+            TAG='latest'
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # prepublishOnly runs the TypeScript build.
+      - name: Publish @inpageedit/cli
+        run: |
+          pnpm --filter cli publish \
+            --no-git-checks \
+            --tag '${{ steps.npm-tag.outputs.tag }}'
+
+  release-notes:
+    needs: publish
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Compare against the previous cli/* tag only; GitHub would otherwise pick the latest core/* tag.
+      - name: Find previous cli tag
+        id: previous
+        run: |
+          PREV=$(git tag --list 'cli/*' --sort=-v:refname | grep -vx '${{ github.ref_name }}' | head -n1)
+          echo "tag=$PREV" >> "$GITHUB_OUTPUT"
+
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          prerelease: false
+          generate_release_notes: true
+          previous_tag: ${{ steps.previous.outputs.tag }}
