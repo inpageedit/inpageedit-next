@@ -29,6 +29,8 @@ A `login_required` error later carries the exact command in `command`; run it th
 
 On macOS the system asks before a different program reads a saved credential. A `credential_prompt` event on stderr means a dialog is waiting on the human's screen: ask them to choose **Always Allow**. After 60 seconds the command fails with `credential_store_timeout`; rerun it once they have answered.
 
+`credential_store_error` means the machine has no credential store, typically headless Linux. Do not set `IPE_CREDENTIAL_STORE=file` on your own: it keeps the Bot Password in a plain file you can read. Tell the human, and use it only if they agree; then set it for every `ipe` command, login included.
+
 ## Editing a page
 
 Edit a local copy with your own file-editing tools. Rewriting a whole page on the command line loses text.
@@ -58,6 +60,7 @@ Edit a local copy with your own file-editing tools. Rewriting a whole page on th
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `login_required`                                | The saved login no longer works. Have the human run the `command` from the error.                                                                                                    |
 | `credential_prompt`, `credential_store_timeout` | A system dialog is waiting. See _Credential store prompts_.                                                                                                                          |
+| `credential_store_error`                        | No credential store on this machine. See _Credential store prompts_.                                                                                                                 |
 | `editconflict`                                  | The page changed since your fetch. Follow the conflict steps above.                                                                                                                  |
 | `upload_warning`                                | The Wiki flagged the upload (duplicate, existing name). Show `warnings` to the human; rerun with `--ignore-warnings` only on their say-so.                                           |
 | `mediawiki_error`, other MediaWiki codes        | The Wiki refused the request; the message is the Wiki's own explanation. Extensions such as moderation queues report success-with-review this way: read the message before retrying. |
