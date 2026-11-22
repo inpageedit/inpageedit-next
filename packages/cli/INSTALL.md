@@ -5,7 +5,7 @@ You are setting up `ipe`, a CLI that lets you read and edit MediaWiki pages on b
 ## 1. Check the environment
 
 - Node.js 22.14 or newer: `node -v`. If it is missing or older, ask the human to install or upgrade Node.js before continuing.
-- A system credential store. macOS and Windows always have one. On Linux, a Secret Service provider (such as GNOME Keyring) must be running and unlocked; without it, saving a login fails with `credential_store_error`.
+- A system credential store. macOS and Windows always have one. On Linux, a Secret Service provider (such as GNOME Keyring) must be running and unlocked; without it, saving a login fails with `credential_store_error`. A headless machine with no such provider (a server, a VM an agent works in) can set `IPE_CREDENTIAL_STORE=file` instead; see the end of this file.
 
 ## 2. Install
 
@@ -56,8 +56,10 @@ Use the skills directory your own agent loads from. Ask the human before writing
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `wiki_request_failed`, `NETWORK_ERROR`, or `TIMEOUT`       | The CLI honours `http_proxy`, `https_proxy`, and `no_proxy`. Check that the Wiki is reachable with the same variables (for example with `curl`), and that `no_proxy` does not exclude a Wiki that must go through a proxy. |
 | `credential_prompt` event, then `credential_store_timeout` | macOS is showing a Keychain dialog, usually after Node.js was reinstalled or switched. Ask the human to choose **Always Allow**, then rerun the command.                                                                   |
-| `credential_store_error`                                   | No usable credential store. On Linux, start and unlock a Secret Service provider.                                                                                                                                          |
+| `credential_store_error`                                   | No usable credential store. On Linux, start and unlock a Secret Service provider, or on a headless machine set `IPE_CREDENTIAL_STORE=file`.                                                                                 |
 | `login_required`                                           | The saved Bot Password no longer works. Run the `command` from the error the same way as step 3.                                                                                                                           |
 | Edits fail on an old Wiki                                  | Revision-checked editing needs MediaWiki 1.35 or newer.                                                                                                                                                                    |
 
-Profiles live in `~/.config/inpageedit/profiles`. Set `IPE_CONFIG_DIR` to use another directory. Passwords and session cookies are kept only in the system credential store.
+Profiles live in `~/.config/inpageedit/profiles`. Set `IPE_CONFIG_DIR` to use another directory. Passwords and session cookies are kept in the system credential store.
+
+With `IPE_CREDENTIAL_STORE=file` they are kept instead in `credentials/` under the config directory, one file per entry, readable only by the current user (mode 600). Any program running as that user can read them, an agent included, so use it only where there is no credential store, with a Bot Password granted no more than the work needs. The variable must be set for every command, login included; the CLI never falls back to files on its own.
