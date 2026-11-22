@@ -10,6 +10,19 @@ import type { Profile } from './types.js'
 const configDir = resolve(process.env.IPE_CONFIG_DIR || join(homedir(), '.config', 'inpageedit'))
 const profileDir = join(configDir, 'profiles')
 const activeFile = join(configDir, 'active')
+const credentialDir = join(configDir, 'credentials')
+
+/**
+ * Where passwords and session cookies live. `file` is for machines with no
+ * system credential store (a headless Linux VM): plain files any process of
+ * this user can read. Opt-in only, never a fallback: a desktop whose store
+ * fails once must not start writing passwords to disk unasked.
+ */
+function credentialStore(): 'system' | 'file' {
+  const value = process.env.IPE_CREDENTIAL_STORE || 'system'
+  if (value === 'system' || value === 'file') return value
+  throw new CliError('invalid_credential_store', 'Set IPE_CREDENTIAL_STORE to "system" or "file".')
+}
 
 export function profileName(name: string | undefined): string {
   // Case-insensitive filesystems and Windows device names must behave consistently.
@@ -125,6 +138,7 @@ async function credential(
   service: string,
   value?: KeyringRequest['value']
 ): Promise<unknown> {
+  if (credentialStore() === 'file') return fileCredential(op, service, keyringAccount(profile), value)
   try {
     return await keyring({ op, service, account: keyringAccount(profile), value })
   } catch (error) {
@@ -136,6 +150,28 @@ async function credential(
         : 'Could not save to the system credential store.'
     )
   }
+}
+
+/** The file store: one base64 file per (service, account), readable only by this user. */
+async function fileCredential(
+  op: KeyringRequest['op'],
+  service: string,
+  account: string,
+  value?: KeyringRequest['value']
+): Promise<unknown> {
+  const path = join(
+    credentialDir,
+    createHash('sha256').update(JSON.stringify([service, account])).digest('hex')
+  )
+  if (op === 'getPassword' || op === 'getSecret') {
+    const stored = await readOptional(path)
+    if (stored === undefined) return null
+    const bytes = Buffer.from(stored.trim(), 'base64')
+    return op === 'getPassword' ? bytes.toString('utf8') : [...bytes]
+  }
+  await mkdir(credentialDir, { recursive: true, mode: 0o700 })
+  const bytes = typeof value === 'string' ? Buffer.from(value, 'utf8') : Buffer.from(value ?? [])
+  await atomicWrite(path, `${bytes.toString('base64')}\n`)
 }
 
 const PASSWORD = 'InPageEdit CLI'

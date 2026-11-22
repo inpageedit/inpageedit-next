@@ -24,7 +24,7 @@ Read and install this for me: https://github.com/inpageedit/inpageedit-next/blob
 
 ## 特性 / Features
 
-- **密码不经过 Agent**：登录时在你自己的浏览器里填写 Bot Password，Agent 只拿到一个登录链接。凭据保存在系统钥匙串（macOS Keychain / Windows 凭据管理器 / Linux Secret Service）。
+- **密码不经过 Agent**：登录时在你自己的浏览器里填写 Bot Password，Agent 只拿到一个登录链接。凭据保存在系统钥匙串（macOS Keychain / Windows 凭据管理器 / Linux Secret Service）；没有钥匙串的无头环境可设 `IPE_CREDENTIAL_STORE=file` 改存为仅当前用户可读的文件，见 [INSTALL.md](./INSTALL.md)。
 - **改得稳**：拉取 → 本地编辑 → diff → 预览 → 保存，保存时校验基准版本，别人中途改过页面会报编辑冲突而不是覆盖。
 - **只动一个章节**：长页面可以按章节读写，其他部分原样保留。
 - **预览先行**：保存前即可看到解析警告、分类、缺失模板和红链。
