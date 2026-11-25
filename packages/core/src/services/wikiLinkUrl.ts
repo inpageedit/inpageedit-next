@@ -27,6 +27,11 @@ export interface WikiLinkUrlConfig {
    */
   scriptPath: string
   /**
+   * Origin the page is being viewed from, if any
+   * @example "https://m.example.com"
+   */
+  currentOrigin?: string
+  /**
    * Landing page URL
    * @example "https://example.com/"
    */
@@ -63,6 +68,30 @@ export function isWikiScriptUrl(url: URL, config: WikiLinkUrlConfig): boolean {
   }
   const rest = url.pathname.slice(scriptPath.length)
   return /^[^/]+\.php$/i.test(rest)
+}
+
+/**
+ * Move a link on the current host onto the wiki's own server.
+ *
+ * The page may be served from a host other than siteinfo `server` (a mirror,
+ * a mobile domain, a reverse proxy), and relative links in it resolve against
+ * that host. The API comes from the page's own EditURI, so the current host is
+ * the same wiki; without this every such link would count as external.
+ */
+export function toWikiServerOrigin(url: URL, config: WikiLinkUrlConfig): URL {
+  if (!config.currentOrigin || url.origin !== config.currentOrigin) {
+    return url
+  }
+  let serverOrigin: string
+  try {
+    serverOrigin = new URL(config.baseUrl).origin
+  } catch {
+    return url
+  }
+  if (url.origin === serverOrigin) {
+    return url
+  }
+  return new URL(`${url.pathname}${url.search}${url.hash}`, serverOrigin)
 }
 
 export function isWikiLinkUrl(url: URL, config: WikiLinkUrlConfig): boolean {

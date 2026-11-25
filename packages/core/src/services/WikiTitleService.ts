@@ -5,6 +5,7 @@ import {
   extractWikiLinkTitleText,
   isWikiLinkUrl,
   resolveWikiLinkAction,
+  toWikiServerOrigin,
   type WikiLinkUrlConfig,
 } from './wikiLinkUrl.js'
 
@@ -185,6 +186,7 @@ export class WikiTitleService extends Service {
       articleBaseUrl: this.wikiArticleBaseUrl,
       indexPhpUrl: this.wikiIndexPhpUrl,
       scriptPath: this.wiki.scriptPath,
+      currentOrigin: globalThis.location?.origin,
       landingPageUrl: this.ctx.wiki.landingPageUrl,
     }
   }
@@ -196,7 +198,8 @@ export class WikiTitleService extends Service {
     } catch {
       return false
     }
-    return isWikiLinkUrl(url, this.wikiLinkUrlConfig)
+    const config = this.wikiLinkUrlConfig
+    return isWikiLinkUrl(toWikiServerOrigin(url, config), config)
   }
 
   static readonly REG_SKIPPED_HREF = /^(#|javascript:|vbscript:|file:)/i
@@ -227,13 +230,16 @@ export class WikiTitleService extends Service {
     if (!this.isWikiLink(url)) {
       return null
     }
+    const config = this.wikiLinkUrlConfig
+    // For the checks below only; the returned `url` stays as the page has it
+    const wikiUrl = toWikiServerOrigin(url, config)
     const params = url.searchParams
     const hash = url.hash.replace('#', '')
     const action = resolveWikiLinkAction(params)
     const titleParam = params.get('title') || ''
     const curid = parseInt(params.get('curid') || '0', 10)
     const oldid = parseInt(params.get('oldid') || '0', 10)
-    const titleText = extractWikiLinkTitleText(url, this.wikiLinkUrlConfig, titleParam)
+    const titleText = extractWikiLinkTitleText(wikiUrl, config, titleParam)
 
     let title: IWikiTitle | undefined = undefined
     let pageId: number | undefined = undefined
@@ -247,7 +253,7 @@ export class WikiTitleService extends Service {
       title = this.newTitle(titleText)
     } else {
       // 无任何有效参数
-      if (url.origin + url.pathname === this.ctx.wiki.landingPageUrl) {
+      if (wikiUrl.origin + wikiUrl.pathname === this.ctx.wiki.landingPageUrl) {
         // 但 url 是 landingPageUrl，则认为是主页
         title = this.newMainPageTitle()
       } else {

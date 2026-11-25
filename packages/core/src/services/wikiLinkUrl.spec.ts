@@ -5,6 +5,7 @@ import {
   isWikiScriptUrl,
   resolveWikiLinkAction,
   type WikiLinkUrlConfig,
+  toWikiServerOrigin,
 } from './wikiLinkUrl.js'
 
 /** 大多数 MediaWiki 站点的常见配置 */
@@ -146,5 +147,28 @@ describe('extractWikiLinkTitleText', () => {
   it('站内但不在 article path 下的路径返回空标题', () => {
     const url = new URL('https://example.com/special/thing')
     expect(extractWikiLinkTitleText(url, config, '')).toBe('')
+  })
+})
+
+describe('toWikiServerOrigin', () => {
+  const config = makeConfig({ currentOrigin: 'https://m.example.com' })
+
+  it('把当前访问域名上的链接换到 server 的域名', () => {
+    const url = new URL('https://m.example.com/w/index.php?title=Foo&diff=2&oldid=1#bar')
+    const moved = toWikiServerOrigin(url, config)
+    expect(moved.href).toBe('https://example.com/w/index.php?title=Foo&diff=2&oldid=1#bar')
+    expect(isWikiLinkUrl(moved, config)).toBe(true)
+  })
+
+  it('不动真正的站外链接', () => {
+    const url = new URL('https://other.example.org/wiki/Foo')
+    expect(toWikiServerOrigin(url, config)).toBe(url)
+    expect(isWikiLinkUrl(toWikiServerOrigin(url, config), config)).toBe(false)
+  })
+
+  it('当前域名与 server 相同或未知时原样返回', () => {
+    const url = new URL('https://example.com/wiki/Foo')
+    expect(toWikiServerOrigin(url, makeConfig({ currentOrigin: 'https://example.com' }))).toBe(url)
+    expect(toWikiServerOrigin(url, makeConfig())).toBe(url)
   })
 })
