@@ -88,7 +88,18 @@ describe('resolveWikiLinkAction', () => {
 
   it('把 veaction=editsource 视作编辑动作（issue #61）', () => {
     expect(resolveWikiLinkAction(new URLSearchParams('veaction=editsource'))).toBe('edit')
-    expect(resolveWikiLinkAction(new URLSearchParams('veaction=edit'))).toBe('edit')
+    expect(
+      resolveWikiLinkAction(new URLSearchParams('title=Foo&section=2&veaction=editsource'))
+    ).toBe('edit')
+  })
+
+  it('不把 veaction=edit 当成编辑动作', () => {
+    // VE 的「编辑」按钮与「编辑源代码」按钮会在同一段落并排出现，
+    // 若把 veaction=edit 也算成编辑，同一个段落会挂两个快速编辑按钮
+    expect(resolveWikiLinkAction(new URLSearchParams('veaction=edit'))).toBe('view')
+    expect(
+      resolveWikiLinkAction(new URLSearchParams('title=Foo&section=2&veaction=edit'))
+    ).toBe('view')
   })
 
   it('没有动作参数时默认为 view', () => {

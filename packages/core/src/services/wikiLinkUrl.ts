@@ -81,8 +81,13 @@ export function isWikiLinkUrl(url: URL, config: WikiLinkUrlConfig): boolean {
 /**
  * Resolve the effective action of a wiki link.
  *
- * VisualEditor links carry the action in `veaction` instead of `action`,
- * e.g. `/w/index.php?title=Foo&section=2&veaction=editsource`.
+ * VisualEditor links carry the action in `veaction` instead of `action`.
+ * Only `veaction=editsource` is treated as an edit: that is the 2017
+ * wikitext editor, which edits the same source InPageEdit does.
+ * `veaction=edit` opens VisualEditor, a different editing surface, so it
+ * is deliberately left as `view` — otherwise wikis that render both
+ * "edit" and "edit source" links per section would get two quick-edit
+ * buttons on the same section.
  */
 export function resolveWikiLinkAction(params: URLSearchParams): string {
   const action = params.get('action')
@@ -90,7 +95,7 @@ export function resolveWikiLinkAction(params: URLSearchParams): string {
     return action
   }
   const veaction = params.get('veaction')
-  if (veaction === 'edit' || veaction === 'editsource') {
+  if (veaction === 'editsource') {
     return 'edit'
   }
   return 'view'
