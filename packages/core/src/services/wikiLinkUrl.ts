@@ -17,15 +17,11 @@ export interface WikiLinkUrlConfig {
    */
   articleBaseUrl: string
   /**
-   * URL of `index.php`
+   * URL of the index entry point, from siteinfo `script` (`$wgScript`).
+   * Not always `index.php`: translatewiki.net uses `/w/i.php`.
    * @example "https://example.com/w/index.php"
    */
-  indexPhpUrl: string
-  /**
-   * Script path, **without** trailing slash
-   * @example "/w" (or "" if the wiki runs at the domain root)
-   */
-  scriptPath: string
+  indexUrl: string
   /**
    * Origin the page is being viewed from, if any
    * @example "https://m.example.com"
@@ -38,36 +34,9 @@ export interface WikiLinkUrlConfig {
   landingPageUrl: string
 }
 
-/**
- * Whether the URL points at a PHP entry point of this wiki.
- *
- * MediaWiki sites may expose entry points other than `index.php`;
- * translatewiki.net for instance uses `/w/i.php`. Those are wiki links
- * all the same, so accept any single `.php` file directly under the
- * script path. Titles that merely end with `.php` live under the article
- * path and are deliberately excluded.
- */
-export function isWikiScriptUrl(url: URL, config: WikiLinkUrlConfig): boolean {
-  let origin: string
-  try {
-    origin = new URL(config.baseUrl).origin
-  } catch {
-    return false
-  }
-  if (url.origin !== origin) {
-    return false
-  }
-  // "/wiki/Foo.php" is an article, not a script entry point
-  const articlePath = config.articleBaseUrl.replace(/^https?:\/\/[^/]+/, '')
-  if (articlePath !== '/' && url.pathname.startsWith(articlePath)) {
-    return false
-  }
-  const scriptPath = `${config.scriptPath.replace(/\/$/, '')}/`
-  if (!url.pathname.startsWith(scriptPath)) {
-    return false
-  }
-  const rest = url.pathname.slice(scriptPath.length)
-  return /^[^/]+\.php$/i.test(rest)
+/** Whether the URL is the index entry point itself, query and hash aside. */
+export function isWikiIndexUrl(url: URL, config: WikiLinkUrlConfig): boolean {
+  return `${url.origin}${url.pathname}` === config.indexUrl
 }
 
 /**
@@ -98,8 +67,7 @@ export function isWikiLinkUrl(url: URL, config: WikiLinkUrlConfig): boolean {
   const href = url.toString()
   return (
     href.startsWith(config.articleBaseUrl) ||
-    href.startsWith(config.indexPhpUrl) ||
-    isWikiScriptUrl(url, config) ||
+    isWikiIndexUrl(url, config) ||
     // Some servers allow index.php to be omitted
     href.startsWith(`${config.baseUrl}/?`) ||
     // It's the landing page
@@ -143,11 +111,9 @@ export function extractWikiLinkTitleText(
   if (titleParam) {
     return titleParam
   }
-  // A script entry point has no title in its path, e.g. "/w/i.php".
-  // index.php is checked by URL as well: when the article path sits under the
-  // script path ("/w/$1" with "/w/index.php"), isWikiScriptUrl() rejects it
-  // as an article, and "index.php" would become the title.
-  if (url.href.startsWith(config.indexPhpUrl) || isWikiScriptUrl(url, config)) {
+  // Checked before the article path: when the article path sits under the
+  // script path ("/w/$1" with "/w/index.php"), "index.php" would become the title
+  if (isWikiIndexUrl(url, config)) {
     return ''
   }
   const articlePath = config.articleBaseUrl.replace(/^https?:\/\/[^/]+/, '')

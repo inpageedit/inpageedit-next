@@ -350,8 +350,13 @@ export class WikiMetadataService extends Service {
   }
 
   // utils
+  /** Use the configured index path from siteinfo, which can differ from `<scriptpath>/index.php`. */
   getSciprtUrl(name = 'index') {
-    return `${this.scriptBaseUrl}/${name.replace(/\.php$/, '')}.php`
+    const entry = name.replace(/\.php$/, '')
+    if (entry === 'index') {
+      return `${this.baseUrl}${this.general.script}`
+    }
+    return `${this.scriptBaseUrl}/${entry}.php`
   }
 
   /** Get mainpage URL */

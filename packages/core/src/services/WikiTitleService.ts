@@ -174,18 +174,13 @@ export class WikiTitleService extends Service {
    * @example "https://example.com/wiki/" (if wgArticlePath is "/wiki/$1")
    */
   private readonly wikiArticleBaseUrl = this.wiki.articleBaseUrl.replace('$1', '')
-  /**
-   * Script base URL, **without** trailing slash
-   * @example "https://example.com/w" (if wgScriptPath is "/w")
-   */
-  private readonly wikiIndexPhpUrl = this.wiki.getSciprtUrl('index.php')
+  private readonly wikiIndexUrl = this.wiki.getSciprtUrl('index')
 
   private get wikiLinkUrlConfig(): WikiLinkUrlConfig {
     return {
       baseUrl: this.wikiBaseUrl,
       articleBaseUrl: this.wikiArticleBaseUrl,
-      indexPhpUrl: this.wikiIndexPhpUrl,
-      scriptPath: this.wiki.scriptPath,
+      indexUrl: this.wikiIndexUrl,
       currentOrigin: globalThis.location?.origin,
       landingPageUrl: this.ctx.wiki.landingPageUrl,
     }

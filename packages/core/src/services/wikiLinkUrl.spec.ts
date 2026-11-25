@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   extractWikiLinkTitleText,
   isWikiLinkUrl,
-  isWikiScriptUrl,
   resolveWikiLinkAction,
   type WikiLinkUrlConfig,
   toWikiServerOrigin,
@@ -13,8 +12,7 @@ function makeConfig(overrides: Partial<WikiLinkUrlConfig> = {}): WikiLinkUrlConf
   return {
     baseUrl: 'https://example.com',
     articleBaseUrl: 'https://example.com/wiki/',
-    indexPhpUrl: 'https://example.com/w/index.php',
-    scriptPath: '/w',
+    indexUrl: 'https://example.com/w/index.php',
     landingPageUrl: 'https://example.com/',
     ...overrides,
   }
@@ -31,11 +29,19 @@ describe('isWikiLinkUrl', () => {
     expect(isWikiLinkUrl(new URL('https://example.com/w/index.php?title=Foo'), config)).toBe(true)
   })
 
-  it('识别非 index.php 的入口脚本（issue #61）', () => {
-    // translatewiki.net 的 index.php 被配置成了 i.php
+  it('按 siteinfo 的 script 识别改过名的 index 入口（issue #61）', () => {
+    // translatewiki.net 的 $wgScript 是 /w/i.php
+    const twn = makeConfig({ indexUrl: 'https://example.com/w/i.php' })
     expect(
-      isWikiLinkUrl(new URL('https://example.com/w/i.php?title=Foo&curid=1&diff=2&oldid=3'), config)
+      isWikiLinkUrl(new URL('https://example.com/w/i.php?title=Foo&curid=1&diff=2&oldid=3'), twn)
     ).toBe(true)
+  })
+
+  it('不把 api.php 等其他入口当成 wiki 链接', () => {
+    expect(isWikiLinkUrl(new URL('https://example.com/w/api.php?action=query'), config)).toBe(false)
+    expect(isWikiLinkUrl(new URL('https://example.com/w/load.php?modules=site'), config)).toBe(
+      false
+    )
   })
 
   it('识别省略 index.php 的链接', () => {
@@ -56,25 +62,11 @@ describe('isWikiLinkUrl', () => {
     )
   })
 
-  it('不把 article path 下以 .php 结尾的条目当成脚本', () => {
-    expect(isWikiScriptUrl(new URL('https://example.com/wiki/Foo.php'), config)).toBe(false)
+  it('把 article path 下以 .php 结尾的条目当成条目', () => {
     expect(isWikiLinkUrl(new URL('https://example.com/wiki/Foo.php'), config)).toBe(true)
-  })
-
-  it('不把脚本路径下的子目录当成入口脚本', () => {
-    expect(isWikiScriptUrl(new URL('https://example.com/w/skins/foo.php'), config)).toBe(false)
-  })
-})
-
-describe('isWikiScriptUrl', () => {
-  it('script path 为空（站点在根目录）时仍能识别入口脚本', () => {
-    const config = makeConfig({
-      articleBaseUrl: 'https://example.com/',
-      indexPhpUrl: 'https://example.com/index.php',
-      scriptPath: '',
-    })
-    expect(isWikiScriptUrl(new URL('https://example.com/index.php?title=Foo'), config)).toBe(true)
-    expect(isWikiScriptUrl(new URL('https://example.com/api.php'), config)).toBe(true)
+    expect(extractWikiLinkTitleText(new URL('https://example.com/wiki/Foo.php'), config, '')).toBe(
+      'Foo.php'
+    )
   })
 })
 
@@ -123,9 +115,11 @@ describe('extractWikiLinkTitleText', () => {
     expect(extractWikiLinkTitleText(url, config, '')).toBe('Foo_Bar')
   })
 
-  it('脚本入口不会把文件名当成标题', () => {
-    const url = new URL('https://example.com/w/i.php?curid=123')
-    expect(extractWikiLinkTitleText(url, config, '')).toBe('')
+  it('index 入口不会把文件名当成标题', () => {
+    const twn = makeConfig({ indexUrl: 'https://example.com/w/i.php' })
+    expect(
+      extractWikiLinkTitleText(new URL('https://example.com/w/i.php?curid=123'), twn, '')
+    ).toBe('')
     const indexPath = new URL('https://example.com/w/index.php?curid=123')
     expect(extractWikiLinkTitleText(indexPath, config, '')).toBe('')
   })
@@ -136,10 +130,7 @@ describe('extractWikiLinkTitleText', () => {
   })
 
   it('article path 位于 script path 下时，index.php 不会被当成标题', () => {
-    const nested = makeConfig({
-      articleBaseUrl: 'https://example.com/w/',
-      scriptPath: '/w',
-    })
+    const nested = makeConfig({ articleBaseUrl: 'https://example.com/w/' })
     const url = new URL('https://example.com/w/index.php?curid=1&diff=2&oldid=1')
     expect(extractWikiLinkTitleText(url, nested, '')).toBe('')
   })
