@@ -1,0 +1,125 @@
+/**
+ * URL helpers for recognising MediaWiki links.
+ *
+ * Kept free of any `InPageEdit` import so they can be unit tested
+ * without booting the whole application.
+ */
+
+export interface WikiLinkUrlConfig {
+  /**
+   * Base URL of the wiki, without a trailing slash
+   * @example "https://example.com"
+   */
+  baseUrl: string
+  /**
+   * Article base URL, with trailing slash
+   * @example "https://example.com/wiki/"
+   */
+  articleBaseUrl: string
+  /**
+   * URL of `index.php`
+   * @example "https://example.com/w/index.php"
+   */
+  indexPhpUrl: string
+  /**
+   * Script path, **without** trailing slash
+   * @example "/w" (or "" if the wiki runs at the domain root)
+   */
+  scriptPath: string
+  /**
+   * Landing page URL
+   * @example "https://example.com/"
+   */
+  landingPageUrl: string
+}
+
+/**
+ * Whether the URL points at a PHP entry point of this wiki.
+ *
+ * MediaWiki sites may expose entry points other than `index.php`;
+ * translatewiki.net for instance uses `/w/i.php`. Those are wiki links
+ * all the same, so accept any single `.php` file directly under the
+ * script path. Titles that merely end with `.php` live under the article
+ * path and are deliberately excluded.
+ */
+export function isWikiScriptUrl(url: URL, config: WikiLinkUrlConfig): boolean {
+  let origin: string
+  try {
+    origin = new URL(config.baseUrl).origin
+  } catch {
+    return false
+  }
+  if (url.origin !== origin) {
+    return false
+  }
+  // "/wiki/Foo.php" is an article, not a script entry point
+  const articlePath = config.articleBaseUrl.replace(/^https?:\/\/[^/]+/, '')
+  if (articlePath !== '/' && url.pathname.startsWith(articlePath)) {
+    return false
+  }
+  const scriptPath = `${config.scriptPath.replace(/\/$/, '')}/`
+  if (!url.pathname.startsWith(scriptPath)) {
+    return false
+  }
+  const rest = url.pathname.slice(scriptPath.length)
+  return /^[^/]+\.php$/i.test(rest)
+}
+
+export function isWikiLinkUrl(url: URL, config: WikiLinkUrlConfig): boolean {
+  const href = url.toString()
+  return (
+    href.startsWith(config.articleBaseUrl) ||
+    href.startsWith(config.indexPhpUrl) ||
+    isWikiScriptUrl(url, config) ||
+    // Some servers allow index.php to be omitted
+    href.startsWith(`${config.baseUrl}/?`) ||
+    // It's the landing page
+    href === config.landingPageUrl
+  )
+}
+
+/**
+ * Resolve the effective action of a wiki link.
+ *
+ * VisualEditor links carry the action in `veaction` instead of `action`,
+ * e.g. `/w/index.php?title=Foo&section=2&veaction=editsource`.
+ */
+export function resolveWikiLinkAction(params: URLSearchParams): string {
+  const action = params.get('action')
+  if (action) {
+    return action
+  }
+  const veaction = params.get('veaction')
+  if (veaction === 'edit' || veaction === 'editsource') {
+    return 'edit'
+  }
+  return 'view'
+}
+
+/**
+ * Extract the raw title text of a wiki link.
+ *
+ * @param titleParam value of the `title` query parameter, if any
+ */
+export function extractWikiLinkTitleText(
+  url: URL,
+  config: WikiLinkUrlConfig,
+  titleParam: string
+): string {
+  if (titleParam) {
+    return titleParam
+  }
+  if (isWikiScriptUrl(url, config)) {
+    // A script entry point has no title in its path, e.g. "/w/i.php"
+    return ''
+  }
+  const articlePath = config.articleBaseUrl.replace(/^https?:\/\/[^/]+/, '')
+  if (!url.pathname.startsWith(articlePath)) {
+    return ''
+  }
+  try {
+    return decodeURIComponent(url.pathname.substring(articlePath.length))
+  } catch {
+    return ''
+  }
+}

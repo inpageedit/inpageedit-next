@@ -1,6 +1,12 @@
 import { Inject, InPageEdit, Service } from '@/InPageEdit'
 import { IWikiPage } from '@/models/WikiPage/index.js'
 import { createWikiTitleModel, IWikiTitle, WikiTitleConstructor } from '@/models/WikiTitle/index.js'
+import {
+  extractWikiLinkTitleText,
+  isWikiLinkUrl,
+  resolveWikiLinkAction,
+  type WikiLinkUrlConfig,
+} from './wikiLinkUrl.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -163,11 +169,6 @@ export class WikiTitleService extends Service {
    */
   private readonly wikiBaseUrl = this.wiki.baseUrl
   /**
-   * Article path, with trailing slash
-   * @example "/wiki/" (if wgArticlePath is "/wiki/$1")
-   */
-  private readonly wikiArticlePath = this.wiki.articlePath.replace('$1', '')
-  /**
    * Article base URL, with trailing slash
    * @example "https://example.com/wiki/" (if wgArticlePath is "/wiki/$1")
    */
@@ -178,15 +179,24 @@ export class WikiTitleService extends Service {
    */
   private readonly wikiIndexPhpUrl = this.wiki.getSciprtUrl('index.php')
 
-  isWikiLink(url: string): boolean {
-    return (
-      url.startsWith(this.wikiArticleBaseUrl) ||
-      url.startsWith(this.wikiIndexPhpUrl) ||
-      // Some servers allow index.php to be omitted
-      url.startsWith(`${this.wikiBaseUrl}/?`) ||
-      // It's the landing page
-      url === this.ctx.wiki.landingPageUrl
-    )
+  private get wikiLinkUrlConfig(): WikiLinkUrlConfig {
+    return {
+      baseUrl: this.wikiBaseUrl,
+      articleBaseUrl: this.wikiArticleBaseUrl,
+      indexPhpUrl: this.wikiIndexPhpUrl,
+      scriptPath: this.wiki.scriptPath,
+      landingPageUrl: this.ctx.wiki.landingPageUrl,
+    }
+  }
+
+  isWikiLink(link: string | URL): boolean {
+    let url: URL
+    try {
+      url = makeURL(link)
+    } catch {
+      return false
+    }
+    return isWikiLinkUrl(url, this.wikiLinkUrlConfig)
   }
 
   static readonly REG_SKIPPED_HREF = /^(#|javascript:|vbscript:|file:)/i
@@ -214,28 +224,16 @@ export class WikiTitleService extends Service {
       return null
     }
 
-    if (!this.isWikiLink(url.toString())) {
+    if (!this.isWikiLink(url)) {
       return null
     }
     const params = url.searchParams
     const hash = url.hash.replace('#', '')
-    const action = params.get('action') || 'view'
+    const action = resolveWikiLinkAction(params)
     const titleParam = params.get('title') || ''
     const curid = parseInt(params.get('curid') || '0', 10)
     const oldid = parseInt(params.get('oldid') || '0', 10)
-    let titleText =
-      titleParam ||
-      (() => {
-        try {
-          return decodeURIComponent(url.pathname.substring(this.wikiArticlePath.length))
-        } catch (e) {
-          this.logger.error('parseLink', url, e)
-          return ''
-        }
-      })()
-    if (titleText.endsWith('index.php')) {
-      titleText = ''
-    }
+    const titleText = extractWikiLinkTitleText(url, this.wikiLinkUrlConfig, titleParam)
 
     let title: IWikiTitle | undefined = undefined
     let pageId: number | undefined = undefined
