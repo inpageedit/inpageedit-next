@@ -114,8 +114,11 @@ export function extractWikiLinkTitleText(
   if (titleParam) {
     return titleParam
   }
-  if (isWikiScriptUrl(url, config)) {
-    // A script entry point has no title in its path, e.g. "/w/i.php"
+  // A script entry point has no title in its path, e.g. "/w/i.php".
+  // index.php is checked by URL as well: when the article path sits under the
+  // script path ("/w/$1" with "/w/index.php"), isWikiScriptUrl() rejects it
+  // as an article, and "index.php" would become the title.
+  if (url.href.startsWith(config.indexPhpUrl) || isWikiScriptUrl(url, config)) {
     return ''
   }
   const articlePath = config.articleBaseUrl.replace(/^https?:\/\/[^/]+/, '')

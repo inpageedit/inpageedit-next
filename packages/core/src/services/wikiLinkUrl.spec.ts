@@ -33,10 +33,7 @@ describe('isWikiLinkUrl', () => {
   it('识别非 index.php 的入口脚本（issue #61）', () => {
     // translatewiki.net 的 index.php 被配置成了 i.php
     expect(
-      isWikiLinkUrl(
-        new URL('https://example.com/w/i.php?title=Foo&curid=1&diff=2&oldid=3'),
-        config
-      )
+      isWikiLinkUrl(new URL('https://example.com/w/i.php?title=Foo&curid=1&diff=2&oldid=3'), config)
     ).toBe(true)
   })
 
@@ -97,9 +94,9 @@ describe('resolveWikiLinkAction', () => {
     // VE 的「编辑」按钮与「编辑源代码」按钮会在同一段落并排出现，
     // 若把 veaction=edit 也算成编辑，同一个段落会挂两个快速编辑按钮
     expect(resolveWikiLinkAction(new URLSearchParams('veaction=edit'))).toBe('view')
-    expect(
-      resolveWikiLinkAction(new URLSearchParams('title=Foo&section=2&veaction=edit'))
-    ).toBe('view')
+    expect(resolveWikiLinkAction(new URLSearchParams('title=Foo&section=2&veaction=edit'))).toBe(
+      'view'
+    )
   })
 
   it('没有动作参数时默认为 view', () => {
@@ -135,6 +132,15 @@ describe('extractWikiLinkTitleText', () => {
   it('能解码百分号转义的标题', () => {
     const url = new URL('https://example.com/wiki/Foo%20Bar')
     expect(extractWikiLinkTitleText(url, config, '')).toBe('Foo Bar')
+  })
+
+  it('article path 位于 script path 下时，index.php 不会被当成标题', () => {
+    const nested = makeConfig({
+      articleBaseUrl: 'https://example.com/w/',
+      scriptPath: '/w',
+    })
+    const url = new URL('https://example.com/w/index.php?curid=1&diff=2&oldid=1')
+    expect(extractWikiLinkTitleText(url, nested, '')).toBe('')
   })
 
   it('站内但不在 article path 下的路径返回空标题', () => {
