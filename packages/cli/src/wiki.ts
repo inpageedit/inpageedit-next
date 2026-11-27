@@ -114,33 +114,24 @@ async function cacheSession(
   profile: Profile,
   { wiki, identity }: Session & { identity: Identity }
 ) {
-  const { hostname, pathname } = new URL(profile.api)
-  const jar = (wiki.request as any).cookieJar
-  const cookies = jar.getCookies(hostname, pathname).map((cookie: any) => {
-    const { maxAge, _createdAt, ...rest } = cookie
-    // CookieJar.setCookie resets Max-Age on insert. Persist its original absolute expiry.
-    const expires = maxAge === undefined ? rest.expires : new Date(+_createdAt + maxAge * 1000)
-    return { ...rest, expires }
-  })
-  await saveSession(profile, { username: identity.username, cookies })
+  await saveSession(profile, { username: identity.username, cookies: wiki.cookieJar.toJSON() })
 }
 
 async function restoreSession(profile: Profile): Promise<Session | undefined> {
   const cached = (await savedSession(profile)) as
-    | { username?: unknown; cookies?: any[] }
+    | { username?: unknown; cookies?: unknown }
     | undefined
   if (typeof cached?.username !== 'string' || !Array.isArray(cached.cookies)) return
   const wiki = client(profile.api)
-  const jar = (wiki.request as any).cookieJar
-  const now = Date.now()
-  for (const cookie of cached.cookies) {
-    if (typeof cookie?.name !== 'string' || typeof cookie.value !== 'string') return
-    const expires = cookie.expires === undefined ? undefined : new Date(cookie.expires)
-    if (expires && !(+expires > now)) continue
-    jar.setCookie({ ...cookie, expires })
+  try {
+    // No verification request: an expired session surfaces as assertuserfailed on the
+    // first operation, which withWikiSession answers by logging in with the password.
+    await wiki.login({ cookies: cached.cookies, assertuser: cached.username, verify: false })
+  } catch {
+    return // malformed cache: fall back to password login
   }
   const { hostname, pathname } = new URL(profile.api)
-  if (jar.getCookies(hostname, pathname).length) return session(wiki, cached.username)
+  if (wiki.cookieJar.getCookies(hostname, pathname).length) return session(wiki, cached.username)
 }
 
 function apiErrorCode(error: unknown): string | undefined {

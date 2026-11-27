@@ -7,6 +7,10 @@ allowBuilds:
   '@parcel/watcher': true
   esbuild: true
 
+minimumReleaseAgeExclude:
+  - fexios
+  - wiki-saikou
+
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - esbuild
