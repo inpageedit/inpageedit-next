@@ -1,6 +1,6 @@
 {
   "name": "@inpageedit/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "InPageEdit CLI for MediaWiki profiles and page editing",
   "license": "MIT",
   "homepage": "https://github.com/inpageedit/inpageedit-next/tree/master/packages/cli#readme",
