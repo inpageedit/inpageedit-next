@@ -42,8 +42,8 @@ importers:
         specifier: ^7.30.2
         version: 7.30.2
       wiki-saikou:
-        specifier: 7.5.0
-        version: 7.5.0
+        specifier: 7.8.0
+        version: 7.8.0
     devDependencies:
       '@types/node':
         specifier: ^22.18.12
@@ -2923,6 +2923,10 @@ packages:
     resolution: {integrity: sha512-jpcSleAlZoQnfskR50VX6pgPYFNNt9zPUckJv6MQMcs3OnS0C6RtKy/PFcm49wlFjMF488cJVuTPuDSVm4klhA==}
     engines: {node: ^16.15.0 || >=18.0.0}
 
+  fexios@6.4.1:
+    resolution: {integrity: sha512-wV+mSc8UYgHm42El/8F0GCaaMVP6YIwNYaIjOHfgBt4Nm/sk6H2qp0mFBu1mRFEx/aheas2Wkj/wlqqIM4hlsQ==}
+    engines: {node: ^16.15.0 || >=18.0.0}
+
   figures@6.1.0:
     resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
     engines: {node: '>=18'}
@@ -5255,6 +5259,9 @@ packages:
 
   wiki-saikou@7.6.0:
     resolution: {integrity: sha512-KErr1fgLYuP6JuD6pPrg3huo5WW4q30Tw4a2YOIwAJzVm6MUf/UnEerU73F3+HgvXZwZ8161zuQo1DvKjqTJjg==}
+
+  wiki-saikou@7.8.0:
+    resolution: {integrity: sha512-hN6wqUJc5DCVXLV3UWZ/tQu6+CeeeEfoWvAzcc2kuVH/m7QxJhdGNKcbxt8d2kpDxM9uNzybB7PsS/IDsQ3hww==}
 
   with@7.0.2:
     resolution: {integrity: sha512-RNGKj82nUPg3g5ygxkQl0R937xLyho1J24ItRCBTr/m1YnZkzJy1hUiHUJrc/VlsDQzsCnInEGSg3bci0Lmd4w==}
@@ -7836,6 +7843,8 @@ snapshots:
 
   fexios@6.2.2: {}
 
+  fexios@6.4.1: {}
+
   figures@6.1.0:
     dependencies:
       is-unicode-supported: 2.1.0
@@ -10326,6 +10335,10 @@ snapshots:
   wiki-saikou@7.6.0:
     dependencies:
       fexios: 6.2.2
+
+  wiki-saikou@7.8.0:
+    dependencies:
+      fexios: 6.4.1
 
   with@7.0.2:
     dependencies:
