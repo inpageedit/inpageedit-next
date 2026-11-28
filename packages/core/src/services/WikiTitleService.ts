@@ -1,6 +1,13 @@
 import { Inject, InPageEdit, Service } from '@/InPageEdit'
 import { IWikiPage } from '@/models/WikiPage/index.js'
 import { createWikiTitleModel, IWikiTitle, WikiTitleConstructor } from '@/models/WikiTitle/index.js'
+import {
+  extractWikiLinkTitleText,
+  isWikiLinkUrl,
+  resolveWikiLinkAction,
+  toWikiServerOrigin,
+  type WikiLinkUrlConfig,
+} from './wikiLinkUrl.js'
 
 declare module '@/InPageEdit' {
   interface InPageEdit {
@@ -163,30 +170,31 @@ export class WikiTitleService extends Service {
    */
   private readonly wikiBaseUrl = this.wiki.baseUrl
   /**
-   * Article path, with trailing slash
-   * @example "/wiki/" (if wgArticlePath is "/wiki/$1")
-   */
-  private readonly wikiArticlePath = this.wiki.articlePath.replace('$1', '')
-  /**
    * Article base URL, with trailing slash
    * @example "https://example.com/wiki/" (if wgArticlePath is "/wiki/$1")
    */
   private readonly wikiArticleBaseUrl = this.wiki.articleBaseUrl.replace('$1', '')
-  /**
-   * Script base URL, **without** trailing slash
-   * @example "https://example.com/w" (if wgScriptPath is "/w")
-   */
-  private readonly wikiIndexPhpUrl = this.wiki.getSciprtUrl('index.php')
+  private readonly wikiIndexUrl = this.wiki.getSciprtUrl('index')
 
-  isWikiLink(url: string): boolean {
-    return (
-      url.startsWith(this.wikiArticleBaseUrl) ||
-      url.startsWith(this.wikiIndexPhpUrl) ||
-      // Some servers allow index.php to be omitted
-      url.startsWith(`${this.wikiBaseUrl}/?`) ||
-      // It's the landing page
-      url === this.ctx.wiki.landingPageUrl
-    )
+  private get wikiLinkUrlConfig(): WikiLinkUrlConfig {
+    return {
+      baseUrl: this.wikiBaseUrl,
+      articleBaseUrl: this.wikiArticleBaseUrl,
+      indexUrl: this.wikiIndexUrl,
+      currentOrigin: globalThis.location?.origin,
+      landingPageUrl: this.ctx.wiki.landingPageUrl,
+    }
+  }
+
+  isWikiLink(link: string | URL): boolean {
+    let url: URL
+    try {
+      url = makeURL(link)
+    } catch {
+      return false
+    }
+    const config = this.wikiLinkUrlConfig
+    return isWikiLinkUrl(toWikiServerOrigin(url, config), config)
   }
 
   static readonly REG_SKIPPED_HREF = /^(#|javascript:|vbscript:|file:)/i
@@ -214,28 +222,19 @@ export class WikiTitleService extends Service {
       return null
     }
 
-    if (!this.isWikiLink(url.toString())) {
+    if (!this.isWikiLink(url)) {
       return null
     }
+    const config = this.wikiLinkUrlConfig
+    // For the checks below only; the returned `url` stays as the page has it
+    const wikiUrl = toWikiServerOrigin(url, config)
     const params = url.searchParams
     const hash = url.hash.replace('#', '')
-    const action = params.get('action') || 'view'
+    const action = resolveWikiLinkAction(params)
     const titleParam = params.get('title') || ''
     const curid = parseInt(params.get('curid') || '0', 10)
     const oldid = parseInt(params.get('oldid') || '0', 10)
-    let titleText =
-      titleParam ||
-      (() => {
-        try {
-          return decodeURIComponent(url.pathname.substring(this.wikiArticlePath.length))
-        } catch (e) {
-          this.logger.error('parseLink', url, e)
-          return ''
-        }
-      })()
-    if (titleText.endsWith('index.php')) {
-      titleText = ''
-    }
+    const titleText = extractWikiLinkTitleText(wikiUrl, config, titleParam)
 
     let title: IWikiTitle | undefined = undefined
     let pageId: number | undefined = undefined
@@ -249,7 +248,7 @@ export class WikiTitleService extends Service {
       title = this.newTitle(titleText)
     } else {
       // 无任何有效参数
-      if (url.origin + url.pathname === this.ctx.wiki.landingPageUrl) {
+      if (wikiUrl.origin + wikiUrl.pathname === this.ctx.wiki.landingPageUrl) {
         // 但 url 是 landingPageUrl，则认为是主页
         title = this.newMainPageTitle()
       } else {
